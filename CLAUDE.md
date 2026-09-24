@@ -38,6 +38,14 @@ Profiling tooling:
 - For each need, use the most effective tool available, from flame graphs to memory and heap dumps and any other suitable instrument.
 - If the best tool for a need is not installed or not available, ask the user to make it available. Do not silently fall back to a weaker tool.
 
+## Simplicity (code strategy)
+
+> **Avoid over-engineering. Always choose the simplest solution that meets the project's strict needs.**
+
+- Implement only what a current requirement needs. Do not add abstractions, generality, configuration or extension points for hypothetical future needs.
+- Prefer the simpler of two solutions that both meet the requirement. Accept added complexity only when measured evidence shows the simpler solution does not meet a stated requirement (see [Laboratory development](#laboratory-development-primary-principle-for-code)).
+- Apply this criterion to the functional and technical specifications and to every design decision: specify only what the project needs, and choose the simplest design that satisfies the specified requirements.
+
 ## Synergy and convergence
 
 - **Group related tasks.** Whenever tasks (in `rmp` or requested ad hoc by the user) have verifiable functional or technical proximity, or complementary or convergent goals, combine them into a single development effort.
@@ -49,6 +57,8 @@ Profiling tooling:
 ## Open-source references
 
 > **Copying is forbidden.** Never copy code, text or any other content from another project. Consult other projects only to study them and draw inspiration from their reference approaches, so that this project's own implementation is of the highest quality.
+
+- **Sole exception:** the `opengql/grammar` project (Apache-2.0) may be used as a grammar and test artefact for GQL conformance verification. Preserve its licence and attribution unchanged.
 
 - Base solutions on proven open-source projects whose licence permits reading their source code for inspiration. Use their strategies, architectures and approaches as starting points instead of reinventing them from scratch.
 - Consult these references:
