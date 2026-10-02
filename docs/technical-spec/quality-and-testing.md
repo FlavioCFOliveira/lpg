@@ -60,10 +60,10 @@ related:
 
 1. Everything that needs the ISO/IEC 39075:2024 text, which is not available (OQ-005): Syntax, General and Conformance Rules; the content of minimum conformance; closed-graph-type matching; cross-type comparison and ordering; numeric types beyond 64 bits; the permission for GQLSTATUS 25N11 and a "feature not supported" code; the validity of procedure names. These affect [TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics), [TS-19](query-engine.md#ts-19-parser), [TS-20](query-engine.md#ts-20-binder-planner-and-execution), [TS-21](values-and-types.md#ts-21-values-and-types), [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events) and [TS-25](algorithms.md#ts-25-graph-algorithms).
 2. WAL behaviour with full page images ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)): volume and commit latency; WAL bytes between checkpoints, since the triggers count transactions; WAL growth while a backup holds recycling; recovery time.
-3. The throughput of the serial commit section, now including validation and the page reads of step 6 pinning ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)).
+3. The throughput of the serial commit section, now including validation and the page copies of step 6 ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)).
 4. Compressed leaves with readers running concurrently with the single committer, the garbage collector, the index builder and the fast load ([TS-06](storage.md#ts-06-graph-layout)).
 5. The minimum pool size (provisionally 1 % of the cap), `std` latches compared with `parking_lot`, and the cost of double caching in the operating system ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
-6. The free-page reserve bound and the 64 MiB extent size ([TS-05](storage.md#ts-05-files-and-pages)); derived, not measured.
+6. The free-page reserve estimate and the 64 MiB extent size ([TS-05](storage.md#ts-05-files-and-pages)); derived, not measured.
 7. The index side-tree protocol with its idempotent replay ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints)).
 8. Parse speed of the hand-written GQL parser; only a SQL proxy was measured ([TS-19](query-engine.md#ts-19-parser)).
 9. The parallel classification of every inventory entry other than ALG-024 and ALG-042; the GDS determinism statements for the algorithms listed in [algorithms.md](algorithms.md#ts-25-graph-algorithms); convergence of synchronous rounds.

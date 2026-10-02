@@ -45,7 +45,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     Every file lies directly in the location; there is no subdirectory, because the storage trait has no directory operation ([TS-03](interfaces.md#ts-03-storage-abstraction)). One `sync_dir` of the location therefore makes the names of `CONTROL`, data and WAL files durable (user decision 2026-10-02).
   - **`CONTROL`** has two 4 KiB slots, written alternately in place with `write_at` and then `sync_data`. Each slot holds:
     - a sequence number, magic, format version, page size, database UUID and active generation `<g>`;
-    - a clean-shutdown flag and the checkpoint redo point;
+    - a clean-shutdown flag ([TS-11](transactions-and-recovery.md#ts-11-checkpoint)) and the checkpoint redo point;
     - the counters: highest commit timestamp, next element identifier, next catalog object identifier, next token identifier;
     - a CRC-32C.
 
@@ -74,10 +74,18 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
       - the root and the right-most page of each level are never freed, so the height of a tree never decreases.
     - `data-<g>` grows in extents of 64 MiB, or 1 % of the file if that is larger. Each extent is reserved with `fallocate` before use; this extension is the only one.
     - Recovery ([TS-13](transactions-and-recovery.md#ts-13-recovery)) and restore ([TS-26](operations.md#ts-26-backup-restore-import-and-export)) extend the file the same way, before they write a page beyond its end. ENOSPC there fails the open or the restore; no database is open, so no reads are lost.
-    - Before taking the commit latch, a committing transaction makes sure the reserve of unused pages covers its bound: 2 × (⌈write-set bytes / 4 KiB⌉ + trees written) + the sum of the heights of the trees written. Each leaf split creates at most one page per level, and splits leave pages at least half full.
-    - If a reservation hits ENOSPC, that transaction fails and reads continue (FR-REC-007).
+    - Before taking the commit latch, a committing transaction makes sure the reserve of unused pages covers its **estimate** ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol) step 2):
+
+      E = 2 × (⌈B / 4 KiB⌉ + T) + Σ<sub>t</sub> h<sub>t</sub> + Σ<sub>t ∈ D</sub> (h<sub>t</sub> + 1) + ⌈d / 1 019⌉
+
+      - B: the batch's key and value bytes; T: the trees it writes; h<sub>t</sub>: the height of tree t; D: the trees it deletes from; d: its deletes.
+      - 2 × (⌈B / 4 KiB⌉ + T) + Σ h<sub>t</sub>: splits leave pages about half full, and a split creates at most one page per level.
+      - Σ<sub>t ∈ D</sub> (h<sub>t</sub> + 1): one split caused by deletes per tree ([TS-06](#ts-06-graph-layout)); a split creates at most one page per level, and two at the root.
+      - ⌈d / 1 019⌉: new free-list trunk pages, counting one freed page per delete. A trunk holds 1 019 page numbers (8 KiB less a 40-byte header, 8 bytes each). A freed page never becomes a trunk, because a reader may still hold it.
+    - E is not a bound. One put or delete can split a full leaf and every level above it, and the overflow chains a batch frees are known only when it reads the old entries. When the reserve runs out during apply, the committer extends the file again under the commit latch; ENOSPC there is undone ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol) step 6).
+    - If an extension hits ENOSPC, that transaction fails and reads continue (FR-REC-007).
     - Checkpoints and eviction write only into reserved space.
-  - **Create** fails, leaving everything unchanged, if `CONTROL` already exists (FR-DB-003). Otherwise it creates and locks `LOCK`, creates `data-1` with `sync_data`, and calls `sync_dir`; it then writes `CONTROL` last and calls `sync_dir` again. The first `sync_dir` ensures `CONTROL` can never be durable while `data-1` is not. Create writes no WAL segment; the WAL writer creates the first one ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). A location is a database exactly when `CONTROL` exists.
+  - **Create** fails, leaving everything unchanged, if `CONTROL` already exists (FR-DB-003). Otherwise it creates and locks `LOCK`, creates `data-1` with `sync_data`, and calls `sync_dir`; it then writes `CONTROL` last, with redo point 0 ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)) and the clean-shutdown flag set, and calls `sync_dir` again. The first `sync_dir` ensures `CONTROL` can never be durable while `data-1` is not. Create writes no WAL segment; the WAL writer creates the first one ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). A location is a database exactly when `CONTROL` exists.
 - **Satisfies**: FR-STO-001, FR-STO-003, FR-DB-003, FR-DB-004, FR-REC-003, FR-REC-007, FR-REC-008, FR-OPS-004, FR-OPS-011, FR-TYPE-003.
 - **Evidence**:
   - Default page sizes: PostgreSQL 8 KiB; Neo4j `PAGE_SIZE = 8192` (R-NEO `community/io/.../pagecache/PageCache.java:51`); InnoDB 16 KiB; SQLite and Kuzu 4 KiB (R-KUZU `CMakeLists.txt:114`). M-LAYOUT ran on 8 KiB pages.
@@ -99,6 +107,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - One file per graph or per tree: more files to sync, rename and back up, for no requirement.
   - Tree roots or the free-list head in `CONTROL`: `CONTROL` is written only at checkpoints and is not logged, so a commit's change to them would not be atomic with the commit.
   - Moving roots (PostgreSQL metapage, LMDB, redb): the directory would change at every root split.
+  - Counting one split per delete in the estimate (the worst case): the reserve would grow by up to (height + 1) pages per delete and stay in the file, which never shrinks, while deletes rarely split and an overrun is handled at apply.
   - Merging or redistributing underfull pages (LMDB below 25 % fill, R-LMDB `mdb.c:1136-1139, 10335-10348`; SQLite at less than one third full, R-SQLITE `src/btree.c:9175-9179`): moving entries across page boundaries can make a concurrent scan miss or repeat them.
   - Keeping only a value prefix inline (SQLite): two places to read one value, for no requirement.
   - Keys in overflow pages (SQLite index trees): inner pages and high keys would then need overflow reads during descent.
@@ -116,6 +125,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - in the adjacency tree, the other entries store their key fields as deltas from the previous key, with integers as varints (M-LAYOUT layout B);
     - in every other tree, whose keys are byte strings, the other entries store the length of the prefix shared with the previous key, the length of the rest of the key, and the rest; both lengths are varints;
     - `created_ts` is omitted once the entry is visible to every snapshot ("frozen"), and `deleted_ts` is omitted while the entry is live.
+  - **A delete can split a leaf.** Removing an entry moves every later entry one position earlier, so each later restart point becomes a different entry, which then stores its full key instead of a suffix. The leaf can therefore grow; if it no longer fits, it splits as for a put.
   - **Stamp encoding.** The leaf format has no stamp fields until MVCC is built ([TS-14](transactions-and-recovery.md#ts-14-mvcc)); the stamp encoding is added with it. The tree directory and the free list ([TS-05](#ts-05-files-and-pages)) never carry stamps.
   - **Fill.** Bulk-built leaves are filled to 90 %. When the right-most leaf of any tree splits, the left page is left 90 % full. There is no per-tree setting.
   - **Concurrent readers** (Lehman and Yao's B-link tree):
@@ -144,6 +154,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - Kuzu's columnar CSR allows one write transaction at a time (R-KUZU `src/transaction/transaction_manager.cpp:35-38`).
     - Memgraph keeps adjacency in memory (R-MG `src/storage/v2/vertex.hpp`).
     - Shared-prefix keys with a restart point every 16 entries: LevelDB blocks (R-LEVELDB `table/block_builder.cc:5-22`; `block_restart_interval = 16`, `include/leveldb/options.h:106`).
+    - A delete that needs new pages: InnoDB reserves file space before a pessimistic delete "so that the node pointer updates will not fail because of lack of space" (R-INNO `btr/btr0cur.cc:4686-4697`, `btr_cur_pessimistic_delete`).
     - Right-most leaf split. PostgreSQL leaves the left page fillfactor full whenever the right-most leaf of any B-tree index splits, default 90 (R-PG `src/backend/access/nbtree/nbtsplitloc.c:95-100, 287-291`; `src/include/access/nbtree.h:201`). SQLite's `balance_quick` applies to every rowid table when a row is appended to the right-most leaf (R-SQLITE `src/btree.c:9217-9238`).
     - Concurrent readers. PostgreSQL implements Lehman and Yao's right links and high keys (R-PG `src/backend/access/nbtree/README:17-29`), holds one read latch at a time and couples latches only when moving right or up (`README:106-110`), and makes a scan follow the right link recorded when it read the page (`README:88-101`).
   - **Limits of M-LAYOUT** ("Limits of the method"):
@@ -178,15 +189,16 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 ## TS-08 Buffer pool and memory cap
 
 - **Decision**:
-  - **Frames.** Each frame is a `Box<[u8]>` of one page behind a `std::sync::RwLock` latch. The page table is sharded, and each frame has an atomic pin count and an atomic usage count.
-  - **Eviction.** A clock sweep. Before a dirty frame is written, its page LSN must be durable in the WAL. Frames are written only by eviction and by checkpoints, always into reserved space ([TS-05](#ts-05-files-and-pages)).
+  - **Cache slots.** Each cache slot is a `Box<[u8]>` of one page behind a `std::sync::RwLock` latch. The page table is sharded, and each cache slot has an atomic pin count and an atomic usage count.
+  - **Eviction.** A clock sweep. Before a dirty cache slot is written, its page LSN must be durable in the WAL. Cache slots are written only by eviction and by checkpoints, always into reserved space ([TS-05](#ts-05-files-and-pages)).
   - **I/O.** Positional `read_at` and `write_at` through the storage trait ([TS-03](interfaces.md#ts-03-storage-abstraction)), using the operating-system cache. No mmap and no direct I/O.
   - **Memory accountant.** One per database, an atomic byte budget equal to the memory cap. The cap is a required argument of create and open; there is no default (FR-LIM-003).
-    - Users that reserve from it: frames, operator state, commit batches ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)), private write sets with their before-image and write-key reservations, old versions, committed write-key sets, read sets, sort buffers, and algorithm projections.
-    - When a reservation fails, the pool evicts clean frames, then dirty frames whose WAL is durable. If the reservation still fails, the statement that asked fails (FR-LIM-001, FR-LIM-005, FR-LIM-007).
+    - Users that reserve from it: cache slots, operator state, commit batches and the page copies of a commit's apply step ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)), private write sets with their before-image and write-key reservations, old versions, committed write-key sets, read sets, sort buffers, and algorithm projections.
+    - When a reservation fails, the pool evicts clean cache slots, then dirty cache slots whose WAL is durable. If the reservation still fails, the statement that asked fails (FR-LIM-001, FR-LIM-005, FR-LIM-007).
+    - **Page copies** ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol) step 6): one page for each existing page the commit changes, held only while step 6 runs. Their number is not known in advance, so nothing is reserved up front: a refused reservation, for a copy or for a cache slot, fails that commit and undoes its changes.
     - The pool never shrinks below a minimum, provisionally 1 % of the cap, to be fixed by measurement.
     - **Outside the cap** (user decision 2026-10-02):
-      - WAL group page images ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)): one per page changed by the open group and by the group being written, so at most two per frame, about twice the pool size;
+      - WAL group page images ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)): one per page changed by the open group and by the group being written, so at most two per cache slot, about twice the pool size;
       - the in-memory free-page set ([TS-05](#ts-05-files-and-pages)): 8 bytes per free page.
     - **Worst case.** One database's memory can therefore reach about 3× the cap: the cap itself, plus page images of up to twice the pool, which is at most the cap. This is arithmetic, not a measurement (user decision 2026-10-02); the real peak is to be measured ([unverified points](quality-and-testing.md#unverified-points)).
     - Backup, restore and migration each copy through one fixed 1 MiB buffer, outside the cap. Its size does not depend on the data, and restore and migration run with no open database, so no accountant exists for them ([TS-26](operations.md#ts-26-backup-restore-import-and-export), [TS-28](operations.md#ts-28-format-versioning-and-migration)).
@@ -199,7 +211,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - PostgreSQL uses the operating-system cache by default; direct I/O is the developer option `debug_io_direct`, empty by default (R-PG `doc/src/sgml/config.sgml:12891-12906`).
   - Copy buffers of fixed size: LMDB's environment copy uses `MDB_WBUF` = 1 MiB (R-LMDB `libraries/liblmdb/mdb.c:11140`); PostgreSQL's base backup uses `SINK_BUFFER_LENGTH` = max(32 KiB, page size) (R-PG `src/backend/backup/basebackup.c:62`).
 - **Crates**: none provides a buffer pool usable under `#![forbid(unsafe_code)]`. `parking_lot` is not used; whether `std` latches are fast enough is to be measured (unverified).
-- **Known consequence**: pages cached by the pool are also in the operating-system cache, outside the cap. If the NFR-PERF-005 measurements show this double caching costs a target, direct I/O with page-aligned frames (`#[repr(align(4096))]`, which needs no `unsafe`) is the measured alternative.
+- **Known consequence**: pages cached by the pool are also in the operating-system cache, outside the cap. If the NFR-PERF-005 measurements show this double caching costs a target, direct I/O with page-aligned cache slots (`#[repr(align(4096))]`, which needs no `unsafe`) is the measured alternative.
 - **Rejected**:
   - mmap: needs `unsafe`, and the crate could not cap the operating-system cache.
   - A fixed split between cache and execution memory: FR-LIM-003 sets one cap for both.

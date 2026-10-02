@@ -47,9 +47,10 @@ Start with [architecture.md](architecture.md).
 
 Functional terms are in the [functional glossary](../functional-spec/glossary.md). Technical terms used here:
 
-- **Frame**: a buffer-pool slot that holds one page in memory.
+- **Cache slot**: a buffer-pool slot that holds one page in memory ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
+- **Frame**: a fixed-size WAL record holding one page image or a group's commit record ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **Group**: the unit of durability in the WAL: page images of one or more commits plus one commit frame ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
-- **LSN**: log sequence number, the byte position of a record in the WAL.
+- **LSN**: log sequence number, a byte position in the WAL's stream of frames ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **NO-STEAL**: the rule that a change reaches disk only after its commit is durable, and is visible only after its commit is published ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **Redo point**: the LSN from which recovery replays the WAL ([TS-11](transactions-and-recovery.md#ts-11-checkpoint)).
 - **Stamp**: the `created_ts` and `deleted_ts` commit timestamps carried by an entry ([TS-06](storage.md#ts-06-graph-layout)).
@@ -65,7 +66,7 @@ Checked between 2026-09-24 and 2026-10-02.
 | R-NEO | Neo4j community, <https://github.com/neo4j/neo4j> | `54a7dcf` (2026-09-14) | GPLv3 |
 | R-MG | Memgraph, <https://github.com/memgraph/memgraph> | `33813d7` (2026-09-24) | BSL-1.1 |
 | R-PG | PostgreSQL, <https://github.com/postgres/postgres> | `8982935` (2026-09-24) | PostgreSQL |
-| R-INNO | MySQL InnoDB (`storage/innobase`), <https://github.com/mysql/mysql-server> | `a1ef44f` (2026-09-24) | GPLv2 |
+| R-INNO | MySQL InnoDB (`storage/innobase`), <https://github.com/mysql/mysql-server> | `3b99be40` (2026-09-28) | GPLv2 |
 | R-KUZU | Kuzu (archived 2025-10-10), <https://github.com/kuzudb/kuzu> | `89f0263` (2025-10-10) | MIT |
 | R-SQLITE | SQLite, <https://github.com/sqlite/sqlite> | `c62a443` (2026-09-24) | public domain |
 | R-DUCK | DuckDB, <https://github.com/duckdb/duckdb> | `0b9cba2` (2026-09-24) | MIT |
