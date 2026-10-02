@@ -123,3 +123,89 @@ Reads reach the device: per run, `nvme0n1` completed 282308 to 283623 reads for 
     inferno-flamegraph raw/perf-fdatasync-<fs>.folded > raw/flamegraph-fdatasync-<fs>.svg
 
 All test files were removed from both lab directories after the runs.
+
+## #9
+
+Crate `lpg` created: `Cargo.toml` (edition 2024, `rust-version = "1.89"`, licence MIT, `exclude = ["docs/evidence/"]`, profile `lab` = `release` + `debug = true`), `deny.toml`, `src/lib.rs` (`#![forbid(unsafe_code)]`, Linux-only statement; modules `storage`, `tx`, `ops`, `obs`). Build and lint outputs: raw/t9-t10-t11-quality-gate.txt.
+
+Dependencies, checked with `cargo search` and `cargo info` on 2026-10-02: the latest releases are the versions TS-31 names, so no version differs. Runtime: `rustix` 1.1.5 (feature `fs`), `crc32c` 0.6.8, `rand` 0.10.3 (default features). Dev: `tempfile` 3.27.0.
+
+| Check | Result |
+|---|---|
+| `cargo +1.89 build`, `cargo +stable build` | exit 0 and exit 0 |
+| `cargo deny check licenses` | `licenses ok`, exit 0 (cargo-deny gathered 21 crates, dev-dependencies included) |
+| `cargo tree -e normal --depth 1` | `crc32c`, `rand`, `rustix` (raw/t9-cargo-tree.txt) |
+| Unique crates in `cargo tree -e normal` | 11 besides `lpg`: bitflags, cfg-if, chacha20, cpufeatures, crc32c, getrandom, libc, linux-raw-sys, rand, rand_core, rustix |
+| Clean build, `cargo clean; cargo build --profile lab --timings`, 3 runs | 1.74 s [1.74, 1.75] wall time (cargo `Finished` line), 22 units (raw/t9-clean-build-timings.txt, raw/t9-cargo-timing-lab.html) |
+
+`deny.toml` allows `Apache-2.0`, `Apache-2.0 WITH LLVM-exception` and `MIT`: the licences of the resolved tree that are on the NFR-DEP-002 list. It has no `clarify` and no exceptions. `r-efi` (`MIT OR Apache-2.0 OR LGPL-2.1-or-later`, a target-specific dependency of `getrandom`) passes through its MIT alternative. TS-31 records the same allow-list as NFR-DEP-002.
+
+**Unverified point 11** (cargo-deny 0.20.2; raw/t9-point11-cargo-deny.txt):
+
+- `crc32c` 0.6.8 (`Apache-2.0/MIT`): cargo-deny reads it as two alternatives, Apache-2.0 and MIT. `cargo deny check licenses` on `lpg` passes with the allow-list only.
+- `csv` 1.4.0 (`Unlicense/MIT`): checked in a throwaway manifest outside the repository that depends only on `csv = "=1.4.0"`, with the full NFR-DEP-002 list and nothing else. cargo-deny reads `csv`, `csv-core` and `memchr` as Unlicense or MIT, and `ryu` as Apache-2.0 or BSL-1.0. The check passes, exit 0.
+
+Both pass without configuration beyond the allow-list; no entry was added. Point 11 is resolved.
+
+## #10
+
+`src/storage/mod.rs` defines the dyn-compatible traits `Storage`, `StorageFile` and `StorageLock` (TS-03). `src/storage/fs.rs` holds `FsStorage`; `src/storage/fault.rs` (`#[cfg(test)]`) holds `FaultStorage`, which wraps any `Box<dyn Storage>`. `File::try_lock` compiles and returns `WouldBlock` for a second descriptor on Rust 1.89.0 without a feature gate (probe built with `rustc +1.89`).
+
+Tests: `cargo nextest run -p lpg storage::fs storage::fault` with `LPG_LAB_EXT4` and `LPG_LAB_XFS` set: 13 passed; each fault test runs in both directories (raw/t10-t11-nextest.txt). `same_contract_through_both_impls` drives `FsStorage` and `FaultStorage` as `Box<dyn Storage>`. Fault modes covered: dropped, partly kept (seeded) and torn (512-byte sectors) unsynced writes; unsynced create, rename and remove lost in a crash; a failed `sync_data`; a failed `write_at`; ENOSPC from `write_at`, `reserve` and `create` with `available_space` reporting the budget; the call log in order. Three mutations of `fault.rs` (no namespace undo; no tearing; operations dropped at `sync_data`) each made at least one test fail; the original then passed again.
+
+`grep -rnE 'std::fs|OpenOptions|File::(open|create)' src --include=*.rs` matches only `src/storage/fs.rs` (7 lines).
+
+**System calls.** `strace -c -f` of `storage::fs::tests::lab_fixed_syscall_run` (profile `lab`, `LPG_TEST_DIR=/data/tmp/lpg-lab`): 10 `fallocate`, 10 000 `pwrite64`, 100 `fdatasync` and 10 002 `pread64` (raw/t10-strace-c-fixed-run.txt). The two extra `pread64` calls are the dynamic loader reading the program headers of `libc.so.6` at process start; exactly 10 000 `pread64` calls read 8 192 bytes (raw/t10-strace-pread64-origin.txt). Each `read_at`, `write_at`, `sync_data` and `reserve` therefore costs one system call.
+
+**Cached 8 KiB `read_at`.** `perf stat -r 3 -e cycles,instructions,cycles:u,instructions:u` of `storage::fs::tests::lab_cached_read_at`, 10^6 reads at random offsets of a 64 MiB file resident in the OS cache, in `/data/tmp/lpg-lab`. Per read = (run − setup-only run of the same round) / 10^6; three interleaved rounds, median [min, max] (raw/t10-perf-stat-read-at.txt):
+
+| Path | cycles | instructions | user cycles | user instructions |
+|---|---|---|---|---|
+| `Box<dyn StorageFile>::read_at` (`FsStorage`) | 6 117 [6 064, 6 162] | 2 560 [2 559, 2 561] | 219 [216, 220] | 136 [136, 136] |
+| `FileExt::read_at` on a `File` | 6 043 [5 946, 6 065] | 2 516 [2 515, 2 516] | 157 [157, 159] | 92 [92, 92] |
+
+The trait path adds 44 user-space instructions and about 60 user cycles per read: the dynamic call and the short-read loop of `FsFile::read_at`. Total cycles differ by 1.2 %, within the per-run variance perf reported (up to 1.48 %), so no total-cycle difference is established. Kernel cycles (copying 8 KiB from the page cache) are 96–97 % of the cycles of either path.
+
+## #11
+
+`src/obs/mod.rs` defines `MetricsSink` (`Send + Sync`, dyn-compatible; `counter`, `gauge` and `histogram` with `&'static str` names and `u64` values) and the name constants in `obs::names`, one module per FR-OBS-001 category the kernel produces: `transactions`, `transaction_log`, `checkpointing`, `cache`, `store_size`. The names reuse Neo4j's metric names (Neo4j Operations Manual, "Metrics reference", read on 2026-10-02); kind and unit are stated on each constant. `src/obs/recording.rs` (`#[cfg(test)]`) holds `RecordingSink` and the `Metrics` snapshot with `since` (difference). `cargo nextest run -p lpg obs::`: 4 passed; `every_call_kind_through_dyn_sink` drives all three calls through `&dyn MetricsSink`.
+
+`src/lab/` (`#[cfg(test)]`): harness (`mod.rs`), generators derived from M-LAYOUT `generator.rs` (`generator.rs`: Zipf α = 0.8 and uniform samplers over a seeded node permutation, adjacency keys `(u64, u8, u32, u64, u64)`, `memory_cap` for 100 %, 10 % and 1 % of the data pages, a parameter only until the pool exists), `lab::storage` and `lab::obs`. Each round is timed as one batch with one `Instant` pair; the clock source is still `hpet` (`/sys/devices/system/clocksource/clocksource0/current_clocksource`). `/proc` reads, table writes and `fadvise` use `rustix` directly, because they are not database files.
+
+**lab::storage** ran 17:50:47–17:51:53 inside one session, between two sets of the task #7 fio jobs (30 s each, before 17:48:46–17:50:47 and after 17:51:53–17:53:55; script raw/t11-session.sh, log raw/t11-session-log.txt, fio JSON raw/t11-fio-*.json). Tables: raw/lab-storage-ext4.md, raw/lab-storage-xfs.md. Data file 1 GiB, 3 rounds; ns/op median [min, max]. The fio column gives the mean time per operation, 10^9 / IOPS, before and after.
+
+| Directory | Workload | lab::storage ns/op | KiB read/op | fio ns/op (before, after) | Ratio lab / fio |
+|---|---|---|---|---|---|
+| ext4 | `read_at` warm (OS cache) | 1 411 [1 286, 1 423] | 0.00 | none (fio read with `direct=1`) | — |
+| ext4 | `read_at` cold (evicted, distinct pages) | 95 298 [94 713, 95 432] | 8.11 | 73 888, 79 343 | 1.20–1.29 |
+| ext4 | `write_at` + `sync_data` | 5 733 534 [4 306 828, 6 694 410] | 0.00 (8.00 written) | 6 856 490, 5 649 219 | 0.84–1.01 |
+| XFS | `read_at` warm (OS cache) | 1 253 [1 248, 1 294] | 0.00 | none | — |
+| XFS | `read_at` cold | 106 823 [106 770, 106 830] | 8.14 | 110 540, 111 571 | 0.96–0.97 |
+| XFS | `write_at` + `sync_data` | 10 615 366 [9 794 341, 13 217 804] | 0.00 (8.00 written) | 13 628 520, 13 643 929 | 0.78 |
+
+VmRSS at the end of the runs: 5 884 KiB (ext4) and 6 460 KiB (XFS); VmHWM 5 884 and 6 460 KiB. `FsStorage` emits no metrics, so the sink difference column is empty (`-`).
+
+- **Cold reads.** `read_bytes` per operation is 8.11 KiB (ext4) and 8.14 KiB (XFS), against 8 KiB expected: `POSIX_FADV_DONTNEED` evicted the file and each read missed. The extra 0.11–0.14 KiB per read is not attributed. On ext4 a buffered cold read takes 1.20–1.29× fio's `O_DIRECT` read; on XFS it takes 0.96–0.97×. lab::storage reads through the OS cache and fio did not, so these ratios compare two different paths; the cause of the ext4 gap is not established.
+- **Write + `sync_data`.** On ext4 the lab range [4.31, 6.69] ms overlaps fio's before/after values [5.65, 6.86] ms, which differ by 21 % within 3 minutes: no difference from the ceiling is established (Limitation 2 of task #7). On XFS lab::storage took 0.78× fio's time per operation in every round, while fio was stable (13.63 and 13.64 ms). The cause is not established; one known difference is that lab::storage syncs its reserved file and directory before timing, and fio does not.
+- **Warm reads** have no device ceiling; 1.25–1.41 µs per 8 KiB read is the system call and page-cache copy cost (see #10).
+
+**`counter` on `RecordingSink`.** `perf stat -r 3 -e task-clock,cycles,instructions` of `lab::obs::counter_calls`, 10^7 calls through `&dyn MetricsSink` minus a run with 0 calls, three interleaved rounds (raw/t11-perf-stat-counter.txt): 7.75 ns [7.73, 7.77], 34.3 cycles [34.33, 34.35] and 136.1 instructions [136.09, 136.10] per call, single-threaded and uncontended (one mutex lock and one map update per call).
+
+**Limitations of #9–#11.**
+
+1. CPU governor `powersave` (EPP `balance_performance`), frequency not pinned, as in task #7.
+2. The task #7 limitation on `fdatasync` variance applies: the ext4 fio write job changed by 21 % between the two sets of one session.
+3. The `perf stat` files of #10 were written under the user's locale, which uses a comma as decimal separator; the counter values are integers and are unaffected, but the variance column reads `0,29%` as two fields. The #11 file was written with `LC_ALL=C`.
+4. Each figure comes from one session with 3 rounds; longer-term variation was not measured.
+
+Reproduction:
+
+    cargo test -p lpg --profile lab --lib --no-run     # prints the test binary, below BIN
+    LPG_TEST_DIR=/data/tmp/lpg-lab strace -c -f -o raw/t10-strace-c-fixed-run.txt \
+        BIN --exact storage::fs::tests::lab_fixed_syscall_run --ignored --test-threads=1
+    LPG_TEST_DIR=/data/tmp/lpg-lab LPG_PERF_MODE=<setup|dyn|direct> LPG_PERF_N=1000000 \
+        perf stat -r 3 -x, -e cycles,instructions,cycles:u,instructions:u \
+        BIN --exact storage::fs::tests::lab_cached_read_at --ignored --test-threads=1
+    raw/t11-session.sh                                 # fio, lab::storage, fio
+    LC_ALL=C LPG_PERF_N=<0|10000000> perf stat -r 3 -x, -e task-clock,cycles,instructions \
+        BIN --exact lab::obs::counter_calls --ignored --test-threads=1

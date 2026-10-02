@@ -1,0 +1,18 @@
+## run 1: cargo clean; cargo build --profile lab --timings
+      Timing report saved to /data/dev/xumiga/lpg/target/cargo-timings/cargo-timing-20261002T164541657Z-8e55fceaee5d1fee.html
+    Finished `lab` profile [optimized + debuginfo] target(s) in 1.75s
+Total units:</td><td>22</td>
+<td>Total time:</td><td>1.8s</td>
+## run 2: cargo clean; cargo build --profile lab --timings
+      Timing report saved to /data/dev/xumiga/lpg/target/cargo-timings/cargo-timing-20261002T164543454Z-8e55fceaee5d1fee.html
+    Finished `lab` profile [optimized + debuginfo] target(s) in 1.74s
+Total units:</td><td>22</td>
+<td>Total time:</td><td>1.7s</td>
+## run 3: cargo clean; cargo build --profile lab --timings
+      Timing report saved to /data/dev/xumiga/lpg/target/cargo-timings/cargo-timing-20261002T164545245Z-8e55fceaee5d1fee.html
+    Finished `lab` profile [optimized + debuginfo] target(s) in 1.74s
+Total units:</td><td>22</td>
+<td>Total time:</td><td>1.8s</td>
+
+rustc 1.99.0 (b940084d7 2026-09-28)
+cargo 1.99.0 (5f94df478 2026-08-27)

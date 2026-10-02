@@ -1,0 +1,15 @@
+# LPG_TEST_DIR=/data/tmp/lpg-lab strace -f -e trace=pread64,openat -o <file> target/lab/deps/lpg-ae66f89beb44ac48 --exact storage::fs::tests::lab_fixed_syscall_run --ignored --test-threads=1
+# Calls other than the 8 KiB data-file reads (the 8 KiB pread64 lines are counted, not listed):
+46938 openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+46938 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+46938 pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+46938 pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+46938 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+46938 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3
+46938 openat(AT_FDCWD, "/proc/self/maps", O_RDONLY|O_CLOEXEC) = 3
+46938 openat(AT_FDCWD, "/usr/share/terminfo/t/tmux-256color", O_RDONLY|O_CLOEXEC) = 3
+46939 openat(AT_FDCWD, "/data/tmp/lpg-lab/.tmpzWPbLY/data", O_RDWR|O_CREAT|O_EXCL|O_CLOEXEC, 0666) = 3
+46939 openat(AT_FDCWD, "/data/tmp/lpg-lab/.tmpzWPbLY", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_DIRECTORY) = 3
+46939 +++ exited with 0 +++
+46938 +++ exited with 0 +++
+# pread64 calls of 8192 bytes: 10000

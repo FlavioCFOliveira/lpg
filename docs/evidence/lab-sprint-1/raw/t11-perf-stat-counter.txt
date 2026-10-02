@@ -1,0 +1,29 @@
+# LC_ALL=C perf stat -r 3 -x, -e task-clock,cycles,instructions target/lab/deps/lpg-ae66f89beb44ac48 --exact lab::obs::counter_calls --ignored --test-threads=1, LPG_PERF_N in {0, 10000000}, 3 interleaved rounds, profile lab, rustc 1.99.0, 2026-10-02T17:54:17+01:00
+## round 1 N 0
+1.03,msec,task-clock,5.84%,1033876,100.00,0.659,CPUs utilized
+3377041,,cycles,1.10%,1033876,100.00,3.271,GHz
+2639501,,instructions,0.03%,1033876,100.00,0.78,insn per cycle
+## round 1 N 10000000
+78.34,msec,task-clock,0.16%,78487561,100.00,0.993,CPUs utilized
+346844916,,cycles,0.03%,78487561,100.00,4.428,GHz
+1363569244,,instructions,0.00%,78487561,100.00,3.93,insn per cycle
+## round 2 N 0
+0.91,msec,task-clock,5.72%,910399,100.00,0.679,CPUs utilized
+3399557,,cycles,1.68%,910399,100.00,3.748,GHz
+2652045,,instructions,0.56%,910399,100.00,0.78,insn per cycle
+## round 2 N 10000000
+78.41,msec,task-clock,0.37%,78325541,100.00,0.992,CPUs utilized
+346831415,,cycles,0.02%,78325541,100.00,4.423,GHz
+1363579796,,instructions,0.00%,78325541,100.00,3.93,insn per cycle
+## round 3 N 0
+0.93,msec,task-clock,0.82%,922951,100.00,0.666,CPUs utilized
+3405085,,cycles,1.91%,922951,100.00,3.650,GHz
+2638890,,instructions,0.62%,922951,100.00,0.77,insn per cycle
+## round 3 N 10000000
+78.62,msec,task-clock,0.35%,78085015,100.00,0.991,CPUs utilized
+346681771,,cycles,0.04%,78085015,100.00,4.410,GHz
+1363592616,,instructions,0.00%,78085015,100.00,3.93,insn per cycle
+# Derived per counter call: (N=1e7 - N=0 of the same round) / 1e7; median [min, max] over 3 rounds
+task-clock ns 7.75 [7.73, 7.77]
+cycles  34.34 [34.33, 34.35]
+instructions  136.09 [136.09, 136.10]

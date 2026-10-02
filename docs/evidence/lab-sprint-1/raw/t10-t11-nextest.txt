@@ -1,0 +1,42 @@
+$ LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg
+   Compiling tempfile v3.27.0
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.05s
+────────────
+ Nextest run ID 117acf76-0914-4963-9726-5b04aecbab69 with nextest profile: default
+    Starting 23 tests across 1 binary (4 tests skipped)
+        PASS [   0.005s] ( 1/23) lpg lab::generator::tests::memory_cap_for_cache_shares
+        PASS [   0.005s] ( 2/23) lpg lab::tests::median_range_of_three
+        PASS [   0.005s] ( 3/23) lpg obs::tests::names_are_unique
+        PASS [   0.005s] ( 4/23) lpg obs::recording::tests::difference_and_display
+        PASS [   0.009s] ( 5/23) lpg lab::generator::tests::samplers_are_deterministic_and_in_range
+        PASS [   0.005s] ( 6/23) lpg storage::fs::tests::create_and_open_errors
+        PASS [   0.011s] ( 7/23) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+        PASS [   0.013s] ( 8/23) lpg lab::tests::text_round_trip
+        PASS [   0.004s] ( 9/23) lpg storage::fs::tests::try_lock_is_exclusive_within_the_process
+        PASS [   0.018s] (10/23) lpg obs::tests::every_call_kind_through_dyn_sink
+        PASS [   0.018s] (11/23) lpg lab::tests::probe_reads_proc
+        PASS [   0.014s] (12/23) lpg storage::fs::tests::file_round_trip
+        PASS [   0.023s] (13/23) lpg storage::fault::tests::space_budget_returns_enospc
+        PASS [   0.020s] (14/23) lpg storage::fs::tests::namespace_operations
+        PASS [   0.036s] (15/23) lpg storage::fault::tests::crash_drops_unsynced_writes
+        PASS [   0.037s] (16/23) lpg storage::fault::tests::crash_tears_writes_at_sector_boundaries
+        PASS [   0.037s] (17/23) lpg storage::fault::tests::failed_write_is_not_applied
+        PASS [   0.028s] (18/23) lpg storage::fault::tests::failed_sync_data_leaves_writes_unsynced
+        PASS [   0.048s] (19/23) lpg storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes
+        PASS [   0.051s] (20/23) lpg storage::fault::tests::calls_are_logged_in_order
+        PASS [   0.057s] (21/23) lpg storage::fault::tests::same_contract_through_both_impls
+        PASS [   0.065s] (22/23) lpg storage::fault::tests::crash_loses_unsynced_rename_create_and_remove
+        PASS [   0.087s] (23/23) lpg lab::generator::tests::zipf_is_skewed_and_uniform_is_not
+────────────
+     Summary [   0.088s] 23 tests run: 23 passed, 4 skipped
+
+$ cargo nextest run -p lpg storage::fs storage::fault
+    Starting 13 tests across 1 binary (14 tests skipped)
+     Summary [   0.068s] 13 tests run: 13 passed, 14 skipped
+$ cargo nextest run -p lpg obs::
+    Starting 4 tests across 1 binary (23 tests skipped)
+        PASS [   0.004s] (1/4) lpg obs::tests::names_are_unique
+        PASS [   0.004s] (2/4) lpg obs::tests::every_call_kind_through_dyn_sink
+        PASS [   0.004s] (3/4) lpg obs::recording::tests::difference_and_display
+        PASS [   0.008s] (4/4) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+     Summary [   0.009s] 4 tests run: 4 passed, 23 skipped

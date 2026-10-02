@@ -1,0 +1,19 @@
+[package]
+name = "lpg"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+license = "MIT"
+exclude = ["docs/evidence/"]
+
+[dependencies]
+rustix = { version = "1.1.5", features = ["fs"] }
+crc32c = "0.6.8"
+rand = "0.10.3"
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[profile.lab]
+inherits = "release"
+debug = true

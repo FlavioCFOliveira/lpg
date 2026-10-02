@@ -1,0 +1,103 @@
+$ cargo deny --version
+cargo-deny 0.20.2
+
+## lpg (deny.toml of the repository)
+$ cargo deny list -l crate
+bitflags@2.13.2 (2): MIT, Apache-2.0
+cfg-if@1.0.5 (2): MIT, Apache-2.0
+chacha20@0.10.2 (2): MIT, Apache-2.0
+cpufeatures@0.3.1 (2): MIT, Apache-2.0
+crc32c@0.6.8 (2): Apache-2.0, MIT
+errno@0.3.14 (2): MIT, Apache-2.0
+getrandom@0.4.3 (2): MIT, Apache-2.0
+libc@0.2.189 (2): MIT, Apache-2.0
+linux-raw-sys@0.12.1 (3): Apache-2.0 WITH LLVM-exception, Apache-2.0, MIT
+lpg@0.1.0 (1): MIT
+r-efi@6.0.0 (3): MIT, Apache-2.0, LGPL-2.1-or-later
+rand@0.10.3 (2): MIT, Apache-2.0
+rand_core@0.10.1 (2): MIT, Apache-2.0
+rustc_version@0.4.1 (2): MIT, Apache-2.0
+rustix@1.1.5 (3): Apache-2.0 WITH LLVM-exception, Apache-2.0, MIT
+semver@1.0.28 (2): MIT, Apache-2.0
+windows-link@0.2.1 (2): MIT, Apache-2.0
+windows-sys@0.61.2 (2): MIT, Apache-2.0
+$ cargo deny check licenses
+licenses ok
+exit status 0
+
+## throwaway manifest depending only on csv =1.4.0 (outside the repository)
+[package]
+name = "csvdeny"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+[workspace]
+
+[dependencies]
+csv = "=1.4.0"
+--- deny.toml
+# Throwaway check for unverified point 11: the full NFR-DEP-002 list, no
+# clarify, no exceptions.
+[licenses]
+allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+$ cargo deny list -l crate
+csv@1.4.0 (2): Unlicense, MIT
+csv-core@0.1.13 (2): Unlicense, MIT
+csvdeny@0.0.0 (1): MIT
+itoa@1.0.18 (2): MIT, Apache-2.0
+memchr@2.8.3 (2): Unlicense, MIT
+ryu@1.0.23 (2): Apache-2.0, BSL-1.0
+serde_core@1.0.229 (2): MIT, Apache-2.0
+$ cargo deny check licenses
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:113
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                                                                                                 ━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:32
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:66
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                                                  ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:82
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                                                                  ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:132
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                                                                                                                    ━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:98
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                                                                                  ━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:143
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                                                                                                                               ━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /tmp/claude-1000/-data-dev-xumiga-lpg/ab164237-e9c2-4152-8303-e6757def694c/scratchpad/csvdeny/deny.toml:4:105
+  │
+4 │ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "0BSD", "BSL-1.0", "CC0-1.0", "Unicode-3.0"]
+  │                                                                                                         ━━━━ unmatched license allowance
+
+licenses ok
+exit status 0

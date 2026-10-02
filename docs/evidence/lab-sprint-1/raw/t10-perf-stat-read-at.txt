@@ -1,0 +1,75 @@
+# perf stat of storage::fs::tests::lab_cached_read_at, LPG_PERF_N=1000000, LPG_TEST_DIR=/data/tmp/lpg-lab, binary target/lab/deps/lpg-ae66f89beb44ac48 (profile lab, rustc 1.99.0), 2026-10-02T17:46:43+01:00
+# Modes interleaved, 3 rounds; each perf stat run -r 3.
+## round 1 mode setup
+# started on Fri Oct  2 17:46:43 2026
+
+288518815,,cycles,0,29%,63571889,100,00,,
+291572782,,instructions,0,06%,63571889,100,00,1,insn per cycle
+22828858,,cycles:u,0,34%,63571889,100,00,,
+72727974,,instructions:u,0,00%,63571889,100,00,3,insn per cycle
+## round 1 mode dyn
+# started on Fri Oct  2 17:46:43 2026
+
+6405032818,,cycles,0,19%,1405540261,100,00,,
+2850443145,,instructions,0,02%,1405540261,100,00,0,insn per cycle
+241661037,,cycles:u,0,50%,1405540261,100,00,,
+208728042,,instructions:u,0,00%,1405540261,100,00,0,insn per cycle
+## round 1 mode direct
+# started on Fri Oct  2 17:46:47 2026
+
+6352976881,,cycles,0,64%,1373550271,100,00,,
+2806883635,,instructions,0,03%,1373550271,100,00,0,insn per cycle
+182253405,,cycles:u,0,12%,1373550271,100,00,,
+164728549,,instructions:u,0,00%,1373550271,100,00,0,insn per cycle
+## round 2 mode setup
+# started on Fri Oct  2 17:46:52 2026
+
+287170941,,cycles,0,14%,63923117,100,00,,
+291314435,,instructions,0,12%,63923117,100,00,1,insn per cycle
+22842593,,cycles:u,0,31%,63923117,100,00,,
+72727978,,instructions:u,0,00%,63923117,100,00,3,insn per cycle
+## round 2 mode dyn
+# started on Fri Oct  2 17:46:52 2026
+
+6449064301,,cycles,0,33%,1409099309,100,00,,
+2852565558,,instructions,0,04%,1409099309,100,00,0,insn per cycle
+242329732,,cycles:u,0,66%,1409099309,100,00,,
+208728349,,instructions:u,0,00%,1409099309,100,00,0,insn per cycle
+## round 2 mode direct
+# started on Fri Oct  2 17:46:56 2026
+
+6330446975,,cycles,0,30%,1391035038,100,00,,
+2807229629,,instructions,0,02%,1391035038,100,00,0,insn per cycle
+180150848,,cycles:u,0,17%,1391035038,100,00,,
+164728815,,instructions:u,0,00%,1391035038,100,00,0,insn per cycle
+## round 3 mode setup
+# started on Fri Oct  2 17:47:00 2026
+
+288121983,,cycles,0,08%,63898687,100,00,,
+291250826,,instructions,0,16%,63898687,100,00,1,insn per cycle
+22762679,,cycles:u,0,36%,63898687,100,00,,
+72727809,,instructions:u,0,00%,63898687,100,00,3,insn per cycle
+## round 3 mode dyn
+# started on Fri Oct  2 17:47:00 2026
+
+6352262925,,cycles,0,57%,1374993032,100,00,,
+2851348481,,instructions,0,02%,1374993032,100,00,0,insn per cycle
+239051843,,cycles:u,0,12%,1374993032,100,00,,
+208727726,,instructions:u,0,00%,1374993032,100,00,0,insn per cycle
+## round 3 mode direct
+# started on Fri Oct  2 17:47:05 2026
+
+6234435270,,cycles,1,48%,1355846493,100,00,,
+2806916753,,instructions,0,01%,1355846493,100,00,0,insn per cycle
+179773274,,cycles:u,0,50%,1355846493,100,00,,
+164728527,,instructions:u,0,00%,1355846493,100,00,0,insn per cycle
+
+# Derived: per read_at = (mode - setup of the same round) / 1e6; median [min, max] over 3 rounds
+dyn    cycles            6116.5 [6064.1, 6161.9]
+direct cycles            6043.3 [5946.3, 6064.5]
+dyn    instructions      2560.1 [2558.9, 2561.3]
+direct instructions      2515.7 [2515.3, 2515.9]
+dyn    cycles:u           218.8 [216.3, 219.5]
+direct cycles:u           157.3 [157.0, 159.4]
+dyn    instructions:u     136.0 [136.0, 136.0]
+direct instructions:u      92.0 [92.0, 92.0]
