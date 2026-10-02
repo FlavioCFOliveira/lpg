@@ -1,0 +1,16 @@
+$ perf stat -e cycles,instructions,cache-misses,branch-misses -- true
+
+ Performance counter stats for 'true':
+
+           1074774      cycles                                                                
+            809667      instructions                     #    0,75  insn per cycle            
+             20504      cache-misses                                                          
+             19681      branch-misses                                                         
+
+       0,000947614 seconds time elapsed
+
+       0,000974000 seconds user
+       0,000000000 seconds sys
+
+
+[exit=0]

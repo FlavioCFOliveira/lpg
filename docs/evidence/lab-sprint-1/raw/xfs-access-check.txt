@@ -1,0 +1,15 @@
+$ stat -f -c %T /mnt/lpg-xfs
+xfs
+$ strace -e trace=openat,fdatasync dd if=/dev/zero of=/mnt/lpg-xfs/lab-check bs=4k count=1 conv=fdatasync
+openat(AT_FDCWD, "/dev/zero", O_RDONLY) = 3
+openat(AT_FDCWD, "/mnt/lpg-xfs/lab-check", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+fdatasync(1)                            = 0
+1+0 records in
+1+0 records out
+4096 bytes (4,1 kB, 4,0 KiB) copied, 0,00612066 s, 669 kB/s
++++ exited with 0 +++
+[exit=0]
+-rw-rw-r-- 1 flavio flavio 4096 out  2 17:22 /mnt/lpg-xfs/lab-check
+$ rm /mnt/lpg-xfs/lab-check
+[exit=0]
+ls: cannot access '/mnt/lpg-xfs/lab-check': No such file or directory
