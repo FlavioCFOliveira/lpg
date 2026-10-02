@@ -1,0 +1,16 @@
+Filename                      Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+storage/btree/mod.rs              446                73    83.63%          36                 7    80.56%         259                26    89.96%           0                 0         -
+storage/btree/node.rs            1747                69    96.05%         106                 2    98.11%         912                29    96.82%           0                 0         -
+storage/btree/write.rs           1055               147    86.07%          47                11    76.60%         470                20    95.74%           0                 0         -
+storage/check.rs                  578               105    81.83%          13                 0   100.00%         340                60    82.35%           0                 0         -
+storage/control.rs                463                11    97.62%          21                 1    95.24%         230                 1    99.57%           0                 0         -
+storage/datafile.rs               619                43    93.05%          29                 1    96.55%         325                15    95.38%           0                 0         -
+storage/engine.rs                 339                24    92.92%          22                 0   100.00%         212                11    94.81%           0                 0         -
+storage/error.rs                  102                33    67.65%           9                 1    88.89%          56                16    71.43%           0                 0         -
+storage/fault.rs                 1365                49    96.41%          56                 0   100.00%         569                 9    98.42%           0                 0         -
+storage/freelist.rs               319                20    93.73%          23                 1    95.65%         188                11    94.15%           0                 0         -
+storage/fs.rs                     421               146    65.32%          26                 5    80.77%         178                58    67.42%           0                 0         -
+storage/memory.rs                 142                 1    99.30%          15                 0   100.00%          81                 0   100.00%           0                 0         -
+storage/page.rs                   148                 0   100.00%          17                 0   100.00%          81                 0   100.00%           0                 0         -
+storage/pool.rs                   686                54    92.13%          41                 7    82.93%         412                31    92.48%           0                 0         -
+TOTAL                           11060              2720    75.41%         624               139    77.72%        5716              1329    76.75%           0                 0         -

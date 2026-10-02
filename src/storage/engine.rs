@@ -13,9 +13,11 @@ use std::path::Path;
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, Mutex};
 
+use super::btree::{Store, Trees};
 use super::control::{Control, ControlSlots};
-use super::datafile::Datafile;
+use super::datafile::{Datafile, Header};
 use super::error::{Error, Health, Result};
+use super::freelist::FreeList;
 use super::memory::MemoryAccountant;
 use super::page::PAGE_SIZE;
 use super::pool::{DEFAULT_FLOOR_PERMILLE, Pool, Sizing};
@@ -70,6 +72,7 @@ pub(crate) struct Engine {
     control: Mutex<ControlSlots>,
     pool: Pool,
     data: Arc<Datafile>,
+    trees: Trees,
     /// Declared last, so it is released after every file is closed.
     _lock: Box<dyn StorageLock>,
 }
@@ -161,7 +164,13 @@ impl Engine {
         };
         let control = ControlSlots::create(s, &location.join(CONTROL), control, health.clone())?;
         s.sync_dir(location)?;
-        Engine::assemble(memory_cap, sink, health, control, data, lock)
+        let header = Header {
+            format_version: FORMAT_VERSION,
+            free_list_head: 0,
+            next_tree_id: 1,
+            page_count: 2,
+        };
+        Engine::assemble(memory_cap, sink, health, control, data, header, lock)
     }
 
     /// Opens the database at `location` (TS-13 steps 1–3, TS-28).
@@ -251,7 +260,7 @@ impl Engine {
         if removed {
             s.sync_dir(location)?;
         }
-        Engine::assemble(memory_cap, sink, health, control, data, lock)
+        Engine::assemble(memory_cap, sink, health, control, data, header, lock)
     }
 
     fn assemble(
@@ -260,6 +269,7 @@ impl Engine {
         health: Arc<Health>,
         control: ControlSlots,
         data: Datafile,
+        header: Header,
         lock: Box<dyn StorageLock>,
     ) -> Result<Engine> {
         let data = Arc::new(data);
@@ -275,6 +285,8 @@ impl Engine {
             sink,
             DEFAULT_FLOOR_PERMILLE,
         )?;
+        let free = FreeList::load(&pool, header.free_list_head, header.page_count)?;
+        let trees = Trees::new(&header, free);
         Ok(Engine {
             health,
             durable_lsn,
@@ -282,6 +294,7 @@ impl Engine {
             control: Mutex::new(control),
             pool,
             data,
+            trees,
             _lock: lock,
         })
     }
@@ -313,6 +326,16 @@ impl Engine {
     /// The durable LSN: every WAL record up to it is on stable storage.
     pub(crate) fn durable_lsn(&self) -> &AtomicU64 {
         &self.durable_lsn
+    }
+
+    /// The trees of the database.
+    pub(crate) fn store(&self) -> Store<'_> {
+        Store {
+            pool: &self.pool,
+            data: &self.data,
+            trees: &self.trees,
+            health: &self.health,
+        }
     }
 
     /// The `CONTROL` file.

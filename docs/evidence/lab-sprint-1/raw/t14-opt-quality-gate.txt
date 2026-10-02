@@ -1,0 +1,13 @@
+# t14 put optimisation: quality gates (2026-10-02)
+## cargo fmt --check
+ok
+## cargo clippy --all-targets -- -D warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+## cargo +1.89 build --all-targets
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.06s
+## cargo deny check licenses
+licenses ok
+## FR-STO-002 grep (files)
+src/storage/fs.rs
+## nextest summary (LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs)
+     Summary [  22.049s] 103 tests run: 103 passed, 14 skipped

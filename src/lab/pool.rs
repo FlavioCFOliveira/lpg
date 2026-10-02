@@ -78,7 +78,7 @@ fn database() -> PathBuf {
 }
 
 /// A memory cap whose pool holds `pages` page buffers.
-fn cap_for(pages: u64) -> u64 {
+pub(crate) fn cap_for(pages: u64) -> u64 {
     let mut cap = pages * PAGE_BYTES;
     for _ in 0..4 {
         let overhead = Sizing::new(cap, DEFAULT_FLOOR_PERMILLE)

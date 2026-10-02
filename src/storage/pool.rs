@@ -377,6 +377,93 @@ impl Pool {
         Ok(PinnedPage { pool: self, frame })
     }
 
+    /// Pins page `page_no`, newly allocated, without reading it: its frame
+    /// holds zeros and is dirty, and the caller initialises it. A page that
+    /// is never written has no valid image on disk (#13), and a free page
+    /// being reused has a stale one, so neither is read.
+    ///
+    /// # Errors
+    ///
+    /// As [`Pool::fetch`], except that no read can fail.
+    pub(crate) fn create(&self, page_no: u64) -> Result<PinnedPage<'_>> {
+        self.health.check()?;
+        if page_no >= self.data.reserved_pages() {
+            return Err(Error::InvalidArgument("page outside the data file"));
+        }
+        let shard = self.shard(page_no);
+        let mapped = self.pin_mapped(&read_map(shard), page_no);
+        let pinned = match mapped {
+            Some(frame) => PinnedPage { pool: self, frame },
+            None => {
+                let frame = self.take_frame()?;
+                let f = &self.frames[frame as usize];
+                let mut map = write_map(shard);
+                if let Some(other) = self.pin_mapped(&map, page_no) {
+                    drop(map);
+                    f.unpin();
+                    PinnedPage {
+                        pool: self,
+                        frame: other,
+                    }
+                } else {
+                    map.insert(page_no, frame);
+                    f.page.store(page_no, Ordering::Relaxed);
+                    f.usage.store(1, Ordering::Relaxed);
+                    PinnedPage { pool: self, frame }
+                }
+            }
+        };
+        pinned.write()?.fill(0);
+        Ok(pinned)
+    }
+
+    /// Pins page `page_no` only if the pool holds it, and says whether it
+    /// is dirty. Reads nothing (for the integrity check).
+    pub(crate) fn resident(&self, page_no: u64) -> Option<(PinnedPage<'_>, bool)> {
+        let frame = self.pin_mapped(&read_map(self.shard(page_no)), page_no)?;
+        let dirty = self.frames[frame as usize].dirty.load(Ordering::Acquire);
+        Some((PinnedPage { pool: self, frame }, dirty))
+    }
+
+    /// Writes every dirty frame whose page LSN is durable, waiting for each
+    /// frame's latch, and returns the number written. The write loop of a
+    /// checkpoint (TS-11 step 2); it does not sync the data file.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Unusable`]; an I/O error, which sets the unusable latch.
+    pub(crate) fn write_dirty(&self) -> Result<u64> {
+        self.health.check()?;
+        let mut written = 0;
+        for f in &self.frames[..] {
+            let page_no = f.page.load(Ordering::Relaxed);
+            if page_no == NO_PAGE || !f.dirty.load(Ordering::Acquire) {
+                continue;
+            }
+            // Pin through the page table, so the frame cannot be evicted
+            // or remapped while it is written.
+            let Some(frame) = self.pin_mapped(&read_map(self.shard(page_no)), page_no) else {
+                continue;
+            };
+            let pinned = PinnedPage { pool: self, frame };
+            let f = pinned.frame();
+            let buf = f.latch.read().map_err(|_| self.poisoned())?;
+            if !f.dirty.load(Ordering::Acquire)
+                || page::lsn(&buf) > self.durable_lsn.load(Ordering::Acquire)
+            {
+                continue;
+            }
+            let mut copy = [0u8; PAGE_SIZE];
+            copy.copy_from_slice(&buf);
+            page::seal(&mut copy);
+            self.data.write_page(page_no, &copy)?;
+            f.dirty.store(false, Ordering::Release);
+            self.sink.counter(FLUSHES, 1);
+            written += 1;
+        }
+        Ok(written)
+    }
+
     /// Returns a frame pinned once by the caller, unmapped, with a buffer:
     /// a new buffer if the accountant allows, else the clock's victim,
     /// clean or dirty with a durable page LSN, as in PostgreSQL's sweep.

@@ -357,3 +357,151 @@ Reproduction:
     raw/t13-perf-stat.sh                                # perf stat of pool_fixed
     LPG_POOL_SHARE=<100|10|1> LPG_POOL_MODE=<hit|miss> LPG_PERF_N=<N|0> \
         <strace -c -f | heaptrack> BIN --exact lab::pool::pool_fixed --ignored --test-threads=1
+
+## #14
+
+`src/storage/freelist.rs` (persisted free list, in-memory free-page set, reader registry), `src/storage/btree/` (`node.rs` page layouts, `mod.rs` reads and the page-change path, `write.rs` the writer), `src/storage/check.rs` (integrity check). Changed: `pool.rs` (`create`, `resident`, `write_dirty`), `datafile.rs` (page 1 written at create; `page_count`; unverified read for the check), `engine.rs` (tree state, free list loaded at open). Laboratory: `src/lab/btree.rs`. Gates: raw/t14-quality-gate.txt; suite: raw/t14-nextest.txt (101 passed, both lab directories); coverage: raw/t14-coverage.txt.
+
+**Acceptance** (`cargo nextest run -p lpg storage::freelist storage::btree storage::check`, all pass):
+
+| Check | Test | Result |
+|---|---|---|
+| 10^6 random puts and deletes match a `BTreeMap`; check passes every 10^4 ops | `btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model` | pass; grow, shrink (range deletes, 1 351 leaves freed in a probe run) and grow phases; `get`, 8- and 13-byte prefix scans and a final full scan compared; freed pages reused |
+| A tree 10× the cap reads back intact | `a_tree_ten_times_larger_than_the_cap_reads_back_intact` | pass; 260 000 entries, cap 2 MiB, every value by `get` and by a full scan |
+| Overflow values round-trip | `overflow_values_round_trip` | pass; 0, 2 048, 2 049, 8 156, 8 157, 100 000 and 1 MiB bytes, replaced inline↔overflow, deleted; chains freed |
+| Check reports a flipped bit, swapped keys, a broken sibling link, a page in a tree and the free list | `check::tests::*` | pass; each test first checks the clean database passes; a high-key mismatch and a leaked page are also reported |
+| Keys of 1 024 bytes; longer refused | `keys_at_the_limit_work_and_longer_keys_are_refused` | pass; 300 keys of 1 024 B with 2 048 B values; a batch with a 1 025 B key fails with nothing applied |
+| Right-most split leaves the left page 90 % full | `rightmost_split_fills_left_page_to_90_percent_and_others_to_half` | pass; every non-last leaf of an append-only tree in (0.90 − one entry, 0.90]; random order: minimum fill ≥ 0.5 − one entry |
+| Concurrent readers during splits see every committed key once | `concurrent_readers_during_splits_see_every_committed_key_exactly_once`, `stale_descents_recover_by_moving_right`, `emptying_a_subtree_frees_its_inner_pages` | pass; 4 readers against one writer with leaf, inner and root splits and page frees; the second test reproduces a stale pointer to a split page and to a deleted page deterministically |
+
+Non-vacuity: 13 deliberate mutations, each reverted, each failed the tests named: right-most fill 0.80; reuse ignoring readers; no move-right on high key; no move-right on deleted page; scan ignoring the prefix end; no key limit; no unlink from the left sibling; freeing the last child of a parent; restart every 17 entries; the check without double-claim detection, without the sibling-link, key-order or high-key check. A first version of the model test emptied no leaf, so the unlink mutation survived; range deletes were added and it now fails.
+
+Line coverage (`cargo llvm-cov nextest`): `btree/node.rs` 96.8 %, `btree/write.rs` 95.7 %, `btree/mod.rs` 90.0 %, `freelist.rs` 94.2 %, `check.rs` 82.4 % (unreached: reports of malformed pages other than those tested).
+
+**Laboratory.** `lab::btree::btree` on `LPG_LAB_EXT4`: M-LAYOUT's graph (10^6 nodes, 10^7 edges, Zipf 0.8 and uniform), 2×10^7 adjacency keys `(u64, u8, u32, u64, u64)`, 29 bytes, empty values, inserted in random order one edge (two entries) per batch with the whole tree in cache, written and synced; then per cache share, 3 rounds, median [min, max] (raw/t14-lab-btree.md, raw/t14-lab-btree-shape.md). Cold = OS cache of `data-1` evicted before each round, pool kept. Put = one key per batch.
+
+| Dist | Cache | get ns | prefix scan ns (entries) | put ns | KiB read/op cold: get, scan, put |
+|---|---|---|---|---|---|
+| Zipf | 100 % | 1 421 [1 405, 1 432] | 21 718 [21 554, 21 926] (1 007) | 5 905 [5 878, 6 026] | 0.01, 0.01, 0.00 |
+| Zipf | 10 % | 3 618 [3 616, 3 630] | 25 210 [25 090, 25 434] | 11 132 [10 815, 11 515] | 7.20, 12.66, 4.25 |
+| Zipf | 1 % | 3 803 [3 801, 3 807] | 29 558 [29 442, 29 764] | 11 978 [11 969, 12 660] | 8.13, 18.07, 8.56 |
+| Uniform | 100 % | 1 417 [1 403, 1 436] | 1 591 [1 586, 1 638] (3.5) | 5 799 [5 798, 5 888] | 0.01, 0.01, 0.00 |
+| Uniform | 10 % | 3 668 [3 659, 3 681] | 3 874 [3 823, 3 875] | 11 224 [10 766, 11 536] | 7.18, 7.22, 3.09 |
+| Uniform | 1 % | 3 796 [3 780, 3 832] | 4 050 [4 037, 4 126] | 12 160 [12 159, 12 830] | 8.11, 8.65, 7.99 |
+
+Cold latencies: get 80 µs (10 %) and 88–92 µs (1 %); cold put at 10 % varies from 7.6 to 69 µs between rounds (raw table). Scan prefixes are taken from sampled entries, so Zipf scans favour high-degree nodes (about 1 000 entries per scan). Build: 5.9 µs per entry (Zipf) and 5.3 µs (uniform), 0.6 s to write the 61 234 and 63 892 dirty pages.
+
+**Shape against M-LAYOUT layout B** (online, random order; `docs/evidence/layout-bench/results.md`, "Space"):
+
+| | lpg #14 Zipf | lpg #14 uniform | M-LAYOUT B Zipf | M-LAYOUT B uniform |
+|---|---|---|---|---|
+| leaf bytes per entry | 16.81 | 17.88 | 11.8 | 12.3 |
+| leaf fill | 0.673 | 0.686 | 0.75 | 0.75 |
+| height | 3 | 3 | 4 | 4 |
+| leaves | 60 970 | 63 618 | 38 267 | 40 025 |
+
+The differences have measured or stated causes, not all attributed: lpg compresses keys as byte strings (TS-06 for every tree but the adjacency tree), while B stores field deltas as varints (the adjacency encoding, Sprint 2); lpg has no stamps, B carries two per entry; lpg's page header is 50 bytes. Fill 0.67–0.69 equals the ln 2 ≈ 0.69 expected of balanced splits under random inserts; the cause of B's 0.75 was not investigated. Height 3 against 4: lpg truncates separators (suffix truncation) and has 8 KiB inner pages of about 230 children (60 970 leaves under 261 non-root inner pages).
+
+**CPU.** `perf stat` of `lab::btree::btree_fixed`, uniform, per operation = (run with N − run with 0) / N, 3 interleaved rounds (raw/t14-perf-stat.txt, script raw/t14-perf.sh). Zen 3 has no per-process LLC-miss event; as in #13, DRAM fills are `ls_any_fills_from_sys.mem_io_local`; `cache-misses` is the generic event.
+
+| Cache | Op | Cycles | Instructions | IPC | Branch misses | cache-misses | DRAM fills |
+|---|---|---|---|---|---|---|---|
+| 100 % | get | 6 447 [6 340, 6 718] | 4 501 | 0.70 | 10 | 38 | 15 |
+| 10 % | get | 16 250 [16 157, 16 955] | 19 321 | 1.19 | 70 | 103 | 90 |
+| 100 % | scan | 7 327 [7 038, 8 050] | 7 632 | 1.04 | 14 | 42 | 19 |
+| 100 % | put | 25 933 [25 749, 26 078] | 62 990 | 2.43 | 171 | 124 | 36 |
+
+Flame graphs (`perf record --call-graph dwarf`, `inferno`, samples under `get_loop` / `put_loop` only; perf.data kept outside the repository): raw/t14-flamegraph-get.svg, raw/t14-flamegraph-put.svg, folded stacks raw/t14-perf-get.folded, raw/t14-perf-put.folded. `read_hpet` frames are samples taken in the HPET clock-source read (attribution not established; 3.5 % in an earlier `get` profile).
+
+- `get` at 100 %: `leaf_get` 59.0 % of samples, of which `find_group` (binary search over restart points) 49.2 %; `inner_child` 29.0 %. `raw_entry` holds 55.3 % self time: the first touch of each restart entry, at random offsets of a page not in the CPU caches (15 DRAM fills per get).
+- In-leaf search on 2 000 resident leaf images (about 16 MB, outside L2): 236 [235, 276] ns per `leaf_get` (Zipf), 249 [237, 283] (uniform); decoding with key reconstruction 10.4–11.2 ns per entry; 329–347 entries per leaf.
+- `put` at 100 %: `leaf_apply` 91.7 %, of which decoding 45.1 % and re-encoding 40.1 %; `memcpy` of a few bytes at a time is 23.7 % self. TS-06 keeps every 16th entry a restart point, so an insert or delete shifts every later restart point and the leaf is rewritten from the key's group to its end (half a leaf on average).
+
+**Improvement applied.** The first profile of `put` (raw/t14-perf-put-before.folded) showed the byte-wise `common_prefix` at 35.9 %. Comparing 8 bytes at a time took `put` from 6 714 to 6 030 ns, and reusing the shared lengths decoded from the page took it to 5 847 ns, −13 % in all (raw/t14-put-optimisation.txt, 3 runs each).
+
+**Allocations.** heaptrack, run with N − run with 0 (raw/t14-heaptrack-summary.txt): `get` 1 call in 10^6; prefix scan 5.1 calls per scan (the copy buffers of each scan); `put` 1.01 calls per put (the tree list of `apply`).
+
+**Finding: in-leaf format.** At 100 % cache, in-leaf search is 59 % of `get` (about 0.84 µs of 1.42 µs), mostly cache misses of the restart binary search. The paper "B-Trees Are Back" measures lookup gains of 16–64 % from heads and up to 26 % from hints, in memory, on slotted leaves without delta encoding, at a cost of about 5.7 B per record for heads (its §4.2–4.3). On this workload that would be +32–34 % leaf bytes (5.7 on 16.8–17.9 B), and at 1–10 % cache a get already reads 7.2–8.1 KiB from the device, where the cost is I/O: cold gets take 78–92 µs against 1.4 µs warm. No alternative was measured here, so no claim that it would win is made. A hints array over the restart keys (64 bytes in the header, no per-entry cost) addresses the same misses and is a candidate for a spec decision with measurement.
+
+**Finding: put cost of the literal restart rule.** A put costs 5.8–5.9 µs at 100 % cache, against M-LAYOUT B's 3.8–4.7 µs for a whole edge (two entries and an edge-table insert), whose leaves re-encode only the group holding the key (groups of up to 32 entries). Here decoding and re-encoding the tail of the leaf take 85 % of `put`. Two options keep the format: copy the bytes of unchanged entries and re-encode only the two entries per moved group boundary; or, with a spec change, let groups vary as in M-LAYOUT. Neither is implemented.
+
+**Finding: deletes can split.** With delta encoding, removing an entry can lengthen the leaf (the entry that becomes a restart point stores its whole key). The 10^6-operation test hit it; such a delete now splits the leaf. The TS-05 reserve bound counts write-set bytes, so a batch of many such deletes, or of deletes freeing long overflow chains that need new free-list trunks, is not covered by it.
+
+**Limitations of #14.**
+
+1. ext4 only; one session; CPU governor `powersave`.
+2. Single-threaded measurements; reader concurrency was tested, not measured.
+3. Puts during the read workloads add 66 000 entries per share (0.3 %) to each database.
+4. M-LAYOUT read misses with `O_DIRECT`; lpg reads through the OS cache, evicted with `fadvise` in cold mode.
+
+Reproduction:
+
+    cargo test -p lpg --profile lab --lib --no-run      # BIN below
+    LPG_LAB_EXT4=… LPG_LAB_XFS=… LPG_LAB_OUT=raw BIN --exact lab::btree::btree --ignored --test-threads=1
+    BIN=… SCRATCH=<outside the repository> raw/t14-perf.sh   # perf stat, perf record + inferno, heaptrack
+    LPG_BTREE_DIST=uniform LPG_BTREE_SHARE=100 LPG_BTREE_MODE=put LPG_PERF_N=200000 \
+        BIN --exact lab::btree::btree_fixed --ignored --test-threads=1 --nocapture
+
+Both lab directories were emptied after the runs.
+
+### Put optimisation
+
+**Change.** `node::leaf_apply` no longer decodes and re-encodes the leaf from the key's restart group to its end. An insert or delete shifts every later entry by one position, so every later group boundary moves by one entry. Only the entries whose encoding changes are re-encoded: the changed entry, the entry after it (its predecessor changed), and at each later boundary the entry that becomes a restart point (it now stores its whole key) and the one that stops being one (it now stores a delta against its predecessor). Every other entry keeps its predecessor and its restart status, so its bytes are copied unchanged, one copy per run. The leaf is still walked from the key's group to its end, to find the boundaries and reconstruct the keys they need. The TS-06 format is unchanged. The decode-and-re-encode path remains for splits (`leaf_decode_with`, `write_leaf`) and as the test reference (`leaf_apply_reencode`, test builds only).
+
+**References.** LevelDB `table/block_builder.cc:71-104` (`Add`) and RocksDB `table/block_based/block_builder.cc` (`AddWithLastKeyImpl`, `Finish`) only build blocks by appending, and never change a finished block in place except for RocksDB's one-off rewrite of restart keys in `Finish`. RocksDB's data-block hash index (`table/block_based/data_block_hash_index.h`) maps keys to restart intervals for point reads and does not affect writes. SQLite `src/btree.c` (`insertCell` 7363, `dropCell` 7299) and LeanStore `backend/leanstore/storage/btree/core/BTreeNode.cpp` (`insert` 88-100, `removeSlot` 398-401) change slotted pages in place: they write the new cell once and `memmove` the slot array, never re-encoding unchanged cells. The pattern adopted is theirs (copy unchanged bytes, encode only what changed), applied to a delta-encoded stream, where entries at moved group boundaries also change.
+
+**Byte equality.** `node::tests::apply_matches_the_full_reencode` applies each change with both paths to copies of the same page and requires equal outcomes and identical page bytes, including the zeroed free gap and the restart array. It covers 120 random leaves of 1 000 operations each: short keys over a three-letter alphabet, and keys with a 150-byte common prefix (two-byte shared varints); inline values up to 300 bytes (two-byte tags) and overflow values; with and without a high key; inserts, replacements, deletes and deletes of absent keys. A probe run counted 120 000 operations, 313 deletes that grew a leaf, 12 008 puts that did not fit and 66 495 changes that moved at least one later boundary; the test asserts minimums for all three counts. `deletes_that_grow_the_leaf_match_the_full_reencode` builds a leaf whose restart keys share 602 bytes with their successors. A delete with one later boundary grows the leaf by more than 500 bytes and still fits; a delete with nine later boundaries does not fit, and both paths return `Full` with the page unchanged. Non-vacuity: two mutations, each reverted, made the random test fail: copying entries whose predecessor changed, and re-encoding a boundary delta against a stale key. End to end, the 2×10^7-entry databases built by the new code have `data-1` files byte-identical to those built by the old code (`cmp`, both distributions; raw/t14-opt-build.txt).
+
+**A/B method.** The pre-change working tree and the changed one were copied outside the repository and built with the `lab` profile. The two copies differ only in `btree/node.rs` and `btree/write.rs`. The old code built both databases once (pristine copies kept). For each full `lab::btree` run, the pristine databases were restored first, in the order before, after, before, after (raw/t14-opt-lab-btree-{before,after}-{1,2}.md). `btree_fixed` and `perf stat` were interleaved per configuration over 3 rounds (raw/t14-opt-perf-stat.txt). Script: raw/t14-opt-ab.sh. Same host, session and parameters as above.
+
+Full `lab::btree`, warm OS cache, ns per operation, median [min, max] of 3 rounds, two runs per version:
+
+| Dist | Cache | Op | Before, run 1 | Before, run 2 | After, run 1 | After, run 2 | Change |
+|---|---|---|---|---|---|---|---|
+| Zipf | 100 % | put | 5 759 [5 756, 6 022] | 5 764 [5 737, 5 994] | 3 820 [3 753, 4 015] | 3 792 [3 678, 3 963] | −33.9 % |
+| Zipf | 100 % | get | 1 428 [1 398, 1 433] | 1 417 [1 411, 1 439] | 1 435 [1 389, 1 440] | 1 420 [1 398, 1 434] | +0.4 % |
+| Zipf | 10 % | put | 11 161 [10 686, 11 410] | 11 404 [10 686, 11 507] | 9 209 [8 737, 9 636] | 9 320 [8 646, 9 507] | −17.9 % |
+| Zipf | 10 % | get | 3 677 [3 677, 3 693] | 3 745 [3 742, 3 761] | 3 751 [3 742, 3 771] | 3 723 [3 714, 3 738] | +0.7 % |
+| Zipf | 1 % | put | 12 225 [11 980, 12 970] | 12 256 [12 014, 12 969] | 10 402 [9 904, 11 190] | 10 249 [10 022, 11 001] | −15.6 % |
+| Zipf | 1 % | get | 3 946 [3 939, 3 962] | 3 982 [3 978, 3 982] | 3 923 [3 908, 3 939] | 3 932 [3 930, 3 972] | −0.9 % |
+| Uniform | 100 % | put | 5 858 [5 842, 5 883] | 5 774 [5 707, 5 893] | 3 722 [3 658, 3 915] | 3 750 [3 677, 3 909] | −35.8 % |
+| Uniform | 100 % | get | 1 436 [1 421, 1 440] | 1 429 [1 425, 1 435] | 1 419 [1 412, 1 419] | 1 399 [1 392, 1 413] | −1.6 % |
+| Uniform | 10 % | put | 11 523 [10 545, 11 636] | 11 327 [10 674, 11 687] | 9 270 [8 607, 9 542] | 9 219 [8 612, 9 520] | −19.1 % |
+| Uniform | 10 % | get | 3 662 [3 658, 3 678] | 3 714 [3 711, 3 718] | 3 692 [3 684, 3 707] | 3 679 [3 665, 3 680] | −0.1 % |
+| Uniform | 1 % | put | 12 287 [12 188, 12 952] | 12 304 [12 213, 13 313] | 10 269 [10 151, 10 915] | 10 227 [10 100, 10 917] | −16.7 % |
+| Uniform | 1 % | get | 3 845 [3 832, 3 856] | 3 873 [3 872, 3 886] | 3 812 [3 794, 3 819] | 3 801 [3 800, 3 824] | −1.4 % |
+
+Change = mean of the two after medians against the mean of the two before medians. At 10 % and 1 % cache, a put also pays for evicting and writing back pages, which the change does not affect, so the relative gain is smaller. Get changes stay within the run-to-run spread of the old code (1.8 %: 3 677 against 3 745 ns), and get executes the same instruction count (below); the get path code is unchanged. Cold rows are dominated by device reads and show no change outside their spread. Cold put: Zipf 1 % 87.9 and 89.9 µs before, 91.3 and 91.6 µs after, with overlapping ranges ([86.4, 89.7], [89.5, 92.3] against [88.3, 91.9], [88.0, 96.5]). Uniform 1 %: 82.8 and 83.9 µs before, 80.1 and 83.1 µs after. Integrity check: it passed after every share in all four runs (the workload asserts it), and the shape figures are identical across runs.
+
+`perf stat` of `btree_fixed`, 100 % cache, per operation, median [min, max] of 3 interleaved rounds:
+
+| Dist | Op | Version | ns | Cycles | Instructions | IPC | Branch misses | cache-misses | DRAM fills |
+|---|---|---|---|---|---|---|---|---|---|
+| Uniform | put | before | 5 839 [5 798, 5 867] | 25 761 [25 133, 26 252] | 63 053 | 2.45 | 173 | 118 | 37 |
+| Uniform | put | after | 3 763 [3 741, 3 773] | 16 770 [16 740, 16 968] | 35 990 | 2.13 | 93 | 96 | 40 |
+| Zipf | put | before | 5 901 [5 869, 5 909] | 26 092 [25 877, 27 208] | 66 776 | 2.56 | 133 | 111 | 38 |
+| Zipf | put | after | 3 824 [3 790, 4 009] | 18 875 [16 093, 18 998] | 38 164 | 2.04 | 79 | 86 | 44 |
+| Uniform | get | before | 1 418 [1 409, 1 420] | 6 427 [6 407, 6 506] | 4 607 | 0.72 | 11 | 41 | 16 |
+| Uniform | get | after | 1 432 [1 408, 1 436] | 6 532 [6 332, 6 533] | 4 596 | 0.70 | 11 | 41 | 16 |
+| Zipf | get | before | 1 412 [1 411, 1 430] | 6 440 [6 419, 6 710] | 4 618 | 0.72 | 10 | 41 | 17 |
+| Zipf | get | after | 1 426 [1 419, 1 427] | 6 251 [5 999, 6 523] | 4 627 | 0.72 | 10 | 39 | 15 |
+
+Put instructions fall by 43 % and cycles by 28–35 %; IPC drops from 2.45–2.56 to 2.04–2.13. The data files were hashed before and after these runs and were unchanged. Building the databases (two entries per batch) took 3 839 ns per entry (Zipf) and 3 508 ns (uniform), against 5 856 and 5 547 ns with the old code (−34 % and −37 %; raw/t14-opt-build.txt).
+
+**Profile after** (`perf record --call-graph dwarf`, uniform, 100 %; raw/t14-opt-flamegraph-put.svg, raw/t14-opt-perf-put.folded). `leaf_apply` takes 87.7 % of `put_loop` samples, against 91.7 % before, of a put that is 36 % shorter. Its main direct children (the rest, each under 4 %, are index checks, `is_multiple_of`, key comparison and `value_of`):
+
+| Part | Before | After |
+|---|---|---|
+| Decode into `Entries` (`leaf_decode`) | 45.1 % | — |
+| Re-encode (`write_entries`; after: `encode_parts` + `common_prefix`) | 40.1 % | 4.7 % |
+| Page write (`commit_tail`) | in `write_entries` | 3.7 % |
+| Walk: `Vec::extend_from_slice` (key reconstruction and run copies; the profile does not separate them), `raw_entry`, `truncate`, `leaf_apply` self | — | 54.6 % |
+| `find_group` | 2.9 % | 9.6 % |
+
+Re-encoding fell from 40.1 % to 4.7 % of samples. The walk of the leaf tail now dominates `put`: its bytes are parsed and the key chain is rebuilt entry by entry to reach each boundary key. The run copies and the key reconstruction both go through `Vec::extend_from_slice` (23.6 %) and `memcpy`; how the time splits between them is not measured. Some samples are attributed to `Pool::fetch` under `leaf_apply` (1.8 %), which the code does not call; this is taken as a DWARF unwinding artefact, not verified.
+
+**Costs.** `node.rs` grows by about 200 lines outside its tests (199: the new `leaf_apply`, `encode_parts`, `commit_tail`, and the reference kept for tests), and `Encoder` holds three more scratch key buffers. A replacement of an existing key's value also walks the tail, although nothing after the entry needs re-encoding there; this case was not measured (the workloads insert new keys).
+
+**Limitations.** As for #14 above (ext4, one session, `powersave` governor, single-threaded). The cold-cache rows were not analysed beyond their spread.
+
+Both lab directories were emptied after the runs.

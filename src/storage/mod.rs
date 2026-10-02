@@ -21,6 +21,16 @@ mod fs;
 // and 1.99 report dead code in these modules differently.
 #[cfg_attr(
     not(test),
+    allow(dead_code, reason = "first non-test callers come with #15-#16")
+)]
+pub(crate) mod btree;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #15-#16")
+)]
+pub(crate) mod check;
+#[cfg_attr(
+    not(test),
     allow(dead_code, reason = "first non-test callers come with #14-#16")
 )]
 pub(crate) mod control;
@@ -39,6 +49,11 @@ pub(crate) mod engine;
     allow(dead_code, reason = "first non-test callers come with #14-#16")
 )]
 pub(crate) mod error;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #15-#16")
+)]
+pub(crate) mod freelist;
 #[cfg_attr(
     not(test),
     allow(dead_code, reason = "first non-test callers come with #14-#16")

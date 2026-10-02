@@ -1,0 +1,336 @@
+### round=1 dist=uniform mode=put n=200000 bin=B
+11578221115,,cycles,2591201163,100.00,,
+23321476374,,instructions,2591201163,100.00,2.01,insn per cycle
+79446694,,branch-misses,2591201163,100.00,,
+60684721,,cache-misses,2591201163,100.00,,
+21204060,,ls_any_fills_from_sys.mem_io_local,2591201163,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=5798
+### round=1 dist=uniform mode=put n=0 bin=B
+6426024161,,cycles,1427681396,100.00,,
+10710856392,,instructions,1427681396,100.00,1.67,insn per cycle
+44882405,,branch-misses,1427681396,100.00,,
+37082686,,cache-misses,1427681396,100.00,,
+13826518,,ls_any_fills_from_sys.mem_io_local,1427681396,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1397
+### round=1 dist=uniform mode=put n=200000 bin=A
+9831564998,,cycles,2186646230,100.00,,
+17914318902,,instructions,2186646230,100.00,1.82,insn per cycle
+63391821,,branch-misses,2186646230,100.00,,
+55733687,,cache-misses,2186646230,100.00,,
+21549426,,ls_any_fills_from_sys.mem_io_local,2186646230,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=3773
+### round=1 dist=uniform mode=put n=0 bin=A
+6437985296,,cycles,1435630607,100.00,,
+10713879802,,instructions,1435630607,100.00,1.66,insn per cycle
+44794417,,branch-misses,1435630607,100.00,,
+36610580,,cache-misses,1435630607,100.00,,
+13646219,,ls_any_fills_from_sys.mem_io_local,1435630607,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1397
+### round=1 dist=uniform mode=get n=1000000 bin=B
+12783655337,,cycles,2824707187,100.00,,
+15186290263,,instructions,2824707187,100.00,1.19,insn per cycle
+54427877,,branch-misses,2824707187,100.00,,
+77646622,,cache-misses,2824707187,100.00,,
+29775344,,ls_any_fills_from_sys.mem_io_local,2824707187,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1420
+### round=1 dist=uniform mode=get n=0 bin=B
+6277897386,,cycles,1396973069,100.00,,
+10580692962,,instructions,1396973069,100.00,1.69,insn per cycle
+43654586,,branch-misses,1396973069,100.00,,
+36363634,,cache-misses,1396973069,100.00,,
+13030535,,ls_any_fills_from_sys.mem_io_local,1396973069,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=1886
+### round=1 dist=uniform mode=get n=1000000 bin=A
+12990414133,,cycles,2871031743,100.00,,
+15359307606,,instructions,2871031743,100.00,1.18,insn per cycle
+56713880,,branch-misses,2871031743,100.00,,
+78553402,,cache-misses,2871031743,100.00,,
+30301596,,ls_any_fills_from_sys.mem_io_local,2871031743,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1432
+### round=1 dist=uniform mode=get n=0 bin=A
+6457480908,,cycles,1439068643,100.00,,
+10763095983,,instructions,1439068643,100.00,1.67,insn per cycle
+45861679,,branch-misses,1439068643,100.00,,
+37534509,,cache-misses,1439068643,100.00,,
+13520195,,ls_any_fills_from_sys.mem_io_local,1439068643,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=1885
+### round=1 dist=zipf mode=put n=200000 bin=B
+19585480225,,cycles,4342167522,100.00,,
+27808655469,,instructions,4342167522,100.00,1.42,insn per cycle
+70970568,,branch-misses,4342167522,100.00,,
+151023416,,cache-misses,4342167522,100.00,,
+24069286,,ls_any_fills_from_sys.mem_io_local,4342167522,100.00,,
+LAB dist=zipf share=100 mode=put n=200000 ns_per_op=5909
+### round=1 dist=zipf mode=put n=0 bin=B
+14143830192,,cycles,3114821385,100.00,,
+14602352848,,instructions,3114821385,100.00,1.03,insn per cycle
+46087224,,branch-misses,3114821385,100.00,,
+128766335,,cache-misses,3114821385,100.00,,
+16428059,,ls_any_fills_from_sys.mem_io_local,3114821385,100.00,,
+LAB dist=zipf share=100 mode=put n=0 ns_per_op=1466
+### round=1 dist=zipf mode=put n=200000 bin=A
+17696622235,,cycles,3904528572,100.00,,
+22110220754,,instructions,3904528572,100.00,1.25,insn per cycle
+59598341,,branch-misses,3904528572,100.00,,
+142314034,,cache-misses,3904528572,100.00,,
+25105094,,ls_any_fills_from_sys.mem_io_local,3904528572,100.00,,
+LAB dist=zipf share=100 mode=put n=200000 ns_per_op=3824
+### round=1 dist=zipf mode=put n=0 bin=A
+14478055485,,cycles,3186977551,100.00,,
+14609568042,,instructions,3186977551,100.00,1.01,insn per cycle
+45788395,,branch-misses,3186977551,100.00,,
+133076841,,cache-misses,3186977551,100.00,,
+17245213,,ls_any_fills_from_sys.mem_io_local,3186977551,100.00,,
+LAB dist=zipf share=100 mode=put n=0 ns_per_op=1816
+### round=1 dist=zipf mode=get n=1000000 bin=B
+20662603944,,cycles,4544008226,100.00,,
+18764691178,,instructions,4544008226,100.00,0.91,insn per cycle
+52348074,,branch-misses,4544008226,100.00,,
+166818753,,cache-misses,4544008226,100.00,,
+32579786,,ls_any_fills_from_sys.mem_io_local,4544008226,100.00,,
+LAB dist=zipf share=100 mode=get n=1000000 ns_per_op=1430
+### round=1 dist=zipf mode=get n=0 bin=B
+13952503869,,cycles,3070634770,100.00,,
+14146584927,,instructions,3070634770,100.00,1.01,insn per cycle
+42223431,,branch-misses,3070634770,100.00,,
+125582505,,cache-misses,3070634770,100.00,,
+15535182,,ls_any_fills_from_sys.mem_io_local,3070634770,100.00,,
+LAB dist=zipf share=100 mode=get n=0 ns_per_op=1467
+### round=1 dist=zipf mode=get n=1000000 bin=A
+20657255703,,cycles,4549179438,100.00,,
+18763445946,,instructions,4549179438,100.00,0.91,insn per cycle
+52230216,,branch-misses,4549179438,100.00,,
+165493625,,cache-misses,4549179438,100.00,,
+32362024,,ls_any_fills_from_sys.mem_io_local,4549179438,100.00,,
+LAB dist=zipf share=100 mode=get n=1000000 ns_per_op=1426
+### round=1 dist=zipf mode=get n=0 bin=A
+14405856112,,cycles,3170077395,100.00,,
+14262724999,,instructions,3170077395,100.00,0.99,insn per cycle
+43775324,,branch-misses,3170077395,100.00,,
+126020083,,cache-misses,3170077395,100.00,,
+17324673,,ls_any_fills_from_sys.mem_io_local,3170077395,100.00,,
+LAB dist=zipf share=100 mode=get n=0 ns_per_op=1886
+### round=2 dist=uniform mode=put n=200000 bin=B
+11686524258,,cycles,2616134811,100.00,,
+23436359893,,instructions,2616134811,100.00,2.01,insn per cycle
+80396475,,branch-misses,2616134811,100.00,,
+61746747,,cache-misses,2616134811,100.00,,
+21532697,,ls_any_fills_from_sys.mem_io_local,2616134811,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=5867
+### round=2 dist=uniform mode=put n=0 bin=B
+6436195963,,cycles,1430727853,100.00,,
+10710154705,,instructions,1430727853,100.00,1.66,insn per cycle
+44874752,,branch-misses,1430727853,100.00,,
+37419248,,cache-misses,1430727853,100.00,,
+13890610,,ls_any_fills_from_sys.mem_io_local,1430727853,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1466
+### round=2 dist=uniform mode=put n=200000 bin=A
+9809574118,,cycles,2180017372,100.00,,
+17907653713,,instructions,2180017372,100.00,1.83,insn per cycle
+63474795,,branch-misses,2180017372,100.00,,
+56059174,,cache-misses,2180017372,100.00,,
+21484122,,ls_any_fills_from_sys.mem_io_local,2180017372,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=3763
+### round=2 dist=uniform mode=put n=0 bin=A
+6455626663,,cycles,1436386628,100.00,,
+10709670284,,instructions,1436386628,100.00,1.66,insn per cycle
+44883200,,branch-misses,1436386628,100.00,,
+37639161,,cache-misses,1436386628,100.00,,
+14323330,,ls_any_fills_from_sys.mem_io_local,1436386628,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1467
+### round=2 dist=uniform mode=get n=1000000 bin=B
+12693716164,,cycles,2804446576,100.00,,
+15183224280,,instructions,2804446576,100.00,1.20,insn per cycle
+54341780,,branch-misses,2804446576,100.00,,
+77725210,,cache-misses,2804446576,100.00,,
+29202314,,ls_any_fills_from_sys.mem_io_local,2804446576,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1409
+### round=2 dist=uniform mode=get n=0 bin=B
+6286980774,,cycles,1399226507,100.00,,
+10574876603,,instructions,1399226507,100.00,1.68,insn per cycle
+43659270,,branch-misses,1399226507,100.00,,
+36876063,,cache-misses,1399226507,100.00,,
+13769488,,ls_any_fills_from_sys.mem_io_local,1399226507,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=1885
+### round=2 dist=uniform mode=get n=1000000 bin=A
+12868652671,,cycles,2843454385,100.00,,
+15359932389,,instructions,2843454385,100.00,1.19,insn per cycle
+56361062,,branch-misses,2843454385,100.00,,
+78401200,,cache-misses,2843454385,100.00,,
+29442982,,ls_any_fills_from_sys.mem_io_local,2843454385,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1408
+### round=2 dist=uniform mode=get n=0 bin=A
+6336820065,,cycles,1408237299,100.00,,
+10635308223,,instructions,1408237299,100.00,1.68,insn per cycle
+44503371,,branch-misses,1408237299,100.00,,
+36718381,,cache-misses,1408237299,100.00,,
+13700834,,ls_any_fills_from_sys.mem_io_local,1408237299,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=2375
+### round=2 dist=zipf mode=put n=200000 bin=B
+19435618486,,cycles,4309274248,100.00,,
+27839268658,,instructions,4309274248,100.00,1.43,insn per cycle
+71280928,,branch-misses,4309274248,100.00,,
+152166549,,cache-misses,4309274248,100.00,,
+23595618,,ls_any_fills_from_sys.mem_io_local,4309274248,100.00,,
+LAB dist=zipf share=100 mode=put n=200000 ns_per_op=5869
+### round=2 dist=zipf mode=put n=0 bin=B
+14217282593,,cycles,3128084520,100.00,,
+14477955173,,instructions,3128084520,100.00,1.02,insn per cycle
+44591235,,branch-misses,3128084520,100.00,,
+126942445,,cache-misses,3128084520,100.00,,
+17204074,,ls_any_fills_from_sys.mem_io_local,3128084520,100.00,,
+LAB dist=zipf share=100 mode=put n=0 ns_per_op=1467
+### round=2 dist=zipf mode=put n=200000 bin=A
+18177069896,,cycles,4045161336,100.00,,
+22114795427,,instructions,4045161336,100.00,1.22,insn per cycle
+59961364,,branch-misses,4045161336,100.00,,
+146869415,,cache-misses,4045161336,100.00,,
+25563023,,ls_any_fills_from_sys.mem_io_local,4045161336,100.00,,
+LAB dist=zipf share=100 mode=put n=200000 ns_per_op=4009
+### round=2 dist=zipf mode=put n=0 bin=A
+14402102001,,cycles,3171191986,100.00,,
+14482019581,,instructions,3171191986,100.00,1.01,insn per cycle
+44208795,,branch-misses,3171191986,100.00,,
+129732046,,cache-misses,3171191986,100.00,,
+16848310,,ls_any_fills_from_sys.mem_io_local,3171191986,100.00,,
+LAB dist=zipf share=100 mode=put n=0 ns_per_op=1467
+### round=2 dist=zipf mode=get n=1000000 bin=B
+20391249100,,cycles,4482391678,100.00,,
+18766036913,,instructions,4482391678,100.00,0.92,insn per cycle
+52287049,,branch-misses,4482391678,100.00,,
+164524489,,cache-misses,4482391678,100.00,,
+30787773,,ls_any_fills_from_sys.mem_io_local,4482391678,100.00,,
+LAB dist=zipf share=100 mode=get n=1000000 ns_per_op=1411
+### round=2 dist=zipf mode=get n=0 bin=B
+13972284934,,cycles,3073382393,100.00,,
+14142506486,,instructions,3073382393,100.00,1.01,insn per cycle
+42347875,,branch-misses,3073382393,100.00,,
+125957470,,cache-misses,3073382393,100.00,,
+15814159,,ls_any_fills_from_sys.mem_io_local,3073382393,100.00,,
+LAB dist=zipf share=100 mode=get n=0 ns_per_op=1467
+### round=2 dist=zipf mode=get n=1000000 bin=A
+20585328966,,cycles,4529588800,100.00,,
+18929788133,,instructions,4529588800,100.00,0.92,insn per cycle
+54291965,,branch-misses,4529588800,100.00,,
+166840504,,cache-misses,4529588800,100.00,,
+31465095,,ls_any_fills_from_sys.mem_io_local,4529588800,100.00,,
+LAB dist=zipf share=100 mode=get n=1000000 ns_per_op=1427
+### round=2 dist=zipf mode=get n=0 bin=A
+14062543669,,cycles,3091675586,100.00,,
+14262952451,,instructions,3091675586,100.00,1.01,insn per cycle
+43648602,,branch-misses,3091675586,100.00,,
+124672665,,cache-misses,3091675586,100.00,,
+16837762,,ls_any_fills_from_sys.mem_io_local,3091675586,100.00,,
+LAB dist=zipf share=100 mode=get n=0 ns_per_op=1467
+### round=3 dist=uniform mode=put n=200000 bin=B
+11592748196,,cycles,2595651220,100.00,,
+23321667659,,instructions,2595651220,100.00,2.01,insn per cycle
+79169832,,branch-misses,2595651220,100.00,,
+60272437,,cache-misses,2595651220,100.00,,
+20966107,,ls_any_fills_from_sys.mem_io_local,2595651220,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=5839
+### round=3 dist=uniform mode=put n=0 bin=B
+6566053017,,cycles,1458953956,100.00,,
+10828474194,,instructions,1458953956,100.00,1.65,insn per cycle
+46451020,,branch-misses,1458953956,100.00,,
+39311012,,cache-misses,1458953956,100.00,,
+14692179,,ls_any_fills_from_sys.mem_io_local,1458953956,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1397
+### round=3 dist=uniform mode=put n=200000 bin=A
+9803374473,,cycles,2178107632,100.00,,
+17911167258,,instructions,2178107632,100.00,1.83,insn per cycle
+63274048,,branch-misses,2178107632,100.00,,
+55873487,,cache-misses,2178107632,100.00,,
+21056567,,ls_any_fills_from_sys.mem_io_local,2178107632,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=3741
+### round=3 dist=uniform mode=put n=0 bin=A
+6455437389,,cycles,1436808122,100.00,,
+10767938263,,instructions,1436808122,100.00,1.67,insn per cycle
+45560766,,branch-misses,1436808122,100.00,,
+36414663,,cache-misses,1436808122,100.00,,
+12740297,,ls_any_fills_from_sys.mem_io_local,1436808122,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1397
+### round=3 dist=uniform mode=get n=1000000 bin=B
+12650689322,,cycles,2795061595,100.00,,
+15186231900,,instructions,2795061595,100.00,1.20,insn per cycle
+54356956,,branch-misses,2795061595,100.00,,
+76576839,,cache-misses,2795061595,100.00,,
+28558057,,ls_any_fills_from_sys.mem_io_local,2795061595,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1418
+### round=3 dist=uniform mode=get n=0 bin=B
+6223830670,,cycles,1385084331,100.00,,
+10578858044,,instructions,1385084331,100.00,1.70,insn per cycle
+43818365,,branch-misses,1385084331,100.00,,
+35438468,,cache-misses,1385084331,100.00,,
+12316922,,ls_any_fills_from_sys.mem_io_local,1385084331,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=1397
+### round=3 dist=uniform mode=get n=1000000 bin=A
+12727494293,,cycles,2814358477,100.00,,
+15188001115,,instructions,2814358477,100.00,1.19,insn per cycle
+54385893,,branch-misses,2814358477,100.00,,
+75542154,,cache-misses,2814358477,100.00,,
+28514209,,ls_any_fills_from_sys.mem_io_local,2814358477,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1436
+### round=3 dist=uniform mode=get n=0 bin=A
+6395137578,,cycles,1420363072,100.00,,
+10751994877,,instructions,1420363072,100.00,1.68,insn per cycle
+45666624,,branch-misses,1420363072,100.00,,
+37149630,,cache-misses,1420363072,100.00,,
+13242346,,ls_any_fills_from_sys.mem_io_local,1420363072,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=1885
+### round=3 dist=zipf mode=put n=200000 bin=B
+19591864383,,cycles,4343295925,100.00,,
+27834957553,,instructions,4343295925,100.00,1.42,insn per cycle
+71156695,,branch-misses,4343295925,100.00,,
+152544133,,cache-misses,4343295925,100.00,,
+25268770,,ls_any_fills_from_sys.mem_io_local,4343295925,100.00,,
+LAB dist=zipf share=100 mode=put n=200000 ns_per_op=5901
+### round=3 dist=zipf mode=put n=0 bin=B
+14416516589,,cycles,3170099971,100.00,,
+14479819727,,instructions,3170099971,100.00,1.00,insn per cycle
+44497754,,branch-misses,3170099971,100.00,,
+131199120,,cache-misses,3170099971,100.00,,
+17491153,,ls_any_fills_from_sys.mem_io_local,3170099971,100.00,,
+LAB dist=zipf share=100 mode=put n=0 ns_per_op=1397
+### round=3 dist=zipf mode=put n=200000 bin=A
+17908344072,,cycles,3947029408,100.00,,
+22186533897,,instructions,3947029408,100.00,1.24,insn per cycle
+60642296,,branch-misses,3947029408,100.00,,
+147712558,,cache-misses,3947029408,100.00,,
+25486719,,ls_any_fills_from_sys.mem_io_local,3947029408,100.00,,
+LAB dist=zipf share=100 mode=put n=200000 ns_per_op=3790
+### round=3 dist=zipf mode=put n=0 bin=A
+14108748926,,cycles,3101739756,100.00,,
+14442090052,,instructions,3101739756,100.00,1.02,insn per cycle
+43858248,,branch-misses,3101739756,100.00,,
+125079369,,cache-misses,3101739756,100.00,,
+15706161,,ls_any_fills_from_sys.mem_io_local,3101739756,100.00,,
+LAB dist=zipf share=100 mode=put n=0 ns_per_op=1397
+### round=3 dist=zipf mode=get n=1000000 bin=B
+20411145114,,cycles,4485666272,100.00,,
+18760281497,,instructions,4485666272,100.00,0.92,insn per cycle
+52170458,,branch-misses,4485666272,100.00,,
+164771782,,cache-misses,4485666272,100.00,,
+31841232,,ls_any_fills_from_sys.mem_io_local,4485666272,100.00,,
+LAB dist=zipf share=100 mode=get n=1000000 ns_per_op=1412
+### round=3 dist=zipf mode=get n=0 bin=B
+13971441545,,cycles,3072953330,100.00,,
+14147540756,,instructions,3072953330,100.00,1.01,insn per cycle
+42156128,,branch-misses,3072953330,100.00,,
+122991967,,cache-misses,3072953330,100.00,,
+15280618,,ls_any_fills_from_sys.mem_io_local,3072953330,100.00,,
+LAB dist=zipf share=100 mode=get n=0 ns_per_op=1885
+### round=3 dist=zipf mode=get n=1000000 bin=A
+20477242503,,cycles,4503427376,100.00,,
+18771474008,,instructions,4503427376,100.00,0.92,insn per cycle
+52588670,,branch-misses,4503427376,100.00,,
+165191217,,cache-misses,4503427376,100.00,,
+31857700,,ls_any_fills_from_sys.mem_io_local,4503427376,100.00,,
+LAB dist=zipf share=100 mode=get n=1000000 ns_per_op=1419
+### round=3 dist=zipf mode=get n=0 bin=A
+14478442213,,cycles,3186872801,100.00,,
+14144054228,,instructions,3186872801,100.00,0.98,insn per cycle
+42255415,,branch-misses,3186872801,100.00,,
+126327933,,cache-misses,3186872801,100.00,,
+18041782,,ls_any_fills_from_sys.mem_io_local,3186872801,100.00,,
+LAB dist=zipf share=100 mode=get n=0 ns_per_op=1886

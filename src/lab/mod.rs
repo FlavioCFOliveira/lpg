@@ -24,6 +24,7 @@ use rustix::fs::{Advice, Mode, OFlags};
 
 use crate::obs::recording::{Metrics, RecordingSink};
 
+mod btree;
 mod files;
 mod generator;
 mod obs;

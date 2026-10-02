@@ -71,11 +71,11 @@ fn create_then_open_round_trip() {
         assert_eq!(e.data().reserved_pages(), MIN_EXTENT_PAGES);
         let m = s.snapshot();
         assert_eq!(m.gauge(DATABASE), Some(64 << 20));
-        assert_eq!(m.gauge(RESERVED_UNUSED), Some((64 << 20) - PAGE_BYTES));
+        assert_eq!(m.gauge(RESERVED_UNUSED), Some((64 << 20) - 2 * PAGE_BYTES));
         drop(e);
         let e = open(d).unwrap();
         assert_eq!(*e.control().lock().unwrap().current(), c);
-        assert_eq!(e.data().unused_pages(), MIN_EXTENT_PAGES - 1);
+        assert_eq!(e.data().unused_pages(), MIN_EXTENT_PAGES - 2);
         assert_header_page(&e);
     }
 }

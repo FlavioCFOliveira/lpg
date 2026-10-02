@@ -1,0 +1,6 @@
+t14-ht-get-0 | calls to allocation functions: 65202 (45723/s) peak heap memory consumption: 593.37M 
+t14-ht-get-1000000 | calls to allocation functions: 65203 (22608/s) peak heap memory consumption: 596.57M 
+t14-ht-put-0 | calls to allocation functions: 65203 (44476/s) peak heap memory consumption: 633.62M 
+t14-ht-put-200000 | calls to allocation functions: 267065 (98294/s) peak heap memory consumption: 640.22M 
+t14-ht-scan-0 | calls to allocation functions: 65202 (44597/s) peak heap memory consumption: 593.37M 
+t14-ht-scan-200000 | calls to allocation functions: 1092936 (552266/s) peak heap memory consumption: 593.37M 

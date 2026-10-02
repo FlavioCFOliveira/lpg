@@ -1,0 +1,168 @@
+### round=1 share=100 mode=get n=1000000
+13029640407,,cycles,2883577791,100.00,,
+15383712430,,instructions,2883577791,100.00,1.18,insn per cycle
+56357808,,branch-misses,2883577791,100.00,,
+77213510,,cache-misses,2883577791,100.00,,
+29135769,,ls_any_fills_from_sys.mem_io_local,2883577791,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1460
+### round=1 share=100 mode=get n=0
+6311632828,,cycles,1399879075,100.00,,
+10762966494,,instructions,1399879075,100.00,1.71,insn per cycle
+45199372,,branch-misses,1399879075,100.00,,
+37423819,,cache-misses,1399879075,100.00,,
+12491561,,ls_any_fills_from_sys.mem_io_local,1399879075,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=1397
+### round=1 share=10 mode=get n=200000
+10076424541,,cycles,2239682435,100.00,,
+16407358205,,instructions,2239682435,100.00,1.63,insn per cycle
+46137653,,branch-misses,2239682435,100.00,,
+68202844,,cache-misses,2239682435,100.00,,
+42567667,,ls_any_fills_from_sys.mem_io_local,2239682435,100.00,,
+LAB dist=uniform share=10 mode=get n=200000 ns_per_op=3626
+### round=1 share=10 mode=get n=0
+6826426607,,cycles,1524823040,100.00,,
+12542469230,,instructions,1524823040,100.00,1.84,insn per cycle
+32194222,,branch-misses,1524823040,100.00,,
+47602697,,cache-misses,1524823040,100.00,,
+24720947,,ls_any_fills_from_sys.mem_io_local,1524823040,100.00,,
+LAB dist=uniform share=10 mode=get n=0 ns_per_op=1396
+### round=1 share=100 mode=scan n=200000
+7726714233,,cycles,1719834499,100.00,,
+12172463755,,instructions,1719834499,100.00,1.58,insn per cycle
+47081675,,branch-misses,1719834499,100.00,,
+43248431,,cache-misses,1719834499,100.00,,
+14937170,,ls_any_fills_from_sys.mem_io_local,1719834499,100.00,,
+LAB dist=uniform share=100 mode=scan n=200000 ns_per_op=1689
+### round=1 share=100 mode=scan n=0
+6116713235,,cycles,1360334714,100.00,,
+10645094780,,instructions,1360334714,100.00,1.74,insn per cycle
+44299823,,branch-misses,1360334714,100.00,,
+34868637,,cache-misses,1360334714,100.00,,
+10908412,,ls_any_fills_from_sys.mem_io_local,1360334714,100.00,,
+LAB dist=uniform share=100 mode=scan n=0 ns_per_op=1467
+### round=1 share=100 mode=put n=200000
+11581681186,,cycles,2590770819,100.00,,
+23488224738,,instructions,2590770819,100.00,2.03,insn per cycle
+80680108,,branch-misses,2590770819,100.00,,
+61799660,,cache-misses,2590770819,100.00,,
+20060629,,ls_any_fills_from_sys.mem_io_local,2590770819,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=5850
+### round=1 share=100 mode=put n=0
+6431888840,,cycles,1430549758,100.00,,
+10897821639,,instructions,1430549758,100.00,1.69,insn per cycle
+46537628,,branch-misses,1430549758,100.00,,
+36613450,,cache-misses,1430549758,100.00,,
+11886129,,ls_any_fills_from_sys.mem_io_local,1430549758,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1956
+### round=2 share=100 mode=get n=1000000
+12719008221,,cycles,2816742141,100.00,,
+15302185401,,instructions,2816742141,100.00,1.20,insn per cycle
+55648341,,branch-misses,2816742141,100.00,,
+75983457,,cache-misses,2816742141,100.00,,
+28361006,,ls_any_fills_from_sys.mem_io_local,2816742141,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1434
+### round=2 share=100 mode=get n=0
+6379001683,,cycles,1420147396,100.00,,
+10820679833,,instructions,1420147396,100.00,1.70,insn per cycle
+46052346,,branch-misses,1420147396,100.00,,
+37634629,,cache-misses,1420147396,100.00,,
+12891049,,ls_any_fills_from_sys.mem_io_local,1420147396,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=1886
+### round=2 share=10 mode=get n=200000
+10127841081,,cycles,2254667076,100.00,,
+16405429908,,instructions,2254667076,100.00,1.62,insn per cycle
+46176129,,branch-misses,2254667076,100.00,,
+67552374,,cache-misses,2254667076,100.00,,
+42816914,,ls_any_fills_from_sys.mem_io_local,2254667076,100.00,,
+LAB dist=uniform share=10 mode=get n=200000 ns_per_op=3681
+### round=2 share=10 mode=get n=0
+6736753972,,cycles,1503930254,100.00,,
+12541230288,,instructions,1503930254,100.00,1.86,insn per cycle
+32040656,,branch-misses,1503930254,100.00,,
+46738503,,cache-misses,1503930254,100.00,,
+24671666,,ls_any_fills_from_sys.mem_io_local,1503930254,100.00,,
+LAB dist=uniform share=10 mode=get n=0 ns_per_op=1956
+### round=2 share=100 mode=scan n=200000
+7682990303,,cycles,1707948505,100.00,,
+12168691695,,instructions,1707948505,100.00,1.58,insn per cycle
+46530829,,branch-misses,1707948505,100.00,,
+44949646,,cache-misses,1707948505,100.00,,
+15742782,,ls_any_fills_from_sys.mem_io_local,1707948505,100.00,,
+LAB dist=uniform share=100 mode=scan n=200000 ns_per_op=1665
+### round=2 share=100 mode=scan n=0
+6275340118,,cycles,1395821975,100.00,,
+10764257362,,instructions,1395821975,100.00,1.72,insn per cycle
+45312608,,branch-misses,1395821975,100.00,,
+37330163,,cache-misses,1395821975,100.00,,
+12678578,,ls_any_fills_from_sys.mem_io_local,1395821975,100.00,,
+LAB dist=uniform share=100 mode=scan n=0 ns_per_op=1886
+### round=2 share=100 mode=put n=200000
+11683883533,,cycles,2620581140,100.00,,
+23449858079,,instructions,2620581140,100.00,2.01,insn per cycle
+79932422,,branch-misses,2620581140,100.00,,
+61966106,,cache-misses,2620581140,100.00,,
+20218412,,ls_any_fills_from_sys.mem_io_local,2620581140,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=5977
+### round=2 share=100 mode=put n=0
+6468183575,,cycles,1454476502,100.00,,
+10818564239,,instructions,1454476502,100.00,1.67,insn per cycle
+45521939,,branch-misses,1454476502,100.00,,
+37140551,,cache-misses,1454476502,100.00,,
+12973991,,ls_any_fills_from_sys.mem_io_local,1454476502,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1466
+### round=3 share=100 mode=get n=1000000
+12687178955,,cycles,2828125727,100.00,,
+15257662814,,instructions,2828125727,100.00,1.20,insn per cycle
+54955091,,branch-misses,2828125727,100.00,,
+74577845,,cache-misses,2828125727,100.00,,
+27246025,,ls_any_fills_from_sys.mem_io_local,2828125727,100.00,,
+LAB dist=uniform share=100 mode=get n=1000000 ns_per_op=1421
+### round=3 share=100 mode=get n=0
+6240437764,,cycles,1391302433,100.00,,
+10756936930,,instructions,1391302433,100.00,1.72,insn per cycle
+45328280,,branch-misses,1391302433,100.00,,
+36257563,,cache-misses,1391302433,100.00,,
+11938381,,ls_any_fills_from_sys.mem_io_local,1391302433,100.00,,
+LAB dist=uniform share=100 mode=get n=0 ns_per_op=2445
+### round=3 share=10 mode=get n=200000
+10055828786,,cycles,2240924928,100.00,,
+16407554177,,instructions,2240924928,100.00,1.63,insn per cycle
+46262229,,branch-misses,2240924928,100.00,,
+67508460,,cache-misses,2240924928,100.00,,
+42775716,,ls_any_fills_from_sys.mem_io_local,2240924928,100.00,,
+LAB dist=uniform share=10 mode=get n=200000 ns_per_op=3696
+### round=3 share=10 mode=get n=0
+6824478566,,cycles,1522917087,100.00,,
+12590650175,,instructions,1522917087,100.00,1.84,insn per cycle
+32700748,,branch-misses,1522917087,100.00,,
+47994511,,cache-misses,1522917087,100.00,,
+24723373,,ls_any_fills_from_sys.mem_io_local,1522917087,100.00,,
+LAB dist=uniform share=10 mode=get n=0 ns_per_op=1885
+### round=3 share=100 mode=scan n=200000
+7913231944,,cycles,1760378220,100.00,,
+12344536015,,instructions,1760378220,100.00,1.56,insn per cycle
+48814270,,branch-misses,1760378220,100.00,,
+48603740,,cache-misses,1760378220,100.00,,
+16589975,,ls_any_fills_from_sys.mem_io_local,1760378220,100.00,,
+LAB dist=uniform share=100 mode=scan n=200000 ns_per_op=1607
+### round=3 share=100 mode=scan n=0
+6447785599,,cycles,1435610180,100.00,,
+10818052564,,instructions,1435610180,100.00,1.68,insn per cycle
+45982800,,branch-misses,1435610180,100.00,,
+37666728,,cache-misses,1435610180,100.00,,
+12857796,,ls_any_fills_from_sys.mem_io_local,1435610180,100.00,,
+LAB dist=uniform share=100 mode=scan n=0 ns_per_op=1466
+### round=3 share=100 mode=put n=200000
+11656786870,,cycles,2613255472,100.00,,
+23493533402,,instructions,2613255472,100.00,2.02,insn per cycle
+80446986,,branch-misses,2613255472,100.00,,
+60926981,,cache-misses,2613255472,100.00,,
+19571213,,ls_any_fills_from_sys.mem_io_local,2613255472,100.00,,
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=5934
+### round=3 share=100 mode=put n=0
+6470097265,,cycles,1440586762,100.00,,
+10895460465,,instructions,1440586762,100.00,1.68,insn per cycle
+46652027,,branch-misses,1440586762,100.00,,
+37441476,,cache-misses,1440586762,100.00,,
+12545358,,ls_any_fills_from_sys.mem_io_local,1440586762,100.00,,
+LAB dist=uniform share=100 mode=put n=0 ns_per_op=1956

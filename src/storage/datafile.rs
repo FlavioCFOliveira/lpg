@@ -29,7 +29,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use super::error::{Error, Health, Result};
 use super::page::{self, PAGE_BYTES, PAGE_SIZE, PageType};
-use super::{Storage, StorageFile};
+use super::{Storage, StorageFile, btree};
 use crate::obs::MetricsSink;
 use crate::obs::names::store_size::{DATABASE, RESERVED_UNUSED};
 
@@ -70,6 +70,15 @@ impl Header {
         page::seal(buf);
     }
 
+    /// Writes the free-list head, next tree identifier and page count into
+    /// the header page image `buf`, leaving its page header and the other
+    /// fields alone. The image is sealed when written.
+    pub(crate) fn write_fields(&self, buf: &mut [u8]) {
+        buf[40..48].copy_from_slice(&self.free_list_head.to_le_bytes());
+        buf[48..56].copy_from_slice(&self.next_tree_id.to_le_bytes());
+        buf[56..64].copy_from_slice(&self.page_count.to_le_bytes());
+    }
+
     /// Reads a verified header page image.
     ///
     /// # Errors
@@ -105,8 +114,10 @@ pub(crate) struct Datafile {
 }
 
 impl Datafile {
-    /// Creates `path` with page 0 written and its first extent reserved,
-    /// and syncs it.
+    /// Creates `path` with its first extent reserved, page 0 and page 1
+    /// written, and syncs it. Page 1 is the empty root leaf of the tree
+    /// directory (TS-05); without it, the first read of page 1 would fail
+    /// its checksum.
     ///
     /// # Errors
     ///
@@ -126,18 +137,22 @@ impl Datafile {
             health,
             sink,
         };
-        data.ensure(1)?;
+        data.ensure(2)?;
         let header_page = data.allocate()?;
-        debug_assert_eq!(header_page, 0);
+        let directory_root = data.allocate()?;
+        debug_assert_eq!((header_page, directory_root), (0, 1));
         let mut buf = vec![0u8; PAGE_SIZE];
         Header {
             format_version,
             free_list_head: 0,
             next_tree_id: 1,
-            page_count: 1,
+            page_count: 2,
         }
         .encode(&mut buf);
         data.write_page(0, &buf)?;
+        btree::node::init_empty_leaf(&mut buf, 0);
+        page::seal(&mut buf);
+        data.write_page(1, &buf)?;
         data.sync()?;
         Ok(data)
     }
@@ -178,6 +193,13 @@ impl Datafile {
         data.used.store(header.page_count, Ordering::Release);
         data.report();
         Ok((data, header))
+    }
+
+    /// Pages in use or on the free list: the header's page count, kept
+    /// here as pages come into use and written to page 0 by each batch.
+    #[must_use]
+    pub(crate) fn page_count(&self) -> u64 {
+        self.used.load(Ordering::Acquire)
     }
 
     /// Pages reserved, that is the file length in pages.
@@ -279,6 +301,27 @@ impl Datafile {
         }
     }
 
+    /// Reads page `page_no` into `buf` and returns whether its checksum
+    /// holds, without setting the unusable latch on a mismatch: for the
+    /// integrity check, which reports every bad page.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::InvalidArgument`] for a page outside the file; a failed or
+    /// short read, which sets the unusable latch.
+    pub(crate) fn read_page_unverified(&self, page_no: u64, buf: &mut [u8]) -> Result<bool> {
+        if page_no >= self.reserved_pages() {
+            return Err(Error::InvalidArgument("page outside the data file"));
+        }
+        match self.file.read_at(buf, page_no * PAGE_BYTES) {
+            Err(e) => Err(self.health.fail(e.into())),
+            Ok(n) if n < PAGE_SIZE => Err(self.health.fail(Error::Corruption(format!(
+                "data file ends inside page {page_no}"
+            )))),
+            Ok(_) => Ok(page::verify(buf)),
+        }
+    }
+
     /// Writes the sealed page image `buf` at page `page_no`. Only reserved
     /// pages are written (TS-05).
     ///
@@ -345,10 +388,10 @@ mod tests {
         let path = dir.path().join("data-1");
         let (data, sink) = create(&FsStorage, &path);
         assert_eq!(data.reserved_pages(), MIN_EXTENT_PAGES);
-        assert_eq!(data.unused_pages(), MIN_EXTENT_PAGES - 1);
+        assert_eq!(data.unused_pages(), MIN_EXTENT_PAGES - 2);
         let m = sink.snapshot();
         assert_eq!(m.gauge(DATABASE), Some(64 << 20));
-        assert_eq!(m.gauge(RESERVED_UNUSED), Some((64 << 20) - PAGE_BYTES));
+        assert_eq!(m.gauge(RESERVED_UNUSED), Some((64 << 20) - 2 * PAGE_BYTES));
         drop(data);
         let (data, header) =
             Datafile::open(FsStorage.open(&path).unwrap(), Arc::default(), sink).unwrap();
@@ -358,10 +401,14 @@ mod tests {
                 format_version: 1,
                 free_list_head: 0,
                 next_tree_id: 1,
-                page_count: 1
+                page_count: 2
             }
         );
-        assert_eq!(data.unused_pages(), MIN_EXTENT_PAGES - 1);
+        assert_eq!(data.unused_pages(), MIN_EXTENT_PAGES - 2);
+        // Page 1, the directory root, passes its checksum (#13 finding).
+        let mut buf = vec![0u8; PAGE_SIZE];
+        data.read_page(1, &mut buf).unwrap();
+        assert_eq!(page::page_type(&buf), Some(PageType::Leaf));
     }
 
     #[test]
@@ -371,7 +418,7 @@ mod tests {
         let path = dir.path().join("data-1");
         let (data, _) = create(&s, &path);
         let before = s.calls().len();
-        data.ensure(MIN_EXTENT_PAGES - 1).unwrap(); // already reserved
+        data.ensure(MIN_EXTENT_PAGES - 2).unwrap(); // already reserved
         assert_eq!(s.calls().len(), before);
         data.ensure(2 * MIN_EXTENT_PAGES).unwrap(); // needs two more extents
         let reserves: Vec<_> = s.calls()[before..]
@@ -388,10 +435,10 @@ mod tests {
             }]
         );
         assert_eq!(data.reserved_pages(), 3 * MIN_EXTENT_PAGES);
-        for expected in 1..4 {
+        for expected in 2..5 {
             assert_eq!(data.allocate().unwrap(), expected);
         }
-        assert_eq!(data.unused_pages(), 3 * MIN_EXTENT_PAGES - 4);
+        assert_eq!(data.unused_pages(), 3 * MIN_EXTENT_PAGES - 5);
     }
 
     #[test]
@@ -423,7 +470,7 @@ mod tests {
     fn allocate_without_reserve_is_enospc() {
         let dir = tempfile::tempdir().unwrap();
         let (data, _) = create(&FsStorage, &dir.path().join("data-1"));
-        for _ in 1..MIN_EXTENT_PAGES {
+        for _ in 2..MIN_EXTENT_PAGES {
             data.allocate().unwrap();
         }
         assert!(data.allocate().unwrap_err().is_no_space());
