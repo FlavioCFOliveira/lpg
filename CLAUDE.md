@@ -58,7 +58,10 @@ Profiling tooling:
 
 > **Copying is forbidden.** Never copy code, text or any other content from another project. Consult other projects only to study them and draw inspiration from their reference approaches, so that this project's own implementation is of the highest quality.
 
-- **Sole exception:** the `opengql/grammar` project (Apache-2.0) may be used as a grammar and test artefact for GQL conformance verification. Preserve its licence and attribution unchanged.
+- **Sole exceptions:** the following Apache-2.0 projects may be used as test artefacts for GQL conformance verification. Preserve their licence and attribution unchanged.
+  - `opengql/grammar`: the GQL grammar, including a parser generated from it in a test-only crate.
+  - `opengql/tck`: the GQL technology compatibility kit.
+  - The openCypher TCK: only the scenarios applicable to GQL.
 
 - Base solutions on proven open-source projects whose licence permits reading their source code for inspiration. Use their strategies, architectures and approaches as starting points instead of reinventing them from scratch.
 - Consult these references:
@@ -69,6 +72,20 @@ Profiling tooling:
   1. **Learn first.** The first approach must never reinvent the wheel. Make an informed decision by studying the references above and identifying **only the best** approaches of each project, then implement them originally in this project.
   2. **Improve second.** Only when that process reveals a measurable improvement opportunity (see [Honest empiricism](#honest-empiricism-mandatory)), proceed to improve on the chosen approach.
 - Treat source code as the most reliable source of truth. Clone each reference repository locally under `/tmp/` (for example, `/tmp/<project>`) and read the code directly, for study only.
+
+### Research and decision-making (modus operandi)
+
+Apply this procedure to every research need and every technical decision:
+
+1. **Study the right references.** For each decision, study together:
+   - the leading open-source projects in that specific area, meaning the recognised reference for that exact problem; and
+   - the Rust crates that already implement exactly that functionality, stating for each one whether it is used as a dependency or only studied.
+
+   Skip projects that are not references for that area.
+2. **Decide from patterns, not experiments.** Base each decision on the approaches that recur across the references and on their documented reasons. Do not run extensive tests to reach a decision. Measurement of the resulting code follows [Laboratory development](#laboratory-development-primary-principle-for-code).
+3. **Decide autonomously.** When a decision grounded in the references satisfies the project's requirements, take it and record it with its evidence. Do not ask the user.
+4. **Ask only on gaps or conflicts.** Ask the user only when the information is incomplete, conflicting or contradictory. Name the requirements or statements involved and offer two to four options, with the recommended option first.
+5. **Be assertive.** State the decision, its evidence and its justification. Omit digressions.
 
 ## Subagents
 
