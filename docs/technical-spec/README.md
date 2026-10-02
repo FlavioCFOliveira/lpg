@@ -71,6 +71,7 @@ Checked between 2026-09-24 and 2026-10-02.
 | R-DUCK | DuckDB, <https://github.com/duckdb/duckdb> | `0b9cba2` (2026-09-24) | MIT |
 | R-REDB | redb, <https://github.com/cberner/redb> | `7677a88` (2026-09-23) | MIT/Apache-2.0 |
 | R-LMDB | LMDB, <https://github.com/LMDB/lmdb> | `700e10f` (2026-08-19) | OpenLDAP Public License 2.8 |
+| R-ROCKS | RocksDB, <https://github.com/facebook/rocksdb> | `4cd0450` (2026-10-01) | GPLv2 or Apache-2.0 |
 | R-LEVELDB | LevelDB, <https://github.com/google/leveldb> | `7ee830d` (2026-03-10) | BSD-3-Clause |
 | R-FJALL | fjall, <https://github.com/fjall-rs/fjall> | `3adaa50` (2026-08-30) | MIT/Apache-2.0 |
 | R-TURSO | turso, <https://github.com/tursodatabase/turso> | `300b692` (2026-10-02) | MIT |

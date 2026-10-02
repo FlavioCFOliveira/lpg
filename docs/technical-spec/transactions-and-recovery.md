@@ -23,13 +23,13 @@ related:
   - **Ordering.** Group *k*+1 is written only after the `sync_data` of group *k* has returned, so only the last group can be partly on disk.
   - **Capture.** Images are copied under the commit latch ([TS-16](#ts-16-commit-protocol)), so an image never holds a change from a later group. Image memory is outside the memory cap ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). Garbage collection changes pages under the same latch, so its changes also belong to exactly one group.
   - **Writer.** One dedicated thread per database writes each group and calls `sync_data`. Committers wait on a notification, so no tokio worker blocks on a flush.
-  - **Segments.** 16 MiB each, created by writing zeros, named by their first LSN.
+  - **Segments.** 16 MiB each, created by writing zeros. Each is a file `wal-<g>-<lsn>` in the database location ([TS-05](storage.md#ts-05-files-and-pages)): `<g>` is the generation, in decimal as in `data-<g>`; `<lsn>` is the segment's first LSN, a `u64`, written as 16 lowercase hexadecimal digits, zero-padded. A byte-wise sort of the names `list` returns therefore orders the segments of one generation by LSN. The writer creates every segment, the first one included.
   - **Errors.**
     - ENOSPC while creating a segment fails the transaction that needed the space; reads continue (FR-REC-007).
     - Any other failed WAL write or `sync_data` sets the unusable latch ([TS-12](storage.md#ts-12-checksums-corruption-and-integrity-check)).
 - **Satisfies**: FR-TX-001, FR-TX-002, FR-REC-001, FR-REC-002, FR-REC-006, FR-REC-007, FR-REC-008, FR-OBS-001.
 - **Evidence**:
-  - PostgreSQL WAL: CRC-32C per record (R-PG `src/include/access/xlogrecord.h:49`); segments zero-filled at creation, `wal_init_zero = true` (`src/backend/access/transam/xlog.c:134`).
+  - PostgreSQL WAL: CRC-32C per record (R-PG `src/include/access/xlogrecord.h:49`); segments zero-filled at creation, `wal_init_zero = true` (`src/backend/access/transam/xlog.c:134`); segment names are fixed-width, zero-padded hexadecimal (`%08X%08X%08X`, `src/include/access/xlog_internal.h:164-170`).
   - SQLite WAL: fixed-size page-image frames, each transaction closed by a commit frame (R-SQLITE `src/wal.c`, header comment).
   - Neo4j appends to its log, then applies to the store (R-NEO `kernel/.../api/InternalTransactionCommitProcess.java:77-80`). A dedicated `LOG_WRITER` thread drains commits in batches (`kernel/.../wal/TransactionLogQueue.java:111, 220`).
   - InnoDB: dedicated `log_writer` and `log_flusher` threads (R-INNO `log/log0write.cc:108-122`).
@@ -85,7 +85,7 @@ related:
   1. If `CONTROL` is absent, fail without creating any file (FR-DB-004).
   2. Take `LOCK` ([TS-27](storage.md#ts-27-single-process-lock)).
   3. Read both `CONTROL` slots and use the valid one with the higher sequence number. If only one is valid, use it; if none is, fail ([TS-05](storage.md#ts-05-files-and-pages)). Check the format version ([TS-28](operations.md#ts-28-format-versioning-and-migration)).
-  4. Read the WAL from the redo point, frame by frame. Apply the page images of each group whose commit frame is valid, in order. Before writing a page beyond the end of `data-<g>`, extend the file as [TS-05](storage.md#ts-05-files-and-pages) states.
+  4. Read the WAL from the redo point, frame by frame. If no segment of generation `<g>` exists, the log is empty and the redo point is its end; this is the state after create and after migration ([TS-28](operations.md#ts-28-format-versioning-and-migration)). Apply the page images of each group whose commit frame is valid, in order. Before writing a page beyond the end of `data-<g>`, extend the file as [TS-05](storage.md#ts-05-files-and-pages) states.
   5. At the first invalid frame, look at the frames that follow it up to the end of the WAL:
      - if any of them is a valid commit frame of a later group, the WAL is corrupt and the open fails (FR-REC-003, FR-REC-008);
      - otherwise the invalid frame belongs to the last group, which was not synced. That group is a torn tail and is discarded.

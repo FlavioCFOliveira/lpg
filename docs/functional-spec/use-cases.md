@@ -44,6 +44,7 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
   - A3. This process has the database open: open is refused ([FR-DB-007](functional-requirements.md#database-lifecycle)).
   - A4. Corruption is detected: open fails and reports it ([FR-REC-003](functional-requirements.md#recovery)). Exactly one of the two metadata copies is invalid: this is not corruption; open continues from the valid copy and a metric reports the event ([FR-REC-003](functional-requirements.md#recovery)).
   - A5. The format is older or newer than the crate's: open fails ([FR-OPS-004](functional-requirements.md#operations), [FR-OPS-013](functional-requirements.md#operations)).
+  - A6. The database's lock file is missing: open fails with an error that names the missing lock file, distinct from corruption, and creates nothing. Recreating the file could let a second handle open the database ([FR-DB-006](functional-requirements.md#database-lifecycle), [FR-DB-007](functional-requirements.md#database-lifecycle)) (user decision 2026-10-02).
 - **Postconditions**: The database is open through one handle.
 
 ### UC-DB-003 Close a database

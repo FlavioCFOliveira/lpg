@@ -38,22 +38,25 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - `LOCK`, the lock target ([TS-27](#ts-27-single-process-lock));
     - `CONTROL`;
     - `data-<g>`, one paged file whose page 0 is the header page (below);
-    - `wal-<g>/`, the WAL segments ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
+    - `wal-<g>-<lsn>`, the WAL segments ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 
-    `<g>` is the file-set generation, starting at 1. Only migration changes it ([TS-28](operations.md#ts-28-format-versioning-and-migration)). At open, files of any other generation are removed.
+    `<g>` is the file-set generation, starting at 1. Only migration changes it ([TS-28](operations.md#ts-28-format-versioning-and-migration)). At open, files of any other generation are removed: `data-<h>` and every `wal-<h>-<lsn>` with `<h>` ≠ `<g>`.
+
+    Every file lies directly in the location; there is no subdirectory, because the storage trait has no directory operation ([TS-03](interfaces.md#ts-03-storage-abstraction)). One `sync_dir` of the location therefore makes the names of `CONTROL`, data and WAL files durable (user decision 2026-10-02).
   - **`CONTROL`** has two 4 KiB slots, written alternately in place with `write_at` and then `sync_data`. Each slot holds:
     - a sequence number, magic, format version, page size, database UUID and active generation `<g>`;
     - a clean-shutdown flag and the checkpoint redo point;
     - the counters: highest commit timestamp, next element identifier, next catalog object identifier, next token identifier;
     - a CRC-32C.
 
-    The valid slot with the higher sequence number is authoritative. Page 0 of `data-<g>` must hold the same format version; a mismatch is corruption.
+    The valid slot with the higher sequence number is authoritative. Page 0 of `data-<g>` must hold the same format version; a mismatch is corruption. If `data-<g>` is absent while `CONTROL` exists, the open fails as corruption (FR-REC-003); open never recreates it.
     - **One invalid slot** at open is treated as a torn `CONTROL` write: the database opens from the valid slot, the next `CONTROL` write (always to the non-authoritative slot) rewrites the invalid one, and the event is counted in a metric ([TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events)). This is the exception to FR-REC-003 set by the user decision of 2026-10-02. If both slots are invalid, the open fails (FR-REC-003).
   - **Pages.** 8 KiB, fixed at creation. Page header: CRC-32C, page LSN, page type, tree identifier. Leaf and inner pages are slotted.
   - **Overflow.** A value longer than 2 048 bytes, a quarter of the page, is stored whole in a chain of overflow pages. Its entry keeps the value length and the first overflow page number.
   - **Key size.** A key is at most 1 024 bytes; a write with a longer key fails. A leaf therefore always holds its high key ([TS-06](#ts-06-graph-layout)) and at least two entries of the largest size, so every split succeeds.
   - **Header page and tree directory.**
-    - Page 0 holds the magic, the format version, the first trunk page of the free list and the next tree identifier.
+    - Page 0 holds the magic, the format version, the first trunk page of the free list, the next tree identifier and `page_count`.
+    - `page_count` is the high-water mark of `data-<g>`: pages below it are in use or in the free list; pages at or above it are reserved but unused. Without it, the reserved but unused pages could not be told from used pages after a reopen.
     - Page 1 is the root of the **tree directory**, a B+tree that maps each tree identifier to its root page. The directory is tree 0. Other tree identifiers are `u64`, start at 1, are monotonic and are never reused.
     - A root page keeps its number for the life of its tree: a root split moves the root's entries into new child pages and leaves the root in place. The directory therefore changes only when a tree is created, dropped, or installed by a bottom-up build ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints), [TS-26](operations.md#ts-26-backup-restore-import-and-export)).
     - Pages 0 and 1 change like any other page: under the commit latch, with their images in the WAL ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). Each change is therefore atomic with its commit.
@@ -74,7 +77,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - Before taking the commit latch, a committing transaction makes sure the reserve of unused pages covers its bound: 2 × (⌈write-set bytes / 4 KiB⌉ + trees written) + the sum of the heights of the trees written. Each leaf split creates at most one page per level, and splits leave pages at least half full.
     - If a reservation hits ENOSPC, that transaction fails and reads continue (FR-REC-007).
     - Checkpoints and eviction write only into reserved space.
-  - **Create** fails, leaving everything unchanged, if `CONTROL` already exists (FR-DB-003). Otherwise it creates and locks `LOCK`, creates `data-1` and `wal-1/`, and writes `CONTROL` last, then `sync_dir`. A location is a database exactly when `CONTROL` exists.
+  - **Create** fails, leaving everything unchanged, if `CONTROL` already exists (FR-DB-003). Otherwise it creates and locks `LOCK`, creates `data-1` with `sync_data`, and calls `sync_dir`; it then writes `CONTROL` last and calls `sync_dir` again. The first `sync_dir` ensures `CONTROL` can never be durable while `data-1` is not. Create writes no WAL segment; the WAL writer creates the first one ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). A location is a database exactly when `CONTROL` exists.
 - **Satisfies**: FR-STO-001, FR-STO-003, FR-DB-003, FR-DB-004, FR-REC-003, FR-REC-007, FR-REC-008, FR-OPS-004, FR-OPS-011, FR-TYPE-003.
 - **Evidence**:
   - Default page sizes: PostgreSQL 8 KiB; Neo4j `PAGE_SIZE = 8192` (R-NEO `community/io/.../pagecache/PageCache.java:51`); InnoDB 16 KiB; SQLite and Kuzu 4 KiB (R-KUZU `CMakeLists.txt:114`). M-LAYOUT ran on 8 KiB pages.
@@ -84,9 +87,13 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - Key size. PostgreSQL limits a B-tree item to a third of the page so that three items fit on every page (R-PG `src/include/access/nbtree.h:157-169`). LMDB also fixes a maximum key size (R-LMDB `libraries/liblmdb/mdb.c:713, 12685`).
   - Recovery extends the file. PostgreSQL redo extends a relation when a logged page lies beyond its end, "in recovery only" (R-PG `src/backend/access/transam/xlogutils.c:525-543`). SQLite's checkpoint gives the file a size hint before writing pages beyond its end (R-SQLITE `src/wal.c:2378`).
   - Header page and directory. SQLite page 1 holds the first free-list trunk page (R-SQLITE `src/btreeInt.h:68-69`) and is the root of the schema tree, which maps names to root pages (`src/sqliteInt.h:1285`). A root split keeps the root in place (`src/btree.c:9060-9068`, `balance_deeper`). LMDB's meta page holds the free-page tree and the main tree, which maps names to tree roots (R-LMDB `libraries/liblmdb/mdb.c:1377, 12331-12341`). redb's header holds the root of its table tree, which maps names to table roots (R-REDB `docs/design.md:16, 132`).
+  - Page count. SQLite's file header holds the database size in pages at offset 28 (R-SQLITE `src/btreeInt.h:67`). InnoDB's space header, on the first page of the space, holds `FSP_FREE_LIMIT`, at and above which pages are free by definition (R-INNO `include/fsp0fsp.h:128-130, 141-146`).
+  - Flat files. SQLite names its WAL by appending `-wal` to the database path, so the WAL lies beside the database (R-SQLITE `src/pager.c:4979-4984`). A redb database is one file (R-REDB `docs/design.md:14`).
+  - Missing data file. PostgreSQL reports an error when the first segment of a relation is missing, and never creates one in its place (R-PG `src/backend/storage/smgr/md.c:665-697`).
   - Underflow. PostgreSQL deletes only empty pages: merging "might miss the items" in a concurrent scan; it never deletes the right-most page of a level, so height never decreases (R-PG `src/backend/access/nbtree/README:234-241, 247-253, 365-367`).
   - Reuse. PostgreSQL recycles a deleted page only when "there is no possible scan or search that has a reference to it" (R-PG `src/backend/access/nbtree/README:386-391`). LMDB reuses freed pages only below its oldest reader (R-LMDB `libraries/liblmdb/mdb.c:2640-2656, 2802-2812`). redb reuses a freed page "only after all read transactions that could reference it have completed" (R-REDB `docs/design.md:388-389`).
 - **Rejected**:
+  - A `wal-<g>/` directory (PostgreSQL `pg_wal`, R-PG `src/include/access/xlog_internal.h:148`; RocksDB `Env::CreateDir` and `CreateDirIfMissing`, R-ROCKS `include/rocksdb/env.h:360-365`, used for the WAL directory at `db/db_impl/db_impl_open.cc:2687`): [TS-03](interfaces.md#ts-03-storage-abstraction) would need `create_dir` and `remove_dir`, which every application storage would have to implement, and each segment would need a `sync_dir` of a second directory (user decision 2026-10-02).
   - Replacing `CONTROL` by rename at each checkpoint: it creates a file, which can hit ENOSPC outside any transaction.
   - Growing the file when a checkpoint or eviction first writes a page: ENOSPC would then hit background work and make the database unusable, which FR-REC-007 forbids.
   - One file per graph or per tree: more files to sync, rename and back up, for no requirement.
@@ -224,6 +231,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 
 - **Decision**:
   - Open first checks that `CONTROL` exists; if not, it fails without creating any file (FR-DB-004).
+  - If `CONTROL` exists and `LOCK` is missing, open fails with the error "`LOCK` missing", distinct from corruption, and creates no file (user decision 2026-10-02). Create, restore and migration always leave `LOCK` in place ([TS-05](#ts-05-files-and-pages), [TS-26](operations.md#ts-26-backup-restore-import-and-export), [TS-28](operations.md#ts-28-format-versioning-and-migration)), so it is missing only after an external deletion, or when the location is a backup artefact ([TS-26](operations.md#ts-26-backup-restore-import-and-export)). Recreating it would let a second handle open while the first still holds the lock on the deleted file (FR-DB-006, FR-DB-007).
   - Create and open then lock `LOCK` with `File::try_lock` through `Storage::try_lock`. A second open from another process, or from the same process, gets `WouldBlock` and fails.
   - The lock is released when the last clone of the handle is closed or dropped ([TS-02](architecture.md#ts-02-async-api-and-threading)).
 - **Satisfies**: FR-DB-004, FR-DB-006, FR-DB-007, FR-STO-002, FR-STO-004.
@@ -235,3 +243,5 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 - **Rejected**:
   - `fcntl` record locks: per process, so they cannot detect a second open in the same process.
   - PID files: they need stale-lock detection.
+  - Recreating a missing `LOCK` and accepting the risk (LMDB opens its lock file with `O_CREAT`, R-LMDB `libraries/liblmdb/mdb.c:5339, 5346, 5417`; `mdb_env_setup_locks`, `5957`): two handles can then hold the database at once.
+  - Recreating a missing `LOCK` and rechecking it periodically (PostgreSQL creates `postmaster.pid` with `O_CREAT | O_EXCL` at start, R-PG `src/backend/utils/init/miscinit.c:1226`; once a minute it reopens the file, and a missing file or a foreign PID forces an immediate shutdown, `miscinit.c:1649-1707`, `src/backend/postmaster/postmaster.c:1794-1813`): a background task, and two handles coexist until the next recheck, which then stops the first one.
