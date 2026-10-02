@@ -1,0 +1,19 @@
+[package]
+name = "layout-bench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# Used only for the O_DIRECT flag constant.
+libc = "0.2"
+
+[features]
+# Sensitivity check only: u64 fast path in B+tree key comparison.
+fastcmp = []
+
+[profile.release]
+debug = true
+
+# Standalone: never a member of the lpg workspace.
+[workspace]

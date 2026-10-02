@@ -1,0 +1,10 @@
+[package]
+name = "tokioexp"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
+
+# Standalone: never a member of the lpg workspace.
+[workspace]

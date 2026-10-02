@@ -1,7 +1,7 @@
 ---
 title: Open questions
 status: draft
-last-reviewed: 2026-09-24
+last-reviewed: 2026-10-02
 related:
   - functional-requirements.md
   - non-functional-requirements.md
@@ -17,7 +17,7 @@ Each item under "Open" is undecided. When the user decides an item, the decision
 
 ### OQ-001
 
-Performance targets ([NFR-PERF-001](non-functional-requirements.md#performance)). The workloads and the comparison are decided ([NFR-PERF-002](non-functional-requirements.md#performance)). The metrics and the numeric targets are open, to be set from the measured baseline.
+Performance targets ([NFR-PERF-001](non-functional-requirements.md#performance)). The workloads and the comparison are decided ([NFR-PERF-002](non-functional-requirements.md#performance)). The metrics and the numeric targets are open, to be set from the measured baseline. No absolute graph size is set; efficiency is judged on the reference hardware with the cache holding 1% to 10% of the data ([NFR-PERF-005](non-functional-requirements.md#performance), [NFR-PERF-006](non-functional-requirements.md#performance)).
 
 ### OQ-005
 
@@ -55,7 +55,7 @@ Procedure and function registration. Closed 2026-09-24: the interface is the abs
 
 ### OQ-010
 
-Serializable isolation with non-blocking reads. Closed 2026-09-24: a serializable transaction may fail with a serialisation-failure GQLSTATUS error and the application retries ([FR-TX-006](functional-requirements.md#transactions), [FR-TX-008](functional-requirements.md#transactions), [BR-TX-001](functional-requirements.md#transactions)).
+Serializable isolation with non-blocking reads. Closed 2026-09-24: a serializable transaction may fail with a serialisation-failure GQLSTATUS error and the application retries ([FR-TX-006](functional-requirements.md#transactions), [FR-TX-008](functional-requirements.md#transactions), [BR-TX-001](functional-requirements.md#transactions)). On 2026-09-24 the user also decided that serializable isolation is enforced by validating the read sets of read-write transactions at commit ([FR-TX-009](functional-requirements.md#transactions)); read-only transactions are not validated ([FR-TX-010](functional-requirements.md#transactions)).
 
 ### OQ-011
 

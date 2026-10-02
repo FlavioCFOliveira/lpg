@@ -1,0 +1,12 @@
+[package]
+name = "sqlbench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[dependencies]
+sqlparser = "0.59"
+[profile.release]
+debug = 1
+
+# Standalone: never a member of the lpg workspace.
+[workspace]

@@ -1,0 +1,6 @@
+graph n=100000 m=1000000 alpha=0.8 order=random seed=42; nodes with out-edges=96580; max out-degree=22092; mean out-degree (of those)=10.35
+BT18  pages/expand: mean(uniform)=  1.03 mean(degree-weighted)=   4.77 p50=   1 p99=    2 max=   78  (+2 inner page(s) per descent, usually cached)
+BT18  bytes/edge=56.3 (2 entries/edge, leaf fill=0.65, leaves=6868, height=3); insert: pages dirtied mean=3.01, pre-existing records modified (MVCC versions)=0
+graph n=100000 m=1000000 alpha=0.8 order=sorted seed=42; nodes with out-edges=96580; max out-degree=22092; mean out-degree (of those)=10.35
+BT18  pages/expand: mean(uniform)=  1.03 mean(degree-weighted)=   5.72 p50=   1 p99=    2 max=   98  (+2 inner page(s) per descent, usually cached)
+BT18  bytes/edge=55.9 (2 entries/edge, leaf fill=0.65, leaves=6823, height=3); insert: pages dirtied mean=3.01, pre-existing records modified (MVCC versions)=0

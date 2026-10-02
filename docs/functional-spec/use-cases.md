@@ -1,7 +1,7 @@
 ---
 title: Use cases
 status: draft
-last-reviewed: 2026-09-24
+last-reviewed: 2026-10-02
 related:
   - functional-requirements.md
   - non-functional-requirements.md
@@ -173,7 +173,7 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 - **Preconditions**: The database is open; the graph exists.
 - **Main flow**:
   1. The crate creates the index or constraint on that graph ([FR-IDX-001](functional-requirements.md#indexes-and-constraints) to [FR-IDX-003](functional-requirements.md#indexes-and-constraints)).
-  2. For an index, the crate builds it while writes continue ([FR-IDX-005](functional-requirements.md#indexes-and-constraints)).
+  2. For an index, the crate builds it while writes continue ([FR-IDX-005](functional-requirements.md#indexes-and-constraints)). For a constraint, writers on its label or edge type wait until the existing data is validated ([FR-IDX-006](functional-requirements.md#indexes-and-constraints)).
 - **Alternate flows**:
   - A1. Existing data violates the constraint: creation fails and no constraint exists ([FR-IDX-004](functional-requirements.md#indexes-and-constraints)).
 - **Postconditions**: The index or constraint exists and applies to later writes.

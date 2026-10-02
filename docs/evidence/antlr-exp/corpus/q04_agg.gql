@@ -1,0 +1,6 @@
+MATCH (m:Message)-[:HAS_CREATOR]->(p:Person), (m)-[:HAS_TAG]->(t:Tag)
+WHERE m.creationDate >= $from AND m.creationDate < $to AND (t.name = 'a' OR t.name = 'b')
+RETURN p.id AS personId, t.name AS tag, count(*) AS n, sum(m.length) AS total
+GROUP BY personId, tag
+ORDER BY n DESC
+LIMIT 100

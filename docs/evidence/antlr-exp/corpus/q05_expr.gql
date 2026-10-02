@@ -1,0 +1,1 @@
+MATCH (n:Node) WHERE ((n.a + 1) * 2 - n.b / 3 > 10 AND NOT n.c IS NULL) OR (n.d = 'x' || n.e) RETURN CASE WHEN n.a > 1 THEN n.a ELSE 0 END AS v

@@ -51,6 +51,8 @@ The crate defines the following abstractions (traits). The application implement
 
 The functional specification is in [`docs/functional-spec/`](docs/functional-spec/README.md). It holds the requirements with stable identifiers, the glossary and the open questions.
 
+The technical specification, which states how the crate is built, is in [`docs/technical-spec/`](docs/technical-spec/README.md).
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).

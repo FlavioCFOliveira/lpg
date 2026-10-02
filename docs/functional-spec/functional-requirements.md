@@ -1,7 +1,7 @@
 ---
 title: Functional requirements
 status: draft
-last-reviewed: 2026-09-24
+last-reviewed: 2026-10-02
 related:
   - scope.md
   - application-abstractions.md
@@ -14,7 +14,7 @@ related:
 
 # Functional requirements
 
-Each requirement records a user decision. A requirement marked "Neo4j default" or "Memgraph default" records the behaviour of that product, adopted under the user's instruction to assume the defaults of Neo4j and Memgraph for points the user did not decide, with Neo4j taking precedence where the two differ. External facts cite the [sources](README.md#sources) as [S1] to [S36]. Each requirement is followed by its acceptance criterion in Given/When/Then form.
+Each requirement records a user decision unless it states otherwise. A requirement marked "decision taken from a reference" records a decision taken under the "Research and decision-making" procedure of the project's `CLAUDE.md`, grounded in the cited reference, and not a user decision. A requirement marked "Neo4j default" or "Memgraph default" records the behaviour of that product, adopted under the user's instruction to assume the defaults of Neo4j and Memgraph for points the user did not decide, with Neo4j taking precedence where the two differ. External facts cite the [sources](README.md#sources) as [S1] to [S42]. Each requirement is followed by its acceptance criterion in Given/When/Then form.
 
 ## API
 
@@ -109,6 +109,8 @@ Each requirement records a user decision. A requirement marked "Neo4j default" o
   - Acceptance: Given two graphs in one database, when one query reads both, then its result combines data from both graphs.
 - FR-CAT-004 Catalog changes SHALL be fully transactional: a transaction MAY mix catalog changes and data changes, and a rollback SHALL undo both. Neo4j forbids mixing schema changes and data changes in one transaction (`Neo.ClientError.Transaction.ForbiddenDueToTransactionType` [S13]); the user's decision overrides that default.
   - Acceptance: Given a transaction that creates a graph and inserts nodes into it, when the transaction rolls back, then neither the graph nor the nodes exist.
+- FR-CAT-005 The crate SHALL let the application create catalog directories through the Rust API only. It SHALL NOT provide a procedure or GQL syntax that creates a directory (user decision 2026-09-24, confirmed 2026-10-02).
+  - Acceptance: Given an open database, when the application creates a directory through the Rust API, then the catalog-listing procedure ([FR-PROC-004](#procedures-and-functions)) lists it; and given the list of built-in procedures and the supported GQL syntax, when they are inspected, then neither offers a way to create a directory.
 
 ## Indexes and constraints
 
@@ -120,8 +122,10 @@ Each requirement records a user decision. A requirement marked "Neo4j default" o
   - Acceptance: Given a uniqueness constraint on graph "g1", when a statement inserts duplicate values in graph "g2", then the statement succeeds.
 - FR-IDX-004 IF existing data violates a constraint that the application creates, THEN the creation SHALL fail with an error and the constraint SHALL NOT exist.
   - Acceptance: Given two nodes with the same value of p, when the application creates a uniqueness constraint on p, then creation fails and no constraint exists.
-- FR-IDX-005 WHILE an index is being built, the crate SHALL accept writes to its graph.
+- FR-IDX-005 WHILE an index is being built, the crate SHALL accept writes to its graph. This does not apply to the writers that [FR-IDX-006](#indexes-and-constraints) blocks while a constraint, including any index it owns, is being created.
   - Acceptance: Given an index build in progress on a large graph, when a transaction writes to that graph, then the transaction commits without waiting for the build to finish, and the finished index includes the write.
+- FR-IDX-006 WHILE a constraint is being created and the existing data has not yet been validated against it, the crate SHALL make each transaction that writes nodes with the constraint's label, or edges with the constraint's edge type, in the constraint's graph wait until the validation ends. Writes to other labels and edge types SHALL NOT wait (user decision 2026-09-24, confirmed 2026-10-02).
+  - Acceptance: Given a uniqueness-constraint creation on label L in progress, when one transaction writes an L node and another writes an M node in the same graph, then the L write waits until the validation ends and then succeeds or fails against the constraint, and the M write commits without waiting.
 
 ## Procedures and functions
 
@@ -150,6 +154,8 @@ Each requirement records a user decision. A requirement marked "Neo4j default" o
   - Acceptance: Given a graph with labels A and B, when an algorithm runs filtered to label A, then its result covers only A nodes; and when another transaction commits a new A node during the run, then the result does not include that node.
 - FR-ALG-005 The crate SHALL provide every algorithm in the closed inventory in [graph-algorithms.md](graph-algorithms.md), and the whole inventory SHALL ship in the first release ([NFR-REL-004](non-functional-requirements.md#release)).
   - Acceptance: Given the first release, when its list of provided algorithms is compared with the inventory, then every kept `ALG-` entry is provided.
+- FR-ALG-006 An algorithm SHALL run in parallel when one of its reference sources in the inventory (Neo4j Graph Data Science, Memgraph MAGE, petgraph or graphalgs, [graph-algorithms.md](graph-algorithms.md)) provides a parallel version of it; an algorithm with no parallel version in those sources SHALL run on one thread. This applies whether the algorithm is invoked with `CALL` or through the Rust API. Every algorithm SHALL accept a `concurrency` parameter that sets the maximum number of threads a run uses; the default SHALL be 4 (Neo4j default: the Graph Data Science `concurrency` parameter controls the parallelism of an algorithm run and defaults to 4 [S41]). [NFR-PERF-007](non-functional-requirements.md#performance) does not apply to algorithm runs (user decision 2026-10-02).
+  - Acceptance: Given an algorithm with a parallel version in its reference sources, when it runs with no `concurrency` value, then it uses more than one thread and at most 4 threads at a time, and with `concurrency` 1 it uses one thread; given an algorithm with no parallel version in its reference sources, when it runs with any `concurrency` value, then it uses one thread; and given the same run through `CALL` and through the Rust API, then both accept the parameter with the same default.
 
 ## Types
 
@@ -203,6 +209,10 @@ Each requirement records a user decision. A requirement marked "Neo4j default" o
   - Acceptance: Given two concurrent serializable transactions in a write-skew pattern, when both try to commit, then at most one commits and the other fails with a serialisation-failure GQLSTATUS error.
 - BR-TX-001 The crate SHALL NOT retry a failed transaction automatically, on any interface. The application decides whether to retry. The Neo4j drivers retry managed transactions automatically [S24]; the user's decision overrides that default.
   - Acceptance: Given a transaction that fails with a serialisation failure or a deadlock, when the failure is reported, then the crate has run the transaction exactly once.
+- FR-TX-009 The crate SHALL enforce serializable isolation by validating the read set of each read-write transaction when it commits. IF data in the read set was changed by another transaction that committed after the validating transaction's snapshot was taken, THEN the crate SHALL fail the commit with the serialisation-failure GQLSTATUS error ([FR-TX-008](#transactions)) and SHALL abort the transaction. A read-write transaction that reads much data MAY therefore fail more often; the application decides whether to retry ([BR-TX-001](#transactions)). Reads do not wait for writes ([FR-TX-006](#transactions)). Read-only transactions are not validated ([FR-TX-010](#transactions)) (user decision 2026-09-24, confirmed 2026-10-02).
+  - Acceptance: Given a serializable transaction T1 that reads node n and writes node m, when transaction T2 changes n and commits before T1 commits, then T1's commit fails with a serialisation-failure GQLSTATUS error and m's change is not visible to any later transaction.
+- FR-TX-010 A serializable transaction that has written no data when it commits (a read-only transaction) SHALL NOT be validated at commit and SHALL NOT fail with the serialisation-failure GQLSTATUS error. It reads the committed snapshot taken when it started. That snapshot contains exactly the read-write transactions that committed before it, so it is a prefix of the serial order of the validated read-write commits ([FR-TX-009](#transactions)) (decision taken from a reference, 2026-10-02: in HyPer's MVCC, read-only transactions see a stable snapshot and behave as if executed at their start timestamp, while update transactions are validated and serialised in commit order [S42], Sections 2.3 and 3.2).
+  - Acceptance: Given a serializable transaction T1 that only reads node n, when transaction T2 changes n and commits before T1 commits, then T1 commits successfully and every read of n in T1 returned the state committed before T1 started.
 
 ## Resource limits
 
@@ -210,10 +220,14 @@ Each requirement records a user decision. A requirement marked "Neo4j default" o
   - Acceptance: Given a transaction with a memory limit, when a statement exceeds it, then the statement fails with a GQLSTATUS error and the transaction's earlier writes are not visible to any later transaction.
 - FR-LIM-002 The crate SHALL support two result-size limits: a maximum number of rows and a maximum number of bytes. Each SHALL be optional and configurable.
   - Acceptance: Given a row limit of 10, when a query produces 11 rows, then the statement fails with a GQLSTATUS error; and given no limits, then the query returns all its rows.
-- FR-LIM-003 The crate SHALL enforce a database-wide memory cap that covers the cache and query execution together. Unless the application sets it, the cap SHALL be 100% of physical memory when swap is enabled and 90% of physical memory otherwise (Memgraph default: `--memory-limit=0` [S33]; Neo4j has no single equivalent, as it limits transaction memory, `dbms.memory.transaction.total.max`, separately from the page cache [S14]).
+- FR-LIM-003 The crate SHALL enforce a database-wide memory cap that covers the cache, query execution and the old versions kept for MVCC together ([FR-LIM-005](#resource-limits)); memory that registered procedures allocate on their own is outside it ([FR-LIM-006](#resource-limits)). Unless the application sets it, the cap SHALL be 100% of physical memory when swap is enabled and 90% of physical memory otherwise (Memgraph default: `--memory-limit=0` [S33]; Neo4j has no single equivalent, as it limits transaction memory, `dbms.memory.transaction.total.max`, separately from the page cache [S14]).
   - Acceptance: Given a memory cap, when concurrent queries and caching run under load, then the memory the crate accounts for never exceeds the cap, and a statement that would exceed it fails under FR-LIM-001.
 - FR-LIM-004 The application SHALL set the default limits of Bolt sessions.
   - Acceptance: Given application-set Bolt default limits, when a Bolt session runs a statement that exceeds them, then the statement fails under FR-LIM-001.
+- FR-LIM-005 IF keeping old versions for MVCC would make the accounted memory exceed the memory cap ([FR-LIM-003](#resource-limits)), THEN the crate SHALL fail the statement that needs the memory under [FR-LIM-001](#resource-limits). The crate SHALL NOT abort another transaction to release old versions, and SHALL NOT move old versions out of memory to storage (user decision 2026-09-24, confirmed 2026-10-02).
+  - Acceptance: Given a long-running transaction whose snapshot keeps old versions alive and a memory cap near the accounted memory, when another transaction's statement changes enough data to exceed the cap, then that statement fails with a GQLSTATUS error and its transaction is aborted, the long-running transaction continues and still reads its snapshot, and no old version is written to storage.
+- FR-LIM-006 Memory that a registered procedure or function allocates on its own SHALL NOT count against the memory cap ([FR-LIM-003](#resource-limits)). The rows it returns to the crate SHALL count against the memory cap as query-execution memory (user decision 2026-09-24, confirmed 2026-10-02).
+  - Acceptance: Given a registered procedure that allocates a large internal buffer and returns rows, when it is called under a memory cap, then the buffer is not included in the memory the crate accounts for and the returned rows are.
 
 ## Recovery
 
@@ -316,7 +330,7 @@ Each requirement records a user decision. A requirement marked "Neo4j default" o
 
 ## Import and export
 
-- FR-IMP-001 The crate SHALL import and export these formats: CSV (separate node files and edge files), JSON Lines, GraphML, and a native dump format.
+- FR-IMP-001 The crate SHALL import and export these formats: CSV (separate node files and edge files), JSON Lines, GraphML, and a native dump format. A value whose type a format cannot represent natively is annotated as [FR-IMP-006](#import-and-export) states.
   - Acceptance: Given a graph, when it is exported and imported in each of the four formats, then each imported graph has the same nodes, edges, labels and property values as the original.
 - FR-IMP-002 The crate SHALL offer two import modes: a transactional import into an existing graph, and a fast initial load into an empty graph. IF the fast initial load targets a graph that is not empty, THEN it SHALL fail with an error (Neo4j default: full import requires a non-existent or empty database [S12]).
   - Acceptance: Given a graph with one node, when a fast initial load targets it, then the load fails; and when a transactional import targets it, then the imported data is added.
@@ -326,6 +340,11 @@ Each requirement records a user decision. A requirement marked "Neo4j default" o
   - Acceptance: Given an input with one invalid record, when it is imported with the default option, then the import aborts, no data is added and the report names the record; and when it is imported with the skip option, then the valid records are imported and the report names the skipped record.
 - FR-IMP-005 Import SHALL assign new element identifiers ([BR-TYPE-002](#types)). Identifiers in the input SHALL serve only to connect edges to nodes within the same import.
   - Acceptance: Given a CSV node file with identifier "n1" and an edge file that references "n1", when they are imported, then the edge connects to the imported node, whose element identifier is newly assigned.
+- FR-IMP-006 WHEN the crate exports to CSV, JSON Lines or GraphML a value whose type the format cannot represent natively, it SHALL write the value with an lpg type annotation, and import SHALL restore the value and its type from that annotation, so that the round trip of [FR-IMP-001](#import-and-export) is lossless (user decision 2026-10-02). The annotation SHALL be:
+  - GraphML: a key of type `string` and a type attribute in an lpg namespace. A GraphML reader that ignores that attribute reads the value as a string.
+  - JSON Lines: a tagged object in place of each value whose type JSON does not have.
+  - CSV: the Neo4j header data type of the column [S38] where one applies, and an lpg type name otherwise.
+  - Acceptance: Given a graph with a point property, when it is exported to GraphML and imported, then the imported value is the same point; given a date property, when it is exported to JSON Lines and imported, then the imported value is the same date; given a property of a type outside the Neo4j header types, when it is exported to CSV and imported, then the imported value and its type are unchanged; and given the GraphML export, when a reader ignores the lpg namespace, then it reads the point as a string.
 
 ## Observability
 

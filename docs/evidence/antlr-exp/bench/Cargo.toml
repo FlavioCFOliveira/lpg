@@ -1,0 +1,13 @@
+[package]
+name = "gqlbench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[dependencies]
+antlr4rust = "=0.5.2"
+bit-set = "0.8"
+[profile.release]
+debug = 1
+
+# Standalone: never a member of the lpg workspace.
+[workspace]

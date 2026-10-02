@@ -1,7 +1,7 @@
 ---
 title: Non-functional requirements
 status: draft
-last-reviewed: 2026-09-24
+last-reviewed: 2026-10-02
 related:
   - functional-requirements.md
   - graph-algorithms.md
@@ -10,13 +10,21 @@ related:
 
 # Non-functional requirements
 
-Each requirement records a user decision. External facts cite the [sources](README.md#sources). Each testable requirement is followed by its acceptance criterion in Given/When/Then form.
+Each requirement records a user decision unless it states otherwise. External facts cite the [sources](README.md#sources). Each testable requirement is followed by its acceptance criterion in Given/When/Then form.
 
 ## Performance
 
 - NFR-PERF-001 Performance targets (for example throughput, latency and memory) are to be defined by measurement. The project SHALL fix them from a measured baseline ([NFR-PERF-002](#performance)). Until then, no performance target applies; the numbers are open ([OQ-001](open-questions.md#oq-001)).
-- NFR-PERF-002 The baseline SHALL be measured on three workloads: the LDBC Social Network Benchmark Interactive workload, the LDBC Social Network Benchmark Business Intelligence workload [S32], and the project's own micro-workloads. The crate SHALL be compared with Neo4j and Memgraph on the same workloads.
-  - Acceptance: Given the baseline report, when it is inspected, then it contains measured results of the crate, Neo4j and Memgraph for each of the three workloads, with the hardware and versions used.
+- NFR-PERF-002 The baseline SHALL be measured on three workloads: the LDBC Social Network Benchmark Interactive workload, the LDBC Social Network Benchmark Business Intelligence workload [S32], and the project's own micro-workloads. The crate SHALL be compared with Neo4j and Memgraph on the same workloads. The baseline SHALL be measured on the reference hardware ([NFR-PERF-006](#performance)) (user decision 2026-10-02).
+  - Acceptance: Given the baseline report, when it is inspected, then it contains measured results of the crate, Neo4j and Memgraph for each of the three workloads, measured on the reference hardware, with the versions used.
+- NFR-PERF-003 Performance and resource efficiency in CPU, memory and I/O SHALL be a primary requirement of the crate, together with compatibility with multiversion concurrency control (MVCC) (user decision 2026-09-24, confirmed 2026-10-02).
+- NFR-PERF-004 The layout in which the crate stores graphs SHALL be fully compatible with MVCC, fast for traversals, and the least costly in CPU, memory and I/O among the layouts considered. The layout SHALL be chosen on evidence (user decision 2026-09-24, confirmed 2026-10-02).
+  - Acceptance: Given the record of the layout choice, when it is inspected, then it cites the evidence for the chosen layout's MVCC compatibility, traversal speed and CPU, memory and I/O cost, compared with the other layouts considered.
+- NFR-PERF-005 The crate SHALL handle graphs far larger than memory ([FR-STO-001](functional-requirements.md#storage)) with maximum efficiency. No absolute graph size is set. Efficiency SHALL be judged by measurements on the reference hardware ([NFR-PERF-006](#performance)) with the cache holding between 1% and 10% of the data. The numeric targets are open ([NFR-PERF-001](#performance), [OQ-001](open-questions.md#oq-001)) (user decision 2026-10-02).
+  - Acceptance: Given an efficiency measurement, when its report is inspected, then it names the reference hardware and states the cache size and the data size, and the cache holds between 1% and 10% of the data.
+- NFR-PERF-006 The reference hardware SHALL be the machine the user designated on 2026-10-02, until the user designates another: an AMD Ryzen 9 5900HX processor (8 cores, 16 threads, 16 MiB L3 cache), 30 GiB of RAM, a Samsung 970 EVO Plus 1 TB NVMe SSD with an ext4 filesystem, and Linux (user decision 2026-10-02). On 2026-10-02 `lscpu`, `free`, `lsblk` and `df` on that machine reported these values.
+- NFR-PERF-007 The GQL query engine SHALL NOT execute a single query in parallel until the baseline ([NFR-PERF-002](#performance)) contains measured results for the LDBC Social Network Benchmark Business Intelligence workload. After that, parallel execution of a single query MAY be added only as an option that the application enables through the Rust API and that is off by default (user decision 2026-09-24, confirmed 2026-10-02). This requirement applies to the GQL query engine only; graph-algorithm runs, including those invoked with `CALL`, follow [FR-ALG-006](functional-requirements.md#graph-algorithms) (user decision 2026-10-02).
+  - Acceptance: Given a release published before the baseline contains Business Intelligence results, when any query that invokes no graph algorithm runs, then its execution uses no more than one thread at a time; and given a later release that offers parallel execution, when a query runs without the application enabling the option, then its execution uses no more than one thread at a time.
 
 ## Platform
 
@@ -62,9 +70,12 @@ Each requirement records a user decision. External facts cite the [sources](READ
 
 - NFR-VER-001 GQL conformance tests SHALL be traced to clauses and feature identifiers of ISO/IEC 39075.
   - Acceptance: Given any conformance test, when it is inspected, then it names the clause or feature identifier it verifies.
-- NFR-VER-002 The project SHALL use the opengql/grammar repository (Apache-2.0 [S4]) as a test and grammar artefact, and SHALL preserve its attribution and licence. The project's `CLAUDE.md` permits this use as the sole exception to its no-copying rule (section "Open-source references").
-  - Acceptance: Given the repository, when the opengql/grammar material is inspected, then its Apache-2.0 licence and attribution are present and unchanged.
-- NFR-VER-003 Integration tests SHALL verify the Bolt endpoints against the currently supported official Neo4j drivers for Java, Python, JavaScript, .NET and Go, against the crate's own Bolt client and against `neo4rs`.
+- NFR-VER-002 The project SHALL use these Apache-2.0 projects as test artefacts for GQL conformance verification, and SHALL preserve their licence and attribution unchanged (user decision 2026-10-02). The project's `CLAUDE.md` permits these uses as the sole exceptions to its no-copying rule (section "Open-source references").
+  - The opengql/grammar repository [S4], including a parser generated from it in a test-only crate.
+  - The opengql/tck repository [S39].
+  - The openCypher TCK [S40], limited to the scenarios that apply to GQL.
+  - Acceptance: Given the repository, when the material from these projects is inspected, then each keeps its Apache-2.0 licence and attribution unchanged, the parser generated from opengql/grammar is in a test-only crate that the published crate does not depend on, and every openCypher TCK scenario used applies to GQL.
+- NFR-VER-003 Integration tests SHALL verify the Bolt endpoints against the currently supported official Neo4j drivers for Java, Python, JavaScript, .NET and Go, and against the crate's own Bolt client. The `neo4rs` crate is excluded until a release of it offers Bolt 5.0 or later: its releases 0.8.0 and 0.9.0-rc.10 offer only Bolt 4.x versions [S37], which [FR-BOLT-003](functional-requirements.md#bolt) refuses (user decision 2026-10-02).
   - Acceptance: Given the integration test suite, when it runs, then it exercises the server-side endpoint with each listed driver and all tests pass.
 - NFR-VER-004 Fault-injection and crash tests SHALL verify durability and recovery, including process termination by `kill -9` and fsync failures simulated through the storage abstraction ([ABS-003](application-abstractions.md#abstractions)).
   - Acceptance: Given the fault-injection suite, when it runs, then it includes `kill -9` and simulated fsync-failure cases and all pass.

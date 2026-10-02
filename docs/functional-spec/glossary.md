@@ -1,7 +1,7 @@
 ---
 title: Glossary
 status: draft
-last-reviewed: 2026-09-24
+last-reviewed: 2026-10-02
 related:
   - README.md
 ---
@@ -31,12 +31,17 @@ related:
 - **Group commit**: flushing the log records of several committing transactions to stable storage with one flush.
 - **Home schema, home graph**: the schema and graph a session uses when a request names none ([FR-SES-002](functional-requirements.md#sessions)).
 - **Labeled Property Graph (LPG)**: a graph of nodes and edges that carry labels and properties.
-- **Memory cap**: the database-wide limit on the memory used by the cache and query execution together ([FR-LIM-003](functional-requirements.md#resource-limits)).
+- **Memory cap**: the database-wide limit on the memory used by the cache, query execution and the old versions kept for MVCC together ([FR-LIM-003](functional-requirements.md#resource-limits)).
+- **Multiversion concurrency control (MVCC)**: keeping several committed versions of the data so that a transaction reads the versions of its snapshot without waiting for writers ([NFR-PERF-003](non-functional-requirements.md#performance), [FR-TX-006](functional-requirements.md#transactions)).
+- **Old version**: a committed version of data that a later commit has replaced, kept while a transaction's snapshot may still read it ([FR-LIM-005](functional-requirements.md#resource-limits)).
 - **Native dump**: the crate's own import and export format ([FR-IMP-001](functional-requirements.md#import-and-export)).
 - **Owner**: the principal recorded on a catalog object, passed to the authorisation abstraction ([FR-AUTH-002](functional-requirements.md#authorisation)).
 - **PackStream**: the binary encoding used by Bolt.
 - **Principal**: the identity under which a session runs, returned by the authentication and authorisation abstraction (Bolt) or supplied by the application (Rust API).
+- **Read set**: the data that a transaction has read, validated when a read-write transaction commits ([FR-TX-009](functional-requirements.md#transactions)).
 - **Read-only procedure, read-write procedure**: a registered procedure declared unable, or able, to modify data ([FR-PROC-002](functional-requirements.md#procedures-and-functions)).
+- **Read-only transaction, read-write transaction**: a transaction that has written no data, or has written data, when it commits ([FR-TX-009](functional-requirements.md#transactions), [FR-TX-010](functional-requirements.md#transactions)).
+- **Reference hardware**: the machine on which the crate's efficiency is judged ([NFR-PERF-006](non-functional-requirements.md#performance)).
 - **Serialisation failure**: the failure of a serializable transaction whose effect, combined with concurrent transactions, would not match any serial order ([FR-TX-008](functional-requirements.md#transactions)). "Serializable" keeps its standard spelling as the name of the isolation level.
 - **Session**: a GQL session: the context in which a principal runs requests. A Bolt connection carries one session ([FR-BOLT-014](functional-requirements.md#bolt)).
 - **Snapshot isolation**: an isolation mode in which a transaction reads the committed state at its start; selected per transaction through the Rust API ([FR-TX-004](functional-requirements.md#transactions)).

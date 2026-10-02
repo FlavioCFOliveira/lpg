@@ -1,0 +1,40 @@
+graph n=100000 m=1000000 alpha=0.8 order=random seed=42; nodes with out-edges=96580; max out-degree=22092; mean out-degree (of those)=10.35
+REC   pages/expand: mean(uniform)= 15.74 mean(degree-weighted)= 450.30 p50=   9 p99=   92 max= 4151
+REC   bytes/edge=35.5 (34 B record shared by both directions); insert: pages dirtied mean=4.69, pre-existing records modified (MVCC versions) mean=3.90
+BT47  pages/expand: mean(uniform)=  1.08 mean(degree-weighted)=  10.31 p50=   1 p99=    2 max=  186  (+2 inner page(s) per descent, usually cached)
+BT47  bytes/edge=137.0 (2 entries/edge, leaf fill=0.70, leaves=16723, height=3); insert: pages dirtied mean=3.02, pre-existing records modified (MVCC versions)=0
+BT31  pages/expand: mean(uniform)=  1.05 mean(degree-weighted)=   7.12 p50=   1 p99=    2 max=  129  (+2 inner page(s) per descent, usually cached)
+BT31  bytes/edge=89.7 (2 entries/edge, leaf fill=0.70, leaves=10945, height=3); insert: pages dirtied mean=3.01, pre-existing records modified (MVCC versions)=0
+CSR   pages/expand: mean(uniform)=  1.02 mean(degree-weighted)=   3.15 p50=   1 p99=    2 max=   44  (+ offsets array page)
+CSR   bytes/edge=33.6 (both directions + offsets); not updatable in place
+
+graph n=100000 m=1000000 alpha=0.8 order=sorted seed=42; nodes with out-edges=96580; max out-degree=22092; mean out-degree (of those)=10.35
+REC   pages/expand: mean(uniform)=  7.11 mean(degree-weighted)=  11.15 p50=   6 p99=   24 max=   95
+REC   bytes/edge=35.5 (34 B record shared by both directions); insert: pages dirtied mean=3.90, pre-existing records modified (MVCC versions) mean=3.90
+BT47  pages/expand: mean(uniform)=  1.08 mean(degree-weighted)=  13.63 p50=   1 p99=    2 max=  257  (+2 inner page(s) per descent, usually cached)
+BT47  bytes/edge=151.3 (2 entries/edge, leaf fill=0.63, leaves=18475, height=3); insert: pages dirtied mean=3.02, pre-existing records modified (MVCC versions)=0
+BT31  pages/expand: mean(uniform)=  1.05 mean(degree-weighted)=   9.22 p50=   1 p99=    2 max=  169  (+2 inner page(s) per descent, usually cached)
+BT31  bytes/edge=98.2 (2 entries/edge, leaf fill=0.64, leaves=11991, height=3); insert: pages dirtied mean=3.01, pre-existing records modified (MVCC versions)=0
+CSR   pages/expand: mean(uniform)=  1.02 mean(degree-weighted)=   3.15 p50=   1 p99=    2 max=   44  (+ offsets array page)
+CSR   bytes/edge=33.6 (both directions + offsets); not updatable in place
+
+graph n=100000 m=1000000 alpha=0.5 order=random seed=42; nodes with out-edges=99815; max out-degree=1576; mean out-degree (of those)=10.02
+REC   pages/expand: mean(uniform)= 18.97 mean(degree-weighted)=  39.59 p50=  16 p99=   53 max= 1334
+REC   bytes/edge=35.5 (34 B record shared by both directions); insert: pages dirtied mean=4.88, pre-existing records modified (MVCC versions) mean=3.90
+BT47  pages/expand: mean(uniform)=  1.07 mean(degree-weighted)=   1.26 p50=   1 p99=    2 max=   15  (+2 inner page(s) per descent, usually cached)
+BT47  bytes/edge=136.3 (2 entries/edge, leaf fill=0.70, leaves=16640, height=3); insert: pages dirtied mean=3.02, pre-existing records modified (MVCC versions)=0
+BT31  pages/expand: mean(uniform)=  1.05 mean(degree-weighted)=   1.17 p50=   1 p99=    2 max=   11  (+2 inner page(s) per descent, usually cached)
+BT31  bytes/edge=89.3 (2 entries/edge, leaf fill=0.70, leaves=10900, height=3); insert: pages dirtied mean=3.01, pre-existing records modified (MVCC versions)=0
+CSR   pages/expand: mean(uniform)=  1.02 mean(degree-weighted)=   1.06 p50=   1 p99=    2 max=    5  (+ offsets array page)
+CSR   bytes/edge=33.6 (both directions + offsets); not updatable in place
+
+graph n=100000 m=1000000 alpha=0.5 order=sorted seed=42; nodes with out-edges=99815; max out-degree=1576; mean out-degree (of those)=10.02
+REC   pages/expand: mean(uniform)= 10.04 mean(degree-weighted)=  10.25 p50=   9 p99=   26 max=   38
+REC   bytes/edge=35.5 (34 B record shared by both directions); insert: pages dirtied mean=3.99, pre-existing records modified (MVCC versions) mean=3.90
+BT47  pages/expand: mean(uniform)=  1.07 mean(degree-weighted)=   1.27 p50=   1 p99=    2 max=   18  (+2 inner page(s) per descent, usually cached)
+BT47  bytes/edge=140.1 (2 entries/edge, leaf fill=0.68, leaves=17107, height=3); insert: pages dirtied mean=3.02, pre-existing records modified (MVCC versions)=0
+BT31  pages/expand: mean(uniform)=  1.04 mean(degree-weighted)=   1.17 p50=   1 p99=    2 max=   12  (+2 inner page(s) per descent, usually cached)
+BT31  bytes/edge=91.3 (2 entries/edge, leaf fill=0.68, leaves=11144, height=3); insert: pages dirtied mean=3.01, pre-existing records modified (MVCC versions)=0
+CSR   pages/expand: mean(uniform)=  1.02 mean(degree-weighted)=   1.06 p50=   1 p99=    2 max=    5  (+ offsets array page)
+CSR   bytes/edge=33.6 (both directions + offsets); not updatable in place
+

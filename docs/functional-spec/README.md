@@ -1,7 +1,7 @@
 ---
 title: Functional specification
 status: draft
-last-reviewed: 2026-09-24
+last-reviewed: 2026-10-02
 related:
   - ../../README.md
 ---
@@ -29,7 +29,7 @@ This folder is the functional specification of the `lpg` crate. It states what t
 - **Identifiers.** `FR-<MODULE>-<NNN>`, `NFR-<CATEGORY>-<NNN>`, `BR-<MODULE>-<NNN>`, `UC-<MODULE>-<NNN>`, `ABS-<NNN>`, `ALG-<NNN>` and `OQ-<NNN>`. An identifier is stable once assigned and is never renumbered or reused. A withdrawn identifier keeps its entry, marked "Withdrawn" with the date and the reason.
 - **Requirement style.** EARS for functional requirements, one requirement per line. Each functional requirement and business rule, and each testable non-functional requirement, is followed by an indented acceptance criterion in Given/When/Then form.
 - **Spelling.** British English. Proper names and standard terms keep their established spelling ([NFR-DOC-001](non-functional-requirements.md#documentation)).
-- **Evidence.** Each external fact cites its source or is marked unverified. Each requirement records a user decision.
+- **Evidence.** Each external fact cites its source or is marked unverified. Each requirement records a user decision, unless it is marked as an adopted default (see below) or as a "decision taken from a reference": a decision taken under the "Research and decision-making" procedure of the project's `CLAUDE.md` and grounded in the cited reference.
 - **Adopted defaults.** For points the user did not decide, the user instructed that the defaults and behaviours of Neo4j and Memgraph apply, Neo4j first where they differ and Memgraph where Neo4j has no equivalent; earlier user decisions and project rules take precedence. A requirement that adopts such a default says so and cites the source.
 - **Simplicity.** The specification includes only what a decided requirement needs ([NFR-SIMP-001](non-functional-requirements.md#simplicity)).
 
@@ -73,5 +73,14 @@ External facts in this folder were checked on 2026-09-24 against these sources. 
 - [S34] Neo4j Cypher Manual, "Show indexes": <https://neo4j.com/docs/cypher-manual/current/indexes/search-performance-indexes/list-indexes/> (default columns `id`, `name`, `state`, `populationPercent`, `type`, `entityType`, `labelsOrTypes`, `properties`, `indexProvider`, `owningConstraint`, `lastRead`, `readCount`).
 - [S35] Neo4j Cypher Manual, "Show constraints": <https://neo4j.com/docs/cypher-manual/current/schema/constraints/list-constraints/> (default columns `id`, `name`, `type`, `entityType`, `labelsOrTypes`, `properties`, `enforcedLabel`, `ownedIndex`, `propertyType`).
 - [S36] Neo4j Operations Manual, "Show databases": <https://neo4j.com/docs/operations-manual/current/database-administration/standard-databases/listing-databases/> (default columns include `name`, `type`, `aliases`, `access`, `currentStatus`, `default`, `home`).
+
+These sources were checked on 2026-10-02:
+
+- [S37] neo4rs source <https://github.com/neo4j-labs/neo4rs>, file `lib/src/version.rs`: at tag `v0.8.0` it offers Bolt 4.0 and 4.1; at tag `v0.9.0-rc.10` it offers Bolt 4.0, 4.1, 4.3 and 4.4. The crates.io API (`GET /api/v1/crates/neo4rs`) lists 0.9.0-rc.10, published 2026-06-11, as the latest version and 0.8.0 as the latest stable version.
+- [S38] Neo4j Operations Manual, "Import: header format": <https://neo4j.com/docs/operations-manual/current/import/header-format/> (property data types `int`, `long`, `float`, `double`, `boolean`, `byte`, `short`, `char`, `string`, `point`, `date`, `localtime`, `time`, `localdatetime`, `datetime`, `duration` and `vector`; `[]` appended for arrays; no type means `string`).
+- [S39] opengql/tck: <https://github.com/opengql/tck> (Apache-2.0, per the GitHub repository metadata).
+- [S40] openCypher, Technology Compatibility Kit: <https://github.com/opencypher/openCypher>, directory `tck` (Apache-2.0, per the GitHub repository metadata).
+- [S41] Neo4j Graph Data Science Library Manual 2026.09, "Running algorithms": <https://neo4j.com/docs/graph-data-science/current/common-usage/running-algos/> (`concurrency` "Controls the parallelism with which the algorithm is executed. This value is set to 4"; in a GDS Session the default is the number of available processors).
+- [S42] T. Neumann, T. Mühlbauer and A. Kemper, "Fast Serializable Multi-Version Concurrency Control for Main-Memory Database Systems", SIGMOD 2015, <https://doi.org/10.1145/2723372.2749436>. Section 2.3: a snapshot "is sufficient for serializability of read-only transactions", while update transactions need a validation phase; Section 3.2: read-only transactions "see a stable snapshot" and "behave as if they were executed at the point in time of their commitTime-stamp, which is the same as their startTime-stamp", and executions are "serializable in commit order".
 
 The ISO/IEC 39075:2024 text has not yet been consulted. Every GQL feature identifier cited here (for example GG01, GG02, GV39) is unverified until it is checked against that text; see [OQ-005](open-questions.md#oq-005).

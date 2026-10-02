@@ -1,0 +1,5 @@
+MATCH (p:Person WHERE p.id = $personId)-[:KNOWS]->{1,3}(f:Person)
+WHERE f.firstName = $firstName AND f <> p
+RETURN f.id AS friendId, f.lastName AS lastName
+ORDER BY lastName ASC, friendId ASC
+LIMIT 20

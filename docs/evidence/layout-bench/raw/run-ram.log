@@ -1,0 +1,11 @@
+start ram-zipf-online 2026-10-02T12:17:55+01:00 load 0.90 1.23 1.19 1/2363 1524621
+end ram-zipf-online 2026-10-02T12:33:49+01:00 load 1.16 1.20 1.26 1/2367 1527994 | wall 953.35 s, maxrss 5121220 KB, exit 0
+start ram-zipf-bulk 2026-10-02T12:33:49+01:00 load 1.16 1.20 1.26 1/2367 1527997
+end ram-zipf-bulk 2026-10-02T12:40:14+01:00 load 1.00 1.06 1.16 1/2377 1529241 | wall 385.14 s, maxrss 4865952 KB, exit 0
+start ram-uniform-online 2026-10-02T12:40:14+01:00 load 1.00 1.06 1.16 1/2377 1529244
+end ram-uniform-online 2026-10-02T12:46:19+01:00 load 1.03 1.05 1.12 1/2368 1530407 | wall 365.01 s, maxrss 5497976 KB, exit 0
+start ram-uniform-bulk 2026-10-02T12:46:19+01:00 load 1.03 1.05 1.12 2/2368 1530410
+end ram-uniform-bulk 2026-10-02T12:51:09+01:00 load 1.06 1.05 1.09 1/2380 1531375 | wall 290.65 s, maxrss 4860128 KB, exit 0
+start large 2026-10-02T12:51:09+01:00 load 1.06 1.05 1.09 1/2380 1531378 free 26G avail, /data   478G
+end large 2026-10-02T13:00:37+01:00 load 1.00 1.00 1.04 2/2373 1533145 | wall 567.18 s, maxrss 7398044 KB, exit 0
+ALLDONE
