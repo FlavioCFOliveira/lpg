@@ -30,7 +30,7 @@ related:
     - `RESET` cancels the running statement and aborts the transaction ([TS-20](query-engine.md#ts-20-binder-planner-and-execution)).
     - Every Bolt transaction is serializable.
   - **`db` field.** Resolved as a catalog reference: absent, null or empty selects the home graph; a graph or a schema becomes the transaction's current graph or schema; anything else is an error.
-  - **Bookmarks.** A bookmark is `<database UUID>:<commit_ts>`. A bookmark with this database's UUID starts the transaction at once; any other bookmark is an error.
+  - **Bookmarks.** A bookmark is `<database UUID>:<commit_ts>`. A bookmark with this database's UUID and a `commit_ts` no higher than the highest published one starts the transaction at once. Any other bookmark is an error. The second check rejects bookmarks from the source of a restored copy that refer to commits after the backup point.
   - **ROUTE.** A routing table with the application's advertised address in the `ROUTE`, `READ` and `WRITE` roles, `ttl` 300.
   - **Values.**
     - Nodes and relationships carry `element_id` as the identifier's decimal text and `id` as its integer ([TS-07](storage.md#ts-07-element-identifiers)).

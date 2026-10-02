@@ -21,11 +21,11 @@ Performance targets ([NFR-PERF-001](non-functional-requirements.md#performance))
 
 ### OQ-005
 
-GQL implementation-defined choices and feature identifiers ([FR-GQL-001](functional-requirements.md#gql)). The choices that ISO/IEC 39075:2024 leaves to the implementation are decided one by one with the user's explicit approval ([BR-GQL-002](functional-requirements.md#gql)); they stay open until the normative text is available, which the user will provide outside the repository. The feature identifiers cited in this specification (GG01, GG02, GV39) the serialisation-failure GQLSTATUS code ([FR-TX-008](functional-requirements.md#transactions)) and the validity of the built-in procedure names as GQL identifiers ([FR-PROC-004](functional-requirements.md#procedures-and-functions)) are unverified until checked against that text. The concrete order of optional features ([FR-GQL-006](functional-requirements.md#gql)) also depends on it.
+GQL implementation-defined choices, rules and corrigendum ([FR-GQL-001](functional-requirements.md#gql)). The ISO/IEC 39075:2024 text is not available to the project (user decision 2026-10-02). The authority for GQL syntax is opengql/grammar [S4] ([NFR-VER-002](non-functional-requirements.md#verification)); against it are verified the shape of a procedure call and the identifier characters ([FR-PROC-004](functional-requirements.md#procedures-and-functions)), dotted procedure references ([FR-ALG-007](functional-requirements.md#graph-algorithms)) and the absence of a directory-creation statement ([FR-CAT-005](functional-requirements.md#catalog)). The ISO electronic inserts [S45] are a supplementary source; against them are verified the feature identifiers GG01, GG02 ([FR-GQL-004](functional-requirements.md#gql)), GV39, GV40, GV41 ([FR-TYPE-001](functional-requirements.md#types)) and GP18 ([FR-CAT-004](functional-requirements.md#catalog)), the list of optional features ([FR-GQL-001](functional-requirements.md#gql), [FR-GQL-006](functional-requirements.md#gql)), the syntax-error code 42001 ([BR-GQL-001](functional-requirements.md#gql)), the absence of a serialisation-failure condition ([FR-TX-008](functional-requirements.md#transactions)) and the list of 117 implementation-defined items ([BR-GQL-002](functional-requirements.md#gql)). opengql/grammar, opengql/tck and the inserts are the provisional authority; every requirement that depends on the standard's Syntax Rules, General Rules or Conformance Rules is marked "provisional (OQ-005)", and the text may be obtained later. Open until then: whether the implementation-defined subclass 25N11 chosen for the serialisation failure is permitted ([FR-TX-008](functional-requirements.md#transactions)); how the standard resolves the built-in and algorithm procedure names ([FR-PROC-004](functional-requirements.md#procedures-and-functions), [FR-ALG-007](functional-requirements.md#graph-algorithms)); the meaning in context of each implementation-defined item, which is decided one by one with the user's explicit approval ([BR-GQL-002](functional-requirements.md#gql)); and the content of minimum conformance ([FR-GQL-001](functional-requirements.md#gql)). The effect of ISO/IEC 39075:2024/Cor 1:2026 is also unverified ([FR-GQL-003](functional-requirements.md#gql)).
 
 ### OQ-006
 
-Spatial types and the standard ([FR-TYPE-002](functional-requirements.md#types)). The spatial behaviour is decided ([FR-TYPE-002](functional-requirements.md#types), [FR-TYPE-004](functional-requirements.md#types), [FR-TYPE-005](functional-requirements.md#types)). Whether Point2D and Point3D conflict with, or are covered by, ISO/IEC 39075:2024, and how a declared extension is expressed without new syntax ([BR-GQL-001](functional-requirements.md#gql)), remain to be verified against the norm.
+Spatial types and the standard ([FR-TYPE-002](functional-requirements.md#types)). The spatial behaviour is decided ([FR-TYPE-002](functional-requirements.md#types), [FR-TYPE-004](functional-requirements.md#types), [FR-TYPE-005](functional-requirements.md#types)). Whether Point2D and Point3D conflict with, or are covered by, ISO/IEC 39075:2024, and how a declared extension is expressed without new syntax ([BR-GQL-001](functional-requirements.md#gql)), remain to be verified against the norm. The ISO features insert lists no spatial feature [S45].
 
 ## Closed
 
@@ -55,7 +55,7 @@ Procedure and function registration. Closed 2026-09-24: the interface is the abs
 
 ### OQ-010
 
-Serializable isolation with non-blocking reads. Closed 2026-09-24: a serializable transaction may fail with a serialisation-failure GQLSTATUS error and the application retries ([FR-TX-006](functional-requirements.md#transactions), [FR-TX-008](functional-requirements.md#transactions), [BR-TX-001](functional-requirements.md#transactions)). On 2026-09-24 the user also decided that serializable isolation is enforced by validating the read sets of read-write transactions at commit ([FR-TX-009](functional-requirements.md#transactions)); read-only transactions are not validated ([FR-TX-010](functional-requirements.md#transactions)).
+Serializable isolation with non-blocking reads. Closed 2026-09-24: a serializable transaction may fail with a serialisation-failure GQLSTATUS error and the application decides whether to retry ([FR-TX-006](functional-requirements.md#transactions), [FR-TX-008](functional-requirements.md#transactions), [BR-TX-001](functional-requirements.md#transactions)). On 2026-09-24 the user also decided that serializable isolation is enforced by validating the read sets of read-write transactions at commit ([FR-TX-009](functional-requirements.md#transactions)); read-only transactions are not validated ([FR-TX-010](functional-requirements.md#transactions)).
 
 ### OQ-011
 
@@ -84,3 +84,15 @@ Names and result columns of the built-in procedures. Closed 2026-09-24: they fol
 ### OQ-017
 
 Export formats per scope. Closed 2026-09-24 ([FR-IMP-003](functional-requirements.md#import-and-export)).
+
+### OQ-018
+
+Algorithm procedure names. Closed 2026-10-02: GDS names in the GDS namespace where GDS provides the entry, MAGE names where only MAGE provides it ([FR-ALG-007](functional-requirements.md#graph-algorithms)); the remaining entries moved to [OQ-020](#oq-020).
+
+### OQ-019
+
+Fast initial load and the rest of the database. Closed 2026-10-02: writers to the graph wait, existing indexes and constraints are built after the load, and a backup requested during the load fails ([FR-IMP-002](functional-requirements.md#import-and-export), [FR-OPS-001](functional-requirements.md#operations)).
+
+### OQ-020
+
+Names of the algorithm procedures that neither GDS nor MAGE provides. Closed 2026-10-02: the `gds.` namespace and a camelCase name derived from the source function or algorithm name ([FR-ALG-007](functional-requirements.md#graph-algorithms), [Derived procedure names](graph-algorithms.md#derived-procedure-names)).

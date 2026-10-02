@@ -31,7 +31,8 @@ related:
   - **Lexical forms**, used by import, export and literals:
     - temporal values: ISO 8601 text, with an IANA zone name in brackets for named zones;
     - points: `{srid, x, y[, z]}`.
-  - **Open points.** Wider numeric types (`INT128`, `INT256`, unsigned, `DECIMAL`, `FLOAT16`/`128`/`256`), any crate for them, cross-type comparison and the total order for `ORDER BY` wait for the ISO text (OQ-005, BR-GQL-002). Whether Point2D and Point3D conflict with the norm is OQ-006.
+  - **Features.** The temporal types implement features GV39, GV40 and GV41, verified against the ISO features insert [S45].
+  - **Open points.** Wider numeric types (`INT128`, `INT256`, unsigned, `DECIMAL`, `FLOAT16`/`128`/`256`), any crate for them, cross-type comparison and the total order for `ORDER BY` are provisional (OQ-005) and wait for the user's approval of the implementation-defined items (BR-GQL-002). Whether Point2D and Point3D conflict with the norm is OQ-006.
 - **Satisfies**: FR-TYPE-001, FR-TYPE-002, FR-TYPE-004, FR-TYPE-006, FR-TYPE-007, FR-SES-003, FR-BOLT-005, BR-BOLT-001, FR-IMP-006, NFR-PERF-003.
 - **Evidence**:
   - jiff reads `/usr/share/zoneinfo`, or `TZDIR`, by default on Unix, and bundles zone data only with the `tzdb-bundle-*` features (D-JIFF).

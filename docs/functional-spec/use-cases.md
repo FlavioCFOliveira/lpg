@@ -19,7 +19,7 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 ### UC-DB-001 Create a database
 
 - **Actor**: Application.
-- **Trigger**: The application requests create at a location.
+- **Trigger**: The application requests create at a location, passing the memory cap ([FR-LIM-003](functional-requirements.md#resource-limits)).
 - **Preconditions**: The location holds no database.
 - **Main flow**:
   1. The crate creates the database with a default schema and a default graph ([FR-DB-005](functional-requirements.md#database-lifecycle)).
@@ -31,8 +31,8 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 ### UC-DB-002 Open a database
 
 - **Actor**: Application.
-- **Trigger**: The application requests open at a location.
-- **Preconditions**: The location holds a database in the current format version.
+- **Trigger**: The application requests open at a location, passing the memory cap ([FR-LIM-003](functional-requirements.md#resource-limits)).
+- **Preconditions**: None; the alternate flows cover a location that holds no usable database.
 - **Main flow**:
   1. The crate verifies the log and the metadata ([FR-REC-008](functional-requirements.md#recovery)).
   2. The crate runs recovery if the database was not closed cleanly ([FR-DB-009](functional-requirements.md#database-lifecycle), [UC-REC-001](#uc-rec-001-recover-after-a-crash)).
@@ -127,6 +127,7 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
   1. The crate writes a full, consistent backup of the whole database while transactions continue ([FR-OPS-001](functional-requirements.md#operations), [FR-OPS-007](functional-requirements.md#operations), [FR-OPS-008](functional-requirements.md#operations)).
 - **Alternate flows**:
   - A1. The storage is full: the backup fails with an error ([FR-REC-007](functional-requirements.md#recovery)).
+  - A2. A fast initial load is running: the backup fails with an error ([FR-IMP-002](functional-requirements.md#import-and-export)).
 - **Postconditions**: A backup exists that represents one commit point.
 
 ### UC-OPS-002 Restore a database
@@ -153,6 +154,8 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 - **Alternate flows**:
   - A1. A record is invalid: the crate aborts (default) or skips it, and reports it ([FR-IMP-004](functional-requirements.md#import-and-export)).
   - A2. The fast initial load targets a graph that is not empty: it fails.
+  - A3. A transactional import needs more memory than the cap: it fails and the graph is unchanged ([FR-IMP-002](functional-requirements.md#import-and-export), [FR-LIM-007](functional-requirements.md#resource-limits)).
+  - A4. A backup is running when the fast initial load is requested: the load waits until the backup ends ([FR-OPS-001](functional-requirements.md#operations)).
 - **Postconditions**: The graph contains the imported data, or is unchanged after an abort.
 
 ### UC-OPS-004 Export data
@@ -208,14 +211,16 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 
 - **Actor**: Application.
 - **Trigger**: Open fails because the format is the preceding version ([FR-OPS-004](functional-requirements.md#operations)).
-- **Preconditions**: The database is closed; a backup taken before migration exists.
+- **Preconditions**: The database was closed cleanly; a backup taken before migration exists.
 - **Main flow**:
   1. The application runs the migration through the Rust API.
-  2. The crate rewrites the database in place in the current format, preserving element identifiers ([FR-OPS-011](functional-requirements.md#operations), [BR-TYPE-002](functional-requirements.md#types)).
+  2. The crate checks that the storage has free space at least equal to the database's size, writes a copy in the current format inside the same location and switches to it, preserving element identifiers ([FR-OPS-011](functional-requirements.md#operations), [BR-TYPE-002](functional-requirements.md#types)).
   3. The application opens the database.
 - **Alternate flows**:
   - A1. The format is older than the preceding version: migration fails and names the intermediate crate version required ([FR-OPS-012](functional-requirements.md#operations)).
   - A2. The migration fails or must be undone: the application restores the pre-migration backup ([FR-OPS-013](functional-requirements.md#operations)).
+  - A3. The free space is less than the database's size: migration fails before writing and the database is unchanged ([FR-OPS-011](functional-requirements.md#operations)).
+  - A4. The database is open or was not closed cleanly: migration fails with an error ([FR-OPS-011](functional-requirements.md#operations)).
 - **Postconditions**: The database is in the current format.
 
 ### UC-REC-001 Recover after a crash

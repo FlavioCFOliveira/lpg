@@ -1,7 +1,7 @@
 ---
 title: Graph-algorithm inventory
 status: draft
-last-reviewed: 2026-09-24
+last-reviewed: 2026-10-02
 related:
   - functional-requirements.md
   - open-questions.md
@@ -196,6 +196,43 @@ An entry is included when a source provides it as a procedure or function that c
 |---|---|---|
 | ALG-205 | Transitive closure | P `dag_transitive_reduction_closure`; N `transitive_closure`, `transitive_closure_dag` |
 | ALG-206 | Transitive reduction | P `dag_transitive_reduction_closure`, `dag_to_toposorted_adjacency_list`; N `transitive_reduction` |
+
+## Derived procedure names
+
+Neither Neo4j Graph Data Science nor Memgraph MAGE provides these entries as a usable procedure: either no procedure exists, or the MAGE name does not parse under opengql/grammar because it starts with the reserved word `PATH` (ALG-004). Their procedure names follow the rule in [FR-ALG-007](functional-requirements.md#graph-algorithms) (user decision 2026-10-02): the `gds.` namespace and a camelCase name derived from the first function that petgraph or graphalgs lists for the entry, or from each MAGE name for ALG-004, with `.`, `::` and `_` removed. Where an entry has no function name (ALG-013, ALG-028) or shares its first function with another entry (ALG-205, ALG-206), the name is derived from the entry's algorithm name in this inventory, without its parenthetical. Each name takes the mode suffixes `.stream` and `.write`.
+
+| ID | Procedure name | Derived from |
+|---|---|---|
+| ALG-004 | `gds.pathExpand`, `gds.pathSubgraphNodes`, `gds.pathSubgraphAll` | MAGE `path.expand`, `path.subgraph_nodes`, `path.subgraph_all` (`PATH` is reserved) |
+| ALG-009 | `gds.hasPathConnecting` | petgraph `has_path_connecting` |
+| ALG-011 | `gds.dominatorsSimpleFast` | petgraph `dominators::simple_fast` |
+| ALG-013 | `gds.unweightedShortestPaths` | algorithm name "Unweighted shortest paths" |
+| ALG-015 | `gds.bidirectionalDijkstra` | petgraph `bidirectional_dijkstra` |
+| ALG-020 | `gds.findNegativeCycle` | petgraph `find_negative_cycle` |
+| ALG-021 | `gds.spfa` | petgraph `spfa` |
+| ALG-024 | `gds.johnson` | petgraph `johnson` |
+| ALG-025 | `gds.floydWarshall` | petgraph `floyd_warshall` |
+| ALG-026 | `gds.seidel` | graphalgs `seidel` |
+| ALG-028 | `gds.allShortestPathsBetweenNodes` | algorithm name "All shortest paths between nodes" |
+| ALG-030 | `gds.kShortestPath` | petgraph `k_shortest_path` |
+| ALG-084 | `gds.connectedComponents` | petgraph `connected_components` |
+| ALG-086 | `gds.condensation` | petgraph `condensation` |
+| ALG-123 | `gds.eccentricity` | graphalgs `eccentricity` |
+| ALG-128 | `gds.girth` | graphalgs `girth` |
+| ALG-143 | `gds.laplacianMatrix` | graphalgs `laplacian_matrix` |
+| ALG-151 | `gds.countSpanningTrees` | graphalgs `count_spanning_trees` |
+| ALG-161 | `gds.maximumMatching` | petgraph `maximum_matching` |
+| ALG-169 | `gds.maximalCliques` | petgraph `maximal_cliques` |
+| ALG-174 | `gds.dsaturColoring` | petgraph `dsatur_coloring` |
+| ALG-177 | `gds.greedyFeedbackArcSet` | petgraph `greedy_feedback_arc_set` |
+| ALG-181 | `gds.elementaryCircuits` | graphalgs `elementary_circuits` |
+| ALG-189 | `gds.isIsomorphic` | petgraph `is_isomorphic` |
+| ALG-190 | `gds.isIsomorphicSubgraph` | petgraph `is_isomorphic_subgraph` |
+| ALG-194 | `gds.isBipartiteUndirected` | petgraph `is_bipartite_undirected` |
+| ALG-203 | `gds.isTournament` | graphalgs `is_tournament` |
+| ALG-204 | `gds.isDegreeSequenceGraphlike` | graphalgs `is_degree_sequence_graphlike` |
+| ALG-205 | `gds.transitiveClosure` | algorithm name "Transitive closure" |
+| ALG-206 | `gds.transitiveReduction` | algorithm name "Transitive reduction" |
 
 ## Withdrawn entries
 

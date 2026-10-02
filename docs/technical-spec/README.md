@@ -35,7 +35,9 @@ Start with [architecture.md](architecture.md).
 - **Decision identifiers.** `TS-NN`, stable once assigned, never reused. Each decision lives in one file and is cited elsewhere by link.
 - **Decision form.** Each decision states: the decision; the requirements it satisfies (`FR-`, `NFR-`, `BR-`, `ABS-` identifiers of the functional specification); the evidence; the Rust crates assessed, each as a dependency or study only; the rejected options, one line each.
 - **Basis.** Every decision follows the "Research and decision-making" procedure of the project's `CLAUDE.md`: it rests on the recurring approach of the reference projects for that area, on official documentation, or on a measurement listed below.
-- **Coverage.** Every requirement of the functional specification is traced by at least one decision, except these release and process requirements, which need no technical decision: FR-GQL-003, FR-GQL-006, NFR-PERF-001, NFR-REL-001, NFR-REL-003, NFR-REL-005 (and the withdrawn FR-REC-009).
+- **Coverage.** Every requirement of the functional specification is listed in the `Satisfies` line of at least one decision, except these release, process and documentation requirements, which need no technical decision: FR-GQL-003, FR-GQL-006, NFR-PERF-001, NFR-REL-001, NFR-REL-003, NFR-REL-005, NFR-DOC-001 (met by the conventions of this folder) and the withdrawn FR-REC-009.
+- **Functional sources.** `[Sn]` refers to the sources of the [functional specification](../functional-spec/README.md#sources).
+- **Provisional.** A decision that depends on the ISO/IEC 39075:2024 text, which is not available, is marked "provisional (OQ-005)".
 - **Unverified.** A claim not confirmed in a source or a measurement is marked "unverified". The full list is in [quality-and-testing.md](quality-and-testing.md#unverified-points).
 - **Simplicity.** Only what a requirement needs is specified ([NFR-SIMP-001](../functional-spec/non-functional-requirements.md#simplicity)). An option, setting or extension point appears only when a requirement or a measurement demands it.
 - **Spelling.** British English ([NFR-DOC-001](../functional-spec/non-functional-requirements.md#documentation)).
@@ -48,9 +50,9 @@ Functional terms are in the [functional glossary](../functional-spec/glossary.md
 - **Frame**: a buffer-pool slot that holds one page in memory.
 - **Group**: the unit of durability in the WAL: page images of one or more commits plus one commit frame ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **LSN**: log sequence number, the byte position of a record in the WAL.
-- **NO-STEAL**: the rule that uncommitted data is never written to shared pages.
+- **NO-STEAL**: the rule that a change reaches disk only after its commit is durable, and is visible only after its commit is published ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **Redo point**: the LSN from which recovery replays the WAL ([TS-11](transactions-and-recovery.md#ts-11-checkpoint)).
-- **Stamp**: the `created_ts` and `deleted_ts` commit timestamps carried by an immutable entry ([TS-14](transactions-and-recovery.md#ts-14-mvcc)).
+- **Stamp**: the `created_ts` and `deleted_ts` commit timestamps carried by an entry ([TS-06](storage.md#ts-06-graph-layout)).
 
 ## Sources
 
@@ -75,7 +77,8 @@ Checked between 2026-09-24 and 2026-10-02.
 | R-RWX | rustworkx, <https://github.com/Qiskit/rustworkx> | `25398ab` | Apache-2.0 |
 | R-GALGS | graphalgs, <https://github.com/starovoid/graphalgs> | `1f8a412` | MIT |
 | R-ANTLR | antlr4rust/antlr4, <https://github.com/antlr4rust/antlr4> | `9b5bd1e` (2026-09-27) | BSD-3-Clause |
-| R-GQL | opengql/grammar, <https://github.com/opengql/grammar> | `16ea71b` (2025-06-17), v1.9.0 | Apache-2.0 |
+| R-GQL | opengql/grammar, <https://github.com/opengql/grammar>; the trusted GQL syntax reference ([TS-19](query-engine.md#ts-19-parser)) | `16ea71b` (2025-06-17), v1.9.0 | Apache-2.0 |
+| R-ISO | ISO/IEC 39075:2024 electronic inserts, [docs/standards/iso-iec-39075/ed-1/](../standards/iso-iec-39075/ed-1/README.md) ([S45]); supplementary source for GQLSTATUS codes, feature identifiers and implementation-defined items | edition 1 (2024-03-23) | ISO terms of use |
 
 ### Official documentation
 
@@ -97,7 +100,9 @@ Checked between 2026-09-24 and 2026-10-02.
 | D-RAYON | rayon 1.12.0, `ParallelIterator::reduce` and `sum`: <https://docs.rs/rayon/1.12.0/rayon/iter/trait.ParallelIterator.html> |
 | D-AFIT | Rust blog, "Announcing `async fn` and return-position `impl Trait` in traits" (2023-12-21): <https://blog.rust-lang.org/2023/12/21/async-fn-rpit-in-traits/> |
 | D-METRICS | metrics 0.24.6: <https://docs.rs/metrics/0.24.6/metrics/> |
-| D-RUST | rust-lang/rust `RELEASES.md` (Rust 1.89.0 stabilises `File::lock` and `File::try_lock`; latest stable 1.98.1, 2026-09-03) |
+| D-RUST | rust-lang/rust `RELEASES.md`, <https://github.com/rust-lang/rust/blob/master/RELEASES.md> (1.85.0: "The 2024 Edition is now stable"; 1.89.0 stabilises `File::lock` and `File::try_lock`; latest stable 1.98.1, 2026-09-03) |
+| D-RUSTIX | rustix 1.1.5, `rustix::fs` (`fstatvfs`, `fallocate`): <https://docs.rs/rustix/1.1.5/rustix/fs/index.html> |
+| D-KUZU | X. Feng, G. Jin, Z. Chen, C. Liu, S. Salihoğlu, "KÙZU Graph Database Management System", CIDR 2023, <https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf> |
 | D-HYPER | T. Neumann, T. Mühlbauer, A. Kemper, "Fast Serializable Multi-Version Concurrency Control for Main-Memory Database Systems", SIGMOD 2015 ([S42] of the functional specification) |
 
 ### Measurements and research notes

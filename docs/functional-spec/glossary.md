@@ -24,14 +24,15 @@ related:
 - **Default schema, default graph**: the schema and graph that a new database's catalog contains, used as a session's home schema and home graph when none is supplied ([FR-DB-005](functional-requirements.md#database-lifecycle)).
 - **Element identifier**: the identifier of a node or edge. It is stable for the element's lifetime and never reused.
 - **Fast initial load**: the import mode that loads data into an empty graph ([FR-IMP-002](functional-requirements.md#import-and-export)).
-- **Feature identifier**: a code, such as GG01, that ISO/IEC 39075 assigns to an optional GQL feature.
+- **Feature identifier**: a code, such as GG01, that ISO/IEC 39075 assigns to an optional GQL feature; the ISO features insert lists them ([S45](README.md#sources)).
 - **Format version**: the version of the crate's on-disk format ([FR-OPS-004](functional-requirements.md#operations)).
 - **GQL**: the Graph Query Language, ISO/IEC 39075.
 - **GQLSTATUS**: the GQL status code that reports the outcome of a GQL request.
 - **Group commit**: flushing the log records of several committing transactions to stable storage with one flush.
 - **Home schema, home graph**: the schema and graph a session uses when a request names none ([FR-SES-002](functional-requirements.md#sessions)).
+- **In-memory projection**: the copy of an algorithm's input graph that the crate holds in memory for one algorithm run ([FR-ALG-004](functional-requirements.md#graph-algorithms)).
 - **Labeled Property Graph (LPG)**: a graph of nodes and edges that carry labels and properties.
-- **Memory cap**: the database-wide limit on the memory used by the cache, query execution and the old versions kept for MVCC together ([FR-LIM-003](functional-requirements.md#resource-limits)).
+- **Memory cap**: the database-wide limit on the memory used by the cache, query execution and the old versions kept for MVCC together; the application passes it to create and open, with no default ([FR-LIM-003](functional-requirements.md#resource-limits)).
 - **Multiversion concurrency control (MVCC)**: keeping several committed versions of the data so that a transaction reads the versions of its snapshot without waiting for writers ([NFR-PERF-003](non-functional-requirements.md#performance), [FR-TX-006](functional-requirements.md#transactions)).
 - **Old version**: a committed version of data that a later commit has replaced, kept while a transaction's snapshot may still read it ([FR-LIM-005](functional-requirements.md#resource-limits)).
 - **Native dump**: the crate's own import and export format ([FR-IMP-001](functional-requirements.md#import-and-export)).
