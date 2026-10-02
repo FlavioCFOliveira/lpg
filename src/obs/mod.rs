@@ -54,6 +54,10 @@ pub mod names {
         pub const DURATION: &str = "check_point.duration";
         /// Counter: bytes written by checkpoints.
         pub const FLUSHED_BYTES: &str = "check_point.flushed_bytes";
+        /// Counter: opens that found one invalid `CONTROL` slot and used the
+        /// other (TS-05; FR-REC-003 exception). The next `CONTROL` write
+        /// repairs the slot.
+        pub const CONTROL_SLOT_INVALID: &str = "check_point.control_slot_invalid";
     }
 
     /// Cache (buffer pool).
@@ -66,6 +70,9 @@ pub mod names {
         pub const EVICTIONS: &str = "page_cache.evictions";
         /// Counter: dirty pages written to storage.
         pub const FLUSHES: &str = "page_cache.flushes";
+        /// Gauge: bytes reserved from the database's memory accountant, by
+        /// the pool and every other user (TS-08).
+        pub const ACCOUNTED_BYTES: &str = "page_cache.accounted_bytes";
     }
 
     /// Store size.
@@ -74,6 +81,9 @@ pub mod names {
         pub const FULL: &str = "store.size.full";
         /// Gauge: bytes of the data file.
         pub const DATABASE: &str = "store.size.database";
+        /// Gauge: bytes of the data file reserved with `reserve` and not yet
+        /// in use (TS-05).
+        pub const RESERVED_UNUSED: &str = "store.size.reserved_unused";
     }
 }
 
@@ -115,12 +125,15 @@ mod tests {
             checkpointing::EVENTS,
             checkpointing::DURATION,
             checkpointing::FLUSHED_BYTES,
+            checkpointing::CONTROL_SLOT_INVALID,
             cache::HITS,
             cache::PAGE_FAULTS,
             cache::EVICTIONS,
             cache::FLUSHES,
+            cache::ACCOUNTED_BYTES,
             store_size::FULL,
             store_size::DATABASE,
+            store_size::RESERVED_UNUSED,
         ];
         let set: std::collections::BTreeSet<_> = all.iter().collect();
         assert_eq!(set.len(), all.len());

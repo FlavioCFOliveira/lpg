@@ -16,6 +16,45 @@ use std::path::Path;
 
 mod fs;
 
+// The kernel modules below have no caller outside tests until the B+tree,
+// WAL and API tasks build on them. `allow` rather than `expect`: Rust 1.89
+// and 1.99 report dead code in these modules differently.
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #14-#16")
+)]
+pub(crate) mod control;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #14-#16")
+)]
+pub(crate) mod datafile;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #14-#16")
+)]
+pub(crate) mod engine;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #14-#16")
+)]
+pub(crate) mod error;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #14-#16")
+)]
+pub(crate) mod memory;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #14-#16")
+)]
+pub(crate) mod page;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with #14-#16")
+)]
+pub(crate) mod pool;
+
 #[cfg(test)]
 pub(crate) mod fault;
 

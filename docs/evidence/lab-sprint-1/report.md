@@ -209,3 +209,151 @@ Reproduction:
     raw/t11-session.sh                                 # fio, lab::storage, fio
     LC_ALL=C LPG_PERF_N=<0|10000000> perf stat -r 3 -x, -e task-clock,cycles,instructions \
         BIN --exact lab::obs::counter_calls --ignored --test-threads=1
+
+## #12
+
+`src/storage/control.rs` (two 4 KiB `CONTROL` slots with CRC-32C), `src/storage/page.rs` (8 KiB pages; header with CRC-32C, page LSN, tree identifier and page type), `src/storage/datafile.rs` (header page and extent growth), `src/storage/engine.rs` (create and open), `src/storage/error.rs` (error type and the unusable latch) and `src/test_support/child.rs` (re-runs one test in a child process). Gates and suite: raw/t12-t13-quality-gate.txt, raw/t12-t13-nextest.txt (71 passed, both lab directories); coverage: raw/t12-t13-coverage.txt.
+
+**Acceptance.** `cargo nextest run -p lpg storage::control storage::page storage::datafile storage::engine storage::pool storage::memory`: 44 passed. Every engine test runs in `LPG_LAB_EXT4` and `LPG_LAB_XFS`.
+
+| Check | Test | Result |
+|---|---|---|
+| Create over an existing database fails; every file unchanged | `create_over_an_existing_database_fails_and_changes_nothing` | pass; method: every file read in full through `FsStorage` before and after and compared byte for byte, a stronger check than a digest |
+| Open on an empty or missing directory fails and creates nothing | `open_without_a_database_fails_and_creates_nothing` | pass |
+| Second open in the same process fails; the first handle keeps working | `second_open_in_the_same_process_fails_and_the_first_keeps_working` | pass |
+| Open from a child process fails while held, succeeds after close | `second_open_from_a_child_process_fails` | pass |
+| Both `CONTROL` slots invalid: corruption | `both_control_slots_invalid_is_corruption` | pass |
+| One invalid slot: opens from the other, counted, repaired by the next write | `one_invalid_control_slot_opens_from_the_other_and_is_counted`, `control::one_invalid_slot_…` | pass |
+| Page-0 version ≠ `CONTROL`: corruption | `page_zero_version_differing_from_control_is_corruption` | pass |
+| Newer version fails, all files unchanged | `newer_format_fails_and_changes_nothing` | pass |
+| Older version: `migration required` | `older_format_requires_migration` | pass |
+| `ensure` under a full `FaultStorage` returns ENOSPC; a read still succeeds | `enospc_on_ensure_keeps_reads_working` | pass |
+| `memory_cap` on create and open | `grep -n memory_cap src/storage/engine.rs` | lines 98 and 172 (raw/t12-t13-quality-gate.txt) |
+
+**System calls.** `strace -c -f` of `lab::files::files_one` with `LPG_FILES_MODE` `none`, `create` and `create_open`; one create is `create − none`, one open is `create_open − create` (raw/t12-strace-c-*.txt). ext4 and XFS give the same counts.
+
+| Call | `fdatasync` | `fsync` | `fallocate` | `pwrite64` | `pread64` | `flock` |
+|---|---|---|---|---|---|---|
+| create | 2 (`data-1`, `CONTROL`) | 2 (`sync_dir` after `data-1`, after `CONTROL`) | 1 (first 64 MiB extent) | 2 (page 0, both `CONTROL` slots) | 0 | 1 |
+| open | 0 | 0 | 0 | 0 | 2 (`CONTROL`, page 0) | 1 |
+
+**Wall time.** `lab::files::files`, 100 creates and 100 opens per directory, each call timed alone, memory cap 64 MiB (raw/t12-lab-files.md):
+
+| Directory | create µs, median [min, max] | create p90 | open µs, median [min, max] | open p90 |
+|---|---|---|---|---|
+| ext4 | 5 947 [5 305, 13 559] | 6 503 | 85 [82, 253] | 104 |
+| XFS | 11 806 [11 352, 28 185] | 12 864 | 83 [76, 150] | 115 |
+
+Create performs the four syncs above; open performs none. How the create time divides among the syncs was not measured.
+
+**Extent growth (first data for unverified point 6).** `strace -f -T -e trace=fallocate` of `lab::files::files_growth`, growth from the first extent to 4 GiB, one extent per `ensure`, three runs per directory (raw/t12-strace-fallocate-*.txt, summary raw/t12-fallocate-summary.txt):
+
+| Directory | `fallocate` of 64 MiB, median per run (µs) | max (µs) | total for 4 GiB (ms) |
+|---|---|---|---|
+| ext4 | 37, 32, 24 | 71, 56, 41 | 2.47, 2.12, 1.61 |
+| XFS | 39, 40, 37 | 54, 3 083, 3 137 | 2.64, 5.72, 5.77 |
+
+Up to 6.25 GiB an extent is 64 MiB, so growth takes 16 extents per GiB; above it an extent is 1 % of the file, so a file of S GiB takes 100 / S extents per GiB. The measured runs took 64 extents for 4 GiB. Two of 192 XFS calls took about 3.1 ms; their cause was not investigated. These figures cover the extent size only; the free-page reserve bound of point 6 needs commits (#16) and stays unverified. `fallocate` changes the file size, which becomes durable only with the next `sync_data` of the file.
+
+## #13
+
+`src/storage/pool.rs` (buffer pool), `src/storage/memory.rs` (memory accountant). Laboratory: `src/lab/pool.rs`, run on `LPG_LAB_EXT4` with a 1 GiB database of 131 072 pages (`$LPG_LAB_EXT4/pool-db`, removed afterwards), OS cache warm unless stated. One operation is `fetch`, shared latch, one byte read and unpin. Cache share = pool page buffers as a percentage of the data pages; the cap is sized so (`cap_for`).
+
+**Acceptance.** In the 44 tests above:
+
+| Check | Test | Result |
+|---|---|---|
+| 16 threads fetching and reserving never exceed the cap, checked on every reservation | `memory::concurrent_reservations_never_exceed_the_cap`, `pool::sixteen_threads_fetching_and_reserving_stay_within_the_cap` | pass; the compare-and-swap in `try_charge` checks the cap on every reservation, each thread asserts it after each one, and the recorded peak is at most the cap |
+| Pages worth 10× the cap are returned intact | `pages_worth_ten_times_the_cap_are_returned_intact` | pass; 2 560 pages, cap 2 MiB, three passes, every byte compared |
+| A flipped bit fails its read; every later operation fails until reopen | `flipped_bit_fails_the_read_and_every_later_operation_until_reopen` | pass; after reopen the good page reads again and the bad one fails again |
+| A frame with page LSN > durable LSN is never written | `frame_with_lsn_above_durable_is_never_written` | pass; `FaultStorage` call log shows no `write_at` at that offset under three passes of eviction pressure, then exactly one once the durable LSN reaches it |
+
+The suite also covers: all frames pinned gives a memory-limit error and leaves the database usable; a reservation shrinks the pool to its floor and no further; reservations take clean frames before dirty ones. Fifty debug and thirty release repetitions of the pool tests passed.
+
+**Latency per operation.** `lab::pool::pool`, 3 rounds, median [min, max] (raw/t13-lab-pool.md):
+
+| Cache | miss (ns) | hit (ns) | uniform random (ns, hit rate) | Zipf 0.8 random (ns, hit rate) |
+|---|---|---|---|---|
+| 100 % | 12 084 [11 818, 12 122] (pool growing) | 50 [50, 63] | 162 [158, 166], 1.000 | 217 [211, 247], 1.000 |
+| 10 % | 3 063 [3 029, 3 109] (with eviction) | 31 [31, 31] | 3 084 [3 038, 3 118], 0.100 | 1 994 [1 977, 2 035], 0.477 |
+| 1 % | 2 683 [2 665, 2 730] (with eviction) | 22 [22, 22] | 2 921 [2 915, 2 948], 0.010 | 2 524 [2 493, 2 550], 0.213 |
+
+Misses are sequential first touches, one `pread64` each. At 100 % no frame is evicted and each miss also allocates and first-touches a new 8 KiB buffer; a run of the same workload before the final page-table change measured 8 056 [7 958, 8 169] ns, and the cause of the difference was not established. Hits are random within a resident set of a quarter of the pool; the misses in the "hit" rows of the raw table are the loading of that set before the timed rounds. A hit costs more at 100 % than at 1 % because the frames touched span 1 GiB instead of 10 MiB.
+
+**CPU counters.** `perf stat` of `lab::pool::pool_fixed`, per operation = (run with N operations − run with 0) / N, 3 interleaved rounds, median [min, max] (raw/t13-perf-stat.txt, raw/t13-perf-stat-per-op.txt, script raw/t13-perf-stat.sh). The Zen 3 core PMU has no `LLC-load-misses`; the L3-miss column counts `ls_any_fills_from_sys.mem_io_local`, data-cache fills from local DRAM. The per-operation figures include drawing the page number.
+
+| Cache | Mode | Cycles | Instructions | IPC | Branch misses | DRAM fills |
+|---|---|---|---|---|---|---|
+| 100 % | hit | 347 [176, 384] | 303 [153, 318] | 0.87 | 1.0 | 0.3 |
+| 100 % | miss | 37 832 [37 056, 38 498] | 34 514 | 0.91 | 469 | 97 |
+| 10 % | hit | 138 [135, 162] | 238 | 1.72 | 0.1 | 0.1 |
+| 10 % | miss | 13 674 [13 408, 16 045] | 16 680 | 1.22 | 67 | 86 |
+| 1 % | hit | 119 [119, 119] | 260 | 2.19 | 0.3 | 0.0 |
+| 1 % | miss | 12 528 [12 496, 12 607] | 16 439 | 1.31 | 65 | 104 |
+
+**Reads equal misses.** `strace -c -f` of `pool_fixed`, 30 000 operations per mode (raw/t13-strace-c-*.txt, counters raw/t13-strace-c-counters.txt): in all six runs `pread64` = miss counter + 4 (32 772 = 32 768 + 4; 95 540; 3 281; 43 112; 331; 31 315). The 4 are the dynamic loader's 2 reads (#10) and the open's reads of `CONTROL` and page 0 (#12 table).
+
+**Allocations.** heaptrack of `pool_fixed`, run with N minus run with 0 (raw/t13-heaptrack-summary.txt):
+
+| Cache | Per hit (N = 10^6) | Per miss (N = 30 000) |
+|---|---|---|
+| 100 % | 0 (1 call in 10^6: the harness's pick vector) | 1.0 (30 000 calls: the new page buffer; the pool is growing) |
+| 10 % | 0 (2 calls in 10^6, harness) | 0 (0 calls) |
+| 1 % | 0 (2 calls in 10^6, harness) | 0.00003 (1 call) |
+
+A first run sized each page-table shard for its mean occupancy and made 80 allocations in 30 000 misses at 10 %. With twice the mean occupancy it made none (same raw file, before and after); the change costs 0.26 % of the cap at 10 % and is kept.
+
+**Accounted bytes against VmRSS.** VmRSS growth from before the open to the end of `pool_fixed`, one process per run (raw/t13-strace-c-counters.txt): with the pool full, growth / accounted = 1.0022 (100 %, 95 536 buffers), 1.0046 (10 %, 13 108) and 1.0342 (1 %, 1 311). The remaining bytes are not accounted: harness allocations, sink state and allocator overhead (not attributed further).
+
+### Unverified point 5
+
+**Pool floor.** `lab::pool::pool_floor`: cap sized for a pool of 10 % of the data; after filling the pool, a competing user reserves 1 MiB, then 8 KiB, chunks until refused (raw/t13-lab-pool-floor.md, raw/t13-lab-pool-floor-hits.md).
+
+| Case | Page buffers | Uniform ns/fetch | Uniform hit rate | Zipf ns/fetch | Zipf hit rate |
+|---|---|---|---|---|---|
+| floor 1 %, no competitor | 13 108 | 3 067 | 0.099 | 2 005 | 0.476 |
+| floor 0.5 %, competing | 66 | 4 073 | 0.004 | 4 054 | 0.049 |
+| floor 1 %, competing | 132 | 3 453 | 0.004 | 3 379 | 0.077 |
+| floor 2 %, competing | 265 | 3 202 | 0.005 | 3 068 | 0.110 |
+| floor 5 %, competing | 663 | 3 104 | 0.008 | 2 846 | 0.164 |
+
+Part of the extra cost at small floors is the clock sweep itself: the frame table keeps one slot per page of the cap, and at the floor almost all slots are empty, so a sweep passes about 13 108 / 132 ≈ 100 slots per victim at 1 %. **Decision: keep the floor at 1 % of the cap.** The floor matters only when other users hold the rest of the cap; from 0.5 % to 1 % a Zipf fetch gets 17 % faster, and each further doubling gains less (9 % to 2 %, 7 % to 5 %) while withholding more memory from statements. Constraint found by the 16-thread test: when pins exceed the floor, a fetch fails with a memory-limit error, so the floor must cover the pages that can be pinned at once.
+
+**`std` latches against `parking_lot`.** `lab::pool::pool_threads`, 400 000 uniform random fetches per thread, 3 rounds per run, 3 runs per build interleaved; `parking_lot` 0.12.5 replaced the frame and shard `RwLock`s in a copy outside the repository; `Cargo.toml` here has no `parking_lot` (raw/t13-lab-pool-threads-*.md, summary raw/t13-lab-pool-threads-summary.md). Mfetch/s, median of the runs:
+
+| Cache | Threads | std | parking_lot | Ratio |
+|---|---|---|---|---|
+| 100 % | 1 | 7.38 | 8.96 | 1.21 |
+| 100 % | 4 | 31.30 | 36.34 | 1.16 |
+| 100 % | 8 | 59.12 | 64.59 | 1.09 |
+| 100 % | 16 | 75.73 | 76.24 | 1.01 |
+| 10 % | 1 | 0.33 | 0.34 | 1.03 |
+| 10 % | 4 | 1.03 | 1.05 | 1.02 |
+| 10 % | 8 | 1.30 | 1.28 | 0.99 |
+| 10 % | 16 | 1.21 | 1.20 | 0.99 |
+
+A `perf record -g` of the std build shows the miss path bound by the kernel page-cache copy (`_copy_to_iter`, 40.5 % of samples) and CRC-32C (18.3 %); page-table and latch symbols are below 2 % each (raw/t13-perf-report-threads.txt). **Decision: keep `std` latches.** `parking_lot` saves about 20 ns per uncontended hit (132 → 112 ns at one thread), the gain shrinks to nothing at 16 threads, and it does not change the miss path. No performance target exists yet against which 20 ns per hit would matter, and the poisoning of `std` latches is what turns a panic under a write latch into the unusable latch. To revisit when the NFR-PERF-002 baseline sets targets.
+
+**Double caching.** `lab::pool::pool_double_cache`, pool of 10 % (raw/t13-lab-pool-double-cache.md, raw/t13-lab-pool-double-cache-notes.md): after `fadvise(DONTNEED)` `fincore` shows 0 bytes of `data-1` resident; after the pool is filled with uniform random pages (13 108 buffers, 107 380 736 B) it shows 199 311 360 B resident: the OS cache holds every page read, including the pool's 107 MB. With the pool full, 10 000 distinct random fetches per round (about 6.5 % of them hits, by the sink counters) cost 3 065 [3 026, 3 219] ns per fetch with the OS cache warm and 93 267 [92 559, 93 558] ns with it evicted, 7.51 KiB read from the device per fetch. **Decision: keep buffered I/O (TS-08).** The duplicate is outside the cap but reclaimable by the kernel, and a pool miss served from the OS cache costs about 1/30 of a device read; direct I/O would remove the duplicate and make every pool miss a device read. No requirement yet bounds memory outside the cap.
+
+**Limitations of #12–#13.**
+
+1. CPU governor `powersave`, frequency not pinned; one session; the task #7 `fdatasync` variance applies to the create timings.
+2. `lab::pool` ran on ext4 only; misses were served by the OS cache except in the double-caching run.
+3. Per-operation counters include the harness's page draw. The 100 % hit row of `perf stat` varies by a factor of two between rounds.
+4. VmRSS comparisons include memory the harness allocates.
+5. The two 3.1 ms XFS `fallocate` calls and the 8.1 against 12.1 µs growing-pool miss were not attributed.
+
+Reproduction:
+
+    cargo test -p lpg --profile lab --lib --no-run      # BIN below
+    LPG_LAB_EXT4=… LPG_LAB_XFS=… LPG_LAB_OUT=raw BIN --exact lab::files::files --ignored --test-threads=1
+    LPG_TEST_DIR=<dir> LPG_FILES_MODE=<none|create|create_open> strace -c -f -o raw/t12-strace-c-<mode>-<fs>.txt \
+        BIN --exact lab::files::files_one --ignored --test-threads=1
+    LPG_TEST_DIR=<dir> LPG_GROW_GIB=4 strace -f -T -e trace=fallocate -o raw/t12-strace-fallocate-<fs>-rep<N>.txt \
+        BIN --exact lab::files::files_growth --ignored --test-threads=1
+    LPG_LAB_EXT4=… LPG_LAB_OUT=raw BIN --exact lab::pool::<pool|pool_floor|pool_double_cache> --ignored --test-threads=1
+    LPG_LATCH=<label> … BIN --exact lab::pool::pool_threads --ignored --test-threads=1
+    raw/t13-perf-stat.sh                                # perf stat of pool_fixed
+    LPG_POOL_SHARE=<100|10|1> LPG_POOL_MODE=<hit|miss> LPG_PERF_N=<N|0> \
+        <strace -c -f | heaptrack> BIN --exact lab::pool::pool_fixed --ignored --test-threads=1

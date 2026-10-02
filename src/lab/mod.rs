@@ -24,8 +24,10 @@ use rustix::fs::{Advice, Mode, OFlags};
 
 use crate::obs::recording::{Metrics, RecordingSink};
 
+mod files;
 mod generator;
 mod obs;
+mod pool;
 mod storage;
 
 /// Measured rounds per workload.

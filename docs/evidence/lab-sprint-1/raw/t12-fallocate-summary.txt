@@ -1,0 +1,6 @@
+t12-strace-fallocate-ext4-rep1.txt n=64 median=37us min=31us max=71us p90=46us total=2.47ms
+t12-strace-fallocate-ext4-rep2.txt n=64 median=32us min=27us max=56us p90=38us total=2.12ms
+t12-strace-fallocate-ext4-rep3.txt n=64 median=24us min=21us max=41us p90=30us total=1.61ms
+t12-strace-fallocate-xfs-rep1.txt n=64 median=39us min=38us max=54us p90=45us total=2.64ms
+t12-strace-fallocate-xfs-rep2.txt n=64 median=40us min=39us max=3083us p90=47us total=5.72ms
+t12-strace-fallocate-xfs-rep3.txt n=64 median=37us min=35us max=3137us p90=58us total=5.77ms

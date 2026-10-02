@@ -15,3 +15,5 @@ pub mod tx;
 
 #[cfg(test)]
 mod lab;
+#[cfg(test)]
+mod test_support;
