@@ -22,6 +22,7 @@ related:
 | `bolt::Client` (feature `bolt`) | `connect(connection, auth)`, then auto-commit queries, transactions, `PULL`, bookmarks | FR-BOLT-002, FR-BOLT-019 |
 | `Error` | GQLSTATUS code, message, cause | FR-BOLT-006 |
 
+- `memory_cap` bounds the memory the crate accounts for. Page images and the free-page set are outside it, so one database can use up to about 3× `memory_cap` ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
 - Every operation that performs I/O or waits is `async` ([TS-02](architecture.md#ts-02-async-api-and-threading)).
 - Operations that need a principal live on `Session` or `Transaction`, never on `Database`. Each of them is authorised and records an owner ([TS-23](#ts-23-authentication-and-authorisation)), and the catalog changes join a transaction (FR-CAT-004).
 - GQLSTATUS codes come from the ISO conditions insert ([S45]) where it defines one. Otherwise they are Neo4j's codes [S48], such as 25N11 and 50N05 ([TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)). Codes that depend on rules outside the inserts are provisional (OQ-005).

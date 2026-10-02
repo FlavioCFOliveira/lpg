@@ -70,6 +70,8 @@ Checked between 2026-09-24 and 2026-10-02.
 | R-SQLITE | SQLite, <https://github.com/sqlite/sqlite> | `c62a443` (2026-09-24) | public domain |
 | R-DUCK | DuckDB, <https://github.com/duckdb/duckdb> | `0b9cba2` (2026-09-24) | MIT |
 | R-REDB | redb, <https://github.com/cberner/redb> | `7677a88` (2026-09-23) | MIT/Apache-2.0 |
+| R-LMDB | LMDB, <https://github.com/LMDB/lmdb> | `700e10f` (2026-08-19) | OpenLDAP Public License 2.8 |
+| R-LEVELDB | LevelDB, <https://github.com/google/leveldb> | `7ee830d` (2026-03-10) | BSD-3-Clause |
 | R-FJALL | fjall, <https://github.com/fjall-rs/fjall> | `3adaa50` (2026-08-30) | MIT/Apache-2.0 |
 | R-TURSO | turso, <https://github.com/tursodatabase/turso> | `300b692` (2026-10-02) | MIT |
 | R-NEO4RS | neo4rs, <https://github.com/neo4j-labs/neo4rs> | `1a35661` (2026-09-25) | MIT |
@@ -101,6 +103,7 @@ Checked between 2026-09-24 and 2026-10-02.
 | D-AFIT | Rust blog, "Announcing `async fn` and return-position `impl Trait` in traits" (2023-12-21): <https://blog.rust-lang.org/2023/12/21/async-fn-rpit-in-traits/> |
 | D-METRICS | metrics 0.24.6: <https://docs.rs/metrics/0.24.6/metrics/> |
 | D-RUST | rust-lang/rust `RELEASES.md`, <https://github.com/rust-lang/rust/blob/master/RELEASES.md> (1.85.0: "The 2024 Edition is now stable"; 1.89.0 stabilises `File::lock` and `File::try_lock`; latest stable 1.98.1, 2026-09-03) |
+| D-DENY | cargo-deny, "licenses" configuration: <https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html> (licences not in `allow` are denied unless a listed licence satisfies the expression; checked 2026-10-02) |
 | D-RUSTIX | rustix 1.1.5, `rustix::fs` (`fstatvfs`, `fallocate`): <https://docs.rs/rustix/1.1.5/rustix/fs/index.html> |
 | D-KUZU | X. Feng, G. Jin, Z. Chen, C. Liu, S. Salihoğlu, "KÙZU Graph Database Management System", CIDR 2023, <https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf> |
 | D-HYPER | T. Neumann, T. Mühlbauer, A. Kemper, "Fast Serializable Multi-Version Concurrency Control for Main-Memory Database Systems", SIGMOD 2015 ([S42] of the functional specification) |

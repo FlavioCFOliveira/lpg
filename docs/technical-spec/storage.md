@@ -37,7 +37,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - **Files.** A database location holds:
     - `LOCK`, the lock target ([TS-27](#ts-27-single-process-lock));
     - `CONTROL`;
-    - `data-<g>`, one paged file whose page 0 holds the magic and the format version;
+    - `data-<g>`, one paged file whose page 0 is the header page (below);
     - `wal-<g>/`, the WAL segments ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 
     `<g>` is the file-set generation, starting at 1. Only migration changes it ([TS-28](operations.md#ts-28-format-versioning-and-migration)). At open, files of any other generation are removed.
@@ -48,24 +48,53 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - a CRC-32C.
 
     The valid slot with the higher sequence number is authoritative. Page 0 of `data-<g>` must hold the same format version; a mismatch is corruption.
-  - **Pages.** 8 KiB, fixed at creation. Page header: CRC-32C, page LSN, page type, tree identifier. Leaf and inner pages are slotted. Values above an inline threshold go to chains of overflow pages.
+    - **One invalid slot** at open is treated as a torn `CONTROL` write: the database opens from the valid slot, the next `CONTROL` write (always to the non-authoritative slot) rewrites the invalid one, and the event is counted in a metric ([TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events)). This is the exception to FR-REC-003 set by the user decision of 2026-10-02. If both slots are invalid, the open fails (FR-REC-003).
+  - **Pages.** 8 KiB, fixed at creation. Page header: CRC-32C, page LSN, page type, tree identifier. Leaf and inner pages are slotted.
+  - **Overflow.** A value longer than 2 048 bytes, a quarter of the page, is stored whole in a chain of overflow pages. Its entry keeps the value length and the first overflow page number.
+  - **Key size.** A key is at most 1 024 bytes; a write with a longer key fails. A leaf therefore always holds its high key ([TS-06](#ts-06-graph-layout)) and at least two entries of the largest size, so every split succeeds.
+  - **Header page and tree directory.**
+    - Page 0 holds the magic, the format version, the first trunk page of the free list and the next tree identifier.
+    - Page 1 is the root of the **tree directory**, a B+tree that maps each tree identifier to its root page. The directory is tree 0. Other tree identifiers are `u64`, start at 1, are monotonic and are never reused.
+    - A root page keeps its number for the life of its tree: a root split moves the root's entries into new child pages and leaves the root in place. The directory therefore changes only when a tree is created, dropped, or installed by a bottom-up build ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints), [TS-26](operations.md#ts-26-backup-restore-import-and-export)).
+    - Pages 0 and 1 change like any other page: under the commit latch, with their images in the WAL ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). Each change is therefore atomic with its commit.
   - **Free space.**
-    - Free pages are kept in a persisted free list plus an in-memory set. A page freed by a commit is reused only after the garbage-collection horizon has passed that commit ([TS-14](transactions-and-recovery.md#ts-14-mvcc)).
+    - Free pages are kept in a persisted free list plus an in-memory set. The persisted list is a chain of trunk pages; each holds free page numbers and the next trunk page.
+    - **Reuse.** A page freed by the commit with timestamp `c` enters the persisted list in that commit. It enters the in-memory set, and may be reused, only when no tree reader can still hold its number ([TS-06](#ts-06-graph-layout)):
+      - each tree read operation registers, when it starts, the `commit_ts` of the last commit whose apply step has finished ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol));
+      - the page becomes reusable when every registered value is at least `c`.
+
+      With MVCC the registered value is the snapshot, so the rule becomes the garbage-collection horizon ([TS-14](transactions-and-recovery.md#ts-14-mvcc)). At open no reader exists, so every listed page is reusable.
+    - **Underflow.** A delete never merges or redistributes pages. A page is freed only when it is empty:
+      - it is removed from its parent, and its key range passes to its right sibling;
+      - it is unlinked from its left sibling, keeps its right link and is marked deleted, so a reader that reaches it moves right ([TS-06](#ts-06-graph-layout));
+      - an inner page left without children is freed the same way;
+      - the root and the right-most page of each level are never freed, so the height of a tree never decreases.
     - `data-<g>` grows in extents of 64 MiB, or 1 % of the file if that is larger. Each extent is reserved with `fallocate` before use; this extension is the only one.
+    - Recovery ([TS-13](transactions-and-recovery.md#ts-13-recovery)) and restore ([TS-26](operations.md#ts-26-backup-restore-import-and-export)) extend the file the same way, before they write a page beyond its end. ENOSPC there fails the open or the restore; no database is open, so no reads are lost.
     - Before taking the commit latch, a committing transaction makes sure the reserve of unused pages covers its bound: 2 × (⌈write-set bytes / 4 KiB⌉ + trees written) + the sum of the heights of the trees written. Each leaf split creates at most one page per level, and splits leave pages at least half full.
     - If a reservation hits ENOSPC, that transaction fails and reads continue (FR-REC-007).
     - Checkpoints and eviction write only into reserved space.
   - **Create** fails, leaving everything unchanged, if `CONTROL` already exists (FR-DB-003). Otherwise it creates and locks `LOCK`, creates `data-1` and `wal-1/`, and writes `CONTROL` last, then `sync_dir`. A location is a database exactly when `CONTROL` exists.
-- **Satisfies**: FR-STO-001, FR-DB-003, FR-DB-004, FR-REC-003, FR-REC-007, FR-REC-008, FR-OPS-004, FR-OPS-011, FR-TYPE-003.
+- **Satisfies**: FR-STO-001, FR-STO-003, FR-DB-003, FR-DB-004, FR-REC-003, FR-REC-007, FR-REC-008, FR-OPS-004, FR-OPS-011, FR-TYPE-003.
 - **Evidence**:
   - Default page sizes: PostgreSQL 8 KiB; Neo4j `PAGE_SIZE = 8192` (R-NEO `community/io/.../pagecache/PageCache.java:51`); InnoDB 16 KiB; SQLite and Kuzu 4 KiB (R-KUZU `CMakeLists.txt:114`). M-LAYOUT ran on 8 KiB pages.
   - Two checksummed commit slots in the file header: redb (`docs/design.md` l.30-60, [P-STO](../evidence/research/research-01-storage.md) §Q9). PostgreSQL keeps `pg_control` within 512 bytes (P-STO §Q9).
   - PostgreSQL extends relation files with `posix_fallocate` in the session that needs the space, and reports ENOSPC there with "Check free disk space" (R-PG `src/backend/storage/smgr/md.c:529-536, 596-629`; `src/backend/storage/file/fd.c:2396-2425`).
-  - SQLite uses overflow pages for large cells.
+  - Overflow threshold. PostgreSQL moves values out of line when a tuple exceeds the size at which four fit on a page (`TOAST_TUPLES_PER_PAGE = 4`, R-PG `src/include/access/heaptoast.h:23-26, 46-48`). SQLite caps a cell's local payload at 64/255 of the usable page (R-SQLITE `src/btree.c:3458-3471`). Both keep at least four entries per page.
+  - Key size. PostgreSQL limits a B-tree item to a third of the page so that three items fit on every page (R-PG `src/include/access/nbtree.h:157-169`). LMDB also fixes a maximum key size (R-LMDB `libraries/liblmdb/mdb.c:713, 12685`).
+  - Recovery extends the file. PostgreSQL redo extends a relation when a logged page lies beyond its end, "in recovery only" (R-PG `src/backend/access/transam/xlogutils.c:525-543`). SQLite's checkpoint gives the file a size hint before writing pages beyond its end (R-SQLITE `src/wal.c:2378`).
+  - Header page and directory. SQLite page 1 holds the first free-list trunk page (R-SQLITE `src/btreeInt.h:68-69`) and is the root of the schema tree, which maps names to root pages (`src/sqliteInt.h:1285`). A root split keeps the root in place (`src/btree.c:9060-9068`, `balance_deeper`). LMDB's meta page holds the free-page tree and the main tree, which maps names to tree roots (R-LMDB `libraries/liblmdb/mdb.c:1377, 12331-12341`). redb's header holds the root of its table tree, which maps names to table roots (R-REDB `docs/design.md:16, 132`).
+  - Underflow. PostgreSQL deletes only empty pages: merging "might miss the items" in a concurrent scan; it never deletes the right-most page of a level, so height never decreases (R-PG `src/backend/access/nbtree/README:234-241, 247-253, 365-367`).
+  - Reuse. PostgreSQL recycles a deleted page only when "there is no possible scan or search that has a reference to it" (R-PG `src/backend/access/nbtree/README:386-391`). LMDB reuses freed pages only below its oldest reader (R-LMDB `libraries/liblmdb/mdb.c:2640-2656, 2802-2812`). redb reuses a freed page "only after all read transactions that could reference it have completed" (R-REDB `docs/design.md:388-389`).
 - **Rejected**:
   - Replacing `CONTROL` by rename at each checkpoint: it creates a file, which can hit ENOSPC outside any transaction.
   - Growing the file when a checkpoint or eviction first writes a page: ENOSPC would then hit background work and make the database unusable, which FR-REC-007 forbids.
   - One file per graph or per tree: more files to sync, rename and back up, for no requirement.
+  - Tree roots or the free-list head in `CONTROL`: `CONTROL` is written only at checkpoints and is not logged, so a commit's change to them would not be atomic with the commit.
+  - Moving roots (PostgreSQL metapage, LMDB, redb): the directory would change at every root split.
+  - Merging or redistributing underfull pages (LMDB below 25 % fill, R-LMDB `mdb.c:1136-1139, 10335-10348`; SQLite at less than one third full, R-SQLITE `src/btree.c:9175-9179`): moving entries across page boundaries can make a concurrent scan miss or repeat them.
+  - Keeping only a value prefix inline (SQLite): two places to read one value, for no requirement.
+  - Keys in overflow pages (SQLite index trees): inner pages and high keys would then need overflow reads during descent.
 
 ## TS-06 Graph layout
 
@@ -77,9 +106,18 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - Every entry carries the **stamps** `created_ts` and `deleted_ts`.
   - **Compressed leaves from the start**, in every tree:
     - entries are sorted; every 16th entry is a restart point holding its full key;
-    - the other entries store their key as a delta from the previous key, with integers as varints;
+    - in the adjacency tree, the other entries store their key fields as deltas from the previous key, with integers as varints (M-LAYOUT layout B);
+    - in every other tree, whose keys are byte strings, the other entries store the length of the prefix shared with the previous key, the length of the rest of the key, and the rest; both lengths are varints;
     - `created_ts` is omitted once the entry is visible to every snapshot ("frozen"), and `deleted_ts` is omitted while the entry is live.
-  - **Fill.** Bulk-built leaves are filled to 90 %. On the right-most leaf of the node and edge trees, which only ever grow at the right, splits leave the left page 90 % full.
+  - **Stamp encoding.** The leaf format has no stamp fields until MVCC is built ([TS-14](transactions-and-recovery.md#ts-14-mvcc)); the stamp encoding is added with it. The tree directory and the free list ([TS-05](#ts-05-files-and-pages)) never carry stamps.
+  - **Fill.** Bulk-built leaves are filled to 90 %. When the right-most leaf of any tree splits, the left page is left 90 % full. There is no per-tree setting.
+  - **Concurrent readers** (Lehman and Yao's B-link tree):
+    - every page holds a high key, the upper bound of its keys, and a link to its right sibling;
+    - a reader holds at most one page latch at a time; when its key is above a page's high key, or the page is marked deleted ([TS-05](#ts-05-files-and-pages)), it follows the right link;
+    - a scan copies the matching entries of one leaf under its latch, records that leaf's right link, releases the latch, and continues at the recorded link;
+    - the committer splits a page under its exclusive latch: it fills the new right page, links it, and only then latches the parent to insert the separator, holding the child latch until it has the parent latch.
+
+    A key present and unchanged for a whole read operation is returned exactly once. Until MVCC is built, a reader may see a concurrent commit in part, and before that commit is durable or published. Stamps and snapshots remove both effects ([TS-14](transactions-and-recovery.md#ts-14-mvcc)).
   - **Expansion.** Expanding a node is one descent plus a sequential leaf scan of the `(node_id, direction, edge_type)` prefix.
 - **Satisfies**: NFR-PERF-003, NFR-PERF-004, NFR-PERF-005, FR-STO-001, FR-STO-003, FR-TX-006, FR-TYPE-003, BR-TYPE-001, FR-CAT-001.
 - **Evidence**: measured ([M-LAYOUT](../evidence/layout-bench/results.md)) on the reference hardware, 8 KiB pages, synthetic Zipf and uniform graphs. Layouts are ranked by NFR-PERF-004's criteria, in its order.
@@ -98,6 +136,9 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - Neo4j's newer block format keeps adjacency per node, with a B+tree sorted by type and direction for dense nodes (Operations Manual, "Store formats"; P-TX §L1.1).
     - Kuzu's columnar CSR allows one write transaction at a time (R-KUZU `src/transaction/transaction_manager.cpp:35-38`).
     - Memgraph keeps adjacency in memory (R-MG `src/storage/v2/vertex.hpp`).
+    - Shared-prefix keys with a restart point every 16 entries: LevelDB blocks (R-LEVELDB `table/block_builder.cc:5-22`; `block_restart_interval = 16`, `include/leveldb/options.h:106`).
+    - Right-most leaf split. PostgreSQL leaves the left page fillfactor full whenever the right-most leaf of any B-tree index splits, default 90 (R-PG `src/backend/access/nbtree/nbtsplitloc.c:95-100, 287-291`; `src/include/access/nbtree.h:201`). SQLite's `balance_quick` applies to every rowid table when a row is appended to the right-most leaf (R-SQLITE `src/btree.c:9217-9238`).
+    - Concurrent readers. PostgreSQL implements Lehman and Yao's right links and high keys (R-PG `src/backend/access/nbtree/README:17-29`), holds one read latch at a time and couples latches only when moving right or up (`README:106-110`), and makes a scan follow the right link recorded when it read the page (`README:88-101`).
   - **Limits of M-LAYOUT** ("Limits of the method"):
     - one host and one device; synthetic graphs without properties;
     - misses were read with `O_DIRECT` and no read-ahead, while TS-08 reads through the operating-system cache, so I/O under kernel read-ahead is unmeasured;
@@ -110,6 +151,9 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - Per-node blocks (C): more device bytes and 2.2–2.8× larger; fastest only when fully resident.
   - CSR as the primary store: one snapshot; no MVCC; no concurrent writers.
   - Memgraph's in-memory adjacency: fails FR-STO-001.
+  - Reserving the stamp encoding before MVCC: it fixes now a format whose use is not yet built (NFR-SIMP-001). If a release falls between the two, the change is a format migration ([TS-28](operations.md#ts-28-format-versioning-and-migration)).
+  - A per-tree fill setting: no requirement needs one (NFR-SIMP-001).
+  - Latch coupling on the way down (crabbing): a reader would hold a parent while it waits for a child, and the committer holds the child while it waits for the parent, which can deadlock (R-PG `README:106-110`).
 
 ## TS-07 Element identifiers
 
@@ -131,9 +175,14 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - **Eviction.** A clock sweep. Before a dirty frame is written, its page LSN must be durable in the WAL. Frames are written only by eviction and by checkpoints, always into reserved space ([TS-05](#ts-05-files-and-pages)).
   - **I/O.** Positional `read_at` and `write_at` through the storage trait ([TS-03](interfaces.md#ts-03-storage-abstraction)), using the operating-system cache. No mmap and no direct I/O.
   - **Memory accountant.** One per database, an atomic byte budget equal to the memory cap. The cap is a required argument of create and open; there is no default (FR-LIM-003).
-    - Users that reserve from it: frames, operator state, private write sets with their before-image and write-key reservations, old versions, committed write-key sets, read sets, sort buffers, and algorithm projections.
+    - Users that reserve from it: frames, operator state, commit batches ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)), private write sets with their before-image and write-key reservations, old versions, committed write-key sets, read sets, sort buffers, and algorithm projections.
     - When a reservation fails, the pool evicts clean frames, then dirty frames whose WAL is durable. If the reservation still fails, the statement that asked fails (FR-LIM-001, FR-LIM-005, FR-LIM-007).
     - The pool never shrinks below a minimum, provisionally 1 % of the cap, to be fixed by measurement.
+    - **Outside the cap** (user decision 2026-10-02):
+      - WAL group page images ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)): one per page changed by the open group and by the group being written, so at most two per frame, about twice the pool size;
+      - the in-memory free-page set ([TS-05](#ts-05-files-and-pages)): 8 bytes per free page.
+    - **Worst case.** One database's memory can therefore reach about 3× the cap: the cap itself, plus page images of up to twice the pool, which is at most the cap. This is arithmetic, not a measurement (user decision 2026-10-02); the real peak is to be measured ([unverified points](quality-and-testing.md#unverified-points)).
+    - Backup, restore and migration each copy through one fixed 1 MiB buffer, outside the cap. Its size does not depend on the data, and restore and migration run with no open database, so no accountant exists for them ([TS-26](operations.md#ts-26-backup-restore-import-and-export), [TS-28](operations.md#ts-28-format-versioning-and-migration)).
   - **Giant graphs.** With the cache at 1–10 % of the data, B+tree inner pages (about 0.5 % of a tree in M-LAYOUT) stay resident under the clock sweep, so a typical expansion costs about one leaf miss (M-LAYOUT: 0.8–1.2 misses per uniform 1-hop at 100 M edges).
 - **Satisfies**: FR-STO-001, FR-LIM-001, FR-LIM-003, FR-LIM-005, FR-LIM-006, FR-LIM-007, NFR-SAFE-001, NFR-PERF-005.
 - **Evidence**:
@@ -141,6 +190,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - DuckDB has one buffer pool that sets memory limits for every user of the pool (R-DUCK `buffer_pool.hpp:38-39`, from P-STO §Q3).
   - `memmap2::Mmap::map` is an `unsafe fn` (P-STO §Q3).
   - PostgreSQL uses the operating-system cache by default; direct I/O is the developer option `debug_io_direct`, empty by default (R-PG `doc/src/sgml/config.sgml:12891-12906`).
+  - Copy buffers of fixed size: LMDB's environment copy uses `MDB_WBUF` = 1 MiB (R-LMDB `libraries/liblmdb/mdb.c:11140`); PostgreSQL's base backup uses `SINK_BUFFER_LENGTH` = max(32 KiB, page size) (R-PG `src/backend/backup/basebackup.c:62`).
 - **Crates**: none provides a buffer pool usable under `#![forbid(unsafe_code)]`. `parking_lot` is not used; whether `std` latches are fast enough is to be measured (unverified).
 - **Known consequence**: pages cached by the pool are also in the operating-system cache, outside the cap. If the NFR-PERF-005 measurements show this double caching costs a target, direct I/O with page-aligned frames (`#[repr(align(4096))]`, which needs no `unsafe`) is the measured alternative.
 - **Rejected**:

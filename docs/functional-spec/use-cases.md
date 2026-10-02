@@ -42,7 +42,7 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
   - A1. No database at the location: open fails ([FR-DB-004](functional-requirements.md#database-lifecycle)).
   - A2. Another process has the database open: open is refused ([FR-DB-006](functional-requirements.md#database-lifecycle)).
   - A3. This process has the database open: open is refused ([FR-DB-007](functional-requirements.md#database-lifecycle)).
-  - A4. Corruption is detected: open fails and reports it ([FR-REC-003](functional-requirements.md#recovery)).
+  - A4. Corruption is detected: open fails and reports it ([FR-REC-003](functional-requirements.md#recovery)). Exactly one of the two metadata copies is invalid: this is not corruption; open continues from the valid copy and a metric reports the event ([FR-REC-003](functional-requirements.md#recovery)).
   - A5. The format is older or newer than the crate's: open fails ([FR-OPS-004](functional-requirements.md#operations), [FR-OPS-013](functional-requirements.md#operations)).
 - **Postconditions**: The database is open through one handle.
 
@@ -230,8 +230,9 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 - **Preconditions**: The database was not closed cleanly.
 - **Main flow**:
   1. The crate verifies the log and the metadata ([FR-REC-008](functional-requirements.md#recovery)).
-  2. The crate recovers every committed transaction and discards every uncommitted effect ([FR-REC-001](functional-requirements.md#recovery), [FR-REC-002](functional-requirements.md#recovery)).
+  2. The crate recovers every committed transaction, meaning every transaction whose commit record is on stable storage, and discards every uncommitted effect ([FR-REC-001](functional-requirements.md#recovery), [FR-REC-002](functional-requirements.md#recovery)).
   3. The crate returns a handle.
 - **Alternate flows**:
-  - A1. Corruption is detected: the open fails and reports it; the application restores a backup ([FR-REC-003](functional-requirements.md#recovery), [FR-REC-004](functional-requirements.md#recovery)).
+  - A1. Corruption is detected: the open fails and reports it; the application restores a backup ([FR-REC-003](functional-requirements.md#recovery), [FR-REC-004](functional-requirements.md#recovery)). A flipped bit in the newest synced log group with no later group is not detected as corruption and is lost like a torn log tail; only a backup repairs it ([FR-REC-003](functional-requirements.md#recovery)).
+  - A2. Exactly one of the two metadata copies is invalid: recovery continues from the valid copy, and a metric reports the event ([FR-REC-003](functional-requirements.md#recovery)).
 - **Postconditions**: The database is open and holds exactly the committed transactions.

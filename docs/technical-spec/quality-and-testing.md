@@ -60,7 +60,7 @@ related:
 
 1. Everything that needs the ISO/IEC 39075:2024 text, which is not available (OQ-005): Syntax, General and Conformance Rules; the content of minimum conformance; closed-graph-type matching; cross-type comparison and ordering; numeric types beyond 64 bits; the permission for GQLSTATUS 25N11 and a "feature not supported" code; the validity of procedure names. These affect [TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics), [TS-19](query-engine.md#ts-19-parser), [TS-20](query-engine.md#ts-20-binder-planner-and-execution), [TS-21](values-and-types.md#ts-21-values-and-types), [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events) and [TS-25](algorithms.md#ts-25-graph-algorithms).
 2. WAL behaviour with full page images ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)): volume and commit latency; WAL bytes between checkpoints, since the triggers count transactions; WAL growth while a backup holds recycling; recovery time.
-3. The throughput of the serial commit section, now including validation ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)).
+3. The throughput of the serial commit section, now including validation and the page reads of step 6 pinning ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)).
 4. Compressed leaves with readers running concurrently with the single committer, the garbage collector, the index builder and the fast load ([TS-06](storage.md#ts-06-graph-layout)).
 5. The minimum pool size (provisionally 1 % of the cap), `std` latches compared with `parking_lot`, and the cost of double caching in the operating system ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
 6. The free-page reserve bound and the 64 MiB extent size ([TS-05](storage.md#ts-05-files-and-pages)); derived, not measured.
@@ -71,3 +71,5 @@ related:
 11. Whether `cargo-deny` accepts the older licence notation of `crc32c` (`Apache-2.0/MIT`) and `csv` (`Unlicense/MIT`) without configuration.
 12. Whether Neo4j's `point` header accepts a `srid` key, and whether GraphML readers accept an extension attribute on `<data>` and `<key>` ([TS-26](operations.md#ts-26-backup-restore-import-and-export)).
 13. The M-LAYOUT limits: one host; synthetic graphs without properties; misses read with `O_DIRECT` and no read-ahead, while lpg reads through the operating-system cache; a 100 M point for bulk load of two layouts only.
+14. Taken from references, not measured: the 2 048-byte overflow threshold and the 1 024-byte key limit ([TS-05](storage.md#ts-05-files-and-pages)); the shared-prefix key encoding of trees other than the adjacency tree ([TS-06](storage.md#ts-06-graph-layout)); the 1 MiB copy buffer ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
+15. The real peak memory of one database against its cap, including WAL page images and the free-page set outside the cap; the arithmetic worst case is about 3× the cap ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).

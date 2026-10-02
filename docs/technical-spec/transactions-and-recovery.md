@@ -21,7 +21,7 @@ related:
     - The header holds the frame's LSN, the segment salt and a CRC-32C. A frame is valid when all three match its position.
     - A group whose commit frame is not valid did not commit.
   - **Ordering.** Group *k*+1 is written only after the `sync_data` of group *k* has returned, so only the last group can be partly on disk.
-  - **Capture.** Images are copied under the commit latch ([TS-16](#ts-16-commit-protocol)), so an image never holds a change from a later group. Garbage collection changes pages under the same latch, so its changes also belong to exactly one group.
+  - **Capture.** Images are copied under the commit latch ([TS-16](#ts-16-commit-protocol)), so an image never holds a change from a later group. Image memory is outside the memory cap ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). Garbage collection changes pages under the same latch, so its changes also belong to exactly one group.
   - **Writer.** One dedicated thread per database writes each group and calls `sync_data`. Committers wait on a notification, so no tokio worker blocks on a flush.
   - **Segments.** 16 MiB each, created by writing zeros, named by their first LSN.
   - **Errors.**
@@ -84,8 +84,8 @@ related:
 - **Decision**: open performs these steps, in order:
   1. If `CONTROL` is absent, fail without creating any file (FR-DB-004).
   2. Take `LOCK` ([TS-27](storage.md#ts-27-single-process-lock)).
-  3. Read both `CONTROL` slots and use the valid one with the higher sequence number. Check the format version ([TS-28](operations.md#ts-28-format-versioning-and-migration)).
-  4. Read the WAL from the redo point, frame by frame. Apply the page images of each group whose commit frame is valid, in order.
+  3. Read both `CONTROL` slots and use the valid one with the higher sequence number. If only one is valid, use it; if none is, fail ([TS-05](storage.md#ts-05-files-and-pages)). Check the format version ([TS-28](operations.md#ts-28-format-versioning-and-migration)).
+  4. Read the WAL from the redo point, frame by frame. Apply the page images of each group whose commit frame is valid, in order. Before writing a page beyond the end of `data-<g>`, extend the file as [TS-05](storage.md#ts-05-files-and-pages) states.
   5. At the first invalid frame, look at the frames that follow it up to the end of the WAL:
      - if any of them is a valid commit frame of a later group, the WAL is corrupt and the open fails (FR-REC-003, FR-REC-008);
      - otherwise the invalid frame belongs to the last group, which was not synced. That group is a torn tail and is discarded.
@@ -94,7 +94,9 @@ related:
   8. Run a checkpoint.
 
   No undo phase is needed (NO-STEAL).
-- **Satisfies**: FR-REC-001, FR-REC-002, FR-REC-003, FR-REC-008, FR-DB-004, FR-DB-009.
+
+  **Damage in the newest group.** A bit flip inside the newest synced group, with no later valid commit frame, cannot be told from a torn tail. Step 5 discards that group and its commits. This is media failure, repaired by restoring a backup (FR-REC-004), as in PostgreSQL and SQLite (user decision 2026-10-02).
+- **Satisfies**: FR-REC-001, FR-REC-002, FR-REC-003, FR-REC-004, FR-REC-008, FR-DB-004, FR-DB-009.
 - **Evidence**:
   - SQLite ignores frames after the last valid commit frame (R-SQLITE `src/wal.c`).
   - PostgreSQL ends recovery at a broken record at the end of WAL and remembers its position (`abortedRecPtr`, R-PG `src/backend/access/transam/xlogrecovery.c:321`).
@@ -102,6 +104,7 @@ related:
 - **Rejected**:
   - Failing the open on any valid frame after an invalid one: the OS may write a later block of an unsynced group before an earlier one, so a normal power loss would refuse to open (FR-REC-002).
   - Treating every invalid frame as the end of the log: corruption inside the synced WAL would go unnoticed (FR-REC-008).
+  - Writing the synced WAL end to `CONTROL` after each group sync, to tell damage in the newest group from a torn tail: a second synced write per group (user decision 2026-10-02).
 
 ## TS-14 MVCC
 
@@ -175,10 +178,10 @@ related:
 - **Decision**: a commit runs these steps in order:
   1. **Read-only transaction** (it wrote nothing, at any isolation level): end the snapshot and return. Nothing is validated, logged or published (FR-TX-010).
   2. **Reserve file space.** Outside the latch, make sure the free-page reserve ([TS-05](storage.md#ts-05-files-and-pages)) covers this commit's bound. ENOSPC fails the transaction; reads continue (FR-REC-007).
-  3. Take the commit latch and draw `commit_ts`.
+  3. Take the commit latch and draw `commit_ts`. A commit that fails while it holds the latch (steps 4 and 6) gives `commit_ts` back before releasing the latch: no other commit has drawn or used it, so the next commit draws the same value and the published timestamps have no gap.
   4. **Serializable transactions only:** validate the read set ([TS-15](#ts-15-serializable-isolation-and-write-locks)). On failure, release the latch and abort.
   5. Register the write-key set.
-  6. Apply the write set to pages, copying each before-image into the reserved old-version memory first.
+  6. Pin every page the batch will change: the path from the root to each key's leaf; for a key it deletes, the left sibling of each page on that path; the free-list trunk page and page 0. Reserve one frame for each page of the step-2 bound. If a pin or reservation fails, release them, withdraw the write-key set, release the latch and fail the commit; no page has changed. Then apply the write set to pages, copying each before-image into the reserved old-version memory first.
   7. Join the open WAL group, then release the latch.
   8. Wait until the group is durable.
   9. Publish `commit_ts`, in timestamp order.
@@ -187,15 +190,28 @@ related:
 
   Snapshot-isolation transactions that wrote data run every step except validation, so they are logged, durable and published like any other.
 
-  Steps 6 and 7 cannot fail for lack of memory or space, because both were reserved earlier ([TS-14](#ts-14-mvcc), step 2). An I/O failure there, or a failed sync of the group, fails the commit and makes the database unusable (FR-REC-006).
+  Once step 6 starts changing pages, steps 6 and 7 cannot fail for lack of memory or space: the write set and old versions ([TS-14](#ts-14-mvcc)), the frames (step 6) and the file space (step 2) are reserved before, and page images are outside the cap ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). An I/O failure there, or a failed sync of the group, fails the commit and makes the database unusable (FR-REC-006).
 
   Transactions run concurrently; only steps 3–7 are serialised.
-- **Satisfies**: FR-TX-001, FR-TX-002, FR-TX-004, FR-TX-009, FR-TX-010, FR-STO-003, FR-BOLT-017, FR-REC-006, FR-REC-007, FR-LIM-005.
+
+  **Commit point.** A transaction is committed when its commit frame is on stable storage (step 8). If the process stops before step 11 returns, the caller cannot know the outcome; recovery keeps the commit exactly when its group was synced ([TS-13](#ts-13-recovery)). User decision 2026-10-02 (FR-REC-001).
+
+  **Batch.** Step 6 applies a batch: an ordered list of `(tree, key, put value | delete)`.
+  - The transaction layer ([TS-14](#ts-14-mvcc), [TS-15](#ts-15-serializable-isolation-and-write-locks)) builds the batch from the write set. Without that layer, the batch is the whole input of a commit, which then runs steps 2, 3 and 6–9 only, with no before-images.
+  - Each entry reserves its bytes from the memory accountant ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)) when it is added; a failed reservation fails the statement that adds it. The reservation is released when step 6 ends.
+- **Satisfies**: FR-TX-001, FR-TX-002, FR-TX-004, FR-TX-009, FR-TX-010, FR-STO-003, FR-BOLT-017, FR-REC-006, FR-REC-007, FR-LIM-005, FR-LIM-007.
 - **Evidence**:
   - Memgraph serialises timestamp assignment and WAL order under `engine_lock_` (R-MG `src/storage/v2/inmemory/storage.cpp:1081`).
   - Neo4j returns from commit only after it has appended to the log and applied to the store (R-NEO `InternalTransactionCommitProcess.java:77-80`).
   - HyPer commits update transactions serially, in commit-timestamp order (D-HYPER §3.1).
   - PostgreSQL extends relation files in the session that needs the space, so ENOSPC fails that session's work with "Check free disk space" rather than the server (R-PG `src/backend/storage/smgr/md.c:529-536, 596-629`).
+  - Only a commit that can no longer fail keeps its place in commit order. PostgreSQL writes the commit record, which fixes that order, inside the commit critical section (R-PG `src/backend/access/transam/xact.c:1469-1495`). Memgraph draws its commit timestamp under `engine_lock_` and, when a later check fails, marks that timestamp finished so it does not block others (R-MG `src/storage/v2/inmemory/storage.cpp:1081-1089, 1026-1033`).
+  - Every page a change needs is pinned and every condition checked before the section in which a failure would leave unlogged changes in the pool (R-PG `src/backend/access/transam/README:439-446`).
+  - A batch of puts and deletes applied as one unit: LevelDB `WriteBatch` (R-LEVELDB `db/write_batch.cc:5-14`), whose writer joins several batches into one log write (`db/db_impl.cc:1226, 1281`).
 - **Rejected**:
   - Parallel apply under page latches only: harder to give groups a consistent cut, and no measurement shows the serial section limits a requirement (unverified until the NFR-PERF-002 baseline).
   - Publishing before durability: a reader would see a commit that a crash could lose.
+  - Marking a failed commit's timestamp as finished (Memgraph): publication would need a second state per timestamp, while returning the value under the latch needs none.
+  - Drawing `commit_ts` after step 6 pins: validation (step 4) is defined against its own `commit_ts` ([TS-15](#ts-15-serializable-isolation-and-write-locks)), and the steps would need renumbering.
+  - Spilling dirty pages of an unfinished commit to the WAL when the pool is full (SQLite `pagerStress`, R-SQLITE `src/pager.c:4663`; LMDB `mdb_page_spill`, R-LMDB `libraries/liblmdb/mdb.c:2543`): pages would then have to be read back from the WAL, which [TS-09](#ts-09-wal-and-group-commit) never does.
+  - Taking frames during apply as pages are reached: a failure there leaves changed pages with no undo and makes the database unusable.
