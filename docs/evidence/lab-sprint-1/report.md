@@ -505,3 +505,323 @@ Re-encoding fell from 40.1 % to 4.7 % of samples. The walk of the leaf tail now 
 **Limitations.** As for #14 above (ext4, one session, `powersave` governor, single-threaded). The cold-cache rows were not analysed beyond their spread.
 
 Both lab directories were emptied after the runs.
+
+## #15
+
+`src/storage/wal.rs` (frames, segments, open group, writer thread `lpg-wal`), `src/tx/commit.rs` (TS-16 steps 2, 3 and 6–9). Laboratory: `src/lab/commit.rs`, profile `lab`, source revision `622f600` (the harness reports `622f600-dirty` in some files: the only difference from `622f600` was an edit of `CLAUDE.md` made outside this campaign; `src/` was unchanged). Session 2026-10-03 09:22–10:45, same host and governor as above; `mysqld`, `mongod`, `redis-server` and a JVM were running idle (below 2 % CPU each, `ps`). One commit replaces `pages` values of 400 bytes in a tree of 100 000 keys held entirely in the pool, so a commit reads nothing from the device (module documentation of `lab::commit`).
+
+**Device state.** The NVMe flush latency switched during the session between two levels, with no change in lpg: `f_await` of `nvme0n1` (iostat, and the same figure from `/sys/block/nvme0n1/stat` fields 16–17 bracketing each run) was 0.9 ms or 2.6–3.0 ms, within minutes. Every figure below that depends on `fdatasync` must be read with the `f_await` of its run; comparisons are made only between runs in the same state. This is Limitation 2 of task #7, now with a measured indicator; its cause is not established.
+
+### Commit latency and throughput
+
+`lab::commit::commit` (3 rounds of 1 000 commits per thread, each after an untimed checkpoint; median [min, max] of the per-round figures; raw/t15-lab-commit.md, iostat raw/t15-lab-commit-iostat.txt). During the ext4 part `f_await` was 0.89–1.03 ms; during the XFS part it was 2.5–4.1 ms.
+
+| fs | threads | pages | commits/s | p50 µs | p99 µs | commits/group | frames/commit | WAL B/commit | `sync_data`/commit |
+|---|---|---|---|---|---|---|---|---|---|
+| ext4 | 1 | 1 | 954 [940, 1 013] | 968 [967, 978] | 4 031 [1 267, 4 211] | 1.00 | 2.00 | 16 448 | 1.00 |
+| ext4 | 4 | 1 | 1 985 [1 919, 1 988] | 1 900 [1 900, 1 901] | 7 797 [5 169, 7 987] | 2.01 [2.00, 2.01] | 1.50 | 12 324 | 0.50 |
+| ext4 | 16 | 1 | 7 389 [6 911, 7 398] | 2 069 [2 065, 2 075] | 8 043 [5 342, 8 207] | 8.03 [8.03, 8.06] | 1.12 | 9 238 | 0.13 |
+| ext4 | 1 | 10 | 848 [841, 868] | 1 118 [1 111, 1 121] | 4 144 [1 472, 4 193] | 1.00 | 11.00 | 90 464 | 1.00 |
+| ext4 | 1 | 100 | 169 [165, 240] | 5 493 [2 439, 5 560] | 11 932 [10 393, 29 837] | 1.00 | 101.00 | 830 624 | 1.05 |
+| XFS | 1 | 1 | 147 [142, 149] | 6 616 [6 498, 7 029] | 9 486 [9 243, 10 552] | 1.00 | 2.00 | 16 448 | 1.00 |
+| XFS | 4 | 1 | 291 [288, 293] | 13 664 [13 473, 13 686] | 21 213 [21 088, 24 348] | 2.00 | 1.50 | 12 326 | 0.50 |
+| XFS | 16 | 1 | 1 201 [1 185, 1 215] | 12 911 [12 870, 13 096] | 23 525 [21 527, 25 374] | 8.02 | 1.12 | 9 243 | 0.13 |
+| XFS | 1 | 10 | 137 [135, 138] | 7 235 [7 130, 7 414] | 10 991 [10 658, 11 051] | 1.00 | 11.00 | 90 464 | 1.00 |
+| XFS | 1 | 100 | 101 [90, 104] | 8 900 [8 875, 9 027] | 24 485 [23 935, 46 284] | 1.00 | 101.00 | 830 624 | 1.05 |
+
+A second full run (raw/t15-lab-commit-run2.md) reproduced every ext4 median within 1.5 % and every XFS median within 6 %. Run alone at another time of the session, the XFS 1-thread configuration gave a p50 of 2 906–2 997 µs (raw/t15-order-probe.txt and `commit_fixed` runs below), the value of the fast device state.
+
+**WAL bytes per commit (first data for unverified point 2).** A group of `n` changed pages is `n + 1` frames of 8 224 bytes, so one commit alone writes 16 448 B (1 page), 90 464 B (10) and 830 624 B (100), exactly as counted by `log.appended_bytes`. Group commit shares the commit frame: 9 238 B per one-page commit at 16 threads (1.12 frames). The `sync_data` count above 1.00 per commit for 100-page commits is groups that end in a second segment (two files synced). Commits per group: 1.00, 2.00 and 8.0 at 1, 4 and 16 threads; the maximum in one group was 1, 4 and 16.
+
+**Against the `fdatasync` ceiling.** The task #7 job appends to a new file; its `fdatasync` must also commit the file-size change. The WAL instead overwrites zero-filled segments. Both patterns were measured in this session with fio (raw/t15-fio-{append,overwrite}-{ext4,xfs}-rep{1,2,3}.json, 3 × 10 s interleaved, script raw/t15-fio-ceiling.sh): `fdatasync` p50 of append 2 933 µs (ext4) and 5 997 µs (XFS); of 16 KiB overwrite 930 µs (ext4) and 2 867 µs (XFS). The overwrite job is the ceiling that applies. To compare in the same device state, raw/t15-session.sh ran, per repetition and file system, a 5 s overwrite job and then `commit_fixed` at 1, 4 and 16 threads, bracketing each run with `/sys/block` counters (raw/t15-session-log.txt, summary raw/t15-session-summary.md):
+
+| rep | fs | `f_await` ms (fio, lpg) | fio overwrite `fdatasync` p50 / p99 µs | lpg 1 thread p50 / p99 µs | ratio p50 |
+|---|---|---|---|---|---|
+| 1 | ext4 | 0.92, 0.90 | 922 / 3 949 | 972 / 4 028 | 1.05 |
+| 1 | XFS | 0.91, 0.93 | 2 867 / 6 062 | 2 947 / 6 766 | 1.03 |
+| 2 | ext4 | 2.67, 2.71 | 2 834 / 4 817 | 2 843 / 6 198 | 1.00 |
+
+The other three pairs changed state between the fio run and the lpg run and are not compared. **A one-thread commit costs the overwrite `fdatasync` plus 0–5 %.** Against the task #7 append figures (6 324 µs ext4, 12 780 µs XFS) it is 0.15× and 0.23×, because the patterns differ, not because lpg beats the device.
+
+**`fdatasync` against commits.** `strace -c -f` of `commit_fixed`, minus a run with 0 commits (raw/t15-strace-c-{ext4,xfs}-t{0,1,4,16}.txt; counters in the `.lab` files):
+
+| fs | threads | commits | groups | `fdatasync` (run − setup) | group syncs + segment creations | `pwrite64` (run − setup) |
+|---|---|---|---|---|---|---|
+| ext4 | 1 | 1 000 | 1 000 | 1 001 | 1 001 + 0 | 1 001 |
+| ext4 | 4 | 4 000 | 2 000 | 2 004 | 2 003 + 1 | 2 019 |
+| ext4 | 16 | 8 000 | 1 001 | 1 007 | 1 005 + 2 | 1 037 |
+| XFS | 1 | 1 000 | 1 000 | 1 001 | 1 001 + 0 | 1 001 |
+| XFS | 4 | 4 000 | 1 995 | 1 999 | 1 998 + 1 | 2 014 |
+| XFS | 16 | 8 000 | 999 | 1 004 | 1 002 + 2 | 1 034 |
+
+Every `fdatasync` is accounted for: one per segment a group touches, and one per segment created. Each group is one `pwrite64` per segment; a segment creation adds 16 writes of 1 MiB. The futex count per commit was 4.0 (1 thread), 4.2 (4) and 4.1 (16).
+
+**iostat.** Means of the `iostat -x` 1 s intervals inside each measured phase (raw/t15-session-iostat.txt, raw/t15-session-iostat-summary.md, script raw/t15-iostat-window.py). Fast device state (rep 1):
+
+| fs | threads | device | w/s | wkB/s | `w_await` ms | f/s | `f_await` ms | device KiB written / commit |
+|---|---|---|---|---|---|---|---|---|
+| ext4 | 1 | nvme0n1 | 2 002 | 52 984 | 0.51 | 868 | 0.93 | 55.0 |
+| ext4 | 16 | nvme0n1 | 2 175 | 118 620 | 0.60 | 783 | 0.90 | 17.4 |
+| XFS | 1 | loop80 | 587 | 36 406 | 1.57 | 292 | 2.90 | 112.7 |
+| XFS | 16 | loop80 | 446 | 25 014 | 2.27 | 222 | 4.34 | 12.2 |
+
+In the slow state `w_await` on `nvme0n1` was 1.29–1.51 ms (ext4) and `loop80` 2.43–3.49 ms (XFS). At 16 threads the device writes 17.4–18.4 KiB per commit, which is the WAL (9.0 KiB) plus the zero fill of new segments (16 MiB per 2 040 frames, 9.0 KiB per commit at 1.12 frames). The per-commit values at 1 thread vary between windows from 20 to 123 KiB because a 16 MiB segment creation falls into some 3–4 s windows and not others.
+
+**Profile.** `perf record -F 999 --call-graph dwarf` of `commit_fixed`, 16 threads (16 000 commits on ext4, 4 800 on XFS), on-CPU samples; names demangled with `c++filt`; flame graphs raw/t15-flamegraph-commit-{ext4,xfs}.svg, folded stacks raw/t15-perf-commit-{ext4,xfs}.folded, shares by raw/t15-t16-share.py. The kernel `fdatasync` stacks are present: `__x64_sys_fdatasync` in 171 (ext4) and 64 (XFS) distinct stacks, with `ext4_sync_file` or `xfs_file_fsync`, `file_write_and_wait_range` and `blkdev_issue_flush` below it. Shares of all samples (ext4; XFS): writer thread 35.3 %; 16.8 %, of which segment creation 16.5 %; 2.4 % (zero-filling 16 MiB through `pwrite64`) and `write_group` 15.6 %; 9.5 %; `fdatasync` 14.7 %; 7.4 %; committers 28.9 %; 19.8 %, of which futex waits and wakes 26.7 %; 19.2 % of all samples, `apply_batch` 7.9 %; 20.3 %, CRC-32C 5.2 %; 6.3 %; the step-6 copy (`PageWriter::mark`) 0.6 % and the group capture 1.1 % (ext4). The populate phase of the harness is 11.5 % and 29.0 %. On-CPU samples do not show time spent waiting for the device; an off-CPU profile needs the `sched` tracepoints, and `/sys/kernel/tracing` is readable only by root on this host (`perf record -e sched:sched_switch` is refused): **not measured, needs sudo.**
+
+### Open point 1: group commit at low thread counts
+
+**Attribution established: in a closed loop, the writer closes the next group as soon as the previous one is durable, before the committers it has just woken can rejoin. A commit therefore waits for the group in flight and then for its own: two `fdatasync`s.** Evidence:
+
+- Groups per second equal the `fdatasync` rate at 1, 4 and 16 threads (session rep 1, ext4: 964, 969 and 841 groups/s against an overwrite rate of 967/s), so the writer is never idle: it is not waiting for wake-ups.
+- Commits per group are threads / 2 (1.00, 2.00, 8.0), and p50 at 4 threads is 1.96× p50 at 1 thread (1 907 against 972 µs).
+- An experiment in a copy of the source outside the repository (diff raw/t15-t16-scratch-experiments.diff; one binary, variants chosen by environment variables; script raw/t15-gc-variants.sh; data raw/t15-group-commit/) tested two alternatives, interleaved, 3 repetitions, ext4:
+  - **slots**: committers wait on one of 64 condition variables chosen by group number, and the writer wakes only the durable group's slot, as InnoDB's `flush_events` (R-INNO `storage/innobase/log/log0write.cc:797-803, 937, 2840-2856` @3b99be40) and Turso's per-ticket `parked` map (R-TURSO `core/mvcc/database/group_commit.rs:105-120, 194-203` @fc98dac);
+  - **dN**: the writer sleeps N µs before it closes a group, as PostgreSQL's `commit_delay`, which sleeps before the flush when at least `commit_siblings` other transactions are active (R-PG `src/backend/access/transam/xlog.c:2954-2966` @8982935).
+
+| threads | variant | `f_await` ms | p50 µs | p99 µs | commits/s | commits/group | context switches / commit |
+|---|---|---|---|---|---|---|---|
+| 4 | base | 0.92 | 1 911 | 5 273 | 1 953 | 2.00 | 3.50 (all reps) |
+| 4 | slots | 0.91 | 1 914 | 5 243 | 1 973 | 2.00 | 2.49 |
+| 4 | d20 | 0.92 | 1 082 | 2 089 | 3 547 | 3.98 | 3.08 |
+| 4 | base | 2.86–2.93 | 6 118, 6 237 | 9 547, 9 880 | 648, 634 | 2.00 | |
+| 4 | d20 | 2.78–2.80 | 3 387, 3 389 | 8 521, 7 279 | 940, 925 | 2.90, 2.78 | |
+| 4 | d100 | 2.71–2.84 | 3 334 [3 072, 3 516] | 6 839 [6 709, 7 004] | 1 008 [963, 1 021] | 3.06 | 2.89 |
+| 16 | base | 2.95–3.01 | 5 928 [5 803, 6 132] | 12 716 [11 126, 12 942] | 2 541 [2 469, 2 584] | 8.01 | 3.13 |
+| 16 | slots | 2.99–3.17 | 6 570 [5 935, 6 577] | 13 221 [13 090, 13 432] | 2 378 [2 371, 2 492] | 8.01 | 2.10 |
+| 16 | d50 | 3.07–3.14 | 4 384 [4 244, 4 476] | 9 492 [9 322, 9 973] | 3 100 [3 089, 3 118] | 10.6 | 2.68 |
+| 16 | d200 | 3.11–3.17 | 3 988 [3 868, 4 488] | 9 574 [9 458, 10 293] | 3 100 [2 902, 3 123] | 11.1 | 2.62 |
+
+Rows of 4 threads in the fast state are single repetitions (the only ones in that state); 4-thread base and d20 in the slow state list their two repetitions in that state; the others are median [min, max] of 3 (raw/t15-group-commit/summary.md has every variant). Context switches come from `perf stat` of the process minus a run with 0 commits.
+
+- **Wake-all is not the cause.** Per-group slots cut context switches per commit by 29–33 % and changed neither latency nor throughput beyond the run-to-run spread (16 threads: p50 5 928 against 6 570 µs, ranges [5 803, 6 132] and [5 935, 6 577]).
+- **A gather window removes most of the second wait.** A 20 µs delay took 4 threads from 2.00 to 3.98 commits per group in the fast state: p50 −43 %, commits/s +82 %. In the slow state: 4 threads p50 −45 %, +45–56 % commits/s; 16 threads p50 −26 % to −33 %, +22 % commits/s. At 1 thread the delays changed p50 by −8 % to +2 % in the slow state, within that state's spread.
+- PostgreSQL has the same structure as lpg without `commit_delay` (one flush at a time; waiters re-check after `LWLockAcquireOrWait`, `xlog.c:2935`), and its documentation of `commit_delay` states the same trade: more throughput at the cost of latency, used only when other transactions are active.
+
+### Open point 2: XFS write volume
+
+**Attribution established: an accounting effect of large folios, not device writes.** `write_bytes` in `/proc/<pid>/io` is charged per folio when a folio becomes dirty: `folio_account_dirtied` calls `task_io_account_write(nr * PAGE_SIZE)` with `nr = folio_nr_pages(folio)` (Linux v6.8 `mm/page-writeback.c:2606-2625`). XFS enables large folios on every inode (`mapping_set_large_folios`, v6.8 `fs/xfs/xfs_icache.c:91, 326`); ext4 in v6.8 does not (no `large_folio` in `fs/ext4/inode.c` or `ialloc.c`). A segment is created with 1 MiB writes, so its page cache holds large folios, and each group re-dirties one after the previous `fdatasync` cleaned it.
+
+- Probe (raw/t15-folio-probe.py, raw/t15-folio-probe.txt): a 16 MiB file pre-written in chunks of C bytes and synced, then 200 writes of 16 448 bytes each followed by `fdatasync`. `write_bytes` per write on XFS: 20 480 (C = 4 KiB), 81 920 (64 KiB), 1 040 712 (1 MiB). On ext4: 20 480 for every C. Without `fdatasync` after each write: 16 466–18 350 on both.
+- Device writes do not follow it (raw/t15-folio-device.sh, raw/t15-folio-device.txt, `/sys/block/loop80/stat` fields 5, 7 and 16): 8 004 sectors (20 KiB per write), 400 write requests and 201 flushes for both C = 4 KiB and C = 1 MiB, 3 repetitions each.
+- In lpg: 931–936 KB of `write_bytes` per one-page commit at 1 thread on XFS, about 1 MiB per group (473 KB × 2.0 at 4 threads, 124 KB × 8.0 at 16), against 20.5 KB on ext4, while `loop80` received 12–41 KiB per commit in the iostat windows of the fast state (table above).
+
+So `write_bytes` overstates XFS writes by up to 50×; lab harnesses should use the device counters on XFS. Latency on XFS is not affected by it: the probe's write+`fdatasync` time on XFS was the same for C = 4 KiB and 1 MiB (p50 2 882–2 939 against 2 832–3 000 µs; raw/t15-sync-probe.txt).
+
+### Open point 4 (D4): segment creation and commit latency
+
+**Attribution established.** After a group is durable, the `lpg-wal` thread creates the next segment when the WAL end passes three quarters of the newest (`Wal::precreate`): it zero-fills 16 MiB, syncs it, renames it and syncs the directory, holding the segment-map lock. During that time no group is written, and a committer that reaches `ensure_through` waits for the lock while it holds the commit latch. Measured with a per-commit trace in the scratch copy (`lab::commit::commit_trace`: end time and latency of every commit, and the start and end of every segment creation; raw/t15-d4/runs.txt, analysis raw/t15-d4-analyse.py, raw/t15-d4/summary.md), 3 repetitions:
+
+| fs | threads | commits | segments | creation ms, median [min, max] | commits overlapping a creation | their p50 / max ms | other commits p50 / p99 / max ms | 10 slowest commits overlapping |
+|---|---|---|---|---|---|---|---|---|
+| ext4 | 1 | 5 000 | 3 | 25.9 [25.2, 28.4] | 6 | 0.97 / 29.5 | 0.97 / 3.99 / 4.58 | 3 of 10 |
+| ext4 | 16 | 40 000 | 20 | 26.0 [25.1, 35.9] | 558 | 27.6 / 42.4 | 2.07 / 8.06 / 9.12 | 10 of 10 |
+| ext4 | 16 | 40 000 | 20 | 34.1 [21.3, 52.5] | 538 | 28.1 / 60.0 | 2.17 / 9.30 / 21.2 | 10 of 10 |
+| ext4 | 16 | 40 000 | 20 | 39.5 [35.9, 68.8] | 547 | 42.7 / 76.7 | 5.79 / 12.2 / 36.5 | 10 of 10 |
+| XFS | 16 | 16 000 | 7 | 17.9 [16.4, 19.2] | 174 | 20.3 / 26.2 | 5.98 / 12.0 / 27.6 | 0 of 10 |
+| XFS | 16 | 16 000 | 7 | 33.9 [32.2, 35.2] | 183 | 40.4 / 50.4 | 13.0 / 24.4 / 40.7 | 10 of 10 |
+
+(Rows 1–2 of ext4 16 threads are reps 1 and 2 in the fast state; the third and the second XFS row ran in the slow state; all rows are in raw/t15-d4/summary.md.) A creation takes 18–40 ms. At 16 threads about 27 commits per creation (1.4 %) wait for it, at 10–40× the p50; they are the slowest commits of the run. They raise p99 only slightly (rep 1: 8.33 ms for all commits against 8.06 ms for the others); they set the maximum. At one thread, one commit per creation waits the whole creation.
+
+PostgreSQL preallocates segments from the checkpointer, at the end of a checkpoint (`PreallocXlogFiles`, R-PG `xlog.c:3802-3824, 8203-8208`), fills a temporary file without holding a lock, and takes `ControlFileLock` only to install it by rename (`InstallXLogFileSegment`, `xlog.c:3675-3700`). Moving the zero fill out of the writer thread and out of the segment-map lock, and inserting the file under the lock, would remove this stall (expected: maximum latency from 26–77 ms to the level of the other commits, 9–36 ms here; not measured). Between checkpoints recycled segments supply most new segments, so the stall arises mainly while the WAL grows (see #16, 98 segments between two checkpoints with one-page commits).
+
+### Open point 5: cost of the step-6 page copies
+
+Step 6 copies each existing page before its first change (8 KiB, a `Box<[u8]>`) and reserves the copy's memory from the accountant (`PageWriter::mark`, `reserve_copy`).
+
+**On the commit path the copy is negligible:** 0.6 % of on-CPU samples (`mark`) at 16 threads on ext4 (profile above); the accountant charge rose by 0.78 MiB for a 100-page commit (100 × 8 KiB; raw/t15-memory-runs.txt).
+
+**On puts at 10 % and 1 % cache it is the dominant cost.** `lab::btree::btree` at `622f600` against the #14 figures after the put optimisation (mean of the two after-runs in "Put optimisation"), warm OS cache, ns per put, median [min, max] (raw/t15-lab-btree.md):
+
+| Dist | Cache | #14 after | `622f600` | Change |
+|---|---|---|---|---|
+| Zipf | 100 % | 3 806 | 3 747 [3 744, 3 864] | −1.6 % |
+| Zipf | 10 % | 9 265 | 44 676 [32 804, 45 354] | +382 % |
+| Zipf | 1 % | 10 326 | 14 496 [14 110, 14 827] | +40 % |
+| Uniform | 100 % | 3 736 | 3 917 [3 840, 3 939] | +4.8 % |
+| Uniform | 10 % | 9 245 | 46 646 [33 787, 47 274] | +405 % |
+| Uniform | 1 % | 10 248 | 15 192 [15 149, 15 578] | +48 % |
+
+Gets stay within 3 % of #14 at every share. The databases were rebuilt by the current code for this run (same generator and seeds).
+
+A/B in the scratch copy, one binary: `LPG_X_NOCOPY=1` skips the copy and its reservation, which is safe only in a run without failures (no undo is possible). Uniform database, 20 000 puts of new keys, each run on a fresh copy of the same database, interleaved, 3 repetitions; `perf stat` per put = (run − run with 0 puts) / 20 000 (raw/t15-copy-ab/, script raw/t15-copy-ab.sh):
+
+| Cache | ns/put with copies | ns/put without | instructions/put with | without |
+|---|---|---|---|---|
+| 100 % | 3 898 [3 836, 3 898] | 4 007 [3 919, 4 013] | 40 940 | 37 106 |
+| 10 % | 34 262 [34 156, 34 384] | 8 823 [8 793, 8 837] | 305 275 | 64 781 |
+| 1 % | 15 265 [15 229, 15 343] | 11 005 [10 985, 11 234] | 123 764 | 79 587 |
+
+Without copies the puts at 10 % and 1 % return to the #14 values (8 823 against 9 245; 11 005 against 10 248 ns). **Attribution established by profile:** at 10 %, 80.6 % of `put_loop` samples are in `reserve_copy` → `Pool::reserve` → `shrink_one` → `sweep` (raw/t15-flamegraph-put10-copies.svg, raw/t15-perf-put10-copies.folded), and 60 % of those samples are `sweep` itself, 33 % the atomic increment of the clock hand. With the cap full, each copy's reservation frees one pool buffer; `shrink_one` first sweeps for a clean victim (`allow_dirty = false`), and when most frames are dirty, as under this put workload, that pass visits the frame table until it has seen every frame without a change of state. The extra cost scales with the frame count: +240 500 instructions per put at 10 %, +44 200 at 1 % (about 10× fewer frames). That the clean pass visits the whole table is inferred from the code (`pool.rs:554-594, 673-704`) and from that scaling; the visits per sweep were not counted. PostgreSQL's clock sweep takes the first unpinned buffer with zero usage count, dirty or not, and gives up only after `NBuffers` visits without a usage decrement; the caller writes a dirty victim (R-PG `src/backend/storage/buffer/freelist.c:184-300`, `StrategyGetBuffer`, `trycounter`). At 100 % no frame is freed and the copy costs 3 834 instructions per put; the time difference (−2.7 %) is in the opposite direction and is not attributed.
+
+### Open point 6: memory
+
+heaptrack 1.5.0 of `commit_fixed` on ext4, run with N commits minus a run with 0 (raw/t15-heaptrack-summary.txt; `.zst` files kept outside the repository):
+
+| Workload | allocation calls / commit | identified sites per commit | peak heap (setup) |
+|---|---|---|---|
+| 16 threads, 1 page, 16 000 commits | 6.82 | step-2 estimate 1, page copy 1, `apply_batch` 1, copy reservation 0.14; harness 2 | 52.70 MB (51.28) |
+| 1 thread, 100 pages, 300 commits | 129.6 | page copies 100, `apply_batch` and its descent 66 | 54.13 MB (51.28) |
+| 16 threads, 100 pages, 800 commits | — | — | 85.86 MB (51.28) |
+
+The about 1.7 remaining calls per one-page commit were not attributed. The WAL group buffer allocates nothing per group: the writer hands the closed group's buffer back as the next group's (`spare`). At 16 threads × 100 pages the WAL group buffers are the largest consumer after the pool: 33.69 MB at the peak, from `OpenGroup::capture` growing the frame vector (`btree/write.rs:311`). This memory is outside the cap by design (TS-08, "Outside the cap").
+
+Accountant against RSS, `commit_trace` in the scratch copy, cap 256 MiB, pool holding the tree, 3 repetitions (raw/t15-memory-runs.txt):
+
+| Workload | accountant used / peak MiB | VmRSS before → after MiB | RSS − accountant MiB |
+|---|---|---|---|
+| 1 thread, 1 page | 47.64 / 47.67 | 54.2–54.4 → 54.5–54.7 | 6.9–7.0 |
+| 16 threads, 1 page | 47.64 / 47.67 | 54.4 → 55.3 | 7.6–7.7 |
+| 1 thread, 100 pages | 47.64 / 48.42 | 54.2–54.4 → 56.9–57.1 | 9.2–9.4 |
+| 16 threads, 100 pages | 47.64 / 48.42 | 54.3–54.4 → 98.4–101.9 | 50.7–54.3 |
+
+First data for unverified point 15: RSS reached 2.1× the accountant total in the 16 × 100-page workload, of which 33.7 MB are WAL group buffers (heaptrack); the rest (about 17–20 MB) is not attributed (allocator arenas of 16 threads are one candidate, unverified). The cap here is 5× the accounted memory, so these runs do not approach the 3× cap worst case of TS-08. **Observation:** the `page_cache.accounted_bytes` gauge read 6 875 136 while the accountant held 49 956 864 bytes (`commit_trace` output in raw/t15-group-commit/gc-runs.txt): the gauge is set only once, in `Pool::new` (`pool.rs:274`).
+
+### Ranked opportunities (not applied)
+
+| # | Change | Measured or estimated gain | Evidence | Risk |
+|---|---|---|---|---|
+| 1 | Reserve page copies without a full clean-victim sweep (single sweep that accepts dirty frames, or a standing reservation for copies) | Puts at 10 % cache 34.3 → about 8.8 µs (−74 %), at 1 % 15.3 → about 11.0 µs (−28 %): upper bound, measured with copies off | A/B and profile above | Pool code; the floor and memory-limit tests of #13 must still pass |
+| 2 | Gather window before the writer closes a group (`commit_delay`), gated on more than one active committer | 4 threads: p50 −43 to −45 %, commits/s +45 to +82 %; 16 threads: p50 −26 to −33 %, +22 %; measured, scratch copy | Variant table above | Adds the delay to a lone committer unless gated; closed-loop benchmark only |
+| 3 | Segment zero fill outside the writer thread and the segment-map lock | Maximum commit latency 26–77 ms → level of other commits (estimate) | D4 table | Creation order and ENOSPC rules of TS-09 must hold |
+| 4 | Per-group wake slots | None in latency or throughput; −29 to −33 % context switches | Variant table | Not worth its complexity on this evidence |
+
+**Limitations of #15.**
+
+1. The device flush latency changed between two states during the session; comparisons are made only within one state, and several cells have a single repetition in a given state.
+2. The XFS directory is a loop device on the ext4 `/data` (task #7 Limitation 1).
+3. All workloads are closed loops (each thread commits again at once). Group sizes and the gain of a gather window depend on that.
+4. The variant, D4, memory and page-copy experiments ran in a copy of the source outside the repository; the diff is raw/t15-t16-scratch-experiments.diff. The variants are experiments, not proposals of code.
+5. Off-CPU time (waiting for `fdatasync`) is not profiled: the tracepoints need root.
+6. CPU governor `powersave`; `perf.data` and heaptrack `.zst` files were kept outside the repository.
+
+Reproduction:
+
+    cargo test -p lpg --profile lab --lib --no-run      # BIN below
+    LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs LPG_LAB_OUT=<dir> \
+        BIN --exact lab::commit::commit --ignored --test-threads=1      # with iostat -x -t 1 alongside
+    raw/t15-fio-ceiling.sh                               # OUT=<dir>
+    BIN=… OUT=<dir> raw/t15-session.sh                   # fio + commit_fixed, interleaved, /sys/block brackets
+    python3 raw/t15-session-summary.py <dir>; python3 raw/t15-iostat-window.py <dir>
+    LPG_LAB_FS=<ext4|xfs> LPG_COMMIT_THREADS=<1|4|16> LPG_PERF_N=<N|0> \
+        strace -f -c -o raw/t15-strace-c-<fs>-t<T>.txt BIN --exact lab::commit::commit_fixed --ignored --test-threads=1
+    LPG_LAB_FS=<fs> LPG_COMMIT_THREADS=16 LPG_PERF_N=<1000|300> perf record -F 999 --call-graph dwarf,16384 -o <scratch>/commit-<fs>.data \
+        -- BIN --exact lab::commit::commit_fixed --ignored --test-threads=1
+    raw/t15-t16-fold.sh <scratch>/commit-<fs>.data raw/t15-perf-commit-<fs> "<title>"   # c++filt + inferno
+    LPG_LAB_FS=ext4 LPG_COMMIT_THREADS=<T> LPG_COMMIT_PAGES=<P> LPG_PERF_N=<N|0> heaptrack BIN --exact lab::commit::commit_fixed …
+    python3 raw/t15-folio-probe.py <dir> <prefill bytes> <sync 0|1> 200; raw/t15-folio-device.sh; python3 raw/t15-sync-probe.py …
+    LPG_LAB_EXT4=… LPG_LAB_OUT=<dir> BIN --exact lab::btree::btree --ignored --test-threads=1
+    # Scratch copy: apply raw/t15-t16-scratch-experiments.diff to a copy of src/ at 622f600, build it (XB), then
+    raw/t15-gc-variants.sh <out> XB; python3 raw/t15-gc-summary.py <out>
+    LPG_LAB_FS=<fs> LPG_COMMIT_THREADS=<1|16> LPG_PERF_N=<N> LPG_X_TRACE=<file> XB --exact lab::commit::commit_trace --ignored --test-threads=1
+    python3 raw/t15-d4-analyse.py <dir of traces>
+    raw/t15-copy-ab.sh <out> XB                          # needs a uniform lab::btree database saved as pristine-uniform
+
+Both lab directories were emptied after the runs.
+
+## #16
+
+`src/storage/checkpoint.rs` (TS-11 steps 1–5, thread `lpg-checkpoint`), `src/storage/recovery.rs` (TS-13 steps 4–6), close and drop in `src/storage/engine.rs`. Laboratory: `src/lab/recovery.rs`, same session, host and device-state caveat as #15.
+
+### Checkpoint time against dirty pages
+
+`lab::recovery::checkpoint_cost`: per size, a tree whose leaves are all made dirty before each of 3 rounds, then one timed `Engine::checkpoint` (raw/t16-lab-checkpoint.md):
+
+| fs | leaves | pages written | ms | pages/s | MiB/s |
+|---|---|---|---|---|---|
+| ext4 | 1 024 | 967 | 17 [17, 24] | 56 177 [41 013, 58 248] | 439 [320, 455] |
+| ext4 | 8 192 | 7 737 | 79 [67, 97] | 97 438 [79 576, 115 594] | 761 [622, 903] |
+| ext4 | 65 536 | 61 895 | 510 [510, 517] | 121 373 [119 770, 121 459] | 948 [936, 949] |
+| XFS | 1 024 | 967 | 15 [15, 17] | 65 104 [55 406, 66 222] | 509 [433, 517] |
+| XFS | 8 192 | 7 737 | 75 [73, 110] | 102 690 [70 041, 105 517] | 802 [547, 824] |
+| XFS | 65 536 | 61 895 | 850 [829, 870] | 72 787 [71 172, 74 648] | 569 [556, 583] |
+
+`/proc/self/io` `write_bytes` equalled the pages written × 8 KiB on both file systems (495 164 KiB for 61 895 pages). `checkpoint_fixed` (65 536 leaves, 3 repetitions per file system interleaved; raw/t16-checkpoint-fixed-log.txt) took 512–519 ms on ext4 and 517–518 ms on XFS, so the 850 ms XFS row above was not reproduced; its cause is not established. Small checkpoints have a fixed part: the data-file `sync_data`, the `CONTROL` write with its syncs, and one `sync_dir` per recycled segment (1, 11 and 92 segments recycled or removed over the 3 rounds).
+
+**iostat.** The whole checkpoint fits in one 1 s interval of `iostat -x` (raw/t16-checkpoint-fixed-iostat.txt): in the interval that holds it, `nvme0n1` wrote 426–496 MB at 3 556–4 099 w/s, 120–124 KiB per request, with `w_await` 6.2–7.0 ms (ext4) and 10.9–11.3 ms (XFS; `loop80` 11.1–11.5 ms, 760–769 KiB per request); 35 (ext4) and 66 (XFS) flushes. In repetition 3 the 1 s intervals did not separate the checkpoint from the build of the database, so they are not reported. A finer split of step 2 (writes into the OS cache) against step 3 (`sync_data`) was not measured.
+
+### WAL between checkpoints at the 100 000-commit trigger
+
+`lab::recovery::checkpoint_trigger`, one-page commits, one run per thread count (raw/t16-lab-trigger.md):
+
+| fs | threads | seconds | commits/group | WAL bytes between the two redo points | B/commit | triggered checkpoint ms |
+|---|---|---|---|---|---|---|
+| ext4 | 1 | 223.1 | 1.00 | 1 644 800 000 | 16 448 | 705.2 |
+| ext4 | 16 | 39.4 | 8.07 | 923 464 736 | 9 235 | 389.8 |
+| XFS | 1 | 691.1 | 1.00 | 1 644 800 000 | 16 448 | 706.3 |
+| XFS | 16 | 83.8 | 8.10 | 923 300 256 | 9 233 | 454.0 |
+
+The redo-point difference equals `log.appended_bytes` in every run. **With one-page commits the commit trigger lets the WAL reach 1.64 GB (98 segments) at one committer and 0.92 GB (55 segments) at 16** before a checkpoint, because the trigger counts commits while each commit carries at least two full frames. The bytes are deterministic (16 448 × 100 000), so one run per configuration suffices for them; the durations and checkpoint times are single samples, and the ext4 one-thread run ran mostly in the slow device state (448 commits/s).
+
+### Recovery time against WAL replayed
+
+`lab::recovery::recovery_cost`: 100-page commits until the target WAL lies past the redo point, drop without close, database files evicted from the OS cache, timed open (raw/t16-lab-recovery.md; 3 rounds):
+
+| fs | WAL replayed (B) | groups | pages | open ms | open checkpoint ms | replay MiB/s | read KiB |
+|---|---|---|---|---|---|---|---|
+| ext4 | 17 443 104 | 21 | 2 100 | 61 [53, 67] | 18 [17, 21] | 376 [365, 484] | 48 752 [33 020, 50 052] |
+| ext4 | 67 280 544 | 81 | 8 100 | 123 [122, 124] | 30 | 689 [687, 697] | 82 652 [82 484, 82 820] |
+| ext4 | 269 122 176 | 324 | 32 400 | 367 [364, 382] | 64 [61, 67] | 848 [815, 848] | 279 428 [278 756, 294 464] |
+| XFS | 17 443 104 | 21 | 2 100 | 61 [54, 61] | 22 [22, 24] | 427 [421, 547] | 48 752 [33 020, 50 052] |
+| XFS | 67 280 544 | 81 | 8 100 | 109 | 31 [31, 32] | 824 [824, 825] | 82 652 [82 484, 82 820] |
+| XFS | 269 122 176 | 324 | 32 400 | 341 [338, 343] | 69 [69, 72] | 943 [934, 964] | 279 428 [278 756, 294 464] |
+
+Replay MiB/s is WAL bytes / (open time − open checkpoint time); it rises with size because a fixed part (step 5, below; the step-4 checks) is spread over more bytes. At 848–943 MiB/s, the 1.64 GB the trigger allows would take about 1.9 s to replay (extrapolation, not measured).
+
+**System calls** (`strace -c -f` of the open alone, `recovery_fixed`, cold; raw/t16-strace-c-recovery-{ext4,xfs}-{16,64,256}.txt; identical counts on both file systems):
+
+| WAL target MiB | `pread64` | `pwrite64` | `fdatasync` | `fsync` | `rename` |
+|---|---|---|---|---|---|
+| 16 | 6 234 | 2 101 | 2 | 1 | 0 |
+| 64 | 10 314 | 8 101 | 2 | 4 | 4 |
+| 256 | 34 794 | 32 401 | 2 | 16 | 16 |
+
+Recovery reads one frame (8 224 bytes) per `pread64`: replayed frames plus the step-5 scan (2 040 frames per 16 MiB segment). It writes one `pwrite64` per replayed page (plus the header). The `fsync`s are the directory syncs of the open checkpoint's recycling, one per segment.
+
+**Profile.** `perf record --call-graph dwarf` of the open, cold (raw/t16-flamegraph-recovery-{ext4,xfs}-{16,256}.svg, folded stacks raw/t16-perf-recovery-*.folded). Shares of on-CPU samples under `Engine::open`, 256 MiB, ext4 (XFS): reading groups (`Reader::group`) 56.9 % (48.3 %), `pread64` 46.5 % (34.5 %) of which the kernel copy 40.6 % (27.6 %), CRC-32C 20.9 % (28.0 %), writing pages 22.8 % (31.1 %), `page::seal` 7.8 % (11.7 %), step 5 3.1 % (2.4 %), open checkpoint 5.6 % (3.0 %). Each replayed page is checksummed twice: the frame's CRC in `decode_frame` and the page checksum in `page::seal`. At 16 MiB, step 5 is 33.6 % (29.7 %) of samples.
+
+### Open point 3: the step-5 scan
+
+**Attribution established: step 5 reads every frame from the WAL end to the end of the newest segment, so its cost follows the WAL space ahead of the end, not the WAL replayed.** Measured by timing `later_valid_group` in the scratch copy (raw/t16-step5-runs.txt, 3 repetitions, cold):
+
+| fs | WAL replayed | segments on disk | bytes scanned by step 5 | step 5 ms | open ms |
+|---|---|---|---|---|---|
+| ext4 | 17.4 MB | 4 | 32.2 MiB | 20.0–22.5 | 65–73 |
+| ext4 | 67.3 MB | 6 | 16.7 MiB | 10.8–12.1 | 126–153 |
+| ext4 | 269 MB | 18 | 16.2 MiB | 10.4–11.2 | 369–461 |
+| XFS | 17.4 MB | 4 | 32.2 MiB | 17.6–18.3 | 63–73 |
+| XFS | 67.3 MB | 6 | 16.7 MiB | 8.6–9.7 | 111–149 |
+| XFS | 269 MB | 18 | 16.2 MiB | 8.8–9.6 | 342–432 |
+
+This accounts for the smoke-run observation (45 MB read for 4 MiB replayed): the rest of the current segment and the pre-created next one. The scan becomes large when a checkpoint has recycled segments ahead of the end: recycling keeps up to the WAL used since the previous checkpoint (`Wal::recycle`). With a scratch step (`more`) that opens a database after 1 GiB of WAL (its open checkpoint recycles 64 segments), commits 16 MiB more and drops it (raw/t16-step5-recycled-runs.txt, 3 repetitions per file system):
+
+| fs | WAL replayed | segments | read by the open | step 5 scanned | step 5 ms | open ms |
+|---|---|---|---|---|---|---|
+| ext4 | 17.4 MB | 66 | 1 091 MB | 1 024 MiB | 645–680 | 711–734 |
+| XFS | 17.4 MB | 66 | 1 091 MB | 1 024 MiB | 591–611 | 650–694 |
+
+**Step 5 was 88–93 % of the open, and reads about 1.5–1.7 GiB/s.** With the 1.64 GB the 100 000-commit trigger allows, a crash soon after a checkpoint would scan about that much (extrapolation: about 1 s). PostgreSQL ends redo at the first invalid record and recognises a recycled segment by the page address in each page header (`xlp_pageaddr`), so it reads no further: "This check typically fails when an old WAL segment is recycled" (R-PG `src/backend/access/transam/xlogreader.c:1350-1361`, `XLogReaderValidatePageHeader`). Bounding the step-5 scan (for example, stopping in a segment whose frames all carry LSNs of an older position, or reading only the 32-byte frame headers) is a TS-13 decision for the specification owner; the gain is up to the step-5 time above.
+
+**Unverified point 2.** First data recorded: WAL volume per commit and per group, commit latency, WAL bytes between checkpoints at the commit trigger, recovery time against bytes replayed, and the step-5 cost. The point stays open: "WAL growth while a backup holds recycling" cannot be measured before backup exists (TS-26), and every figure comes from one session on one host.
+
+**Limitations of #16.**
+
+1. As #15: device-state changes, loop-backed XFS, `powersave`, one session.
+2. Trigger figures are one run per configuration.
+3. Recovery was measured cold only (`LPG_LAB_COLD=1`, the default); the scratch-copy timing of step 5 adds one `Instant` pair per open.
+4. On-CPU profiles only; cold reads wait off-CPU.
+
+Reproduction:
+
+    cargo test -p lpg --profile lab --lib --no-run      # BIN below
+    LPG_LAB_EXT4=… LPG_LAB_XFS=… LPG_LAB_OUT=<dir> BIN --exact lab::recovery::<checkpoint_cost|checkpoint_trigger|recovery_cost> \
+        --ignored --test-threads=1                       # with iostat -x -t 1 (5 for the trigger) alongside
+    BIN=… raw/t16-checkpoint-fixed.sh <dir>              # checkpoint_fixed + iostat
+    BIN=… S=<scratch> raw/t16-recovery-fixed.sh <dir>    # prepare + strace -c / perf record of the open
+    raw/t15-t16-fold.sh <scratch>/recovery-<fs>-<mib>.data raw/t16-perf-recovery-<fs>-<mib> "<title>"
+    # Scratch copy XB (raw/t15-t16-scratch-experiments.diff): step-5 timing printed as XSTEP5 by the open
+    LPG_TEST_DIR=<d> LPG_RECOVERY_STEP=prepare LPG_RECOVERY_MIB=<16|64|256|1024> BIN --exact lab::recovery::recovery_fixed --ignored --test-threads=1
+    LPG_TEST_DIR=<d> LPG_RECOVERY_STEP=more LPG_RECOVERY_MIB=16 XB --exact lab::recovery::recovery_fixed --ignored --test-threads=1
+    LPG_TEST_DIR=<d> LPG_RECOVERY_STEP=open XB --exact lab::recovery::recovery_fixed --ignored --test-threads=1
+
+Both lab directories were emptied after the runs.

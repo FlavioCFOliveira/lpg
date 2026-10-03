@@ -1,0 +1,16 @@
+dir=/mnt/lpg-xfs prefill=write:4096 write=16384 n=300 p50_us=2939 p99_us=6076
+dir=/mnt/lpg-xfs prefill=write:4096 write=16448 n=300 p50_us=2886 p99_us=4200
+dir=/mnt/lpg-xfs prefill=write:1048576 write=16384 n=300 p50_us=2832 p99_us=6161
+dir=/mnt/lpg-xfs prefill=write:1048576 write=16448 n=300 p50_us=3000 p99_us=6141
+dir=/data/tmp/lpg-lab prefill=write:4096 write=16384 n=300 p50_us=932 p99_us=3985
+dir=/data/tmp/lpg-lab prefill=write:4096 write=16448 n=300 p50_us=935 p99_us=1160
+dir=/data/tmp/lpg-lab prefill=write:1048576 write=16384 n=300 p50_us=938 p99_us=3950
+dir=/data/tmp/lpg-lab prefill=write:1048576 write=16448 n=300 p50_us=932 p99_us=1176
+dir=/mnt/lpg-xfs prefill=write:4096 write=16384 n=300 p50_us=2899 p99_us=6948
+dir=/mnt/lpg-xfs prefill=write:4096 write=16448 n=300 p50_us=2882 p99_us=3394
+dir=/mnt/lpg-xfs prefill=write:1048576 write=16384 n=300 p50_us=2895 p99_us=8996
+dir=/mnt/lpg-xfs prefill=write:1048576 write=16448 n=300 p50_us=2921 p99_us=6129
+dir=/data/tmp/lpg-lab prefill=write:4096 write=16384 n=300 p50_us=928 p99_us=1181
+dir=/data/tmp/lpg-lab prefill=write:4096 write=16448 n=300 p50_us=941 p99_us=1038
+dir=/data/tmp/lpg-lab prefill=write:1048576 write=16384 n=300 p50_us=927 p99_us=1001
+dir=/data/tmp/lpg-lab prefill=write:1048576 write=16448 n=300 p50_us=928 p99_us=1162

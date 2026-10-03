@@ -1,0 +1,1 @@
+LAB fs=ext4 threads=16 pages=1 n=500 start_ms=1791017152949 end_ms=1791017154450 seconds=1.500 commits=8000 commits_per_s=5334 p50_us=2658.3 p99_us=8985.9 groups=1001 frames=8992 wal_bytes=73950208 wal_sync_data=1005 segments_created=2 write_bytes=111570944
