@@ -49,7 +49,13 @@ Profiling tooling:
 ## Synergy and convergence
 
 - **Group related tasks.** Whenever tasks (in `rmp` or requested ad hoc by the user) have verifiable functional or technical proximity, or complementary or convergent goals, combine them into a single development effort.
-- **Group work of the same type, across and within tasks.** Write all the code at once, then test all the changes at once, instead of writing and testing small pieces in isolation. Write all the documentation at once; if its scope is too large, split it into a few coherent blocks and handle each block at once. Apply this principle to every kind of work.
+- **Group work of the same type, across and within tasks (mandatory).** When several tasks need activities of the same type, do that activity for all of them at once, never task by task:
+  - **Code:** write the code of every task in one pass.
+  - **Tests:** test every resulting implementation in one run, never test by test.
+  - **Documentation:** write it all at once; if its scope is too large, split it into a few coherent blocks and handle each block at once.
+  - **Every other operation** in this project (specification, audits, measurements, `rmp` updates, commits): the same rule.
+
+  Apply it only when the delivery keeps its full quality and effectiveness; where grouping would compromise either, split the work and state why.
 - **Minimise tasks and iterations.** Reach every goal with the fewest possible tasks and iterations.
 - **Never trade quality for speed.** Aggregate work only when the result is faster and of equal or better quality than task-by-task delivery.
 - **Use available resources fully.** Make the most of the internal resources available, so that delivery is faster and costs the user less.
