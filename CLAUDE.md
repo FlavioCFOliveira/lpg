@@ -56,7 +56,17 @@ Profiling tooling:
 
 ## Open-source references
 
-> **Copying is forbidden.** Never copy code, text or any other content from another project. Consult other projects only to study them and draw inspiration from their reference approaches, so that this project's own implementation is of the highest quality.
+> **Copying is forbidden, except as stated below.** Never copy code, text or any other content from another project. Consult other projects only to study them and draw inspiration from their reference approaches, so that this project's own implementation is of the highest quality.
+
+- **Copying a component.** A component that a reference project implements, and its tests, may be copied when it either:
+  - matches a component this project needs **exactly (100 %)**; or
+  - is a good starting point for a development that is in progress or about to start.
+
+  Copy only when **all** of these hold:
+  - its licence is compatible with this project's MIT licence (for example MIT, Apache-2.0, BSD, public domain); never copy GPL-only code;
+  - its licence and attribution are preserved;
+  - its source (project, path, commit) is recorded where it is copied and in the task's `rmp` log;
+  - the copy then meets every rule of this file, including [Laboratory development](#laboratory-development-primary-principle-for-code).
 
 - **Sole exceptions:** the following Apache-2.0 projects may be used as test artefacts for GQL conformance verification. Preserve their licence and attribution unchanged.
   - `opengql/grammar`: the GQL grammar, including a parser generated from it in a test-only crate.
@@ -71,9 +81,9 @@ Profiling tooling:
   2. **Open-source databases**: the approaches of the most recognised databases for the relevant task or functionality, such as Memgraph, Neo4j, PostgreSQL, InnoDB, MariaDB and MySQL.
   3. **Other open-source projects**: any project that reveals a relevant strategy, architecture or approach.
 - Follow this decision order for every code and architecture decision:
-  1. **Learn first.** The first approach must never reinvent the wheel. Make an informed decision by studying the references above and identifying **only the best** approaches of each project, then implement them originally in this project.
+  1. **Learn first.** The first approach must never reinvent the wheel. Make an informed decision by studying the references above and identifying **only the best** approaches of each project, then implement them originally in this project, or copy them where [Copying a component](#open-source-references) allows.
   2. **Improve second.** Only when that process reveals a measurable improvement opportunity (see [Honest empiricism](#honest-empiricism-mandatory)), proceed to improve on the chosen approach.
-- Treat source code as the most reliable source of truth. Clone each reference repository locally under `/tmp/` (for example, `/tmp/<project>`) and read the code directly, for study only.
+- Treat source code as the most reliable source of truth. Whenever a reference project's code needs study, clone its public repository into a local folder under `/tmp/` (for example, `/tmp/<project>`), or reuse an existing clone there, and read the code directly. Use it for study, or to copy as [Copying a component](#open-source-references) allows.
 
 ### Research and decision-making (modus operandi)
 
