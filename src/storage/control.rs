@@ -204,6 +204,12 @@ impl ControlSlots {
         &self.current
     }
 
+    /// The sequence number of the authoritative slot. The one written by
+    /// open's checkpoint is the salt of that open's WAL frames (TS-09).
+    pub(crate) fn sequence(&self) -> u64 {
+        self.sequence
+    }
+
     /// Writes `control` to the slot that is not authoritative, with the next
     /// sequence number, then syncs; that slot becomes authoritative.
     ///
@@ -272,7 +278,11 @@ pub(crate) mod tests {
     }
 
     fn reopen(path: &Path, sink: &RecordingSink) -> Result<ControlSlots> {
-        ControlSlots::open(FsStorage.open(path)?, Arc::default(), sink)
+        ControlSlots::open(
+            crate::test_support::NoFlush.open(path)?,
+            Arc::default(),
+            sink,
+        )
     }
 
     #[test]
@@ -293,7 +303,13 @@ pub(crate) mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("CONTROL");
         let sink = RecordingSink::default();
-        let mut cf = ControlSlots::create(&FsStorage, &path, sample(), Arc::default()).unwrap();
+        let mut cf = ControlSlots::create(
+            &crate::test_support::NoFlush,
+            &path,
+            sample(),
+            Arc::default(),
+        )
+        .unwrap();
         assert_eq!(FsStorage.open(&path).unwrap().len().unwrap(), 8192);
         assert_eq!(reopen(&path, &sink).unwrap().slot, 1);
         for i in 0..4u64 {
@@ -320,7 +336,13 @@ pub(crate) mod tests {
             let dir = tempfile::tempdir().unwrap();
             let path = dir.path().join("CONTROL");
             let sink = RecordingSink::default();
-            let mut cf = ControlSlots::create(&FsStorage, &path, sample(), Arc::default()).unwrap();
+            let mut cf = ControlSlots::create(
+                &crate::test_support::NoFlush,
+                &path,
+                sample(),
+                Arc::default(),
+            )
+            .unwrap();
             cf.write(Control {
                 commit_ts: 50,
                 ..sample()
@@ -358,7 +380,13 @@ pub(crate) mod tests {
     fn both_slots_invalid_is_corruption() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("CONTROL");
-        ControlSlots::create(&FsStorage, &path, sample(), Arc::default()).unwrap();
+        ControlSlots::create(
+            &crate::test_support::NoFlush,
+            &path,
+            sample(),
+            Arc::default(),
+        )
+        .unwrap();
         corrupt_slot(&path, 0);
         corrupt_slot(&path, 1);
         let sink = RecordingSink::default();

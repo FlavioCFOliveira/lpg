@@ -15,7 +15,7 @@ use crate::test_support::{child, snapshot, test_dirs};
 const CAP: u64 = 16 << 20;
 
 fn fs() -> Arc<dyn Storage> {
-    Arc::new(FsStorage)
+    crate::test_support::no_flush()
 }
 
 fn sink() -> Arc<RecordingSink> {
@@ -64,7 +64,10 @@ fn create_then_open_round_trip() {
         let d = dir.path();
         let s = sink();
         let e = Engine::create(d, fs(), CAP, s.clone()).unwrap();
-        assert_eq!(names(d), ["CONTROL", "LOCK", "data-1"]);
+        assert_eq!(
+            names(d),
+            ["CONTROL", "LOCK", "data-1", "wal-1-0000000000000000"]
+        );
         let c = *e.control().lock().unwrap().current();
         assert_eq!((c.format_version, c.page_size, c.generation), (1, 8192, 1));
         assert_eq!(c.uuid[6] >> 4, 4, "version 4 UUID");
@@ -113,7 +116,10 @@ fn create_replaces_what_an_interrupted_create_left() {
             .unwrap();
         assert!(matches!(open(d), Err(Error::NoDatabase)));
         let e = create(d);
-        assert_eq!(names(d), ["CONTROL", "LOCK", "data-1"]);
+        assert_eq!(
+            names(d),
+            ["CONTROL", "LOCK", "data-1", "wal-1-0000000000000000"]
+        );
         assert_header_page(&e);
     }
 }
@@ -322,9 +328,9 @@ fn open_removes_other_generations_data_and_wal_segment_files() {
             "wal-10-ffffffffffffffff",
         ];
         let kept = [
-            // The current generation.
-            "wal-1-0000000000000000",
-            "wal-1-0000000001000000",
+            // The current generation: the segment after wal-1-0 (each
+            // segment holds 0xffff00 LSNs, TS-09), empty.
+            "wal-1-0000000000ffff00",
             // Not a file-set name.
             "data-",
             "data-x",
@@ -344,7 +350,8 @@ fn open_removes_other_generations_data_and_wal_segment_files() {
             FsStorage.create(&d.join(name)).unwrap();
         }
         open(d).unwrap();
-        let mut expected: Vec<&str> = ["CONTROL", "LOCK", "data-1"].into();
+        let mut expected: Vec<&str> =
+            ["CONTROL", "LOCK", "data-1", "wal-1-0000000000000000"].into();
         expected.extend(kept);
         expected.sort_unstable();
         assert_eq!(names(d), expected);
@@ -383,7 +390,7 @@ fn open_with_lock_missing_fails_and_creates_nothing() {
         assert!(matches!(err, Error::LockMissing), "{err}");
         assert!(err.to_string().contains("LOCK is missing"), "{err}");
         assert_eq!(snapshot(d), before, "every file keeps every byte");
-        assert_eq!(names(d), ["CONTROL", "data-1"]);
+        assert_eq!(names(d), ["CONTROL", "data-1", "wal-1-0000000000000000"]);
     }
 }
 
@@ -415,7 +422,7 @@ fn lock_deleted_under_an_open_handle_refuses_a_second_open() {
         let out = child::run(&test, "expect-lock-missing", &[(DIR, d.as_os_str())]);
         assert!(out.status.success(), "{out:?}");
         assert_eq!(snapshot(d), before, "every file keeps every byte");
-        assert_eq!(names(d), ["CONTROL", "data-1"]);
+        assert_eq!(names(d), ["CONTROL", "data-1", "wal-1-0000000000000000"]);
         a.check().unwrap();
         assert_header_page(&a);
     }
@@ -434,6 +441,6 @@ fn open_with_data_file_missing_is_corruption_and_creates_nothing() {
         assert!(matches!(err, Error::Corruption(_)), "{err}");
         assert!(err.to_string().contains("data-1 is missing"), "{err}");
         assert_eq!(snapshot(d), before, "every file keeps every byte");
-        assert_eq!(names(d), ["CONTROL", "LOCK"]);
+        assert_eq!(names(d), ["CONTROL", "LOCK", "wal-1-0000000000000000"]);
     }
 }

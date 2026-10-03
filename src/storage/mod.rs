@@ -31,6 +31,11 @@ pub(crate) mod btree;
 pub(crate) mod check;
 #[cfg_attr(
     not(test),
+    allow(dead_code, reason = "first non-test callers come with the API tasks")
+)]
+pub(crate) mod checkpoint;
+#[cfg_attr(
+    not(test),
     allow(dead_code, reason = "first non-test callers come with #14-#16")
 )]
 pub(crate) mod control;
@@ -69,6 +74,16 @@ pub(crate) mod page;
     allow(dead_code, reason = "first non-test callers come with #14-#16")
 )]
 pub(crate) mod pool;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with the API tasks")
+)]
+pub(crate) mod recovery;
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with the API tasks")
+)]
+pub(crate) mod wal;
 
 #[cfg(test)]
 pub(crate) mod fault;

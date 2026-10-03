@@ -20,7 +20,7 @@
 //!   shrinking or removing files returns nothing.
 //! - Every call is logged in order.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ffi::{OsStr, OsString};
 use std::io;
 use std::path::{Path, PathBuf};
@@ -117,20 +117,80 @@ struct FileState {
     inner: Arc<dyn StorageFile>,
     path: PathBuf,
     ops: Vec<Op>,
+    /// Length as seen through the unsynced operations.
+    len: u64,
+    /// Index of the unsynced writes: start offset to the positions of the
+    /// writes in `ops` that start there. With [`FileState::max_write`] it
+    /// finds the writes a read overlaps without scanning every unsynced
+    /// operation, which made reads quadratic in the unsynced writes.
+    writes: BTreeMap<u64, Vec<usize>>,
+    /// Length of the longest unsynced write.
+    max_write: u64,
+    /// Whether an unsynced `set_len` is pending; reads then scan `ops`.
+    set_len: bool,
 }
 
 impl FileState {
-    /// Length as seen through the unsynced operations.
-    fn len(&self) -> io::Result<u64> {
-        let mut len = self.inner.len()?;
-        for op in &self.ops {
-            len = match *op {
-                Op::Write(o, ref d) => len.max(o + d.len() as u64),
-                Op::SetLen(l) => l,
-                Op::Reserve(o, l) => len.max(o + l),
-            };
+    /// Records an unsynced operation.
+    fn push(&mut self, op: Op) {
+        match op {
+            Op::Write(o, ref d) => {
+                let n = d.len() as u64;
+                self.len = self.len.max(o + n);
+                self.max_write = self.max_write.max(n);
+                self.writes.entry(o).or_default().push(self.ops.len());
+            }
+            Op::SetLen(l) => {
+                self.len = l;
+                self.set_len = true;
+            }
+            Op::Reserve(o, l) => self.len = self.len.max(o + l),
         }
-        Ok(len)
+        self.ops.push(op);
+    }
+
+    /// Forgets the unsynced operations once they are applied.
+    fn clear(&mut self) {
+        self.ops.clear();
+        self.writes.clear();
+        self.max_write = 0;
+        self.set_len = false;
+    }
+
+    /// Copies the unsynced data into `buf`, which holds the wrapped file's
+    /// bytes at `offset`, in operation order.
+    fn overlay(&self, buf: &mut [u8], offset: u64) {
+        let end = offset + buf.len() as u64;
+        let mut copy = |op: &Op| match *op {
+            Op::Write(o, ref d) => {
+                let (start, stop) = (o.max(offset), (o + d.len() as u64).min(end));
+                if start < stop {
+                    buf[(start - offset) as usize..(stop - offset) as usize]
+                        .copy_from_slice(&d[(start - o) as usize..(stop - o) as usize]);
+                }
+            }
+            Op::SetLen(l) => {
+                if l < end {
+                    buf[(l.max(offset) - offset) as usize..].fill(0);
+                }
+            }
+            Op::Reserve(..) => {}
+        };
+        if self.set_len {
+            self.ops.iter().for_each(copy);
+            return;
+        }
+        // Writes that overlap [offset, end) start in this range.
+        let from = offset.saturating_sub(self.max_write.saturating_sub(1));
+        let mut hits: Vec<usize> = self
+            .writes
+            .range(from..end)
+            .flat_map(|(_, i)| i.iter().copied())
+            .collect();
+        hits.sort_unstable();
+        for i in hits {
+            copy(&self.ops[i]);
+        }
     }
 
     fn apply(&self, op: &Op) -> io::Result<()> {
@@ -156,20 +216,26 @@ struct State {
     fail_sync_data: Option<u64>,
     fail_write: Option<u64>,
     space: Option<u64>,
+    /// Set by [`FaultStorage::skip_device_sync`].
+    skip_device_sync: bool,
 }
 
 impl State {
-    fn add_file(&mut self, inner: Box<dyn StorageFile>, path: &Path) -> u64 {
+    fn add_file(&mut self, inner: Box<dyn StorageFile>, path: &Path) -> io::Result<u64> {
         let key = self.next_key;
         self.next_key += 1;
         let state = FileState {
+            len: inner.len()?,
             inner: Arc::from(inner),
             path: path.to_path_buf(),
             ops: Vec::new(),
+            writes: BTreeMap::new(),
+            max_write: 0,
+            set_len: false,
         };
         self.files.insert(key, state);
         self.names.insert(path.to_path_buf(), key);
-        key
+        Ok(key)
     }
 
     fn backup_name(&mut self, path: &Path) -> PathBuf {
@@ -291,6 +357,16 @@ impl FaultStorage {
         lock(&self.state).fail_write = Some(n);
     }
 
+    /// Makes `sync_data` and `sync_dir` complete without asking the
+    /// wrapped storage to sync: writes still reach the wrapped files and
+    /// namespace changes still become durable for [`FaultStorage::crash`],
+    /// but nothing waits for the device. For tests that count operations
+    /// and do not crash the operating system, whose run time would
+    /// otherwise be the device's flush latency.
+    pub(crate) fn skip_device_sync(&self) {
+        lock(&self.state).skip_device_sync = true;
+    }
+
     /// Sets the bytes that writes and reservations may still add.
     pub(crate) fn set_space(&self, bytes: u64) {
         lock(&self.state).space = Some(bytes);
@@ -318,7 +394,7 @@ impl Storage for FaultStorage {
             Some(&key) => key,
             None => {
                 let inner = self.inner.open(path)?;
-                st.add_file(inner, path)
+                st.add_file(inner, path)?
             }
         };
         Ok(self.handle(key, st.generation))
@@ -332,7 +408,7 @@ impl Storage for FaultStorage {
         }
         let inner = self.inner.create(path)?;
         st.pending.push(Pending::Created(path.to_path_buf()));
-        let key = st.add_file(inner, path);
+        let key = st.add_file(inner, path)?;
         Ok(self.handle(key, st.generation))
     }
 
@@ -391,7 +467,9 @@ impl Storage for FaultStorage {
     fn sync_dir(&self, dir: &Path) -> io::Result<()> {
         let mut st = lock(&self.state);
         st.log.push(Call::SyncDir(dir.to_path_buf()));
-        self.inner.sync_dir(dir)?;
+        if !st.skip_device_sync {
+            self.inner.sync_dir(dir)?;
+        }
         let (done, kept): (Vec<_>, Vec<_>) = std::mem::take(&mut st.pending)
             .into_iter()
             .partition(|p| p.dir() == Some(dir));
@@ -450,27 +528,8 @@ impl StorageFile for FaultFile {
         let path = file.path.clone();
         let n = file.inner.read_at(buf, offset)?;
         buf[n..].fill(0);
-        let end = offset + buf.len() as u64;
-        let mut len = file.inner.len()?;
-        for op in &file.ops {
-            match *op {
-                Op::Write(o, ref d) => {
-                    let (start, stop) = (o.max(offset), (o + d.len() as u64).min(end));
-                    if start < stop {
-                        buf[(start - offset) as usize..(stop - offset) as usize]
-                            .copy_from_slice(&d[(start - o) as usize..(stop - o) as usize]);
-                    }
-                    len = len.max(o + d.len() as u64);
-                }
-                Op::SetLen(l) => {
-                    if l < end {
-                        buf[(l.max(offset) - offset) as usize..].fill(0);
-                    }
-                    len = l;
-                }
-                Op::Reserve(o, l) => len = len.max(o + l),
-            }
-        }
+        file.overlay(buf, offset);
+        let len = file.len;
         st.log.push(Call::ReadAt {
             path,
             offset,
@@ -491,10 +550,10 @@ impl StorageFile for FaultFile {
         if st.fail_write == Some(st.write_calls) {
             return Err(Errno::IO.into());
         }
-        let growth = (offset + buf.len() as u64).saturating_sub(st.files[&self.key].len()?);
+        let growth = (offset + buf.len() as u64).saturating_sub(st.files[&self.key].len);
         st.take_space(growth)?;
         let file = st.files.get_mut(&self.key).expect("open file has state");
-        file.ops.push(Op::Write(offset, buf.to_vec()));
+        file.push(Op::Write(offset, buf.to_vec()));
         Ok(())
     }
 
@@ -506,18 +565,22 @@ impl StorageFile for FaultFile {
         if st.fail_sync_data == Some(st.sync_data_calls) {
             return Err(Errno::IO.into());
         }
+        let skip = st.skip_device_sync;
         let file = st.files.get_mut(&self.key).expect("open file has state");
         for op in &file.ops {
             file.apply(op)?;
         }
-        file.ops.clear();
+        file.clear();
+        if skip {
+            return Ok(());
+        }
         file.inner.sync_data()
     }
 
     fn set_len(&self, len: u64) -> io::Result<()> {
         let mut st = self.state()?;
         let file = st.files.get_mut(&self.key).expect("open file has state");
-        file.ops.push(Op::SetLen(len));
+        file.push(Op::SetLen(len));
         let path = file.path.clone();
         st.log.push(Call::SetLen(path, len));
         Ok(())
@@ -526,7 +589,7 @@ impl StorageFile for FaultFile {
     fn len(&self) -> io::Result<u64> {
         let mut st = self.state()?;
         let file = &st.files[&self.key];
-        let (path, len) = (file.path.clone(), file.len()?);
+        let (path, len) = (file.path.clone(), file.len);
         st.log.push(Call::Len(path));
         Ok(len)
     }
@@ -535,10 +598,10 @@ impl StorageFile for FaultFile {
         let mut st = self.state()?;
         let path = st.files[&self.key].path.clone();
         st.log.push(Call::Reserve { path, offset, len });
-        let growth = (offset + len).saturating_sub(st.files[&self.key].len()?);
+        let growth = (offset + len).saturating_sub(st.files[&self.key].len);
         st.take_space(growth)?;
         let file = st.files.get_mut(&self.key).expect("open file has state");
-        file.ops.push(Op::Reserve(offset, len));
+        file.push(Op::Reserve(offset, len));
         Ok(())
     }
 }

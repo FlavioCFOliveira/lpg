@@ -17,3 +17,8 @@ tempfile = "3.27.0"
 [profile.lab]
 inherits = "release"
 debug = true
+
+# Tests run at opt-level 1: the suite takes 14-20 s instead of 25-28 s
+# (measured 2026-10-03), and debug assertions and overflow checks stay on.
+[profile.test]
+opt-level = 1

@@ -36,7 +36,7 @@ fn tagged(buf: &mut [u8], p: u64) {
     for at in (HEADER_LEN..PAGE_SIZE - 8).step_by(776) {
         buf[at..at + 8].copy_from_slice(&p.to_le_bytes());
     }
-    page::seal(buf);
+    page::seal(buf, p);
 }
 
 /// Checks that `buf` is the intact image of test page `p`.
@@ -55,7 +55,7 @@ fn engine(dir: &Path, storage: Arc<dyn Storage>, cap: u64) -> (Engine, Arc<Recor
 #[test]
 fn hits_and_misses_are_counted_and_published() {
     for dir in test_dirs() {
-        let (e, sink) = engine(dir.path(), Arc::new(FsStorage), 16 << 20);
+        let (e, sink) = engine(dir.path(), crate::test_support::no_flush(), 16 << 20);
         let pages = write_pages(e.data(), 100);
         for _ in 0..2 {
             for p in pages.clone() {
@@ -79,7 +79,7 @@ fn hits_and_misses_are_counted_and_published() {
 fn pages_worth_ten_times_the_cap_are_returned_intact() {
     const CAP: u64 = 2 << 20;
     for dir in test_dirs() {
-        let (e, sink) = engine(dir.path(), Arc::new(FsStorage), CAP);
+        let (e, sink) = engine(dir.path(), crate::test_support::no_flush(), CAP);
         let n = 10 * CAP / PAGE_BYTES;
         let pages = write_pages(e.data(), n);
         let mut rng = StdRng::seed_from_u64(5);
@@ -108,7 +108,7 @@ fn pages_worth_ten_times_the_cap_are_returned_intact() {
 fn sixteen_threads_fetching_and_reserving_stay_within_the_cap() {
     const CAP: u64 = 4 << 20;
     let dir = test_dirs().remove(0);
-    let (e, _) = engine(dir.path(), Arc::new(FsStorage), CAP);
+    let (e, _) = engine(dir.path(), crate::test_support::no_flush(), CAP);
     let pages = write_pages(e.data(), 3 * CAP / PAGE_BYTES);
     let ok = AtomicU64::new(0);
     let refused = AtomicU64::new(0);
@@ -171,7 +171,7 @@ fn sixteen_threads_fetching_and_reserving_stay_within_the_cap() {
 fn flipped_bit_fails_the_read_and_every_later_operation_until_reopen() {
     for dir in test_dirs() {
         let d = dir.path();
-        let (e, _) = engine(d, Arc::new(FsStorage), 16 << 20);
+        let (e, _) = engine(d, crate::test_support::no_flush(), 16 << 20);
         let pages = write_pages(e.data(), 10);
         let (good, bad) = (pages.start, pages.start + 5);
         check(&e.pool().fetch(good).unwrap().read().unwrap(), good);
@@ -194,7 +194,7 @@ fn flipped_bit_fails_the_read_and_every_later_operation_until_reopen() {
 
         let e = Engine::open(
             d,
-            Arc::new(FsStorage),
+            crate::test_support::no_flush(),
             16 << 20,
             Arc::new(RecordingSink::default()),
         )
@@ -209,7 +209,7 @@ fn flipped_bit_fails_the_read_and_every_later_operation_until_reopen() {
 #[test]
 fn waiter_on_a_failed_load_fails() {
     let dir = test_dirs().remove(0);
-    let (e, _) = engine(dir.path(), Arc::new(FsStorage), 16 << 20);
+    let (e, _) = engine(dir.path(), crate::test_support::no_flush(), 16 << 20);
     let pages = write_pages(e.data(), 2);
     // Page `pages.end` is reserved but never written: its read fails.
     let unwritten = pages.end;
@@ -284,7 +284,7 @@ fn frame_with_lsn_above_durable_is_never_written() {
 fn pinned_frames_stay_and_all_pinned_is_a_memory_limit() {
     const CAP: u64 = 1 << 20;
     let dir = test_dirs().remove(0);
-    let (e, _) = engine(dir.path(), Arc::new(FsStorage), CAP);
+    let (e, _) = engine(dir.path(), crate::test_support::no_flush(), CAP);
     let pages = write_pages(e.data(), 2 * CAP / PAGE_BYTES);
     let mut pinned = Vec::new();
     let mut next = pages.clone();
@@ -311,7 +311,7 @@ fn pinned_frames_stay_and_all_pinned_is_a_memory_limit() {
 fn reserve_shrinks_the_pool_down_to_its_floor() {
     const CAP: u64 = 8 << 20;
     let dir = test_dirs().remove(0);
-    let (e, _) = engine(dir.path(), Arc::new(FsStorage), CAP);
+    let (e, _) = engine(dir.path(), crate::test_support::no_flush(), CAP);
     let pages = write_pages(e.data(), 2 * CAP / PAGE_BYTES);
     for p in pages.clone() {
         e.pool().fetch(p).unwrap();

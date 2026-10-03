@@ -378,14 +378,22 @@ impl Pool {
     }
 
     /// Pins page `page_no`, newly allocated, without reading it: its frame
-    /// holds zeros and is dirty, and the caller initialises it. A page that
-    /// is never written has no valid image on disk (#13), and a free page
-    /// being reused has a stale one, so neither is read.
+    /// holds zeros except page LSN `lsn`, and is dirty; the caller
+    /// initialises it. A page that is never written has no valid image on
+    /// disk (#13), and a free page being reused has a stale one, so neither
+    /// is read.
+    ///
+    /// The zeros and the page LSN are written under one exclusive latch, so
+    /// no checkpoint or eviction can see the frame dirty with page LSN 0
+    /// and write it before the group that will hold its image is durable
+    /// (TS-09; the page LSN is set "in the same latched write that changes
+    /// the page"). A resident frame of a page freed by a commit whose group
+    /// is not yet durable would otherwise be overwritten on disk.
     ///
     /// # Errors
     ///
     /// As [`Pool::fetch`], except that no read can fail.
-    pub(crate) fn create(&self, page_no: u64) -> Result<PinnedPage<'_>> {
+    pub(crate) fn create(&self, page_no: u64, lsn: u64) -> Result<PinnedPage<'_>> {
         self.health.check()?;
         if page_no >= self.data.reserved_pages() {
             return Err(Error::InvalidArgument("page outside the data file"));
@@ -413,12 +421,17 @@ impl Pool {
                 }
             }
         };
-        pinned.write()?.fill(0);
+        {
+            let mut g = pinned.write()?;
+            g.fill(0);
+            page::set_lsn(&mut g, lsn);
+        }
         Ok(pinned)
     }
 
     /// Pins page `page_no` only if the pool holds it, and says whether it
-    /// is dirty. Reads nothing (for the integrity check).
+    /// is dirty. Reads nothing (for the integrity check and the undo of a
+    /// failed batch).
     pub(crate) fn resident(&self, page_no: u64) -> Option<(PinnedPage<'_>, bool)> {
         let frame = self.pin_mapped(&read_map(self.shard(page_no)), page_no)?;
         let dirty = self.frames[frame as usize].dirty.load(Ordering::Acquire);
@@ -426,40 +439,75 @@ impl Pool {
     }
 
     /// Writes every dirty frame whose page LSN is durable, waiting for each
-    /// frame's latch, and returns the number written. The write loop of a
-    /// checkpoint (TS-11 step 2); it does not sync the data file.
+    /// frame's latch, and returns the number written. It does not sync the
+    /// data file.
     ///
     /// # Errors
     ///
     /// [`Error::Unusable`]; an I/O error, which sets the unusable latch.
     pub(crate) fn write_dirty(&self) -> Result<u64> {
+        let mut skipped = Vec::new();
+        self.checkpoint_pass(None, &mut skipped)
+    }
+
+    /// The write loop of a checkpoint (TS-11 step 2). Writes each dirty
+    /// frame whose page LSN is durable, waiting for each frame's latch, and
+    /// returns the number written. Each dirty frame whose page LSN is not
+    /// durable is left in `skipped` as `(page, page LSN)`. With `only`,
+    /// just those pages are visited; a page no longer in the pool was
+    /// written by eviction.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Unusable`]; an I/O error, which sets the unusable latch.
+    pub(crate) fn checkpoint_pass(
+        &self,
+        only: Option<&[(u64, u64)]>,
+        skipped: &mut Vec<(u64, u64)>,
+    ) -> Result<u64> {
         self.health.check()?;
+        skipped.clear();
         let mut written = 0;
-        for f in &self.frames[..] {
-            let page_no = f.page.load(Ordering::Relaxed);
-            if page_no == NO_PAGE || !f.dirty.load(Ordering::Acquire) {
-                continue;
-            }
+        let mut visit = |page_no: u64| -> Result<()> {
             // Pin through the page table, so the frame cannot be evicted
             // or remapped while it is written.
             let Some(frame) = self.pin_mapped(&read_map(self.shard(page_no)), page_no) else {
-                continue;
+                return Ok(());
             };
             let pinned = PinnedPage { pool: self, frame };
             let f = pinned.frame();
             let buf = f.latch.read().map_err(|_| self.poisoned())?;
-            if !f.dirty.load(Ordering::Acquire)
-                || page::lsn(&buf) > self.durable_lsn.load(Ordering::Acquire)
-            {
-                continue;
+            if !f.dirty.load(Ordering::Acquire) {
+                return Ok(());
+            }
+            let lsn = page::lsn(&buf);
+            if lsn > self.durable_lsn.load(Ordering::Acquire) {
+                skipped.push((page_no, lsn));
+                return Ok(());
             }
             let mut copy = [0u8; PAGE_SIZE];
             copy.copy_from_slice(&buf);
-            page::seal(&mut copy);
+            page::seal(&mut copy, page_no);
             self.data.write_page(page_no, &copy)?;
             f.dirty.store(false, Ordering::Release);
             self.sink.counter(FLUSHES, 1);
             written += 1;
+            Ok(())
+        };
+        match only {
+            Some(pages) => {
+                for &(p, _) in pages {
+                    visit(p)?;
+                }
+            }
+            None => {
+                for f in &self.frames[..] {
+                    let page_no = f.page.load(Ordering::Relaxed);
+                    if page_no != NO_PAGE && f.dirty.load(Ordering::Acquire) {
+                        visit(page_no)?;
+                    }
+                }
+            }
         }
         Ok(written)
     }
@@ -590,11 +638,11 @@ impl Pool {
         }
         // Seal a copy, as PostgreSQL's `PageSetChecksumCopy`: readers keep
         // the frame under the shared latch while it is written.
+        let page_no = f.page.load(Ordering::Relaxed);
         let mut copy = [0u8; PAGE_SIZE];
         copy.copy_from_slice(&buf);
-        page::seal(&mut copy);
-        self.data
-            .write_page(f.page.load(Ordering::Relaxed), &copy)?;
+        page::seal(&mut copy, page_no);
+        self.data.write_page(page_no, &copy)?;
         f.dirty.store(false, Ordering::Release);
         self.sink.counter(FLUSHES, 1);
         Ok(true)
@@ -731,6 +779,105 @@ impl PinnedPage<'_> {
         self.pool.health.check()?;
         self.frame().dirty.store(true, Ordering::Release);
         Ok(guard)
+    }
+}
+
+impl PinnedPage<'_> {
+    /// The exclusive latch, without the unusable check: the undo of a
+    /// failed batch restores its pages before it reports the failure
+    /// (TS-16 step 6), also when the failure set the unusable latch.
+    fn undo_latch(&self) -> Result<RwLockWriteGuard<'_, Box<[u8]>>> {
+        self.frame().latch.write().map_err(|_| self.pool.poisoned())
+    }
+
+    /// Takes the exclusive latch and marks the page dirty, as
+    /// [`PinnedPage::write`], and returns whether the page was dirty before,
+    /// so that an undo can restore that state.
+    ///
+    /// # Errors
+    ///
+    /// As [`PinnedPage::write`].
+    pub(crate) fn write_noting_dirty(&self) -> Result<(RwLockWriteGuard<'_, Box<[u8]>>, bool)> {
+        let guard = self.undo_latch()?;
+        self.pool.health.check()?;
+        let was = self.frame().dirty.swap(true, Ordering::AcqRel);
+        Ok((guard, was))
+    }
+
+    /// Undo of a failed batch: writes `image` back into the frame, with its
+    /// dirty state `dirty` from before the batch. A frame that was clean
+    /// holds the image on disk again, so it becomes clean. Works on an
+    /// unusable database: nothing writes a page of an unusable database.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Unusable`] if the latch is poisoned.
+    pub(crate) fn undo_restore(&self, image: &[u8], dirty: bool) -> Result<()> {
+        let mut g = self.undo_latch()?;
+        g.copy_from_slice(image);
+        self.frame().dirty.store(dirty, Ordering::Release);
+        Ok(())
+    }
+
+    /// Undo of a failed batch for a page it took that was free before it,
+    /// in the pool or not, and that is free again after the undo (TS-16 step 6 undo,
+    /// item 3). A reader may have followed a link the batch wrote to this
+    /// page, so the page must stay readable with the image the batch left in
+    /// the frame until the reuse fence is lifted. The image on disk cannot
+    /// serve: it is a reserve page never written, which fails its checksum,
+    /// or an older image of a free page.
+    ///
+    /// The image is therefore made to reach the data file before the frame
+    /// can be freed, under the WAL-before-data rule (TS-09) for `lsn`, the
+    /// durable LSN at which every commit that freed the page is durable
+    /// ([`super::wal::OpenGroup::joined_durable_lsn`]):
+    ///
+    /// - if `lsn` is durable, the image is written now and the frame becomes
+    ///   clean, its page LSN unchanged;
+    /// - otherwise the frame becomes dirty with page LSN `lsn`, so eviction
+    ///   and checkpoints write it once that commit is durable. The page LSN
+    ///   it had before the batch is on disk and so at most the durable LSN:
+    ///   `lsn` is not below it.
+    ///
+    /// On an unusable database nothing is written (TS-12) and the frame
+    /// becomes clean; no read can reach it.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Unusable`] if the latch is poisoned; [`Error::Io`] if the
+    /// write fails, which sets the unusable latch.
+    pub(crate) fn undo_keep(&self, lsn: u64) -> Result<()> {
+        let mut g = self.undo_latch()?;
+        let f = self.frame();
+        if self.pool.health.is_unusable() {
+            f.dirty.store(false, Ordering::Release);
+            return Ok(());
+        }
+        if lsn <= self.pool.durable_lsn.load(Ordering::Acquire) {
+            let page_no = f.page.load(Ordering::Relaxed);
+            let mut copy = [0u8; PAGE_SIZE];
+            copy.copy_from_slice(&g);
+            page::seal(&mut copy, page_no);
+            self.pool.data.write_page(page_no, &copy)?;
+            f.dirty.store(false, Ordering::Release);
+            self.pool.sink.counter(FLUSHES, 1);
+        } else {
+            page::set_lsn(&mut g, lsn);
+            f.dirty.store(true, Ordering::Release);
+        }
+        Ok(())
+    }
+
+    /// The shared latch without the unusable check, for the capture of a
+    /// batch's final images (TS-09): the pages are pinned and their images
+    /// are in memory, so no failure of another component can make them
+    /// unreadable.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Unusable`] if the latch is poisoned.
+    pub(crate) fn read_for_capture(&self) -> Result<RwLockReadGuard<'_, Box<[u8]>>> {
+        self.frame().latch.read().map_err(|_| self.pool.poisoned())
     }
 }
 

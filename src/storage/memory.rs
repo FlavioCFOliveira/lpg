@@ -2,7 +2,8 @@
 //!
 //! One accountant per database holds an atomic byte budget equal to the
 //! memory cap. Every user that TS-08 lists reserves from it before it
-//! allocates; in Sprint 1 these are buffer-pool frames and sort buffers.
+//! allocates; in Sprint 1 these are buffer-pool frames, the page copies of
+//! a commit's apply step (TS-16) and sort buffers.
 //! Memory TS-08 places outside the cap (WAL page images, the free-page set,
 //! the 1 MiB copy buffer) never reserves.
 //!
@@ -105,6 +106,14 @@ impl Reservation {
     pub(crate) fn bytes(&self) -> u64 {
         self.bytes
     }
+
+    /// Takes over the bytes of `other`, a reservation from the same
+    /// accountant, so that one guard releases both.
+    pub(crate) fn absorb(&mut self, mut other: Reservation) {
+        debug_assert!(Arc::ptr_eq(&self.accountant, &other.accountant));
+        self.bytes += other.bytes;
+        other.bytes = 0;
+    }
 }
 
 impl Drop for Reservation {
@@ -139,10 +148,12 @@ mod tests {
     #[test]
     fn concurrent_reservations_never_exceed_the_cap() {
         const CAP: u64 = 1 << 20;
+        const CHUNK: u64 = 64 << 10;
         let a = MemoryAccountant::new(CAP);
+        let all = std::sync::Barrier::new(16);
         std::thread::scope(|s| {
             for t in 0..16u64 {
-                let a = &a;
+                let (a, all) = (&a, &all);
                 s.spawn(move || {
                     let mut held = Vec::new();
                     for i in 0..20_000u64 {
@@ -155,6 +166,18 @@ mod tests {
                             held.pop();
                         }
                     }
+                    held.clear();
+                    // Fill: every thread races to the cap and holds what it
+                    // got. Nothing is released, so once a reservation is
+                    // refused the free bytes are below one chunk for good.
+                    all.wait();
+                    while let Some(r) = a.try_reserve(CHUNK) {
+                        assert!(a.used() <= CAP);
+                        held.push(r);
+                    }
+                    all.wait();
+                    assert!(a.used() > CAP - CHUNK, "used {}", a.used());
+                    all.wait();
                 });
             }
         });

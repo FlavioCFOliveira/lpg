@@ -25,10 +25,12 @@ use rustix::fs::{Advice, Mode, OFlags};
 use crate::obs::recording::{Metrics, RecordingSink};
 
 mod btree;
+mod commit;
 mod files;
 mod generator;
 mod obs;
 mod pool;
+mod recovery;
 mod storage;
 
 /// Measured rounds per workload.
@@ -204,8 +206,9 @@ pub(crate) fn env_dir(var: &str) -> PathBuf {
         .unwrap_or_else(|| panic!("set {var}; see src/lab/mod.rs"))
 }
 
-/// Writes the Markdown table of `rows` to `$LPG_LAB_OUT/<file>`.
-pub(crate) fn write_table(file: &str, title: &str, context: &[(&str, String)], rows: &[Measured]) {
+/// The title and context lines of a result file: date, source revision,
+/// profile, then `context`.
+pub(crate) fn header(title: &str, context: &[(&str, String)]) -> String {
     let mut md = format!("# {title}\n\n");
     let mut lines = vec![
         ("date", date()),
@@ -216,6 +219,53 @@ pub(crate) fn write_table(file: &str, title: &str, context: &[(&str, String)], r
     for (k, v) in lines {
         writeln!(md, "- {k}: {v}").unwrap();
     }
+    md
+}
+
+/// The lab directories that are set, with a short name: `ext4` for
+/// `LPG_LAB_EXT4` (required), `xfs` for `LPG_LAB_XFS`.
+pub(crate) fn lab_dirs() -> Vec<(&'static str, PathBuf)> {
+    let mut dirs = vec![("ext4", env_dir("LPG_LAB_EXT4"))];
+    if let Some(d) = std::env::var_os("LPG_LAB_XFS") {
+        dirs.push(("xfs", PathBuf::from(d)));
+    }
+    dirs
+}
+
+/// The value of `q` (0 to 1) in `v` by nearest rank; 0 for an empty `v`.
+pub(crate) fn percentile(v: &[u64], q: f64) -> u64 {
+    if v.is_empty() {
+        return 0;
+    }
+    let mut s = v.to_vec();
+    s.sort_unstable();
+    let rank = ((q * s.len() as f64).ceil() as usize).clamp(1, s.len());
+    s[rank - 1]
+}
+
+/// An environment variable parsed as `T`, or `default`.
+pub(crate) fn env_or<T: std::str::FromStr>(var: &str, default: T) -> T {
+    std::env::var(var).map_or(default, |v| {
+        v.parse()
+            .unwrap_or_else(|_| panic!("{var}={v} is not a valid value"))
+    })
+}
+
+/// A comma-separated list of numbers from `var`, or `default`.
+pub(crate) fn env_list(var: &str, default: &[u64]) -> Vec<u64> {
+    std::env::var(var).map_or_else(
+        |_| default.to_vec(),
+        |v| {
+            v.split(',')
+                .map(|x| x.trim().parse().unwrap_or_else(|_| panic!("{var}: {x}")))
+                .collect()
+        },
+    )
+}
+
+/// Writes the Markdown table of `rows` to `$LPG_LAB_OUT/<file>`.
+pub(crate) fn write_table(file: &str, title: &str, context: &[(&str, String)], rows: &[Measured]) {
+    let mut md = header(title, context);
     md.push_str(
         "\n| workload | cache mode | ops/round | ns/op median [min, max] | KiB read/op | KiB written/op | VmRSS KiB | VmHWM KiB | sink difference |\n\
          |---|---|---|---|---|---|---|---|---|\n",
@@ -244,6 +294,16 @@ pub(crate) fn write_table(file: &str, title: &str, context: &[(&str, String)], r
 
 mod tests {
     use super::*;
+
+    #[test]
+    fn percentile_by_nearest_rank() {
+        let v: Vec<u64> = (1..=100).rev().collect();
+        assert_eq!(percentile(&v, 0.5), 50);
+        assert_eq!(percentile(&v, 0.99), 99);
+        assert_eq!(percentile(&v, 1.0), 100);
+        assert_eq!(percentile(&[7], 0.01), 7);
+        assert_eq!(percentile(&[], 0.5), 0);
+    }
 
     #[test]
     fn median_range_of_three() {

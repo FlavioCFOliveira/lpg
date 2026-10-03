@@ -38,6 +38,11 @@ const MAGIC: [u8; 8] = *b"LPGDATA\0";
 /// Minimum extent: 64 MiB of pages (TS-05).
 pub(crate) const MIN_EXTENT_PAGES: u64 = (64 << 20) / PAGE_BYTES;
 
+/// Pages a data file can hold: every byte of the last one lies at an
+/// offset positional I/O can address. `pread` and `pwrite` take an `off_t`,
+/// a signed 64-bit offset on Linux, so the file ends at `i64::MAX` at most.
+pub(crate) const MAX_PAGES: u64 = i64::MAX as u64 / PAGE_BYTES;
+
 /// Pages of the next extent for a file of `pages` pages: 64 MiB, or 1 % of
 /// the file if that is larger.
 #[must_use]
@@ -67,7 +72,7 @@ impl Header {
         buf[40..48].copy_from_slice(&self.free_list_head.to_le_bytes());
         buf[48..56].copy_from_slice(&self.next_tree_id.to_le_bytes());
         buf[56..64].copy_from_slice(&self.page_count.to_le_bytes());
-        page::seal(buf);
+        page::seal(buf, 0);
     }
 
     /// Writes the free-list head, next tree identifier and page count into
@@ -151,7 +156,7 @@ impl Datafile {
         .encode(&mut buf);
         data.write_page(0, &buf)?;
         btree::node::init_empty_leaf(&mut buf, 0);
-        page::seal(&mut buf);
+        page::seal(&mut buf, 1);
         data.write_page(1, &buf)?;
         data.sync()?;
         Ok(data)
@@ -162,27 +167,53 @@ impl Datafile {
     ///
     /// # Errors
     ///
-    /// [`Error::Corruption`] if page 0 fails its checksum or is not a header
-    /// page, or if the page count exceeds the file; [`Error::Io`].
+    /// As [`Datafile::attach`] and [`Datafile::load_header`].
     pub(crate) fn open(
         file: Box<dyn StorageFile>,
         health: Arc<Health>,
         sink: Arc<dyn MetricsSink>,
     ) -> Result<(Datafile, Header)> {
+        let data = Datafile::attach(file, health, sink)?;
+        let header = data.load_header()?;
+        Ok((data, header))
+    }
+
+    /// Opens an existing data file without reading any page: recovery
+    /// writes pages into it before its header is read (TS-10, TS-13).
+    /// Until [`Datafile::load_header`], no page counts as in use.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Corruption`] if the file holds no page; [`Error::Io`].
+    pub(crate) fn attach(
+        file: Box<dyn StorageFile>,
+        health: Arc<Health>,
+        sink: Arc<dyn MetricsSink>,
+    ) -> Result<Datafile> {
         let reserved = file.len()? / PAGE_BYTES;
-        let data = Datafile {
+        if reserved == 0 {
+            return Err(Error::Corruption("the data file holds no page".into()));
+        }
+        Ok(Datafile {
             file,
             reserved: AtomicU64::new(reserved),
             used: AtomicU64::new(0),
             grow: Mutex::new(()),
             health,
             sink,
-        };
-        if reserved == 0 {
-            return Err(Error::Corruption("the data file holds no page".into()));
-        }
+        })
+    }
+
+    /// Reads the header page and takes its page count as the pages in use.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Corruption`] if page 0 fails its checksum or is not a header
+    /// page, or if the page count exceeds the file; [`Error::Io`].
+    pub(crate) fn load_header(&self) -> Result<Header> {
+        let reserved = self.reserved_pages();
         let mut buf = vec![0u8; PAGE_SIZE];
-        data.read_page(0, &mut buf)?;
+        self.read_page(0, &mut buf)?;
         let header = Header::decode(&buf)?;
         if header.page_count == 0 || header.page_count > reserved {
             return Err(Error::Corruption(format!(
@@ -190,9 +221,9 @@ impl Datafile {
                 header.page_count
             )));
         }
-        data.used.store(header.page_count, Ordering::Release);
-        data.report();
-        Ok((data, header))
+        self.used.store(header.page_count, Ordering::Release);
+        self.report();
+        Ok(header)
     }
 
     /// Pages in use or on the free list: the header's page count, kept
@@ -211,9 +242,19 @@ impl Datafile {
     /// Pages reserved and not yet in use.
     #[must_use]
     pub(crate) fn unused_pages(&self) -> u64 {
-        // `used` never exceeds `reserved`, and neither ever decreases.
+        // `used` never exceeds `reserved`, and `reserved` never decreases.
         let used = self.used.load(Ordering::Acquire);
         self.reserved_pages() - used
+    }
+
+    /// Sets the page count back to `pages`, the value before a batch that
+    /// is being undone: the pages it took from the reserve return to it
+    /// (TS-16 step 6). Called under the commit latch, the only place pages
+    /// are taken.
+    pub(crate) fn rollback_page_count(&self, pages: u64) {
+        debug_assert!(pages <= self.page_count());
+        self.used.store(pages, Ordering::Release);
+        self.report();
     }
 
     /// Makes sure at least `pages` reserved pages beyond those in use exist
@@ -223,16 +264,23 @@ impl Datafile {
     /// # Errors
     ///
     /// ENOSPC ([`std::io::ErrorKind::StorageFull`]) if the storage is full;
-    /// nothing changes and the database stays usable (FR-REC-007). Any other
-    /// I/O error sets the unusable latch.
+    /// nothing changes and the database stays usable (FR-REC-007).
+    /// [`std::io::ErrorKind::FileTooLarge`] if the file would exceed
+    /// [`MAX_PAGES`]; nothing changes. Any other I/O error sets the unusable
+    /// latch.
     pub(crate) fn ensure(&self, pages: u64) -> Result<()> {
         self.health.check()?;
         let _grow = self.grow.lock().unwrap_or_else(PoisonError::into_inner);
         let reserved = self.reserved_pages();
-        let needed = self.used.load(Ordering::Acquire) + pages;
+        let needed = self
+            .used
+            .load(Ordering::Acquire)
+            .checked_add(pages)
+            .filter(|&n| n <= MAX_PAGES)
+            .ok_or_else(|| Error::Io(std::io::ErrorKind::FileTooLarge.into()))?;
         let mut target = reserved;
         while target < needed {
-            target += extent_pages(target);
+            target = (target + extent_pages(target)).min(MAX_PAGES);
         }
         if target == reserved {
             return Ok(());
@@ -294,9 +342,9 @@ impl Datafile {
             Ok(n) if n < PAGE_SIZE => Err(self.health.fail(Error::Corruption(format!(
                 "data file ends inside page {page_no}"
             )))),
-            Ok(_) if !page::verify(buf) => Err(self.health.fail(Error::Corruption(format!(
-                "page {page_no} fails its checksum"
-            )))),
+            Ok(_) if !page::verify(buf, page_no) => Err(self.health.fail(Error::Corruption(
+                format!("page {page_no} fails its checksum"),
+            ))),
             Ok(_) => Ok(()),
         }
     }
@@ -318,7 +366,7 @@ impl Datafile {
             Ok(n) if n < PAGE_SIZE => Err(self.health.fail(Error::Corruption(format!(
                 "data file ends inside page {page_no}"
             )))),
-            Ok(_) => Ok(page::verify(buf)),
+            Ok(_) => Ok(page::verify(buf, page_no)),
         }
     }
 
@@ -386,15 +434,19 @@ mod tests {
     fn create_writes_header_and_reserves_first_extent() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("data-1");
-        let (data, sink) = create(&FsStorage, &path);
+        let (data, sink) = create(&crate::test_support::NoFlush, &path);
         assert_eq!(data.reserved_pages(), MIN_EXTENT_PAGES);
         assert_eq!(data.unused_pages(), MIN_EXTENT_PAGES - 2);
         let m = sink.snapshot();
         assert_eq!(m.gauge(DATABASE), Some(64 << 20));
         assert_eq!(m.gauge(RESERVED_UNUSED), Some((64 << 20) - 2 * PAGE_BYTES));
         drop(data);
-        let (data, header) =
-            Datafile::open(FsStorage.open(&path).unwrap(), Arc::default(), sink).unwrap();
+        let (data, header) = Datafile::open(
+            crate::test_support::NoFlush.open(&path).unwrap(),
+            Arc::default(),
+            sink,
+        )
+        .unwrap();
         assert_eq!(
             header,
             Header {
@@ -458,7 +510,7 @@ mod tests {
         let p = data.allocate().unwrap();
         let mut buf = vec![0u8; PAGE_SIZE];
         page::init(&mut buf, PageType::Leaf, 3);
-        page::seal(&mut buf);
+        page::seal(&mut buf, p);
         data.write_page(p, &buf).unwrap();
         let mut back = vec![0u8; PAGE_SIZE];
         data.read_page(p, &mut back).unwrap();
@@ -469,7 +521,7 @@ mod tests {
     #[test]
     fn allocate_without_reserve_is_enospc() {
         let dir = tempfile::tempdir().unwrap();
-        let (data, _) = create(&FsStorage, &dir.path().join("data-1"));
+        let (data, _) = create(&crate::test_support::NoFlush, &dir.path().join("data-1"));
         for _ in 2..MIN_EXTENT_PAGES {
             data.allocate().unwrap();
         }
@@ -480,7 +532,7 @@ mod tests {
     #[test]
     fn writes_outside_reserved_space_are_refused() {
         let dir = tempfile::tempdir().unwrap();
-        let (data, _) = create(&FsStorage, &dir.path().join("data-1"));
+        let (data, _) = create(&crate::test_support::NoFlush, &dir.path().join("data-1"));
         let buf = vec![0u8; PAGE_SIZE];
         assert!(matches!(
             data.write_page(MIN_EXTENT_PAGES, &buf),
@@ -492,7 +544,7 @@ mod tests {
     fn checksum_and_io_failures_set_the_latch() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("data-1");
-        let (data, _) = create(&FsStorage, &path);
+        let (data, _) = create(&crate::test_support::NoFlush, &path);
         let mut buf = vec![0u8; PAGE_SIZE];
         // Page 5 is reserved but was never written: zeros fail the checksum.
         assert!(matches!(
@@ -509,11 +561,33 @@ mod tests {
         assert!(data.health.is_unusable());
     }
 
+    /// TS-12 page number binding (#23): a valid image of page A written at
+    /// page B's offset, as a misdirected write would, fails the read of B
+    /// with corruption and sets the unusable latch.
+    #[test]
+    fn a_valid_image_of_another_page_fails_the_read_as_corruption() {
+        let dir = tempfile::tempdir().unwrap();
+        let (data, _) = create(&crate::test_support::NoFlush, &dir.path().join("data-1"));
+        let (a, b) = (data.allocate().unwrap(), data.allocate().unwrap());
+        let mut image_a = vec![0u8; PAGE_SIZE];
+        page::init(&mut image_a, PageType::Leaf, 7);
+        page::seal(&mut image_a, a);
+        data.write_page(a, &image_a).unwrap();
+        let mut back = vec![0u8; PAGE_SIZE];
+        data.read_page(a, &mut back).unwrap();
+        assert_eq!(back, image_a);
+        data.write_page(b, &image_a).unwrap();
+        let r = data.read_page(b, &mut back);
+        assert!(matches!(r, Err(Error::Corruption(_))), "{r:?}");
+        assert!(data.health.is_unusable());
+        assert!(matches!(data.ensure(1), Err(Error::Unusable)));
+    }
+
     #[test]
     fn open_rejects_bad_page_count() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("data-1");
-        let (data, _) = create(&FsStorage, &path);
+        let (data, _) = create(&crate::test_support::NoFlush, &path);
         let mut buf = vec![0u8; PAGE_SIZE];
         Header {
             format_version: 1,

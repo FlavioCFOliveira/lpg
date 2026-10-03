@@ -9,7 +9,6 @@ use rand::{RngExt, SeedableRng};
 use super::node::{self, BODY, MAX_INLINE, USABLE};
 use super::*;
 use crate::obs::recording::RecordingSink;
-use crate::storage::FsStorage;
 use crate::storage::engine::Engine;
 use crate::storage::page::PAGE_SIZE;
 use crate::test_support::test_dirs;
@@ -17,7 +16,7 @@ use crate::test_support::test_dirs;
 pub(crate) fn engine(dir: &std::path::Path, cap: u64) -> Engine {
     Engine::create(
         dir,
-        Arc::new(FsStorage),
+        crate::test_support::no_flush(),
         cap,
         Arc::new(RecordingSink::default()),
     )
@@ -231,7 +230,13 @@ fn a_tree_ten_times_larger_than_the_cap_reads_back_intact() {
             (k, v)
         })
         .collect();
-    for chunk in entries.chunks(500) {
+    // A batch copies each existing page it changes into memory reserved
+    // from the cap (TS-16 step 6, TS-08 page copies), so a batch must touch
+    // fewer pages than the cap holds: 100 random keys change at most about
+    // 100 leaves and their parents, about 0.9 MiB of copies under a 2 MiB
+    // cap. With 500 keys the copies alone need up to 4 MiB, and the batch
+    // fails with `MemoryLimit`, as FR-LIM-007 requires.
+    for chunk in entries.chunks(100) {
         let batch: Vec<Write<'_>> = chunk
             .iter()
             .map(|(k, v)| Write {
@@ -566,6 +571,65 @@ fn concurrent_readers_during_splits_see_every_committed_key_exactly_once() {
     );
 }
 
+/// #14: the scan keeps its key-space position. After the scan has copied
+/// the first leaf, every leaf but the last is emptied and freed, so their
+/// ranges join the last leaf (TS-05 Underflow), and a key is inserted
+/// there below the keys already returned. The scan, which continues at the
+/// first leaf's recorded right link, must not return it: keys come back in
+/// strictly ascending order, and the key present for the whole scan once.
+#[test]
+fn a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away() {
+    let dir = &test_dirs()[0];
+    let e = engine(dir.path(), 16 << 20);
+    let s = e.store();
+    let tree = s.create_tree().unwrap();
+    let keys: Vec<Vec<u8>> = (0..3000).map(|i| format!("a{i:05}").into_bytes()).collect();
+    let v = [7u8; 100];
+    let mut batch: Vec<Write<'_>> = keys
+        .iter()
+        .map(|k| Write {
+            tree,
+            key: k,
+            value: Some(&v),
+        })
+        .collect();
+    batch.push(Write {
+        tree,
+        key: b"z",
+        value: Some(&v),
+    });
+    s.apply(&batch).unwrap();
+    let behind = b"a00000b".to_vec();
+    let mut seen: Vec<Vec<u8>> = Vec::new();
+    s.scan_prefix(tree, &[], |k, _| {
+        if seen.is_empty() {
+            let deletes: Vec<Write<'_>> = keys
+                .iter()
+                .map(|k| Write {
+                    tree,
+                    key: k,
+                    value: None,
+                })
+                .collect();
+            s.apply(&deletes).unwrap();
+            put(&s, tree, &behind, &v);
+        }
+        seen.push(k.to_vec());
+        true
+    })
+    .unwrap();
+    assert!(
+        seen.windows(2).all(|w| w[0] < w[1]),
+        "scan not strictly ascending"
+    );
+    assert_eq!(seen.iter().filter(|k| k.as_slice() == b"z").count(), 1);
+    assert!(
+        seen.len() > 1 && seen.len() < keys.len(),
+        "the first leaf was copied"
+    );
+    assert_check_ok(&s);
+}
+
 #[test]
 fn directory_maps_tree_ids_to_roots_and_survives_reopen() {
     for dir in test_dirs() {
@@ -584,7 +648,7 @@ fn directory_maps_tree_ids_to_roots_and_survives_reopen() {
         drop(e);
         let e = Engine::open(
             dir.path(),
-            Arc::new(FsStorage),
+            crate::test_support::no_flush(),
             16 << 20,
             Arc::new(RecordingSink::default()),
         )
@@ -772,5 +836,245 @@ fn emptying_a_subtree_frees_its_inner_pages() {
     // The freed range takes keys again, now through its right neighbour.
     put(&s, tree, doomed[0], b"back");
     assert!(s.get(tree, doomed[0], &mut out).unwrap());
+    assert_check_ok(&s);
+}
+
+/// Audit M1 (TS-16 step 6 undo, item 3): a second undo while a fence is in
+/// force keeps the first undo's pages fenced and waits for the readers of
+/// the later undo, which started no later than those of the first.
+#[test]
+fn a_second_undo_extends_the_reuse_fence() {
+    use super::write::extend_fence;
+    let mut fence = None;
+    extend_fence(&mut fence, 7, &[]);
+    assert!(fence.is_none(), "an undo that took no page sets no fence");
+    extend_fence(&mut fence, 7, &[10, 11]);
+    extend_fence(&mut fence, 9, &[12]);
+    let (batch, pages) = fence.clone().unwrap();
+    assert_eq!(batch, 9);
+    assert_eq!(pages, [10, 11, 12].into_iter().collect());
+    extend_fence(&mut fence, 8, &[11, 13]);
+    let (batch, pages) = fence.unwrap();
+    assert_eq!(batch, 9, "the higher batch number is kept");
+    assert_eq!(pages, [10, 11, 12, 13].into_iter().collect());
+}
+
+/// AUDIT E (re-audit 2026-10-03, D1 follow-up; TS-16 step 6 undo, item 3).
+/// The D1 fix keeps the batch's image only for a taken page that was not
+/// in the pool (`Saved::Absent`, `PinnedPage::undo_keep`). A taken page
+/// that was in the pool (`Saved::Copy` in `PageWriter::create`) gets its
+/// image from before the batch back, although it is free before and after
+/// the batch. A page freed by an earlier commit usually is in the pool. A
+/// reader that read the undone batch's link to it (here: the leaf entry of
+/// "x" and its first overflow page) then reads the freed page of another
+/// tree: corruption, and the unusable latch, after a mere ENOSPC or memory
+/// limit (FR-REC-007).
+#[test]
+fn audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable() {
+    use crate::storage::error::Error;
+    use crate::tx::commit::Ids;
+    use crate::tx::commit::tests::fault;
+    let dir = &test_dirs()[0];
+    let fault = fault();
+    let e = Engine::create(
+        dir.path(),
+        fault.clone(),
+        32 << 20,
+        Arc::new(RecordingSink::default()),
+    )
+    .unwrap();
+    let trees = e.create_trees(2).unwrap();
+    let (t1, t2) = (trees[0], trees[1]);
+    let w = |tree, key: &'static [u8], value: Option<&'static [u8]>| Write { tree, key, value };
+    let other: &'static [u8] = Box::leak(vec![5u8; 100_000].into_boxed_slice());
+    e.commit(&[w(t2, b"big", Some(other))], Ids::default())
+        .unwrap();
+    e.commit(&[w(t2, b"big", None)], Ids::default()).unwrap();
+    let c0 = e
+        .store()
+        .lock()
+        .free_list()
+        .pages()
+        .next()
+        .expect("freed pages");
+    {
+        let (pin, _) = e
+            .pool()
+            .resident(c0)
+            .expect("precondition: freed page in the pool");
+        assert_eq!(crate::storage::page::tree(&pin.read().unwrap()), t2.id());
+    }
+    // B: "x" takes the freed pages of t2 (FIFO), "y" overruns the reserve.
+    let unused = e.data().unused_pages();
+    let x: &'static [u8] = Box::leak(vec![8u8; 100_000].into_boxed_slice());
+    let y: &'static [u8] = Box::leak(vec![9u8; ((unused + 64) * 8192) as usize].into_boxed_slice());
+    fault.set_space(0);
+    e.core().skip_reserve.store(true, Ordering::Relaxed);
+    let r = e.commit(
+        &[w(t1, b"x", Some(x)), w(t1, b"y", Some(y))],
+        Ids::default(),
+    );
+    e.core().skip_reserve.store(false, Ordering::Relaxed);
+    fault.set_space(u64::MAX);
+    assert!(
+        r.as_ref()
+            .is_err_and(|e| e.is_no_space() || matches!(e, Error::MemoryLimit { .. })),
+        "{r:?}"
+    );
+    assert!(
+        e.check().is_ok(),
+        "precondition: the undo left the database usable"
+    );
+    // The reader that read "x"'s entry (length, first page c0) during B.
+    let mut out = Vec::new();
+    let read = e.store().read_overflow(t1, x.len() as u64, c0, &mut out);
+    let health = e.check();
+    assert!(
+        health.is_ok(),
+        "an ENOSPC undo left the database unusable once a reader followed the undone \
+         batch's link to page {c0}: read = {read:?}, check = {health:?}"
+    );
+}
+
+/// Keys a scan would pass from leaf `page` on, at or above `from`, as a
+/// reader that reached `page` by a right link does (TS-06).
+fn scan_from(s: &Store<'_>, tree: Tree, mut page: u64, from: &[u8]) -> Result<Vec<Vec<u8>>> {
+    let mut from = from.to_vec();
+    let mut copied = Copied::default();
+    let mut key_buf = Vec::new();
+    let mut out = Vec::new();
+    loop {
+        let pin = s.pool.fetch(page)?;
+        let g = pin.read()?;
+        if crate::storage::page::page_type(&g) != Some(crate::storage::page::PageType::Leaf)
+            || crate::storage::page::tree(&g) != tree.id()
+        {
+            return Err(s.corrupt(page, "not a leaf of this tree"));
+        }
+        let next = copied
+            .take(&g, &mut from, &[], &mut key_buf)
+            .ok_or_else(|| s.corrupt(page, "malformed leaf"))?;
+        out.extend((0..copied.len()).map(|i| copied.get(i).0.to_vec()));
+        match next {
+            Some(p) => page = p,
+            None => return Ok(out),
+        }
+    }
+}
+
+/// Finding E, same-tree variant (TS-16 step 6 undo, item 3). An undone
+/// batch splits leaf L into a resident free page R that was a deleted leaf
+/// of the same tree, whose stale right link points far to the right. A
+/// reader that read the batch's L moves right to R from the separator. It
+/// must find the batch's image of R and pass every committed key from the
+/// separator on, exactly once; R's older image would silently skip every
+/// key up to the end of its stale link.
+#[test]
+fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
+    use crate::storage::error::Error;
+    use crate::tx::commit::Ids;
+    use crate::tx::commit::tests::fault;
+    let dir = &test_dirs()[0];
+    let fault = fault();
+    let e = Engine::create(
+        dir.path(),
+        fault.clone(),
+        32 << 20,
+        Arc::new(RecordingSink::default()),
+    )
+    .unwrap();
+    let tree = e.create_trees(1).unwrap()[0];
+    let keys: Vec<Vec<u8>> = (0..2000).map(|i| format!("k{i:05}").into_bytes()).collect();
+    let v = [1u8; 100];
+    for chunk in keys.chunks(200) {
+        let batch: Vec<Write<'_>> = chunk
+            .iter()
+            .map(|k| Write {
+                tree,
+                key: k,
+                value: Some(&v),
+            })
+            .collect();
+        e.commit(&batch, Ids::default()).unwrap();
+    }
+    // Empty the leaves of k01500..k01799: freed, marked deleted, in the pool.
+    let gone = &keys[1500..1800];
+    let batch: Vec<Write<'_>> = gone
+        .iter()
+        .map(|k| Write {
+            tree,
+            key: k,
+            value: None,
+        })
+        .collect();
+    e.commit(&batch, Ids::default()).unwrap();
+    let committed: Vec<Vec<u8>> = keys.iter().filter(|k| !gone.contains(k)).cloned().collect();
+    let r = e.store().lock().free_list().pages().next().expect("freed");
+    {
+        let (pin, _) = e.pool().resident(r).expect("precondition: in the pool");
+        let g = pin.read().unwrap();
+        assert!(node::is_deleted(&g) && crate::storage::page::tree(&g) == tree.id());
+    }
+    // The batch: a 2 000-byte value splits the full leaf of k00100 into R;
+    // the second value overruns the reserve.
+    let split: &[u8] = b"k00100x";
+    let wide = [2u8; 2000];
+    let huge = vec![9u8; ((e.data().unused_pages() + 64) * 8192) as usize];
+    fault.set_space(0);
+    e.core().skip_reserve.store(true, Ordering::Relaxed);
+    let res = e.commit(
+        &[
+            Write {
+                tree,
+                key: split,
+                value: Some(&wide),
+            },
+            Write {
+                tree,
+                key: b"y",
+                value: Some(&huge),
+            },
+        ],
+        Ids::default(),
+    );
+    e.core().skip_reserve.store(false, Ordering::Relaxed);
+    fault.set_space(u64::MAX);
+    assert!(
+        res.as_ref()
+            .is_err_and(|e| e.is_no_space() || matches!(e, Error::MemoryLimit { .. })),
+        "{res:?}"
+    );
+    let s = e.store();
+    let got = scan_from(&s, tree, r, b"k00100").unwrap();
+    // The same put, now committed, splits the same leaf the same way: its
+    // high key is the separator the reader started from, and R its right.
+    e.commit(
+        &[Write {
+            tree,
+            key: split,
+            value: Some(&wide),
+        }],
+        Ids::default(),
+    )
+    .unwrap();
+    let (sep, right) = s
+        .at_leaf(tree, b"k00100", |p, _| {
+            Ok((node::high_key(p).unwrap().to_vec(), node::right(p)))
+        })
+        .unwrap();
+    assert_eq!(right, r, "precondition: the split took page R");
+    let want: Vec<&Vec<u8>> = committed.iter().filter(|k| **k >= sep).collect();
+    let got: Vec<&Vec<u8>> = got
+        .iter()
+        .filter(|k| k.as_slice() != split && **k >= sep)
+        .collect();
+    assert!(
+        got == want,
+        "the reader missed or repeated committed keys: got {} from {:?}, want {} from {:?}",
+        got.len(),
+        got.first().map(|k| String::from_utf8_lossy(k)),
+        want.len(),
+        want.first().map(|k| String::from_utf8_lossy(k)),
+    );
     assert_check_ok(&s);
 }

@@ -31,6 +31,11 @@
 //!
 //! **In-memory set.** The listed pages in queue order, with the batch that
 //! freed each, run-length encoded. Outside the memory cap (TS-08).
+//!
+//! **Journal.** Each change to the in-memory state is journalled from
+//! [`FreeList::begin`] on, so that [`FreeList::rollback`] can restore it
+//! when a batch is undone (TS-16 step 6); the trunk pages themselves are
+//! restored from their page copies.
 
 use std::cell::Cell;
 use std::collections::VecDeque;
@@ -87,10 +92,25 @@ pub(crate) fn decode_trunk(p: &[u8]) -> std::result::Result<TrunkView, String> {
     })
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Trunk {
     page: u64,
     count: u32,
+}
+
+/// One journalled change of the in-memory state.
+#[derive(Debug, Clone, Copy)]
+enum Op {
+    /// The first trunk, emptied, was taken; `first` was its value.
+    PopTrunk { trunk: Trunk, first: u32 },
+    /// The oldest listed page was taken; it carried `tag`.
+    PopPage { page: u64, tag: u64 },
+    /// The last trunk gained an entry.
+    GrowBack,
+    /// A trunk was appended; `first` was its value before.
+    PushTrunk { first: u32 },
+    /// A page was appended to the list.
+    PushPage,
 }
 
 /// The free list of one database: the persisted chain's shape and the
@@ -104,6 +124,18 @@ pub(crate) struct FreeList {
     pages: VecDeque<u64>,
     /// `(batch that freed them, run length)` over `pages`.
     tags: VecDeque<(u64, u64)>,
+    /// Changes since [`FreeList::begin`].
+    journal: Vec<Op>,
+}
+
+/// The in-memory state of a free list, for comparisons in tests.
+#[cfg(test)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct FreeState {
+    trunks: Vec<(u64, u32)>,
+    first: u32,
+    pages: Vec<u64>,
+    tags: Vec<(u64, u64)>,
 }
 
 impl FreeList {
@@ -148,6 +180,57 @@ impl FreeList {
             trunk = t.next;
         }
         Ok(list)
+    }
+
+    /// Starts a new journal: the changes of one batch.
+    pub(crate) fn begin(&mut self) {
+        self.journal.clear();
+    }
+
+    /// Undoes every change since [`FreeList::begin`], newest first.
+    pub(crate) fn rollback(&mut self) {
+        while let Some(op) = self.journal.pop() {
+            match op {
+                Op::PopTrunk { trunk, first } => {
+                    self.trunks.push_front(trunk);
+                    self.first = first;
+                }
+                Op::PopPage { page, tag } => {
+                    self.pages.push_front(page);
+                    self.first -= 1;
+                    match self.tags.front_mut() {
+                        Some((t, n)) if *t == tag => *n += 1,
+                        _ => self.tags.push_front((tag, 1)),
+                    }
+                }
+                Op::GrowBack => {
+                    self.trunks.back_mut().expect("journalled trunk").count -= 1;
+                }
+                Op::PushTrunk { first } => {
+                    self.trunks.pop_back();
+                    self.first = first;
+                }
+                Op::PushPage => {
+                    self.pages.pop_back();
+                    let (_, n) = self.tags.back_mut().expect("journalled page has a tag");
+                    *n -= 1;
+                    if *n == 0 {
+                        self.tags.pop_back();
+                    }
+                }
+            }
+        }
+    }
+
+    /// The in-memory state, for comparisons in tests.
+    #[cfg(test)]
+    pub(crate) fn state(&self) -> FreeState {
+        FreeState {
+            trunks: self.trunks.iter().map(|t| (t.page, t.count)).collect(),
+            first: self.first,
+            pages: self.pages.iter().copied().collect(),
+            tags: self.tags.iter().copied().collect(),
+        }
     }
 
     fn push_pages(&mut self, pages: &[u64], tag: u64) {
@@ -197,6 +280,14 @@ impl FreeList {
         if let Some(&t) = self.trunks.front()
             && self.first == t.count
         {
+            // The trunk is part of the list until this batch ends, and an
+            // undo puts it back: it is copied first, also when it is not in
+            // the pool (TS-16 step 6 undo).
+            pw.mark(t.page)?;
+            self.journal.push(Op::PopTrunk {
+                trunk: t,
+                first: self.first,
+            });
             self.trunks.pop_front();
             self.first = 0;
             pw.header_changed();
@@ -205,11 +296,13 @@ impl FreeList {
         if let Some((tag, n)) = self.tags.front_mut()
             && *tag <= horizon
         {
+            let tag = *tag;
             *n -= 1;
             if *n == 0 {
                 self.tags.pop_front();
             }
             let page = self.pages.pop_front().expect("tags cover pages");
+            self.journal.push(Op::PopPage { page, tag });
             self.first += 1;
             let head = self.trunks.front().expect("a listed page has a trunk").page;
             let pin = pw.change(head)?;
@@ -243,7 +336,9 @@ impl FreeList {
                 t.count += 1;
                 g[COUNT..COUNT + 4].copy_from_slice(&t.count.to_le_bytes());
             }
+            self.journal.push(Op::GrowBack);
             self.push_pages(&[page], tag);
+            self.journal.push(Op::PushPage);
             return Ok(());
         }
         let trunk = self.allocate(horizon, pw)?;
@@ -259,16 +354,18 @@ impl FreeList {
                 let pin = pw.change(last.page)?;
                 pin.write()?[NEXT..NEXT + 8].copy_from_slice(&trunk.to_le_bytes());
             }
-            None => {
-                self.first = 0;
-                pw.header_changed();
-            }
+            None => pw.header_changed(),
+        }
+        self.journal.push(Op::PushTrunk { first: self.first });
+        if self.trunks.is_empty() {
+            self.first = 0;
         }
         self.trunks.push_back(Trunk {
             page: trunk,
             count: 1,
         });
         self.push_pages(&[page], tag);
+        self.journal.push(Op::PushPage);
         Ok(())
     }
 }

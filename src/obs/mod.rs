@@ -36,6 +36,12 @@ pub mod names {
         pub const COMMITTED: &str = "transaction.committed";
         /// Counter: transactions rolled back.
         pub const ROLLBACKS: &str = "transaction.rollbacks";
+        /// Counter: commits that failed and were undone or lost their
+        /// group (TS-16). lpg name.
+        pub const FAILED_COMMITS: &str = "transaction.failed_commits";
+        /// Histogram: latency of one successful commit, from its call to
+        /// its return, in nanoseconds. lpg name.
+        pub const COMMIT_LATENCY: &str = "transaction.commit_latency";
     }
 
     /// Transaction log (WAL).
@@ -44,6 +50,16 @@ pub mod names {
         pub const APPENDED_BYTES: &str = "log.appended_bytes";
         /// Counter: log flushes (`sync_data` calls on the log).
         pub const FLUSHES: &str = "log.flushes";
+        /// Counter: groups written (TS-09). lpg name.
+        pub const GROUPS: &str = "log.groups";
+        /// Counter: frames written. lpg name.
+        pub const FRAMES: &str = "log.frames";
+        /// Histogram: commits per group written.
+        pub const APPEND_BATCH_SIZE: &str = "log.append_batch_size";
+        /// Counter: segments created. lpg name.
+        pub const SEGMENTS_CREATED: &str = "log.segments_created";
+        /// Gauge: bytes of all WAL segments. lpg name.
+        pub const SIZE: &str = "log.size";
     }
 
     /// Checkpointing.
@@ -54,6 +70,12 @@ pub mod names {
         pub const DURATION: &str = "check_point.duration";
         /// Counter: bytes written by checkpoints.
         pub const FLUSHED_BYTES: &str = "check_point.flushed_bytes";
+        /// Counter: pages written by checkpoints. lpg name.
+        pub const PAGES_WRITTEN: &str = "check_point.pages_written";
+        /// Counter: WAL segments renamed for reuse by checkpoints. lpg name.
+        pub const SEGMENTS_RECYCLED: &str = "check_point.segments_recycled";
+        /// Counter: WAL segments removed by checkpoints. lpg name.
+        pub const SEGMENTS_REMOVED: &str = "check_point.segments_removed";
         /// Counter: opens that found one invalid `CONTROL` slot and used the
         /// other (TS-05; FR-REC-003 exception). The next `CONTROL` write
         /// repairs the slot.
@@ -120,11 +142,21 @@ mod tests {
             transactions::STARTED,
             transactions::COMMITTED,
             transactions::ROLLBACKS,
+            transactions::FAILED_COMMITS,
+            transactions::COMMIT_LATENCY,
             transaction_log::APPENDED_BYTES,
             transaction_log::FLUSHES,
+            transaction_log::GROUPS,
+            transaction_log::FRAMES,
+            transaction_log::APPEND_BATCH_SIZE,
+            transaction_log::SEGMENTS_CREATED,
+            transaction_log::SIZE,
             checkpointing::EVENTS,
             checkpointing::DURATION,
             checkpointing::FLUSHED_BYTES,
+            checkpointing::PAGES_WRITTEN,
+            checkpointing::SEGMENTS_RECYCLED,
+            checkpointing::SEGMENTS_REMOVED,
             checkpointing::CONTROL_SLOT_INVALID,
             cache::HITS,
             cache::PAGE_FAULTS,

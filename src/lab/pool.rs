@@ -70,7 +70,7 @@ fn database() -> PathBuf {
         let p = data.allocate().expect("allocate");
         page::init(&mut buf, PageType::Leaf, p);
         buf[HEADER_LEN..HEADER_LEN + 8].copy_from_slice(&p.to_le_bytes());
-        page::seal(&mut buf);
+        page::seal(&mut buf, p);
         data.write_page(p, &buf).expect("write");
     }
     data.sync().expect("sync");

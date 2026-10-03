@@ -14,14 +14,17 @@
 //!   prefix scan copies the matching entries of one leaf under its latch,
 //!   records the right link, releases the latch and continues there
 //!   (PostgreSQL, R-PG `src/backend/access/nbtree/README:17-29, 88-110`).
-//! - **Writer.** One at a time, under the write latch ([`Trees`]), the
-//!   stand-in for the commit latch (TS-16). A split fills the new right page,
-//!   links it, and only then latches the parent, holding the child latch
-//!   until it has the parent latch (TS-06). Deletes never merge: an empty
-//!   page is freed only as PostgreSQL frees one (TS-05 Underflow).
-//! - **Page changes.** Every change goes through [`PageWriter`], which
-//!   records the number of each page a batch changes. Task #15 takes the
-//!   page images from that list at commit.
+//! - **Writer.** One at a time, under the write latch ([`Trees`]), which is
+//!   the commit latch (TS-16). A split fills the new right page, links it,
+//!   and only then latches the parent, holding the child latch until it has
+//!   the parent latch (TS-06). Deletes never merge: an empty page is freed
+//!   only as PostgreSQL frees one (TS-05 Underflow).
+//! - **Page changes.** Every change goes through [`PageWriter`]. Before the
+//!   first change of an existing page in a batch, it copies the page into
+//!   memory reserved from the accountant, and, when the batch is logged,
+//!   gives the page its frame position in the open WAL group and sets its
+//!   page LSN in the same latched write (TS-09, TS-16 step 6). A failed
+//!   batch is undone from the copies ([`write`](mod@write)).
 //!
 //! Keys are byte strings compared byte-wise, at most 1 024 bytes (TS-05).
 
@@ -32,16 +35,20 @@ mod write;
 pub(crate) mod tests;
 
 use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
+use std::ops::{Deref, DerefMut};
 use std::sync::atomic::AtomicU64;
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{Mutex, MutexGuard};
 
 use node::{Encoder, Entries, Found, NONE, Pivots, Value};
 
 use super::datafile::{Datafile, Header};
 use super::error::{Error, Health, Result};
 use super::freelist::{FreeList, Readers, Registered};
-use super::page::{self, PageType};
+use super::memory::Reservation;
+use super::page::{self, PAGE_BYTES, PageType};
 use super::pool::{PinnedPage, Pool};
+use super::wal::{Counters, OpenGroup};
 
 pub(crate) use node::MAX_KEY;
 
@@ -83,13 +90,58 @@ pub(crate) struct Write<'a> {
     pub(crate) value: Option<&'a [u8]>,
 }
 
-/// Records the pages a write batch changes and gives access to them. The
+/// How the undo of a batch restores one page it changed.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Saved {
+    /// From copy number `.0`, which holds the page and its dirty state as
+    /// they were in the pool before the batch.
+    Copy(usize),
+    /// A page the batch took that is free before and after the batch,
+    /// whether or not it was in the pool. The tree never reads it again;
+    /// only a reader that followed a link the batch wrote can reach it, so
+    /// the undo keeps the image the batch wrote ([`PinnedPage::undo_keep`]).
+    Free,
+}
+
+/// The undo state of one batch (TS-16 step 6): the pages it changed, in
+/// first-change order, and the copy of each one that was in the pool.
+#[derive(Default)]
+pub(crate) struct Undo {
+    /// How each changed page is restored.
+    touched: HashMap<u64, Saved>,
+    /// Changed pages in first-change order.
+    order: Vec<u64>,
+    /// Page copies, one page each, with the page's dirty state before the
+    /// batch.
+    copies: Vec<(Box<[u8]>, bool)>,
+    /// The accountant's bytes for `copies`.
+    reserved: Option<Reservation>,
+    /// Pages the batch took from the free list or the reserve.
+    taken: Vec<u64>,
+    /// Pages the batch freed: live again after an undo.
+    freed: HashSet<u64>,
+}
+
+impl Undo {
+    fn clear(&mut self) {
+        self.touched.clear();
+        self.order.clear();
+        self.copies.clear();
+        self.reserved = None;
+        self.taken.clear();
+        self.freed.clear();
+    }
+}
+
+/// Gives access to the pages of a write batch and records each change: the
 /// only path by which tree, free-list and header pages change.
 pub(crate) struct PageWriter<'p> {
     pool: &'p Pool,
     data: &'p Datafile,
-    changed: &'p mut Vec<u64>,
+    undo: &'p mut Undo,
     header: bool,
+    /// The open WAL group when the batch is logged.
+    group: Option<&'p mut OpenGroup>,
 }
 
 impl<'p> PageWriter<'p> {
@@ -98,22 +150,103 @@ impl<'p> PageWriter<'p> {
         self.pool.fetch(p)
     }
 
-    /// Records that page `p` changes in this batch.
-    pub(crate) fn mark(&mut self, p: u64) {
-        self.changed.push(p);
+    /// Reserves a page from the accountant for one more copy.
+    fn reserve_copy(&mut self) -> Result<()> {
+        let reservation = self.pool.reserve(PAGE_BYTES)?;
+        match &mut self.undo.reserved {
+            Some(r) => r.absorb(reservation),
+            None => self.undo.reserved = Some(reservation),
+        }
+        Ok(())
+    }
+
+    /// The page LSN of `p` in a logged batch: its frame position in the
+    /// open group plus one frame (TS-09); 0 in an unlogged batch (tests).
+    fn page_lsn(&mut self, p: u64) -> u64 {
+        self.group.as_deref_mut().map_or(0, |g| g.page_lsn(p))
+    }
+
+    /// Records that page `p` changes in this batch. Before its first
+    /// change, the page and its dirty state are copied into memory reserved
+    /// from the accountant and, in a logged batch, the page is given its
+    /// page LSN in the open group, in one write-latched step, so that
+    /// eviction cannot write it before its group is durable (TS-09).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::MemoryLimit`] if the copy does not fit the cap; errors of
+    /// [`Pool::fetch`].
+    pub(crate) fn mark(&mut self, p: u64) -> Result<()> {
+        if self.undo.touched.contains_key(&p) {
+            return Ok(());
+        }
+        self.reserve_copy()?;
+        let pin = self.pool.fetch(p)?;
+        let (mut g, was_dirty) = pin.write_noting_dirty()?;
+        self.undo.copies.push((Box::from(&g[..]), was_dirty));
+        self.undo
+            .touched
+            .insert(p, Saved::Copy(self.undo.copies.len() - 1));
+        self.undo.order.push(p);
+        if self.group.is_some() {
+            let lsn = self.page_lsn(p);
+            page::set_lsn(&mut g, lsn);
+        }
+        Ok(())
     }
 
     /// Records and pins page `p`, which the caller is about to change.
     pub(crate) fn change(&mut self, p: u64) -> Result<PinnedPage<'p>> {
-        self.mark(p);
+        self.mark(p)?;
         self.pool.fetch(p)
     }
 
-    /// Records and pins page `p`, newly allocated, without reading it: its
-    /// frame holds zeros, and the caller initialises it.
+    /// Records and pins page `p`, newly taken, without reading it: its frame
+    /// holds zeros, apart from its page LSN in a logged batch, and the
+    /// caller initialises it.
+    ///
+    /// A taken page that this batch freed is copied first, with its dirty
+    /// state, and read from disk if it left the pool: the undo makes it
+    /// live again, so it must get its image back. LMDB likewise reuses
+    /// within a transaction only pages it holds a dirty copy of ("loose"
+    /// pages, R-LMDB `libraries/liblmdb/mdb.c:2406-2433`). The free list
+    /// copies an emptied trunk before it is taken, for the same reason
+    /// ([`super::freelist::FreeList::allocate`]).
+    ///
+    /// Every other taken page is free before and after the batch, in the
+    /// pool or not, and needs no copy: the tree never reads it again, and a
+    /// reader that followed a link the batch wrote needs the image the batch
+    /// wrote, not an older one, which may belong to another tree. The undo
+    /// keeps that image ([`PinnedPage::undo_keep`]), with a page LSN at
+    /// which every commit that freed the page is durable, so an older image
+    /// in a group not yet durable is never overwritten on disk early
+    /// (TS-09). LMDB's abort likewise discards the dirty copies a
+    /// transaction made of pages it took (R-LMDB
+    /// `libraries/liblmdb/mdb.c:3740`, `mdb_dlist_free`).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::MemoryLimit`] if a copy does not fit the cap; errors of
+    /// [`Pool::create`].
     pub(crate) fn create(&mut self, p: u64) -> Result<PinnedPage<'p>> {
-        self.mark(p);
-        self.pool.create(p)
+        if !self.undo.touched.contains_key(&p) {
+            let saved = if self.undo.freed.contains(&p) {
+                let (pin, dirty) = match self.pool.resident(p) {
+                    Some(found) => found,
+                    None => (self.pool.fetch(p)?, false),
+                };
+                self.reserve_copy()?;
+                let g = pin.read()?;
+                self.undo.copies.push((Box::from(&g[..]), dirty));
+                Saved::Copy(self.undo.copies.len() - 1)
+            } else {
+                Saved::Free
+            };
+            self.undo.touched.insert(p, saved);
+            self.undo.order.push(p);
+        }
+        let lsn = self.page_lsn(p);
+        self.pool.create(p, lsn)
     }
 
     /// Records that a field of page 0 changes; it is written when the
@@ -123,9 +256,20 @@ impl<'p> PageWriter<'p> {
     }
 
     /// Takes the next reserved, unused page of the data file, raising the
-    /// page count in page 0.
+    /// page count in page 0. If the reserve is used up, the file is
+    /// extended here, under the commit latch (TS-16 step 6 Overrun).
+    ///
+    /// # Errors
+    ///
+    /// ENOSPC if the extension does not fit; the batch is then undone.
     pub(crate) fn allocate_reserved(&mut self) -> Result<u64> {
-        let p = self.data.allocate()?;
+        let p = match self.data.allocate() {
+            Err(e) if e.is_no_space() => {
+                self.data.ensure(1)?;
+                self.data.allocate()?
+            }
+            r => r?,
+        };
         self.header = true;
         Ok(p)
     }
@@ -150,12 +294,27 @@ struct Step {
     idx: usize,
 }
 
+/// The WAL state kept under the commit latch: the open group and the
+/// counters of the last commit applied.
+pub(crate) struct LogState {
+    /// The open WAL group (TS-09).
+    pub(crate) group: OpenGroup,
+    /// Counters after the last commit that joined a group.
+    pub(crate) counters: Counters,
+}
+
 /// State changed only by the writer, under the write latch.
 pub(crate) struct WriteState {
     free: FreeList,
     next_tree_id: u64,
-    changed: Vec<u64>,
+    undo: Undo,
     scratch: Scratch,
+    log: LogState,
+    /// After an undo: the batch number it took and the pages the undone
+    /// batch had taken. A batch that takes one of them first waits until
+    /// every tree read operation that started before the undo has ended
+    /// (TS-16 step 6 undo, item 3).
+    fence: Option<(u64, HashSet<u64>)>,
 }
 
 /// The tree state of one database.
@@ -164,28 +323,88 @@ pub(crate) struct Trees {
     readers: Readers,
     /// Number of the last write batch whose apply step has finished.
     applied: AtomicU64,
+    /// Tests only: raised each time a batch starts waiting at the reuse
+    /// fence, so a test can see the wait without timing it.
+    #[cfg(test)]
+    pub(crate) fence_waits: AtomicU64,
 }
 
 impl Trees {
     /// Tree state for a database whose page 0 holds `header`; `free` is
-    /// its loaded free list.
-    pub(crate) fn new(header: &Header, free: FreeList) -> Trees {
+    /// its loaded free list and `log` its WAL state after recovery.
+    pub(crate) fn new(header: &Header, free: FreeList, log: LogState) -> Trees {
         Trees {
             write: Mutex::new(WriteState {
                 free,
                 next_tree_id: header.next_tree_id,
-                changed: Vec::new(),
+                undo: Undo::default(),
                 scratch: Scratch::default(),
+                log,
+                fence: None,
             }),
             readers: Readers::default(),
             applied: AtomicU64::new(0),
+            #[cfg(test)]
+            fence_waits: AtomicU64::new(0),
         }
     }
 
-    fn lock(&self) -> MutexGuard<'_, WriteState> {
-        // A panic under this latch also poisons the frame latch it held, and
-        // the pool turns that into the unusable latch.
-        self.write.lock().unwrap_or_else(PoisonError::into_inner)
+    /// Takes the write latch. A latch poisoned by a panic sets the unusable
+    /// latch of `health`, and so does a panic while the returned guard is
+    /// held (see [`CommitLatch`]).
+    fn lock<'a>(&'a self, health: &'a Health) -> CommitLatch<'a> {
+        let guard = self.write.lock().unwrap_or_else(|poisoned| {
+            let _ = health.fail(Error::Unusable);
+            poisoned.into_inner()
+        });
+        CommitLatch {
+            guard,
+            health,
+            panicking: std::thread::panicking(),
+        }
+    }
+}
+
+/// The held commit latch (TS-16 steps 3-7).
+///
+/// A panic while it is held can leave pages, the open WAL group or the free
+/// list half changed, with no undo. Dropping the guard while the thread
+/// unwinds from such a panic therefore sets the unusable latch before the
+/// latch is released: no later commit, and no WAL group close
+/// (`Core::close_group`), can then use that state. This is PostgreSQL's
+/// critical-section rule, where any error is a PANIC because "the shared
+/// buffers will contain unlogged changes" (R-PG
+/// `src/backend/access/transam/README:441-446`). A guard taken while the
+/// thread was already unwinding does not count that panic, as std's poison
+/// flag (`library/std/src/sync/poison.rs`, `Flag::done`).
+pub(crate) struct CommitLatch<'a> {
+    guard: MutexGuard<'a, WriteState>,
+    health: &'a Health,
+    /// Whether the thread was already unwinding when the latch was taken.
+    panicking: bool,
+}
+
+impl Deref for CommitLatch<'_> {
+    type Target = WriteState;
+
+    fn deref(&self) -> &WriteState {
+        &self.guard
+    }
+}
+
+impl DerefMut for CommitLatch<'_> {
+    fn deref_mut(&mut self) -> &mut WriteState {
+        &mut self.guard
+    }
+}
+
+impl Drop for CommitLatch<'_> {
+    fn drop(&mut self) {
+        // Runs before the field `guard` is dropped, so the latch is set
+        // before the mutex is released.
+        if !self.panicking && std::thread::panicking() {
+            let _ = self.health.fail(Error::Unusable);
+        }
     }
 }
 
@@ -324,6 +543,17 @@ impl<'e> Store<'e> {
     /// latch held. A key present and unchanged for the whole scan is passed
     /// exactly once (TS-06).
     ///
+    /// The scan keeps its position in the key space: the highest high key of
+    /// the leaves it has passed. On each later leaf it takes only keys at or
+    /// above that position. A freed page gives its key space to its right
+    /// sibling (TS-05 Underflow), so once the scan has left a leaf, that
+    /// leaf and its neighbours can be freed and their ranges joined to a
+    /// page the scan reaches later, which may then hold keys inserted behind
+    /// the scan. Without the position the scan would return them out of
+    /// order. PostgreSQL needs no such check because its MVCC snapshot hides
+    /// those keys (R-PG `src/backend/access/nbtree/README:95-98`); here no
+    /// snapshot exists until MVCC is built (TS-14).
+    ///
     /// # Errors
     ///
     /// As [`Store::get`].
@@ -337,10 +567,12 @@ impl<'e> Store<'e> {
         let mut copied = Copied::default();
         let mut key_buf = Vec::new();
         let mut value = Vec::new();
+        // The scan's position: every key below it has been passed.
+        let mut from = prefix.to_vec();
         // The first leaf is found by descent; later ones by right links.
         let mut next = self.at_leaf(tree, prefix, |p, page_no| {
             copied
-                .take(p, page_no, prefix, &mut key_buf)
+                .take(p, &mut from, prefix, &mut key_buf)
                 .ok_or_else(|| self.corrupt(page_no, "malformed leaf"))
         })?;
         loop {
@@ -370,7 +602,7 @@ impl<'e> Store<'e> {
                 ));
             }
             next = copied
-                .take(&g, page_no, prefix, &mut key_buf)
+                .take(&g, &mut from, prefix, &mut key_buf)
                 .ok_or_else(|| self.corrupt(page_no, "malformed leaf"))?;
         }
     }
@@ -403,8 +635,8 @@ impl<'e> Store<'e> {
     }
 
     /// Takes the write latch: the single writer (TS-16 commit latch).
-    pub(crate) fn lock(&self) -> MutexGuard<'e, WriteState> {
-        self.trees.lock()
+    pub(crate) fn lock(&self) -> CommitLatch<'e> {
+        self.trees.lock(self.health)
     }
 
     /// The lowest value registered by a running reader, `u64::MAX` if none.
@@ -417,6 +649,16 @@ impl WriteState {
     /// The free list.
     pub(crate) fn free_list(&self) -> &FreeList {
         &self.free
+    }
+
+    /// The WAL state.
+    pub(crate) fn log(&mut self) -> &mut LogState {
+        &mut self.log
+    }
+
+    /// The WAL state, read-only.
+    pub(crate) fn log_ref(&self) -> &LogState {
+        &self.log
     }
 
     /// The next tree identifier.
@@ -455,12 +697,14 @@ impl Copied {
     }
 
     /// Replaces the contents with the entries of leaf `p` that start with
-    /// `prefix`, and returns the leaf to continue at: its right link, unless
-    /// no later key can start with `prefix`. `None` on a malformed leaf.
+    /// `prefix` and are at or above the scan position `from`, raises `from`
+    /// to the leaf's high key, and returns the leaf to continue at: its
+    /// right link, unless no later key can start with `prefix`. `None` on a
+    /// malformed leaf.
     fn take(
         &mut self,
         p: &[u8],
-        _page_no: u64,
+        from: &mut Vec<u8>,
         prefix: &[u8],
         key_buf: &mut Vec<u8>,
     ) -> Option<Option<u64>> {
@@ -468,7 +712,7 @@ impl Copied {
         self.items.clear();
         let mut past = false;
         if !node::is_deleted(p) {
-            node::leaf_for_each_from(p, prefix, key_buf, |k, v| {
+            node::leaf_for_each_from(p, from, key_buf, |k, v| {
                 if !k.starts_with(prefix) {
                     past = true;
                     return false;
@@ -489,10 +733,18 @@ impl Copied {
             })?;
         }
         let right = node::right(p);
+        let hk = node::high_key(p);
+        // Every key of this leaf's range is passed. A high key below the
+        // position belongs to a page whose range grew behind the scan.
+        if let Some(hk) = hk
+            && hk > from.as_slice()
+        {
+            from.clear();
+            from.extend_from_slice(hk);
+        }
         // A high key above every key with the prefix ends the scan.
-        let done = past
-            || right == NONE
-            || node::high_key(p).is_some_and(|hk| !hk.starts_with(prefix) && hk > prefix);
+        let done =
+            past || right == NONE || hk.is_some_and(|hk| !hk.starts_with(prefix) && hk > prefix);
         Some((!done).then_some(right))
     }
 }

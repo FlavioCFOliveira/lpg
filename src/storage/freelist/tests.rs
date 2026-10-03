@@ -3,7 +3,6 @@ use std::sync::atomic::AtomicU64;
 
 use super::*;
 use crate::obs::recording::RecordingSink;
-use crate::storage::FsStorage;
 use crate::storage::btree::tests::{adj_key, engine};
 use crate::storage::btree::{Store, Tree, Write};
 use crate::storage::engine::Engine;
@@ -49,7 +48,7 @@ fn reopen(e: Engine, dir: &std::path::Path) -> Engine {
     drop(e);
     Engine::open(
         dir,
-        Arc::new(FsStorage),
+        crate::test_support::no_flush(),
         32 << 20,
         Arc::new(RecordingSink::default()),
     )
@@ -235,7 +234,7 @@ fn a_cyclic_chain_fails_the_open() {
     drop(e);
     let r = Engine::open(
         dir.path(),
-        Arc::new(FsStorage),
+        crate::test_support::no_flush(),
         32 << 20,
         Arc::new(RecordingSink::default()),
     );
