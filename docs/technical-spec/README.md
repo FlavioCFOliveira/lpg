@@ -1,7 +1,7 @@
 ---
 title: Technical specification
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-03
 related:
   - ../../README.md
   - ../functional-spec/README.md
@@ -57,7 +57,7 @@ Functional terms are in the [functional glossary](../functional-spec/glossary.md
 
 ## Sources
 
-Checked between 2026-09-24 and 2026-10-02.
+Checked between 2026-09-24 and 2026-10-03.
 
 ### Reference source code (shallow clones, read for study only)
 
@@ -75,7 +75,8 @@ Checked between 2026-09-24 and 2026-10-02.
 | R-ROCKS | RocksDB, <https://github.com/facebook/rocksdb> | `4cd0450` (2026-10-01) | GPLv2 or Apache-2.0 |
 | R-LEVELDB | LevelDB, <https://github.com/google/leveldb> | `7ee830d` (2026-03-10) | BSD-3-Clause |
 | R-FJALL | fjall, <https://github.com/fjall-rs/fjall> | `3adaa50` (2026-08-30) | MIT/Apache-2.0 |
-| R-TURSO | turso, <https://github.com/tursodatabase/turso> | `300b692` (2026-10-02) | MIT |
+| R-TURSO | Turso, <https://github.com/tursodatabase/turso> | `fc98dac` (2026-10-02) | MIT |
+| R-LIBSQL | libSQL, <https://github.com/tursodatabase/libsql> | `d6c75af` (2026-08-23) | MIT |
 | R-NEO4RS | neo4rs, <https://github.com/neo4j-labs/neo4rs> | `1a35661` (2026-09-25) | MIT |
 | R-PETGRAPH | petgraph, <https://github.com/petgraph/petgraph> | `a4d94bd` (2026-09-13) | MIT/Apache-2.0 |
 | R-RWX | rustworkx, <https://github.com/Qiskit/rustworkx> | `25398ab` | Apache-2.0 |
@@ -109,6 +110,9 @@ Checked between 2026-09-24 and 2026-10-02.
 | D-RUSTIX | rustix 1.1.5, `rustix::fs` (`fstatvfs`, `fallocate`): <https://docs.rs/rustix/1.1.5/rustix/fs/index.html> |
 | D-KUZU | X. Feng, G. Jin, Z. Chen, C. Liu, S. Salihoğlu, "KÙZU Graph Database Management System", CIDR 2023, <https://www.cidrdb.org/cidr2023/papers/p48-jin.pdf> |
 | D-HYPER | T. Neumann, T. Mühlbauer, A. Kemper, "Fast Serializable Multi-Version Concurrency Control for Main-Memory Database Systems", SIGMOD 2015 ([S42] of the functional specification) |
+| D-POSIX | POSIX.1-2024 (IEEE Std 1003.1-2024), `<sys/types.h>`: "`blkcnt_t` and `off_t` shall be signed integer types": <https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/sys_types.h.html> |
+| D-CARGO | The Cargo Book, "Profiles": <https://doc.rust-lang.org/cargo/reference/profiles.html> (`test` inherits `dev`; `dev` defaults `opt-level = 0`, `debug-assertions = true`, `overflow-checks = true`; checked 2026-10-03) |
+| D-SHUTTLE | shuttle 0.9.5: <https://docs.rs/shuttle/0.9.5/shuttle/> ("randomized testing, rather than the exhaustive testing that Loom offers"; `shuttle::sync` provides `Mutex`, `RwLock`, `Condvar`, `Arc`, `atomic`) |
 
 ### Measurements and research notes
 
@@ -121,3 +125,4 @@ Kept in the repository under [`docs/evidence/`](../evidence/README.md), which al
 | M-LOCK | [evidence/research/research-01-storage.md](../evidence/research/research-01-storage.md) §Q8 and [evidence/locktest/](../evidence/locktest/main.rs) (2026-09-24) | `File::try_lock` behaviour within and across processes. |
 | P-STO | [evidence/research/research-01-storage.md](../evidence/research/research-01-storage.md) (2026-09-24) | Storage evidence with file and line references. |
 | P-TX | [evidence/research/research-02-layout-mvcc.md](../evidence/research/research-02-layout-mvcc.md) (2026-09-24), with the page model [evidence/layout-sim/](../evidence/layout-sim/pagesim.py) | Layout, MVCC, validation, locks and indexes evidence with file and line references. |
+| P-TEST | [evidence/research/research-04-turso-libsql.md](../evidence/research/research-04-turso-libsql.md) (2026-10-03) | Turso and libSQL kernel components and test dimensions compared with lpg Sprint 1, with file and line references; recommendations R1–R13; test-speed and flaky-test measurements (§5). |

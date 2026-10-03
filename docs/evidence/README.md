@@ -1,7 +1,7 @@
 ---
 title: Evidence
 status: frozen records
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-03
 related:
   - ../technical-spec/README.md
 ---
@@ -17,6 +17,7 @@ This folder keeps the research notes, measurement reports and experiment sources
 | P-STO | [research/research-01-storage.md](research/research-01-storage.md) | Storage engine: build vs reuse, pages, buffer pool, WAL, torn pages, checksums, backup, lock, file layout | 2026-09-24 | Read only (source study) |
 | P-TX | [research/research-02-layout-mvcc.md](research/research-02-layout-mvcc.md) | Graph layout, MVCC, serializable validation, locks, indexes | 2026-09-24 | Read only (source study) |
 | M-QE | [research/research-03-query-engine.md](research/research-03-query-engine.md) | Parser, binder, planner, execution, values, catalog, procedures, conformance; measurements in §Q1.3, §Q4.2, §Q5 | 2026-09-24 | See the experiment folders below |
+| P-TEST | [research/research-04-turso-libsql.md](research/research-04-turso-libsql.md) | Turso and libSQL kernel components and test dimensions compared with lpg Sprint 1; test-speed and flaky-test measurements in §5 | 2026-10-03 | Read only (source study). §5.2: `cargo nextest run -p lpg` with `CARGO_PROFILE_TEST_OPT_LEVEL=0` and `=1`; `TMPDIR=/dev/shm` for the tmpfs run. The record used `CARGO_PROFILE_DEV_OPT_LEVEL=1`, which no longer changes the test build since `Cargo.toml` sets `[profile.test] opt-level = 1` |
 | R-REG | [research/decision-register.md](research/decision-register.md) | Phase-1 decision register that preceded the technical specification | 2026-10-02 | Read only |
 | M-LAYOUT | [layout-bench/](layout-bench/results.md) | Seven adjacency layouts at 100 %, 25 %, 10 % and 1 % cache; 1 M nodes / 10 M edges; 10 M nodes / 100 M edges | 2026-10-02 | `cargo build --release` in `layout-bench/` and `layout-bench/src-v1/`, then `scripts/run-1m.sh` and `scripts/run-ram.sh` |
 | M-SIM | [layout-sim/](layout-sim/pagesim.py) | Page-touch model of five layouts (cited by P-TX §L1.3) | 2026-09-24 | `python3 layout-sim/pagesim.py 100000 1000000 0.8` |

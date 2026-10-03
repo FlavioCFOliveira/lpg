@@ -1,7 +1,7 @@
 ---
 title: Storage
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-03
 related:
   - architecture.md
   - transactions-and-recovery.md
@@ -38,9 +38,10 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - `LOCK`, the lock target ([TS-27](#ts-27-single-process-lock));
     - `CONTROL`;
     - `data-<g>`, one paged file whose page 0 is the header page (below);
-    - `wal-<g>-<lsn>`, the WAL segments ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
+    - `wal-<g>-<lsn>`, the WAL segments ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit));
+    - `wal-temp`, present only while a segment is being created ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 
-    `<g>` is the file-set generation, starting at 1. Only migration changes it ([TS-28](operations.md#ts-28-format-versioning-and-migration)). At open, files of any other generation are removed: `data-<h>` and every `wal-<h>-<lsn>` with `<h>` ≠ `<g>`.
+    `<g>` is the file-set generation, starting at 1. Only migration changes it ([TS-28](operations.md#ts-28-format-versioning-and-migration)). At open, files of any other generation are removed: `data-<h>` and every `wal-<h>-<lsn>` with `<h>` ≠ `<g>`. A leftover `wal-temp` is removed too. If open removed any file, it then calls `sync_dir` once (`src/storage/engine.rs:375-386`).
 
     Every file lies directly in the location; there is no subdirectory, because the storage trait has no directory operation ([TS-03](interfaces.md#ts-03-storage-abstraction)). One `sync_dir` of the location therefore makes the names of `CONTROL`, data and WAL files durable (user decision 2026-10-02).
   - **`CONTROL`** has two 4 KiB slots, written alternately in place with `write_at` and then `sync_data`. Each slot holds:
@@ -51,7 +52,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 
     The valid slot with the higher sequence number is authoritative. Page 0 of `data-<g>` must hold the same format version; a mismatch is corruption. If `data-<g>` is absent while `CONTROL` exists, the open fails as corruption (FR-REC-003); open never recreates it.
     - **One invalid slot** at open is treated as a torn `CONTROL` write: the database opens from the valid slot, the next `CONTROL` write (always to the non-authoritative slot) rewrites the invalid one, and the event is counted in a metric ([TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events)). This is the exception to FR-REC-003 set by the user decision of 2026-10-02. If both slots are invalid, the open fails (FR-REC-003).
-  - **Pages.** 8 KiB, fixed at creation. Page header: CRC-32C, page LSN, page type, tree identifier. Leaf and inner pages are slotted.
+  - **Pages.** 8 KiB, fixed at creation. Page header: CRC-32C bound to the page number ([TS-12](#ts-12-checksums-corruption-and-integrity-check)), page LSN, page type, tree identifier. The page number itself is not stored. Leaf and inner pages are slotted.
   - **Overflow.** A value longer than 2 048 bytes, a quarter of the page, is stored whole in a chain of overflow pages. Its entry keeps the value length and the first overflow page number.
   - **Key size.** A key is at most 1 024 bytes; a write with a longer key fails. A leaf therefore always holds its high key ([TS-06](#ts-06-graph-layout)) and at least two entries of the largest size, so every split succeeds.
   - **Header page and tree directory.**
@@ -132,6 +133,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - every page holds a high key, the upper bound of its keys, and a link to its right sibling;
     - a reader holds at most one page latch at a time; when its key is above a page's high key, or the page is marked deleted ([TS-05](#ts-05-files-and-pages)), it follows the right link;
     - a scan copies the matching entries of one leaf under its latch, records that leaf's right link, releases the latch, and continues at the recorded link;
+    - a scan keeps its position in the key space: the highest high key of the leaves it has passed. On each later leaf it takes only keys at or above that position (`scan_prefix`, `src/storage/btree/mod.rs:560-608`; `Copied::take`, `mod.rs:704-749`). A freed page gives its key space to its right sibling ([TS-05](#ts-05-files-and-pages) Underflow), so a leaf the scan reaches later can hold keys inserted behind it; without the position, the scan would return them out of order (FINDING 75 on rmp task #14);
     - the committer splits a page under its exclusive latch: it fills the new right page, links it, and only then latches the parent to insert the separator, holding the child latch until it has the parent latch.
 
     A key present and unchanged for a whole read operation is returned exactly once. Until MVCC is built, a reader may see a concurrent commit in part, and before that commit is durable or published. Stamps and snapshots remove both effects ([TS-14](transactions-and-recovery.md#ts-14-mvcc)).
@@ -157,6 +159,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - A delete that needs new pages: InnoDB reserves file space before a pessimistic delete "so that the node pointer updates will not fail because of lack of space" (R-INNO `btr/btr0cur.cc:4686-4697`, `btr_cur_pessimistic_delete`).
     - Right-most leaf split. PostgreSQL leaves the left page fillfactor full whenever the right-most leaf of any B-tree index splits, default 90 (R-PG `src/backend/access/nbtree/nbtsplitloc.c:95-100, 287-291`; `src/include/access/nbtree.h:201`). SQLite's `balance_quick` applies to every rowid table when a row is appended to the right-most leaf (R-SQLITE `src/btree.c:9217-9238`).
     - Concurrent readers. PostgreSQL implements Lehman and Yao's right links and high keys (R-PG `src/backend/access/nbtree/README:17-29`), holds one read latch at a time and couples latches only when moving right or up (`README:106-110`), and makes a scan follow the right link recorded when it read the page (`README:88-101`).
+    - Scan position. PostgreSQL's scan relies on items never moving across pre-existing page boundaries (R-PG `src/backend/access/nbtree/README:95-98`), while its page deletion makes the deleted page's key space belong to its right sibling (`README:250-253`). FINDING 75 attributes PostgreSQL's protection against the keys this exposes to its MVCC snapshot; the cited lines do not state it (not confirmed). lpg has no snapshot until MVCC is built ([TS-14](transactions-and-recovery.md#ts-14-mvcc)). Measured with 16 concurrent copies (FINDING 75): before the fix, 39 of 48 runs failed, each with keys out of order; after it, 0 of 160; test `a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away` (`src/storage/btree/tests.rs:581`) fails with the fix reverted.
   - **Limits of M-LAYOUT** ("Limits of the method"):
     - one host and one device; synthetic graphs without properties;
     - misses were read with `O_DIRECT` and no read-ahead, while TS-08 reads through the operating-system cache, so I/O under kernel read-ahead is unmeasured;
@@ -222,6 +225,8 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 
 - **Decision**:
   - CRC-32C protects every page, every WAL frame and each `CONTROL` slot. A page checksum is verified on every read from disk.
+  - **Page number binding.** A page's CRC-32C is computed over its page number, as 8 little-endian bytes, followed by bytes 4 to 8 191 of the page. A valid image of page A read at page B's position therefore fails B's checksum: a misdirected write, or a stale page from another position, is detected. Such a read fails with corruption and sets the unusable latch, like any checksum failure (below). The WAL frame CRC-32C already covers the frame's page number ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
+  - **Limit.** The checksum has 32 bits and a data file can hold up to 2<sup>50</sup> − 1 pages ([TS-13](transactions-and-recovery.md#ts-13-recovery) step 4), so some pairs of page numbers give the same checksum for the same content. A misplaced page is therefore not always detected. Which pairs collide was not computed (unverified).
   - A checksum failure, or a failed write or sync other than a reservation ENOSPC ([TS-05](#ts-05-files-and-pages), [TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)), sets a database-wide "unusable" latch while the database is open. The failing operation and every later one fail until the database is reopened.
   - At open, `CONTROL` and the WAL from the redo point are verified ([TS-13](transactions-and-recovery.md#ts-13-recovery)).
   - The on-demand integrity check reads every page and checks:
@@ -232,12 +237,18 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 - **Evidence**:
   - CRC-32C is used by the PostgreSQL WAL (R-PG `src/include/access/xlogrecord.h:49`), InnoDB pages, and Neo4j log entries (R-NEO `community/wal/.../CommitLogEntrySerializerV4_2.java:67`). redb uses XXH3-128 (P-STO §Q6).
   - Neo4j ships a consistency checker (R-NEO `community/consistency-check`).
+  - Page number binding. PostgreSQL mixes the block number into every page checksum "to detect the case where a page is somehow moved to a different location" (R-PG `src/include/storage/checksum_impl.h:167-169, 172, 193`). InnoDB stores the page number in the page header (`FIL_PAGE_OFFSET`, R-INNO `include/fil0types.h:44-46`) and stops when a page it reads holds another number (`buf/buf0buf.cc:5800-5821`). Turso passes the page number to its checksum functions but does not use it (R-TURSO `core/storage/checksum.rs:35, 81-83`); neither did lpg before task #23 (`src/storage/page.rs:8, 79-81`) ([P-TEST](../evidence/research/research-04-turso-libsql.md) §2, R9). The page format changes before it is frozen (user decision 2026-10-03, rmp task #23).
 - **Crates**:
   - `crc32c` 0.6.8: dependency. Apache-2.0/MIT, 85.9 M downloads, no runtime dependencies, repository active in 2026-02.
   - `crc-fast`: fallback.
   - `crc32fast`: rejected, it computes CRC-32/IEEE, not CRC-32C.
   - `xxhash-rust`: rejected, its BSL-1.0 licence is not used elsewhere.
-- **Rejected**: checksums verified only by repair or by a check (redb), which fails FR-REC-005.
+- **Rejected**:
+  - Checksums verified only by repair or by a check (redb), which fails FR-REC-005.
+  - No page number binding (Turso): a valid page at the wrong position passes its checksum (FR-REC-005, FR-REC-008).
+  - XOR of the page number into the checksum (PostgreSQL, whose block numbers have 32 bits): lpg page numbers have 64 bits, so only 32 of them could be mixed in, and pages p and p + 2<sup>32</sup> would always share a checksum.
+  - Seeding the CRC-32C with the page number: the seed of `crc32c_append` is a `u32` (`crc32c` 0.6.8 `src/lib.rs:49`), the same truncation.
+  - Storing the page number in the header and comparing it on read (InnoDB): 8 more header bytes per page for what the checksum binds at no cost in space.
 
 ## TS-27 Single-process lock
 
