@@ -1,0 +1,24 @@
+a-overwrite-fdatasync ext4: IOPS 1185.7 [1163.4-1192.9] MiB/s 9.3 [9.1-9.3] clat p50us 8.0 [8.0-8.1] p99us 17.0 [17.0-19.6] fdatasync p50us 806.9 [806.9-815.1] p99us 1056.8 [1056.8-1859.6]
+a-overwrite-fdatasync tmpfs: IOPS 388401.2 [387541.1-388447.4] MiB/s 3034.4 [3027.7-3034.7] clat p50us 1.8 [1.8-1.8] p99us 2.7 [2.7-2.7] fdatasync p50us 0.4 [0.4-0.4] p99us 0.4 [0.4-0.4]
+b-randread ext4: IOPS 462184.1 [461932.4-478432.9] MiB/s 3610.8 [3608.8-3737.8] clat p50us 1.4 [1.4-1.4] p99us 3.6 [3.5-3.6]
+b-randread tmpfs: IOPS 651101.0 [617947.9-661064.2] MiB/s 5086.7 [4827.7-5164.6] clat p50us 1.3 [1.3-1.4] p99us 2.0 [1.9-2.2]
+c-write-nosync ext4: IOPS 268590.2 [267493.9-268590.2] MiB/s 2098.4 [2089.8-2098.4] clat p50us 3.2 [3.1-3.2] p99us 9.0 [8.8-9.0]
+c-write-nosync tmpfs: IOPS 485451.9 [485451.9-489074.6] MiB/s 3792.6 [3792.6-3820.9] clat p50us 1.8 [1.8-1.8] p99us 3.0 [2.9-3.0]
+a-ext4 rep1: nvme reads 0 writes 23865 flush_ios 11932 flush_ms 9368 f_await_ms 0.79
+b-ext4 rep1: nvme reads 32768 writes 3 flush_ios 1 flush_ms 1 f_await_ms 1.00
+c-ext4 rep1: nvme reads 0 writes 0 flush_ios 0
+a-tmpfs rep1: nvme reads 0 writes 4 flush_ios 1 flush_ms 1 f_await_ms 1.00
+b-tmpfs rep1: nvme reads 0 writes 32 flush_ios 8 flush_ms 11 f_await_ms 1.38
+c-tmpfs rep1: nvme reads 0 writes 0 flush_ios 0
+a-ext4 rep2: nvme reads 0 writes 23276 flush_ios 11637 flush_ms 9374 f_await_ms 0.81
+b-ext4 rep2: nvme reads 32768 writes 6 flush_ios 2 flush_ms 2 f_await_ms 1.00
+c-ext4 rep2: nvme reads 5 writes 0 flush_ios 0
+a-tmpfs rep2: nvme reads 0 writes 24 flush_ios 1 flush_ms 1 f_await_ms 1.00
+b-tmpfs rep2: nvme reads 0 writes 5 flush_ios 2 flush_ms 2 f_await_ms 1.00
+c-tmpfs rep2: nvme reads 0 writes 0 flush_ios 0
+a-ext4 rep3: nvme reads 0 writes 23722 flush_ios 11860 flush_ms 9363 f_await_ms 0.79
+b-ext4 rep3: nvme reads 32768 writes 50 flush_ios 8 flush_ms 6 f_await_ms 0.75
+c-ext4 rep3: nvme reads 5 writes 2 flush_ios 0
+a-tmpfs rep3: nvme reads 0 writes 5 flush_ios 1 flush_ms 1 f_await_ms 1.00
+b-tmpfs rep3: nvme reads 0 writes 4 flush_ios 1 flush_ms 0 f_await_ms 0.00
+c-tmpfs rep3: nvme reads 0 writes 0 flush_ios 0

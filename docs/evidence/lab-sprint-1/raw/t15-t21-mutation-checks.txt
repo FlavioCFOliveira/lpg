@@ -1,0 +1,24 @@
+fix1 page copy takes the miss-path victim: FAILS (detected) | Summary [   0.086s] 1 test run: 0 passed, 1 failed, 220 skipped
+fix4 gauge published on change: FAILS (detected) | Summary [   0.006s] 1 test run: 0 passed, 1 failed, 220 skipped
+fix2 gather window removed: FAILS (detected) | Summary [   0.150s] 1 test run: 0 passed, 1 failed, 220 skipped
+fix2 gather for a lone committer: FAILS (detected) | Summary [   0.079s] 1 test run: 0 passed, 1 failed, 220 skipped
+fix3 precreate back on the writer: FAILS (detected) | Summary [  20.049s] 1 test run: 0 passed, 1 failed, 220 skipped
+R8 failed sync keeps writes pending: FAILS (detected) | Summary [   0.020s] 1 test run: 0 passed, 1 failed, 220 skipped
+R1 crash point disabled: FAILS (detected) | Summary [   0.027s] 1 test run: 0 passed, 1 failed, 220 skipped
+R2 nth failure ignored for create: FAILS (detected) | Summary [   0.006s] 1 test run: 0 passed, 1 failed, 220 skipped
+sort merge order reversed: FAILS (detected) | Summary [   0.055s] 1 test run: 0 passed, 1 failed, 220 skipped
+sort files kept on failure: FAILS (detected) | Summary [   0.035s] 1 test run: 0 passed, 1 failed, 220 skipped
+bulk fill to 100 %: PASSES (NOT detected) | Summary [   0.029s] 1 test run: 1 passed, 220 skipped
+bulk pages not given back: FAILS (detected) | Summary [   0.032s] 1 test run: 0 passed, 1 failed, 220 skipped
+bulk no sync before install: FAILS (detected) | Summary [   0.046s] 1 test run: 0 passed, 1 failed, 220 skipped
+bulk right link wrong: FAILS (detected) | Summary [   0.054s] 1 test run: 0 passed, 1 failed, 220 skipped
+backup no hold: FAILS (detected) | Summary [   0.051s] 1 test run: 0 passed, 1 failed, 220 skipped
+backup stop before data copy end: FAILS (detected) | Summary [   0.133s] 1 test run: 0 passed, 1 failed, 220 skipped
+restore keeps stale segments: FAILS (detected) | Summary [   0.210s] 1 test run: 0 passed, 1 failed, 220 skipped
+restore into a database: FAILS (detected) | Summary [   0.346s] 1 test run: 0 passed, 1 failed, 220 skipped
+restore without CRC check: FAILS (detected) | Summary [   0.213s] 1 test run: 0 passed, 1 failed, 220 skipped
+migrate without space check: FAILS (detected) | Summary [   0.147s] 1 test run: 0 passed, 1 failed, 220 skipped
+migrate without clean check: FAILS (detected) | Summary [   0.143s] 1 test run: 0 passed, 1 failed, 220 skipped
+migrate keeps old generation: FAILS (detected) | Summary [   0.055s] 1 test run: 0 passed, 1 failed, 220 skipped
+R10 after_apply point removed: FAILS (detected) | Summary [   0.030s] 1 test run: 0 passed, 1 failed, 220 skipped
+bulk fill to 100 %: FAILS (detected) | Summary [   0.029s] 1 test run: 0 passed, 1 failed, 220 skipped

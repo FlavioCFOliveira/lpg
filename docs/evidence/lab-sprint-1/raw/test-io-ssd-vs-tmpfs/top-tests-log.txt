@@ -1,0 +1,40 @@
+t1 tmpfs rep1 rc=0 wall_s=.012457408 loadavg=3.51 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t1 ssd rep1 rc=0 wall_s=.393606835 loadavg=3.51 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t1 tmpfs rep2 rc=0 wall_s=.012054979 loadavg=3.51 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t1 ssd rep2 rc=0 wall_s=.445515798 loadavg=3.51 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t1 tmpfs rep3 rc=0 wall_s=.012205279 loadavg=3.51 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t1 ssd rep3 rc=0 wall_s=.388967591 loadavg=3.51 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t1 tmpfs strace rc=0 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t1 ssd strace rc=0 storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+t2 tmpfs rep1 rc=0 wall_s=4.963401085 loadavg=3.31 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t2 ssd rep1 rc=0 wall_s=4.950597806 loadavg=3.12 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t2 tmpfs rep2 rc=0 wall_s=4.940583379 loadavg=2.95 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t2 ssd rep2 rc=0 wall_s=4.958816342 loadavg=2.80 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t2 tmpfs rep3 rc=0 wall_s=5.009610683 loadavg=2.65 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t2 ssd rep3 rc=0 wall_s=5.011161226 loadavg=2.52 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t2 tmpfs strace rc=0 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t2 ssd strace rc=0 storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+t3 tmpfs rep1 rc=0 wall_s=2.727352038 loadavg=2.18 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t3 ssd rep1 rc=0 wall_s=2.664021839 loadavg=2.18 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t3 tmpfs rep2 rc=0 wall_s=2.734293050 loadavg=2.09 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t3 ssd rep2 rc=0 wall_s=2.699223299 loadavg=2.00 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t3 tmpfs rep3 rc=0 wall_s=2.726924309 loadavg=2.00 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t3 ssd rep3 rc=0 wall_s=2.672771256 loadavg=1.92 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t3 tmpfs strace rc=0 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t3 ssd strace rc=0 storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+t4 tmpfs rep1 rc=0 wall_s=.561426871 loadavg=1.01 suites::fault::migration
+t4 ssd rep1 rc=0 wall_s=.558833154 loadavg=1.01 suites::fault::migration
+t4 tmpfs rep2 rc=0 wall_s=.558249765 loadavg=1.01 suites::fault::migration
+t4 ssd rep2 rc=0 wall_s=.551979506 loadavg=1.01 suites::fault::migration
+t4 tmpfs rep3 rc=0 wall_s=.562075421 loadavg=1.01 suites::fault::migration
+t4 ssd rep3 rc=0 wall_s=.560631371 loadavg=1.01 suites::fault::migration
+t4 tmpfs strace rc=0 suites::fault::migration
+t4 ssd strace rc=0 suites::fault::migration
+t5 tmpfs rep1 rc=0 wall_s=.625024766 loadavg=1.01 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+t5 ssd rep1 rc=0 wall_s=.584234904 loadavg=1.01 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+t5 tmpfs rep2 rc=0 wall_s=.618486593 loadavg=1.01 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+t5 ssd rep2 rc=0 wall_s=.607008437 loadavg=1.01 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+t5 tmpfs rep3 rc=0 wall_s=.626512186 loadavg=1.01 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+t5 ssd rep3 rc=0 wall_s=.590281249 loadavg=1.01 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+t5 tmpfs strace rc=0 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+t5 ssd strace rc=0 tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
