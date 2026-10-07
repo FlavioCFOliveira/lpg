@@ -43,7 +43,8 @@ Profiling tooling:
 > **When the graph is exercised, its data files live on a RAM drive. Only its data files.**
 > **The RAM drive is only a support that accelerates file I/O during development. It is never a realistic production scenario and must never be treated as one.**
 
-- **Scope.** Every exercise of the graph — experiments, tests, reproductions, error validation, examples (when they exist) and similar runs — creates and uses its graph data files (WAL, snapshots, graph store, indexes and any other file the graph persists) on the RAM drive.
+- **Correctness first (mandatory).** The RAM drive must never reduce the effectiveness of any test or scenario; it may only make it faster. When a test or scenario depends on behaviour that `tmpfs` does not reproduce (for example real `fsync`, disk-full or file-system-specific behaviour), or when the RAM drive would weaken it in any other way, **do not use the RAM drive for it**: run it on persistent storage. When in doubt, do not use it.
+- **Scope.** Subject to the rule above, every exercise of the graph — experiments, tests, reproductions, error validation, examples (when they exist) and similar runs — creates and uses its graph data files (WAL, snapshots, graph store, indexes and any other file the graph persists) on the RAM drive.
 - **RAM drive.** A dedicated `tmpfs` named `LPGRAM`, mounted at `/dev/shm/LPGRAM/`. Create a separate subdirectory per run and delete it when the run ends.
 - **Size.** 1 GiB by default. A scenario may use a larger size only when it needs one and the user has approved that size for that scenario; the approval does not extend to other scenarios. Return to 1 GiB when the scenario ends.
 - **Clean environment.** Whenever scenarios must be cleared and rebuilt from a clean state, unmount and remount the RAM drive; only do so when no run is using it. Mounting needs root privileges; if they are not available, ask the user to run the commands:
