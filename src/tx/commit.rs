@@ -21,10 +21,10 @@
 use std::time::Instant;
 
 use crate::obs::names::transactions::{COMMIT_LATENCY, COMMITTED, FAILED_COMMITS};
-use crate::storage::btree::{Tree, Write};
+use crate::storage::btree::{CommitLatch, Store, Tree, Write, WriteState};
 use crate::storage::engine::Engine;
 use crate::storage::error::Result;
-use crate::storage::wal::Counters;
+use crate::storage::wal::{Counters, Wal};
 
 /// High-water marks of the identifier counters a commit raises (TS-05):
 /// each is the next value to hand out after the commit. A counter is never
@@ -87,17 +87,8 @@ impl Engine {
         ids: Ids,
     ) -> Result<Committed> {
         let started = Instant::now();
-        let core = self.core();
         let r = self.commit_steps(batch, new_trees, ids);
-        match &r {
-            Ok(_) => {
-                core.sink.counter(COMMITTED, 1);
-                core.sink
-                    .histogram(COMMIT_LATENCY, started.elapsed().as_nanos() as u64);
-                core.checkpoints.note_commit();
-            }
-            Err(_) => core.sink.counter(FAILED_COMMITS, 1),
-        }
+        self.note_commit_result(started, &r);
         r
     }
 
@@ -114,10 +105,35 @@ impl Engine {
             core.data.ensure(store.estimate(batch, new_trees)?)?;
         }
         // Step 3.
-        let mut st = store.lock();
+        let st = store.lock();
+        self.commit_latched(st, ids, |store, st, wal| {
+            store.apply_batch(st, Some(wal), batch, new_trees)
+        })
+    }
+
+    /// TS-16 steps 3 and 6-9 with the commit latch `st` already held:
+    /// draws `commit_ts`, runs `apply` (step 6, which must undo itself on
+    /// failure), joins the open group, releases the latch and waits until
+    /// the group is durable. The bulk build calls it after building its
+    /// pages under the latch (`storage::btree::bulk`).
+    ///
+    /// # Errors
+    ///
+    /// Errors of `apply`; the WAL writer's failure (step 8).
+    pub(crate) fn commit_latched(
+        &self,
+        mut st: CommitLatch<'_>,
+        ids: Ids,
+        apply: impl FnOnce(&Store<'_>, &mut WriteState, &Wal) -> Result<Vec<Tree>>,
+    ) -> Result<Committed> {
+        let core = self.core();
+        let store = core.store();
+        // Step 3.
         let commit_ts = st.log_ref().counters.commit_ts + 1;
         // Step 6.
-        let trees = store.apply_batch(&mut st, Some(&core.wal), batch, new_trees)?;
+        let trees = apply(&store, &mut st, &core.wal)?;
+        #[cfg(test)]
+        crate::storage::wal::TestPoints::run(&core.wal.points.after_apply);
         // Step 7.
         let log = st.log();
         log.counters = Counters {
@@ -129,12 +145,30 @@ impl Engine {
         let counters = log.counters;
         log.group.join(commit_ts, counters);
         let seq = log.group.seq();
+        // Counted before the latch is released, so the writer's gather
+        // window sees this commit in the group it closes.
+        core.wal.note_join(seq);
         drop(st);
         // Step 8.
         core.wal.wait_durable(seq)?;
         // Step 9.
         debug_assert!(core.wal.published() >= commit_ts);
         Ok(Committed { commit_ts, trees })
+    }
+
+    /// Records the metrics of a finished commit attempt that began at
+    /// `started`.
+    pub(crate) fn note_commit_result<T>(&self, started: Instant, r: &Result<T>) {
+        let core = self.core();
+        match r {
+            Ok(_) => {
+                core.sink.counter(COMMITTED, 1);
+                core.sink
+                    .histogram(COMMIT_LATENCY, started.elapsed().as_nanos() as u64);
+                core.checkpoints.note_commit();
+            }
+            Err(_) => core.sink.counter(FAILED_COMMITS, 1),
+        }
     }
 }
 

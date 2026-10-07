@@ -13,7 +13,7 @@ use crate::storage::wal::{
     SEGMENT_SPAN, segment_name,
 };
 use crate::storage::{FsStorage, Storage};
-use crate::test_support::test_dirs;
+use crate::test_support::{seed, test_dirs};
 use crate::tx::commit::Ids;
 use crate::tx::commit::tests::{Model, assert_state, del, fault, put, sink};
 
@@ -135,13 +135,19 @@ fn drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commi
 
 #[test]
 fn drop_without_close_then_a_crash_that_keeps_some_writes_keeps_every_returned_commit() {
-    drop_without_close_then_crash(1, Crash::KeepRandom { seed: 11 });
+    drop_without_close_then_crash(1, Crash::KeepRandom { seed: seed() });
 }
 
 #[test]
 fn drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit() {
-    drop_without_close_then_crash(2, Crash::Tear { seed: 12 });
-    drop_without_close_then_crash(3, Crash::Tear { seed: 13 });
+    let sd = seed();
+    drop_without_close_then_crash(2, Crash::Tear { seed: sd });
+    drop_without_close_then_crash(
+        3,
+        Crash::Tear {
+            seed: sd.wrapping_add(1),
+        },
+    );
 }
 
 /// TS-13 step 5: a group whose `sync_data` never returned, torn by a crash
@@ -161,12 +167,11 @@ fn a_torn_last_group_is_discarded() {
         let e = Engine::open(d, fault.clone(), CAP, sink()).unwrap();
         commit_kv(&e, tree, &mut model, format!("ok-{seed}").as_bytes(), b"1");
         let x = e.wal().durable_lsn();
-        let syncs = fault
-            .calls()
-            .iter()
-            .filter(|c| matches!(c, Call::SyncData(_)))
-            .count() as u64;
-        fault.fail_sync_data(syncs + 1);
+        // The storage stops right after the group's write: its sync never
+        // returns, and the crash below tears what the write left unsynced.
+        // (A failed sync would not do: it forgets the unsynced writes, as
+        // Linux does, TS-30 R8.)
+        fault.crash_after(1);
         // The durable bytes where the torn group will lie: its 40 kB value
         // takes at least five overflow pages, so at least six frames.
         let span = 6 * FRAME_SIZE;
@@ -373,9 +378,12 @@ fn a_missing_segment_at_or_after_the_redo_point_fails_the_open() {
             &mut model,
             SEGMENT_SPAN + SEGMENT_SPAN * 3 / 4 + FRAME_BYTES,
         );
-        // The writer creates the next segment after the group it synced,
-        // before it writes the next group.
+        // The next segment is created ahead of use once the WAL end passes
+        // three quarters of the newest. The checkpointer thread does it
+        // when the writer asks (task #15, D4); run it here, so the state
+        // does not depend on that thread's timing.
         commit_kv(&e, tree, &mut model, b"one-more", b"1");
+        e.wal().precreate();
         assert_eq!(e.wal().segment_lsns(), [0, SEGMENT_SPAN, 2 * SEGMENT_SPAN]);
         drop(e);
         let saved: Vec<(u64, Vec<u8>)> = wal::tests::durable_segments(d, 1).into_iter().collect();
@@ -576,9 +584,19 @@ fn a_segment_gets_its_name_only_once_complete_and_synced() {
                     temp_synced,
                     "{b:?} was installed before its zeros were synced"
                 );
+                // The writer may log calls of its own meanwhile (the
+                // creation runs on the checkpointer thread, task #15 D4):
+                // the next change of the namespace is the sync_dir, and the
+                // new segment is not written before it.
+                let next = calls[n + 1..].iter().find(|c| {
+                    matches!(
+                        c,
+                        Call::SyncDir(_) | Call::Create(_) | Call::Rename(..) | Call::Remove(_)
+                    ) || matches!(c, Call::WriteAt { path, .. } if path == b)
+                });
                 assert!(
-                    matches!(calls.get(n + 1), Some(Call::SyncDir(_))),
-                    "the rename to {b:?} is not followed by sync_dir"
+                    matches!(next, Some(Call::SyncDir(_))),
+                    "the rename to {b:?} is not followed by sync_dir: {next:?}"
                 );
                 installed += 1;
             }

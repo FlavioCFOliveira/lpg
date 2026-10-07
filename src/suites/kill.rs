@@ -1,0 +1,388 @@
+//! The `kill -9` suite (TS-30 Process crash, rmp #21).
+//!
+//! The parent starts a child through the re-exec helper
+//! ([`crate::test_support::child`]). The child opens the database on
+//! [`FsStorage`] (creating it the first time) and runs four committing
+//! threads; each commit puts two keys far apart and, after the commit
+//! returns, the child prints its identifier on a line, line-buffered, on a
+//! pipe. Two more threads keep busy the paths that a commit workload with
+//! the default triggers never reaches in a short run (audit finding 8,
+//! 2026-10-03): one runs checkpoints back to back, each of which recycles
+//! or removes the segments below its redo point, and one runs online
+//! backups back to back into fresh targets. Each prints a line when a
+//! checkpoint or a backup starts and when it ends, so the parent knows
+//! which of them the kill interrupted. After a seeded random delay the
+//! parent sends SIGKILL
+//! ([`std::process::Child::kill`]), reopens the database and checks it:
+//!
+//! - every printed commit is present, both of its keys;
+//! - a commit the child started but did not print is present whole or
+//!   absent (FR-REC-001: the commit point is the group's sync, TS-16), and
+//!   each thread's present commits form a prefix of its sequence that ends
+//!   at most one past its last printed commit;
+//! - the integrity check passes.
+//!
+//! The parent counts the kills that fell inside a checkpoint and inside a
+//! backup, and the checkpoints that recycled or removed a segment; the full
+//! run requires each count to be above 0.
+//!
+//! The parent then closes the database, and the next iteration's child
+//! opens it again. The suite runs 200 iterations in each lab directory
+//! (`LPG_LAB_EXT4`, `LPG_LAB_XFS`), without privileges, and prints for
+//! each directory the iterations, the printed commits, the recovery time
+//! per reopen and the WAL bytes replayed (TS-13), and the child's commits
+//! per second.
+
+use std::collections::{BTreeMap, BTreeSet};
+use std::ffi::OsStr;
+use std::io::{BufRead, BufReader, Write as _};
+use std::path::Path;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+use rand::rngs::StdRng;
+use rand::{RngExt, SeedableRng};
+
+use super::suite_dirs;
+use crate::obs::recording::RecordingSink;
+use crate::storage::btree::{Tree, Write};
+use crate::storage::engine::{CONTROL, Engine};
+use crate::storage::{FsStorage, Storage};
+use crate::test_support::child;
+use crate::test_support::seed;
+use crate::tx::commit::Ids;
+
+const CAP: u64 = 64 << 20;
+const THREADS: u64 = 4;
+const DIR_VAR: &str = "LPG_KILL_DIR";
+const BACKUP_VAR: &str = "LPG_KILL_BACKUP_DIR";
+const ITER_VAR: &str = "LPG_KILL_ITER";
+
+/// The two keys of commit `i` of thread `t` in iteration `iter`.
+fn keys(iter: u64, t: u64, i: u64) -> [Vec<u8>; 2] {
+    [
+        format!("a/{iter:03}/{t}/{i:07}").into_bytes(),
+        format!("z/{iter:03}/{t}/{i:07}").into_bytes(),
+    ]
+}
+
+/// Parses a key back into `(iter, t, i)`.
+fn parse(k: &[u8]) -> (u64, u64, u64) {
+    let s = std::str::from_utf8(&k[2..]).unwrap();
+    let mut p = s.split('/').map(|x| x.parse::<u64>().unwrap());
+    (p.next().unwrap(), p.next().unwrap(), p.next().unwrap())
+}
+
+/// The child: commits from four threads until it is killed.
+fn work() {
+    let dir = std::env::var_os(DIR_VAR).expect("directory");
+    let dir = Path::new(&dir);
+    let iter: u64 = std::env::var(ITER_VAR).unwrap().parse().unwrap();
+    let sink = Arc::new(RecordingSink::default());
+    // In `/tmp/lpgram`, a `tmpfs`, `fsync` reaches no disk and `fallocate`
+    // takes memory, so the child uses the test storage that skips both
+    // ([`crate::test_support::NoFlush`]); a process crash keeps the page
+    // cache either way. In the lab directories it uses `FsStorage`.
+    let storage: Arc<dyn Storage> = if dir.starts_with(crate::test_support::GRAPH_DIR) {
+        crate::test_support::no_flush()
+    } else {
+        Arc::new(FsStorage)
+    };
+    let e = if FsStorage.list(dir).unwrap().iter().any(|n| n == CONTROL) {
+        Engine::open(dir, storage, CAP, sink).unwrap()
+    } else {
+        Engine::create(dir, storage, CAP, sink).unwrap()
+    };
+    let tree = match e.store().tree(1).unwrap() {
+        Some(t) => t,
+        None => e.create_trees(1).unwrap()[0],
+    };
+    let out = std::sync::Mutex::new(std::io::stdout());
+    let say = |line: String| {
+        let mut o = out.lock().unwrap();
+        writeln!(o, "{line}").unwrap();
+        o.flush().unwrap();
+    };
+    let backups = std::env::var_os(BACKUP_VAR).expect("backup directory");
+    let backups = Path::new(&backups);
+    std::thread::scope(|s| {
+        let (e, say) = (&e, &say);
+        s.spawn(move || {
+            loop {
+                say("CKPT start".into());
+                let st = e.checkpoint().unwrap();
+                say(format!("CKPT end {}", st.recycled + st.removed));
+            }
+        });
+        s.spawn(move || {
+            for n in 0u64..u64::MAX {
+                // A fresh, empty target each time; the previous artefact is
+                // removed, so the run stays small.
+                let target = backups.join(format!("{iter}-{n}"));
+                std::fs::create_dir(&target).unwrap();
+                say("BACKUP start".into());
+                e.backup(&target).unwrap();
+                say("BACKUP end".into());
+                std::fs::remove_dir_all(&target).unwrap();
+            }
+        });
+        for t in 0..THREADS {
+            s.spawn(move || {
+                for i in 0u64..u64::MAX {
+                    let [a, b] = keys(iter, t, i);
+                    let v = [t as u8; 120];
+                    let batch = [
+                        Write {
+                            tree,
+                            key: &a,
+                            value: Some(&v),
+                        },
+                        Write {
+                            tree,
+                            key: &b,
+                            value: Some(&v),
+                        },
+                    ];
+                    e.commit(&batch, Ids::default()).unwrap();
+                    say(format!("COMMIT {iter} {t} {i}"));
+                }
+            });
+        }
+    });
+}
+
+/// Figures of one directory.
+#[derive(Default)]
+struct Figures {
+    printed: u64,
+    recovery_ms: Vec<f64>,
+    replayed: Vec<u64>,
+    commits_per_s: Vec<f64>,
+    /// Kills that fell between a checkpoint's start and its end.
+    in_checkpoint: u64,
+    /// Kills that fell between a backup's start and its end.
+    in_backup: u64,
+    /// Completed checkpoints that recycled or removed a segment.
+    recycling: u64,
+}
+
+/// One line of the child.
+enum Line {
+    Commit(u64, u64),
+    CheckpointStart,
+    CheckpointEnd { recycled: u64 },
+    BackupStart,
+    BackupEnd,
+}
+
+/// One kill-and-reopen iteration in `dir`. Adds the commits printed to
+/// `printed`, keyed `(iter, t)`, and checks the reopened database.
+fn iteration(
+    dir: &Path,
+    backups: &Path,
+    iter: u64,
+    delay: Duration,
+    printed: &mut BTreeMap<(u64, u64), u64>,
+    tree: &mut Option<Tree>,
+    fig: &mut Figures,
+) {
+    let test = child::test_path(module_path!(), "kill_and_reopen");
+    let iter_s = iter.to_string();
+    let mut c = child::spawn(
+        &test,
+        "work",
+        &[
+            (DIR_VAR, dir.as_os_str()),
+            (BACKUP_VAR, backups.as_os_str()),
+            (ITER_VAR, OsStr::new(&iter_s)),
+        ],
+    );
+    let stdout = c.stdout.take().unwrap();
+    let (tx, rx) = std::sync::mpsc::channel::<Line>();
+    let reader = std::thread::spawn(move || {
+        for line in BufReader::new(stdout).lines() {
+            let Ok(line) = line else { break };
+            // libtest prints `test <name> ... ` without a newline before
+            // the test runs, so the first commit line follows it.
+            let msg = if let Some(at) = line.find("COMMIT ") {
+                let rest = &line[at + "COMMIT ".len()..];
+                let v: Vec<u64> = rest.split(' ').map(|x| x.parse().unwrap()).collect();
+                assert_eq!(v[0], iter);
+                Line::Commit(v[1], v[2])
+            } else if line.ends_with("CKPT start") {
+                Line::CheckpointStart
+            } else if let Some(at) = line.find("CKPT end ") {
+                Line::CheckpointEnd {
+                    recycled: line[at + "CKPT end ".len()..].parse().unwrap(),
+                }
+            } else if line.ends_with("BACKUP start") {
+                Line::BackupStart
+            } else if line.ends_with("BACKUP end") {
+                Line::BackupEnd
+            } else {
+                continue;
+            };
+            let _ = tx.send(msg);
+        }
+    });
+    // The delay counts from the first printed commit, so that the kill
+    // falls in the middle of the workload.
+    let mut lines = Vec::new();
+    loop {
+        let l = rx
+            .recv_timeout(Duration::from_secs(60))
+            .expect("the child commits");
+        let commit = matches!(l, Line::Commit(..));
+        lines.push(l);
+        if commit {
+            break;
+        }
+    }
+    let started = Instant::now();
+    std::thread::sleep(delay);
+    c.kill().unwrap();
+    c.wait().unwrap();
+    let elapsed = started.elapsed().as_secs_f64();
+    reader.join().unwrap();
+    lines.extend(rx.try_iter());
+    let mut n = 0;
+    let mut last = BTreeMap::new();
+    let (mut checkpointing, mut backing_up) = (false, false);
+    for l in lines {
+        match l {
+            Line::Commit(t, i) => {
+                n += 1;
+                let e = last.entry(t).or_insert(i);
+                *e = (*e).max(i);
+            }
+            Line::CheckpointStart => checkpointing = true,
+            Line::CheckpointEnd { recycled } => {
+                checkpointing = false;
+                fig.recycling += u64::from(recycled > 0);
+            }
+            Line::BackupStart => backing_up = true,
+            Line::BackupEnd => backing_up = false,
+        }
+    }
+    fig.in_checkpoint += u64::from(checkpointing);
+    fig.in_backup += u64::from(backing_up);
+    fig.printed += n;
+    fig.commits_per_s.push(n as f64 / elapsed);
+    for (t, i) in last {
+        printed.insert((iter, t), i);
+    }
+    // Reopen and check.
+    let t0 = Instant::now();
+    let e = Engine::open(
+        dir,
+        Arc::new(FsStorage),
+        CAP,
+        Arc::new(RecordingSink::default()),
+    )
+    .unwrap_or_else(|e| panic!("iteration {iter}: reopen: {e}"));
+    fig.recovery_ms.push(t0.elapsed().as_secs_f64() * 1e3);
+    fig.replayed.push(e.recovered().bytes);
+    let t = *tree.get_or_insert_with(|| e.store().tree(1).unwrap().expect("the tree exists"));
+    let mut present: BTreeMap<(u64, u64), BTreeSet<u64>> = BTreeMap::new();
+    let mut halves: BTreeMap<(u64, u64, u64), u8> = BTreeMap::new();
+    e.store()
+        .scan_prefix(t, b"", |k, _| {
+            let (it, th, i) = parse(k);
+            *halves.entry((it, th, i)).or_default() += 1;
+            present.entry((it, th)).or_default().insert(i);
+            true
+        })
+        .unwrap();
+    for (&(it, th, i), &n) in &halves {
+        assert_eq!(
+            n, 2,
+            "iteration {iter}: commit {it}/{th}/{i} is present in part"
+        );
+    }
+    for (&(it, th), &last) in printed.iter() {
+        let got = present.get(&(it, th)).map_or(0, |s| s.len() as u64);
+        let max = present.get(&(it, th)).and_then(|s| s.last().copied());
+        // Commits 0..=last were printed: all present, as a prefix, with at
+        // most the one in flight after them.
+        assert!(
+            got > last && got <= last + 2 && max == Some(got - 1),
+            "iteration {iter}: thread {th} of iteration {it}: {got} commits present, \
+             last printed {last}"
+        );
+    }
+    // A thread that printed nothing may have its first commit in flight.
+    for (&(it, th), s) in &present {
+        if !printed.contains_key(&(it, th)) {
+            assert!(
+                s.len() == 1 && s.contains(&0),
+                "iteration {iter}: unprinted commits {s:?} of thread {th} of iteration {it}"
+            );
+        }
+    }
+    let r = e.store().check().unwrap();
+    assert!(r.is_ok(), "iteration {iter}: {:?}", r.problems);
+    e.close().unwrap();
+}
+
+/// rmp #21: a process killed with SIGKILL during a commit workload reopens
+/// with every commit that returned, on ext4 and XFS (NFR-PLAT-004).
+#[test]
+fn kill_and_reopen() {
+    if child::role().as_deref() == Some("work") {
+        work();
+        return;
+    }
+    let (dirs, full) = suite_dirs();
+    let iterations = if full { 200 } else { 3 };
+    for (fs, base) in dirs {
+        let started = Instant::now();
+        let dir = tempfile::tempdir_in(&base).unwrap();
+        let backups = tempfile::tempdir_in(&base).unwrap();
+        let sd = seed();
+        let mut rng = StdRng::seed_from_u64(sd);
+        let mut printed = BTreeMap::new();
+        let mut tree = None;
+        let mut fig = Figures::default();
+        for iter in 0..iterations {
+            let delay = Duration::from_millis(rng.random_range(5..150));
+            iteration(
+                dir.path(),
+                backups.path(),
+                iter,
+                delay,
+                &mut printed,
+                &mut tree,
+                &mut fig,
+            );
+        }
+        let pct = |v: &[f64], q: f64| {
+            let mut s = v.to_vec();
+            s.sort_by(f64::total_cmp);
+            s[((q * s.len() as f64).ceil() as usize).clamp(1, s.len()) - 1]
+        };
+        let replayed: Vec<f64> = fig.replayed.iter().map(|&b| b as f64).collect();
+        println!(
+            "SUITE kill fs={fs} dir={} iterations={iterations} printed_commits={} \
+             recovery_ms_p50={:.1} recovery_ms_p99={:.1} replayed_bytes_p50={:.0} \
+             replayed_bytes_p99={:.0} child_commits_per_s_p50={:.0} \
+             kills_in_checkpoint={} kills_in_backup={} recycling_checkpoints={} seconds={:.1}",
+            base.display(),
+            fig.printed,
+            pct(&fig.recovery_ms, 0.5),
+            pct(&fig.recovery_ms, 0.99),
+            pct(&replayed, 0.5),
+            pct(&replayed, 0.99),
+            pct(&fig.commits_per_s, 0.5),
+            fig.in_checkpoint,
+            fig.in_backup,
+            fig.recycling,
+            started.elapsed().as_secs_f64(),
+        );
+        if full {
+            assert!(
+                fig.in_checkpoint > 0 && fig.in_backup > 0 && fig.recycling > 0,
+                "{fs}: no kill fell in a checkpoint or in a backup, or no checkpoint recycled"
+            );
+        }
+    }
+}

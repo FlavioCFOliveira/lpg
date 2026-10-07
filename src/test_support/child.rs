@@ -11,7 +11,7 @@
 //! under both `cargo test` and `cargo nextest run`.
 
 use std::ffi::OsStr;
-use std::process::{Command, Output};
+use std::process::{Child, Command, Output, Stdio};
 
 /// The variable that carries the role into the child.
 pub(crate) const ROLE_VAR: &str = "LPG_TEST_CHILD_ROLE";
@@ -43,6 +43,25 @@ pub(crate) fn run(test: &str, role: &str, vars: &[(&str, &OsStr)]) -> Output {
         "the child ran no test named {test}:\n{stdout}"
     );
     out
+}
+
+/// Starts the test `test` in a child process with `role` and `vars`, as
+/// [`run`] does, with its standard output piped to the caller and its
+/// standard error discarded, and returns without waiting.
+///
+/// # Panics
+///
+/// If the child cannot be started.
+pub(crate) fn spawn(test: &str, role: &str, vars: &[(&str, &OsStr)]) -> Child {
+    let exe = std::env::current_exe().expect("path of the test binary");
+    Command::new(exe)
+        .args(["--exact", test, "--nocapture", "--test-threads=1"])
+        .env(ROLE_VAR, role)
+        .envs(vars.iter().copied())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("start the child test process")
 }
 
 /// The test path of a test function in module `module` (`module_path!()`),

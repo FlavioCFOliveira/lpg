@@ -330,11 +330,13 @@ fn commit_fixed() {
     println!(
         "LAB fs={fs} threads={threads} pages={pages} n={n} start_ms={start} end_ms={end} \
          seconds={:.3} commits={commits} commits_per_s={:.0} p50_us={:.1} p99_us={:.1} \
-         groups={} frames={} wal_bytes={} wal_sync_data={} segments_created={} write_bytes={}",
+         max_us={:.1} groups={} frames={} wal_bytes={} wal_sync_data={} segments_created={} \
+         write_bytes={}",
         r.seconds,
         commits as f64 / r.seconds,
         percentile(lat, 0.5) as f64 / 1e3,
         percentile(lat, 0.99) as f64 / 1e3,
+        percentile(lat, 1.0) as f64 / 1e3,
         m.counter(GROUPS),
         m.counter(FRAMES),
         m.counter(APPENDED_BYTES),

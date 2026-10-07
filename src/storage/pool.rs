@@ -33,8 +33,8 @@
 //!   never given back, so the pool can always run (TS-08).
 //!
 //! Hit and miss counts are kept per shard and sent to the metrics sink by
-//! [`Pool::publish_metrics`], so a hit makes no sink call. Evictions and
-//! dirty writes are sent as they happen.
+//! [`Pool::publish_metrics`], which every checkpoint calls, so a hit makes
+//! no sink call. Evictions and dirty writes are sent as they happen.
 
 use std::collections::HashMap;
 use std::hash::{BuildHasherDefault, Hasher};
@@ -48,7 +48,7 @@ use super::error::{Error, Health, Result};
 use super::memory::{MemoryAccountant, Reservation};
 use super::page::{self, PAGE_BYTES, PAGE_SIZE};
 use crate::obs::MetricsSink;
-use crate::obs::names::cache::{ACCOUNTED_BYTES, EVICTIONS, FLUSHES, HITS, PAGE_FAULTS};
+use crate::obs::names::cache::{EVICTIONS, FLUSHES, HITS, PAGE_FAULTS};
 
 /// Page-table shards; PostgreSQL uses 128 buffer-mapping partitions
 /// (`NUM_BUFFER_PARTITIONS`, R-PG `src/include/storage/lwlock.h`).
@@ -152,6 +152,17 @@ pub(crate) struct Pool {
     sink: Arc<dyn MetricsSink>,
     /// Hits and misses already sent to the sink.
     published: Mutex<(u64, u64)>,
+    /// Tests only: runs in [`Pool::write_new_page`] after the data-file
+    /// write, with the frame's exclusive latch held.
+    #[cfg(test)]
+    pub(crate) after_direct_write: Mutex<Option<super::wal::Hook>>,
+    /// Tests only: page-copy reservations so far, and the 1-based number of
+    /// the one that fails with [`Error::MemoryLimit`] (0: none), a fail
+    /// point of TS-30 R10 for the TS-16 step 6 undo.
+    #[cfg(test)]
+    pub(crate) copy_calls: AtomicU64,
+    #[cfg(test)]
+    pub(crate) fail_copy: AtomicU64,
 }
 
 /// A pinned page. While it exists the frame is not evicted. Dropping it
@@ -270,8 +281,13 @@ impl Pool {
             durable_lsn,
             sink,
             published: Mutex::new((0, 0)),
+            #[cfg(test)]
+            after_direct_write: Mutex::new(None),
+            #[cfg(test)]
+            copy_calls: AtomicU64::new(0),
+            #[cfg(test)]
+            fail_copy: AtomicU64::new(0),
         };
-        pool.sink.gauge(ACCOUNTED_BYTES, pool.accountant.used());
         Ok(pool)
     }
 
@@ -436,6 +452,42 @@ impl Pool {
         let frame = self.pin_mapped(&read_map(self.shard(page_no)), page_no)?;
         let dirty = self.frames[frame as usize].dirty.load(Ordering::Acquire);
         Some((PinnedPage { pool: self, frame }, dirty))
+    }
+
+    /// Writes `image`, sealed, as page `page_no` straight to the data file
+    /// (the bulk build, `super::btree::bulk`). If the pool holds the page,
+    /// a frame left by an undone batch, the write happens under that
+    /// frame's exclusive latch, and the frame then gets `image` and becomes
+    /// clean before the latch is released. Eviction and checkpoints write a
+    /// frame only under its shared latch, so no older image the frame held
+    /// can reach the data file after `image` (the eviction write path,
+    /// [`Pool::flush`], does not even wait for a latched frame).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Unusable`] if the frame's latch is poisoned; an I/O error of
+    /// the write, which sets the unusable latch.
+    pub(crate) fn write_new_page(&self, page_no: u64, image: &[u8]) -> Result<()> {
+        let Some((pin, _)) = self.resident(page_no) else {
+            return self.data.write_page(page_no, image);
+        };
+        let mut g = pin.undo_latch()?;
+        self.data.write_page(page_no, image)?;
+        #[cfg(test)]
+        super::wal::TestPoints::run(&self.after_direct_write);
+        g.copy_from_slice(image);
+        pin.frame().dirty.store(false, Ordering::Release);
+        Ok(())
+    }
+
+    /// Tests only: the eviction write of page `page_no` if the pool holds
+    /// it ([`Pool::flush`]); returns whether the frame is clean afterwards.
+    #[cfg(test)]
+    pub(crate) fn evict_write(&self, page_no: u64) -> Result<bool> {
+        match self.resident(page_no) {
+            Some((pin, _)) => self.flush(pin.frame()),
+            None => Ok(true),
+        }
     }
 
     /// Writes every dirty frame whose page LSN is durable, waiting for each
@@ -662,20 +714,64 @@ impl Pool {
             if let Some(r) = self.accountant.try_reserve(bytes) {
                 return Ok(r);
             }
-            if !self.shrink_one()? {
+            if !self.shrink_one(true)? {
                 return Err(Error::MemoryLimit { requested: bytes });
             }
         }
     }
 
+    /// Reserves one page for a page copy of a commit's apply step (TS-16
+    /// step 6, TS-08 "Page copies"). When the accountant refuses, one frame
+    /// is freed by the clock sweep of the miss path ([`Pool::take_frame`]),
+    /// which takes the first unpinned frame at usage 0, clean or dirty with a
+    /// durable page LSN, as PostgreSQL's `StrategyGetBuffer` does (R-PG
+    /// `src/backend/storage/buffer/freelist.c:184-300`).
+    ///
+    /// [`Pool::reserve`]'s clean-only pass is not used: a copy is one page,
+    /// like a miss, and on a pool of mostly dirty frames that pass ages and
+    /// visits the whole frame table before it gives up. Measured before
+    /// this method existed (laboratory report, #15 "Open point 5"): 80.6 %
+    /// of the put samples at 10 % cache were in that sweep, and puts took
+    /// +382 to +405 % against task #14.
+    ///
+    /// # Errors
+    ///
+    /// As [`Pool::reserve`].
+    pub(crate) fn reserve_page_copy(&self) -> Result<Reservation> {
+        self.health.check()?;
+        #[cfg(test)]
+        {
+            let n = self.copy_calls.fetch_add(1, Ordering::SeqCst) + 1;
+            if n == self.fail_copy.load(Ordering::SeqCst) {
+                return Err(Error::MemoryLimit {
+                    requested: PAGE_BYTES,
+                });
+            }
+        }
+        loop {
+            if let Some(r) = self.accountant.try_reserve(PAGE_BYTES) {
+                return Ok(r);
+            }
+            if !self.shrink_one(false)? {
+                return Err(Error::MemoryLimit {
+                    requested: PAGE_BYTES,
+                });
+            }
+        }
+    }
+
     /// Frees one frame's buffer if the pool is above its floor and a victim
-    /// exists. Returns whether it did.
-    fn shrink_one(&self) -> Result<bool> {
+    /// exists. Returns whether it did. With `clean_first`, a sweep that
+    /// takes only clean frames runs before one that also takes dirty frames
+    /// whose page LSN is durable (TS-08 order for reservations); without
+    /// it, only the second sweep runs, as on the miss path.
+    fn shrink_one(&self, clean_first: bool) -> Result<bool> {
         if self.lock_growth().buffers <= self.floor_frames {
             return Ok(false);
         }
         let mut victim = None;
-        for allow_dirty in [false, true] {
+        let passes: &[bool] = if clean_first { &[false, true] } else { &[true] };
+        for &allow_dirty in passes {
             victim = self.sweep(allow_dirty)?;
             if victim.is_some() {
                 break;
@@ -703,8 +799,9 @@ impl Pool {
         Ok(true)
     }
 
-    /// Sends the hits and misses counted since the last call, and the
-    /// accounted bytes, to the metrics sink.
+    /// Sends the hits and misses counted since the last call to the metrics
+    /// sink. The accounted bytes are published by the accountant on every
+    /// change ([`MemoryAccountant`]).
     pub(crate) fn publish_metrics(&self) {
         let (hits, misses) = self.shards.iter().fold((0, 0), |(h, m), s| {
             (
@@ -719,8 +816,6 @@ impl Pool {
         self.sink.counter(HITS, hits - published.0);
         self.sink.counter(PAGE_FAULTS, misses - published.1);
         *published = (hits, misses);
-        drop(published);
-        self.sink.gauge(ACCOUNTED_BYTES, self.accountant.used());
     }
 }
 

@@ -131,6 +131,33 @@ impl Store<'_> {
         Ok(trees[0])
     }
 
+    /// TS-16 step 6 of the install commit of a bulk build (TS-26 fast-load
+    /// step 6, TS-18 step 4; [`super::bulk`]): records `root`, the root of
+    /// tree `id` already built in pages beyond the page count, in the
+    /// directory, and writes the next tree identifier and the page count,
+    /// which now covers the built pages, to page 0. Any failure is undone.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::apply_batch`].
+    pub(crate) fn install_tree(
+        &self,
+        st: &mut WriteState,
+        wal: &Wal,
+        id: u64,
+        root: u64,
+    ) -> Result<Tree> {
+        self.health.check()?;
+        self.run(st, Some(wal), |a| {
+            debug_assert_eq!(*a.next_tree_id, id, "the build holds the commit latch");
+            a.put(DIRECTORY, &id.to_be_bytes(), &root.to_le_bytes())?;
+            *a.next_tree_id = id + 1;
+            a.pw.header_changed();
+            Ok(())
+        })?;
+        Ok(Tree { id, root })
+    }
+
     /// TS-16 step 6 under the commit latch `st`: creates `new_trees` empty
     /// trees, then applies `batch`, as one batch. With `wal`, every changed
     /// page takes its frame position in the open group, the segments the

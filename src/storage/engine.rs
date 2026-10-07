@@ -24,7 +24,7 @@
 
 use std::ffi::OsStr;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicU64;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
@@ -40,6 +40,7 @@ use super::memory::MemoryAccountant;
 use super::page::PAGE_SIZE;
 use super::pool::{DEFAULT_FLOOR_PERMILLE, Pool, Sizing};
 use super::recovery;
+use super::sort::is_sort_temp;
 use super::wal::{ClosedGroup, OpenGroup, TEMP_SEGMENT, Wal};
 use super::{Storage, StorageLock};
 use crate::obs::MetricsSink;
@@ -51,6 +52,35 @@ pub(crate) const FORMAT_VERSION: u32 = 1;
 pub(crate) const LOCK: &str = "LOCK";
 /// Name of the control file (TS-05).
 pub(crate) const CONTROL: &str = "CONTROL";
+/// Name `CONTROL` is written under before its rename (TS-05, TS-26 restore
+/// step 5).
+pub(crate) const CONTROL_TMP: &str = "CONTROL.tmp";
+/// Name of the file a restore writes before `CONTROL` (TS-26 restore steps 4
+/// and 6): the backup's `stop`, which recovery must reach. Every open of
+/// the location enforces it until an open has recovered past `stop` and
+/// written its checkpoint; that open removes the file. PostgreSQL keeps the
+/// same requirement in `backup_label` and then in `pg_control`
+/// (`backupEndRequired`, R-PG `src/backend/access/transam/xlogrecovery.c:546-560,
+/// 931-964`), and refuses to start with "WAL ends before end of online
+/// backup" (`src/backend/access/transam/xlog.c:6583-6599`).
+pub(crate) const BACKUP_END: &str = "BACKUP_END";
+
+/// The content of [`BACKUP_END`]: `stop`, then the CRC-32C of those 8
+/// bytes, little-endian.
+pub(crate) fn encode_backup_end(stop: u64) -> [u8; 12] {
+    let mut b = [0u8; 12];
+    b[..8].copy_from_slice(&stop.to_le_bytes());
+    let crc = crc32c::crc32c(&b[..8]);
+    b[8..].copy_from_slice(&crc.to_le_bytes());
+    b
+}
+
+/// The `stop` a [`BACKUP_END`] file holds, or `None` if it is damaged.
+fn decode_backup_end(b: &[u8]) -> Option<u64> {
+    let (stop, crc) = (b.get(..8)?, b.get(8..12)?);
+    (b.len() == 12 && crc32c::crc32c(stop).to_le_bytes() == crc)
+        .then(|| u64::from_le_bytes(stop.try_into().expect("8 bytes")))
+}
 
 /// Name of the data file of generation `g`.
 pub(crate) fn data_name(g: u64) -> String {
@@ -72,7 +102,7 @@ fn data_generation(name: &OsStr) -> Option<u64> {
 /// The generation of a file of the file set: `data-<g>` (TS-05) or a WAL
 /// segment `wal-<g>-<lsn>`, with `<lsn>` 16 lowercase hexadecimal digits
 /// (TS-09). Any other name is not part of the file set.
-fn file_set_generation(name: &OsStr) -> Option<u64> {
+pub(crate) fn file_set_generation(name: &OsStr) -> Option<u64> {
     if let Some(g) = data_generation(name) {
         return Some(g);
     }
@@ -82,6 +112,19 @@ fn file_set_generation(name: &OsStr) -> Option<u64> {
         return None;
     }
     decimal(g)
+}
+
+/// Whether create or open removes `name` from a location whose live
+/// generation is `live` (`None` for a location without `CONTROL`): a file
+/// of the file set of any other generation, a segment or a `CONTROL` whose
+/// creation a crash interrupted before its rename (TS-09, TS-05), or the run
+/// file of an interrupted sort ([`super::sort`]). Only names the crate
+/// creates match; `LOCK` and [`BACKUP_END`] never do.
+fn is_leftover(name: &OsStr, live: Option<u64>) -> bool {
+    file_set_generation(name).is_some_and(|g| Some(g) != live)
+        || name == TEMP_SEGMENT
+        || name == CONTROL_TMP
+        || is_sort_temp(name)
 }
 
 /// Checkpoint triggers (TS-11): every `interval` or every `commits`
@@ -120,6 +163,10 @@ pub(crate) struct RecoveryStats {
 
 /// The state of one open database, shared with its threads.
 pub(crate) struct Core {
+    /// The database location.
+    pub(crate) location: PathBuf,
+    /// The storage of the location.
+    pub(crate) storage: Arc<dyn Storage>,
     pub(crate) health: Arc<Health>,
     pub(crate) durable_lsn: Arc<AtomicU64>,
     pub(crate) accountant: Arc<MemoryAccountant>,
@@ -131,6 +178,17 @@ pub(crate) struct Core {
     pub(crate) checkpoints: Checkpoints,
     pub(crate) sink: Arc<dyn MetricsSink>,
     pub(crate) recovered: RecoveryStats,
+    /// Sorts started in this open: the number of the next one's files.
+    pub(crate) sorts: AtomicU64,
+    /// Held by a backup and by a bulk build for their whole run: they
+    /// exclude each other (TS-26, FR-OPS-001). A bulk build that finds it
+    /// held waits ([`Core::backup_or_load`]); a backup that finds it held
+    /// fails ([`Core::try_backup_or_load`]). Taken before the commit latch.
+    pub(crate) backup_or_load: Mutex<()>,
+    /// Tests only: how often a bulk build found [`Core::backup_or_load`]
+    /// held and waited for it.
+    #[cfg(test)]
+    pub(crate) load_waits: AtomicU64,
     /// Tests only: skip TS-16 step 2, so that the apply meets an overrun.
     #[cfg(test)]
     pub(crate) skip_reserve: std::sync::atomic::AtomicBool,
@@ -146,6 +204,36 @@ impl Core {
             data: &self.data,
             trees: &self.trees,
             health: &self.health,
+        }
+    }
+
+    /// The backup-or-load latch ([`Core::backup_or_load`]), for a bulk
+    /// build: waits while a backup holds it (TS-26 "a load requested while a
+    /// backup runs waits"). Counts a wait in tests. A panic under it leaves
+    /// nothing half done that the latch protects.
+    pub(crate) fn backup_or_load(&self) -> MutexGuard<'_, ()> {
+        match self.backup_or_load.try_lock() {
+            Ok(g) => g,
+            Err(std::sync::TryLockError::Poisoned(p)) => p.into_inner(),
+            Err(std::sync::TryLockError::WouldBlock) => {
+                #[cfg(test)]
+                self.load_waits
+                    .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                self.backup_or_load
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+            }
+        }
+    }
+
+    /// The backup-or-load latch ([`Core::backup_or_load`]), for a backup:
+    /// `None`, without waiting, while a bulk build holds it (FR-OPS-001 "a
+    /// backup requested during a fast initial load fails").
+    pub(crate) fn try_backup_or_load(&self) -> Option<MutexGuard<'_, ()>> {
+        match self.backup_or_load.try_lock() {
+            Ok(g) => Some(g),
+            Err(std::sync::TryLockError::Poisoned(p)) => Some(p.into_inner()),
+            Err(std::sync::TryLockError::WouldBlock) => None,
         }
     }
 
@@ -199,10 +287,14 @@ impl Engine {
     /// it (TS-05). `memory_cap` bounds the memory the database accounts for
     /// (FR-LIM-003).
     ///
-    /// Order: fail if `CONTROL` exists; create and lock `LOCK`; create
+    /// Order: fail if `CONTROL` exists; create and lock `LOCK`; fail if
+    /// `CONTROL` exists now; remove every file of the file set, `wal-temp`,
+    /// `CONTROL.tmp`, [`BACKUP_END`] and sort run files left by an
+    /// interrupted create or restore, never other files; create
     /// `data-1` with its header page and first extent, synced; `sync_dir`;
-    /// write `CONTROL` last, synced; `sync_dir`. A location is a database
-    /// exactly when `CONTROL` exists, so a crash before the last `sync_dir`
+    /// write `CONTROL` last, as `CONTROL.tmp`, synced, renamed to `CONTROL`;
+    /// `sync_dir`. A location is a database exactly when `CONTROL` exists,
+    /// and it exists only whole, so a failure or a crash before the rename
     /// leaves no database, and a later create overwrites what it left.
     ///
     /// # Errors
@@ -251,7 +343,16 @@ impl Engine {
             return Err(Error::DatabaseExists);
         }
         for name in s.list(location)? {
-            if data_generation(&name).is_some() {
+            // Without `CONTROL` the location holds no database (TS-05), so
+            // every file of the file set and every leftover the crate
+            // names is stale, as is the backup end of a restore that never
+            // wrote `CONTROL`: none of them applies to the new database. A
+            // WAL segment of another database would otherwise be replayed
+            // from the new redo point 0. As PostgreSQL removes its leftover
+            // temporary files at startup (R-PG
+            // `src/backend/storage/file/fd.c:3321`), only names the crate
+            // creates are removed.
+            if is_leftover(&name, None) || name == BACKUP_END {
                 s.remove(&location.join(name))?;
             }
         }
@@ -277,10 +378,9 @@ impl Engine {
             next_catalog_id: 0,
             next_token_id: 0,
         };
-        let control = ControlSlots::create(s, &location.join(CONTROL), control, health.clone())?;
-        s.sync_dir(location)?;
+        let control = ControlSlots::create(s, location, control, health.clone())?;
         Engine::start(
-            location, storage, memory_cap, sink, health, control, data, lock, tuning,
+            location, storage, memory_cap, sink, health, control, data, lock, tuning, 0,
         )
     }
 
@@ -292,11 +392,14 @@ impl Engine {
     /// would let a second handle open the database while the first still
     /// holds the lock on the deleted file; read both `CONTROL` slots and check
     /// the format version; remove the data files and WAL segments of every
-    /// other generation and a leftover temporary segment; recover from the
-    /// WAL ([`super::recovery`]); read
+    /// other generation, a leftover temporary segment, a leftover
+    /// `CONTROL.tmp` and the temporary files of interrupted sorts
+    /// ([`super::sort`]); recover from the WAL ([`super::recovery`]), which
+    /// must reach the `stop` of a [`BACKUP_END`] left by a restore; read
     /// page 0 of `data-<g>` and check it holds the same version; run the
-    /// open checkpoint (TS-13 step 8) and start the threads. A missing
-    /// `data-<g>` is corruption and is never recreated.
+    /// open checkpoint (TS-13 step 8) and start the threads; then remove
+    /// [`BACKUP_END`]. A missing `data-<g>` is corruption and is never
+    /// recreated.
     ///
     /// # Errors
     ///
@@ -307,7 +410,9 @@ impl Engine {
     /// [`Error::Corruption`] if both `CONTROL` slots
     /// are invalid, `data-<g>` is missing, page 0 fails its checksum, the
     /// versions differ (FR-REC-003), a WAL segment is missing or the WAL is
-    /// corrupt (FR-REC-008); [`Error::MigrationRequired`] for an older format and
+    /// corrupt (FR-REC-008), or the WAL ends before the `stop` of a
+    /// [`BACKUP_END`] or that file is damaged (TS-26 restore step 6);
+    /// [`Error::MigrationRequired`] for an older format and
     /// [`Error::NewerFormat`] for a newer one, both before anything is
     /// written (TS-28); [`Error::Io`].
     pub(crate) fn open(
@@ -372,11 +477,24 @@ impl Engine {
         })?;
         let data = Datafile::attach(data_file, health.clone(), sink.clone())?;
         let mut removed = false;
+        let mut min_wal_end = 0;
+        let mut backup_end = false;
         for name in s.list(location)? {
-            // Files of other generations (TS-05), and a segment whose
-            // creation a crash interrupted before its rename (TS-09).
-            if file_set_generation(&name).is_some_and(|g| g != c.generation) || name == TEMP_SEGMENT
-            {
+            if name == BACKUP_END {
+                let f = s.open(&location.join(BACKUP_END))?;
+                let mut b = [0u8; 13];
+                let n = f.read_at(&mut b, 0)?;
+                min_wal_end = decode_backup_end(&b[..n])
+                    .ok_or_else(|| Error::Corruption(format!("{BACKUP_END} fails its checksum")))?;
+                backup_end = true;
+                continue;
+            }
+            // Files of other generations (TS-05); a segment or a `CONTROL`
+            // whose creation a crash interrupted before its rename (TS-09,
+            // TS-05); the run files of a sort a crash interrupted, as
+            // PostgreSQL removes temporary files at startup (R-PG
+            // `src/backend/postmaster/postmaster.c:1332`).
+            if is_leftover(&name, Some(c.generation)) {
                 s.remove(&location.join(name))?;
                 removed = true;
             }
@@ -384,13 +502,30 @@ impl Engine {
         if removed {
             s.sync_dir(location)?;
         }
-        Engine::start(
-            location, storage, memory_cap, sink, health, control, data, lock, tuning,
-        )
+        let engine = Engine::start(
+            location,
+            storage.clone(),
+            memory_cap,
+            sink,
+            health,
+            control,
+            data,
+            lock,
+            tuning,
+            min_wal_end,
+        )?;
+        if backup_end {
+            // Recovery reached `stop` and the open checkpoint recorded a
+            // redo point at or past it, so later opens no longer need it.
+            storage.remove(&location.join(BACKUP_END))?;
+            storage.sync_dir(location)?;
+        }
+        Ok(engine)
     }
 
     /// TS-13 steps 4–6 and 8 on a location whose `LOCK` is held and whose
-    /// `CONTROL` was read, then the threads.
+    /// `CONTROL` was read, then the threads. Recovery must reach
+    /// `min_wal_end` (TS-26 restore step 6).
     #[expect(
         clippy::too_many_arguments,
         reason = "the parts create and open have prepared"
@@ -405,9 +540,18 @@ impl Engine {
         data: Datafile,
         lock: Box<dyn StorageLock>,
         tuning: Tuning,
+        min_wal_end: u64,
     ) -> Result<Engine> {
         let c = *control.current();
         let rec = recovery::recover(&*storage, location, c.generation, &c, &data)?;
+        if rec.wal_end < min_wal_end {
+            // PostgreSQL: "WAL ends before end of online backup" (R-PG
+            // `src/backend/access/transam/xlog.c:6598`).
+            return Err(Error::Corruption(format!(
+                "the WAL ends at {:#x}, before the end of the backup at {min_wal_end:#x}",
+                rec.wal_end
+            )));
+        }
         let header = data.load_header()?;
         if header.format_version != c.format_version {
             return Err(Error::Corruption(format!(
@@ -416,7 +560,7 @@ impl Engine {
             )));
         }
         let data = Arc::new(data);
-        let accountant = MemoryAccountant::new(memory_cap);
+        let accountant = MemoryAccountant::with_sink(memory_cap, sink.clone());
         // Every page in the data file is durable up to the WAL end.
         let durable_lsn = Arc::new(AtomicU64::new(rec.wal_end));
         let pool = Pool::new(
@@ -441,7 +585,7 @@ impl Engine {
         };
         let wal = Wal::new(
             location,
-            storage,
+            storage.clone(),
             c.generation,
             rec.segments,
             durable_lsn.clone(),
@@ -450,6 +594,8 @@ impl Engine {
             sink.clone(),
         );
         let core = Arc::new(Core {
+            location: location.to_path_buf(),
+            storage,
             health,
             durable_lsn,
             accountant,
@@ -461,6 +607,10 @@ impl Engine {
             checkpoints: Checkpoints::new(c.redo_point, tuning),
             sink,
             recovered,
+            sorts: AtomicU64::new(0),
+            backup_or_load: Mutex::new(()),
+            #[cfg(test)]
+            load_waits: AtomicU64::new(0),
             #[cfg(test)]
             skip_reserve: std::sync::atomic::AtomicBool::new(false),
             _lock: lock,
@@ -477,7 +627,10 @@ impl Engine {
         };
         let core = engine.core.clone();
         engine.spawn("lpg-wal", move || {
-            core.wal.run_writer(|spare| core.close_group(spare));
+            core.wal.run_writer(
+                |spare| core.close_group(spare),
+                || core.checkpoints.request_precreate(),
+            );
         })?;
         let core = engine.core.clone();
         engine.spawn("lpg-checkpoint", move || checkpoint::run_thread(&core))?;

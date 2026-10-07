@@ -85,6 +85,12 @@ pub(crate) mod recovery;
 )]
 pub(crate) mod wal;
 
+#[cfg_attr(
+    not(test),
+    allow(dead_code, reason = "first non-test callers come with Sprints 2 and 4")
+)]
+pub(crate) mod sort;
+
 #[cfg(test)]
 pub(crate) mod fault;
 

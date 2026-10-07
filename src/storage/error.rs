@@ -48,6 +48,27 @@ pub(crate) enum Error {
     },
     /// An argument is outside its allowed range.
     InvalidArgument(&'static str),
+    /// A backup artefact has no valid `MANIFEST`: the backup did not
+    /// complete (TS-26 restore step 2).
+    IncompleteBackup(String),
+    /// A backup was requested while a fast initial load runs its bulk
+    /// build, whose pages bypass the WAL (TS-26, FR-OPS-001).
+    LoadRunning,
+    /// Migration needs a clean shutdown: the database must be opened and
+    /// closed with the crate version that wrote it (TS-28 step 2).
+    NotCleanlyClosed {
+        /// Crate version to open and close the database with.
+        crate_version: &'static str,
+    },
+    /// The format is more than one version older than this crate's: an
+    /// intermediate crate version must migrate it first (TS-28,
+    /// FR-OPS-012).
+    MigrationPath {
+        /// Format version found.
+        found: u32,
+        /// The crate version that migrates format `found` to the next one.
+        crate_version: Option<&'static str>,
+    },
 }
 
 /// Result of the storage kernel.
@@ -85,6 +106,33 @@ impl fmt::Display for Error {
                 )
             }
             Error::InvalidArgument(what) => write!(f, "invalid argument: {what}"),
+            Error::IncompleteBackup(what) => {
+                write!(f, "the backup is incomplete or damaged: {what}")
+            }
+            Error::LoadRunning => {
+                f.write_str("a fast initial load is running; a backup cannot run until it ends")
+            }
+            Error::NotCleanlyClosed { crate_version } => write!(
+                f,
+                "the database was not closed cleanly; open and close it with lpg \
+                 {crate_version} before migrating it"
+            ),
+            Error::MigrationPath {
+                found,
+                crate_version: Some(v),
+            } => write!(
+                f,
+                "format version {found} is too old to migrate directly; migrate it with \
+                 lpg {v} first"
+            ),
+            Error::MigrationPath {
+                found,
+                crate_version: None,
+            } => write!(
+                f,
+                "format version {found} is too old to migrate and no crate version is known \
+                 that migrates it"
+            ),
         }
     }
 }

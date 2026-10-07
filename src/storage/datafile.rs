@@ -413,7 +413,7 @@ mod tests {
     use super::*;
     use crate::obs::recording::RecordingSink;
     use crate::storage::FsStorage;
-    use crate::storage::fault::{Call, FaultStorage};
+    use crate::storage::fault::{Call, Crash, FaultStorage, Kind};
 
     fn create(storage: &dyn Storage, path: &Path) -> (Datafile, Arc<RecordingSink>) {
         let sink = Arc::new(RecordingSink::default());
@@ -432,7 +432,7 @@ mod tests {
 
     #[test]
     fn create_writes_header_and_reserves_first_extent() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("data-1");
         let (data, sink) = create(&crate::test_support::NoFlush, &path);
         assert_eq!(data.reserved_pages(), MIN_EXTENT_PAGES);
@@ -465,7 +465,7 @@ mod tests {
 
     #[test]
     fn ensure_grows_by_whole_extents_in_one_reserve() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let s = FaultStorage::new(Box::new(FsStorage));
         let path = dir.path().join("data-1");
         let (data, _) = create(&s, &path);
@@ -495,7 +495,7 @@ mod tests {
 
     #[test]
     fn ensure_enospc_has_no_side_effects_and_reads_continue() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let s = FaultStorage::new(Box::new(FsStorage));
         let path = dir.path().join("data-1");
         let (data, sink) = create(&s, &path);
@@ -520,7 +520,7 @@ mod tests {
 
     #[test]
     fn allocate_without_reserve_is_enospc() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let (data, _) = create(&crate::test_support::NoFlush, &dir.path().join("data-1"));
         for _ in 2..MIN_EXTENT_PAGES {
             data.allocate().unwrap();
@@ -531,7 +531,7 @@ mod tests {
 
     #[test]
     fn writes_outside_reserved_space_are_refused() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let (data, _) = create(&crate::test_support::NoFlush, &dir.path().join("data-1"));
         let buf = vec![0u8; PAGE_SIZE];
         assert!(matches!(
@@ -542,7 +542,7 @@ mod tests {
 
     #[test]
     fn checksum_and_io_failures_set_the_latch() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("data-1");
         let (data, _) = create(&crate::test_support::NoFlush, &path);
         let mut buf = vec![0u8; PAGE_SIZE];
@@ -566,7 +566,7 @@ mod tests {
     /// with corruption and sets the unusable latch.
     #[test]
     fn a_valid_image_of_another_page_fails_the_read_as_corruption() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let (data, _) = create(&crate::test_support::NoFlush, &dir.path().join("data-1"));
         let (a, b) = (data.allocate().unwrap(), data.allocate().unwrap());
         let mut image_a = vec![0u8; PAGE_SIZE];
@@ -583,9 +583,83 @@ mod tests {
         assert!(matches!(data.ensure(1), Err(Error::Unusable)));
     }
 
+    /// TS-30 R9 (rmp #20) with the page number binding of TS-12 (#23): a
+    /// misdirected write and a lost write of [`FaultStorage`] each look
+    /// successful, and reads in the process see the written page, but after
+    /// a crash the page checksum detects them. The misdirected image of A
+    /// lands at B, where it is a valid image of A only: the read of B fails
+    /// as corruption and sets the unusable latch, and A still holds what it
+    /// held before. A lost first write of C leaves C's zeros, which fail the
+    /// checksum. A lost write over an older valid image of the same page
+    /// leaves that image, which no page checksum can tell from the newer
+    /// one; it is not tested here.
+    #[test]
+    fn misdirected_and_lost_writes_are_detected_by_the_page_checksum() {
+        let dir = crate::test_support::graph_dir();
+        let path = dir.path().join("data-1");
+        let s = FaultStorage::new(Box::new(FsStorage));
+        s.skip_device_sync();
+        let (data, _) = create(&s, &path);
+        s.sync_dir(dir.path()).unwrap();
+        let (a, b, c) = (
+            data.allocate().unwrap(),
+            data.allocate().unwrap(),
+            data.allocate().unwrap(),
+        );
+        let image = |p: u64, fill: u8| {
+            let mut buf = vec![0u8; PAGE_SIZE];
+            page::init(&mut buf, PageType::Leaf, 7);
+            buf[100..200].fill(fill);
+            page::seal(&mut buf, p);
+            buf
+        };
+        // B holds a durable valid image first, A none.
+        data.write_page(b, &image(b, 1)).unwrap();
+        data.sync().unwrap();
+        let writes = s.count(Kind::WriteAt);
+        s.misdirect_nth(writes + 1, (b - a) * PAGE_BYTES);
+        s.lose_nth(writes + 2);
+        data.write_page(a, &image(a, 2)).unwrap();
+        data.write_page(c, &image(c, 3)).unwrap();
+        // Before the crash, the process reads what it wrote.
+        let mut back = vec![0u8; PAGE_SIZE];
+        data.read_page(a, &mut back).unwrap();
+        assert_eq!(back, image(a, 2));
+        data.read_page(c, &mut back).unwrap();
+        assert_eq!(back, image(c, 3));
+        data.sync().unwrap();
+        drop(data);
+        s.crash(Crash::DropAll).unwrap();
+        let reopen = || {
+            Datafile::open(
+                FsStorage.open(&path).unwrap(),
+                Arc::default(),
+                Arc::new(RecordingSink::default()),
+            )
+            .unwrap()
+            .0
+        };
+        // B holds A's valid image: only the page number binding detects it.
+        let data = reopen();
+        data.read_page_unverified(b, &mut back).unwrap();
+        assert!(page::verify(&back, a), "B holds A's misdirected image");
+        let r = data.read_page(b, &mut back);
+        assert!(matches!(r, Err(Error::Corruption(_))), "{r:?}");
+        assert!(data.health.is_unusable());
+        for p in [a, c] {
+            let data = reopen();
+            let r = data.read_page(p, &mut back);
+            assert!(
+                matches!(r, Err(Error::Corruption(_))),
+                "page {p} reads back a write that was never durable: {r:?}"
+            );
+            assert!(data.health.is_unusable());
+        }
+    }
+
     #[test]
     fn open_rejects_bad_page_count() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("data-1");
         let (data, _) = create(&crate::test_support::NoFlush, &path);
         let mut buf = vec![0u8; PAGE_SIZE];

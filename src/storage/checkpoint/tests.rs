@@ -292,6 +292,31 @@ fn every_kernel_metric_category_reports() {
     assert!(m.gauge(store_size::DATABASE).is_some());
 }
 
+/// Audit finding 12 (2026-10-03), FR-OBS-001: the buffer pool's hit and
+/// page-fault counts reach the metrics sink through a production caller,
+/// the checkpoint, with no direct call of `Pool::publish_metrics`. A
+/// reopened database starts with an empty pool, so its first read of the
+/// key faults its pages in and the second hits them.
+#[test]
+fn a_checkpoint_publishes_the_page_cache_hits_and_faults() {
+    let dir = test_dirs().remove(0);
+    let e = Engine::create(dir.path(), fs(), CAP, sink()).unwrap();
+    let tree = e.create_trees(1).unwrap()[0];
+    e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
+    e.close().unwrap();
+    let s = Arc::new(RecordingSink::default());
+    let e = Engine::open(dir.path(), fs(), CAP, s.clone()).unwrap();
+    let before = s.snapshot();
+    let mut out = Vec::new();
+    for _ in 0..2 {
+        assert!(e.store().get(tree, b"a", &mut out).unwrap());
+    }
+    e.checkpoint().unwrap();
+    let m = s.snapshot().since(&before);
+    assert!(m.counter(cache::HITS) > 0, "no hit published");
+    assert!(m.counter(cache::PAGE_FAULTS) > 0, "no page fault published");
+}
+
 /// TS-02: each open database runs the threads `lpg-wal` and
 /// `lpg-checkpoint`. A spawned thread sets its own name when it starts
 /// (`std` `thread/lifecycle.rs`), so the test waits for the names.

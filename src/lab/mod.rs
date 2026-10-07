@@ -24,10 +24,13 @@ use rustix::fs::{Advice, Mode, OFlags};
 
 use crate::obs::recording::{Metrics, RecordingSink};
 
+mod backup;
 mod btree;
+mod bulk;
 mod commit;
 mod files;
 mod generator;
+mod migrate;
 mod obs;
 mod pool;
 mod recovery;

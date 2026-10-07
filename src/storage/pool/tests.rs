@@ -6,6 +6,7 @@ use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
 
 use super::*;
+use crate::obs::names::cache::ACCOUNTED_BYTES;
 use crate::obs::recording::RecordingSink;
 use crate::storage::engine::{Engine, data_name};
 use crate::storage::fault::{Call, FaultStorage};
@@ -379,4 +380,45 @@ fn reserve_takes_clean_frames_before_dirty_ones() {
         held.push(r);
     }
     assert_eq!(e.pool().buffer_frames(), e.pool().floor_frames());
+}
+
+/// Task #15: a page copy's reservation takes the clock's first victim,
+/// dirty or clean, as a miss does, and never runs the clean-only sweep,
+/// which visited and aged the whole frame table on a pool of dirty frames
+/// (80.6 % of put time at 10 % cache, laboratory report #15). Here the one
+/// clean frame has the highest usage count: the clean-only sweep would age
+/// every frame until it could take it, writing nothing; the miss-path
+/// sweep takes a dirty frame at usage 0 first and writes it.
+#[test]
+fn a_page_copy_reservation_takes_the_first_victim_dirty_or_clean() {
+    const CAP: u64 = 1 << 20;
+    let dir = test_dirs().remove(0);
+    let fault = Arc::new(FaultStorage::new(Box::new(FsStorage)));
+    let (e, _) = engine(dir.path(), fault.clone(), CAP);
+    let pages = write_pages(e.data(), CAP / PAGE_BYTES / 2);
+    for p in pages.clone() {
+        e.pool().fetch(p).unwrap();
+    }
+    let clean = pages.start;
+    for p in pages.clone().skip(1) {
+        drop(e.pool().fetch(p).unwrap().write().unwrap());
+    }
+    for _ in 0..MAX_USAGE {
+        e.pool().fetch(clean).unwrap();
+    }
+    let writes = || {
+        fault
+            .calls()
+            .iter()
+            .filter(|c| matches!(c, Call::WriteAt { .. }))
+            .count()
+    };
+    let spare = CAP - e.accountant().used();
+    assert!(e.accountant().try_charge(spare));
+    let before = writes();
+    let copy = e.pool().reserve_page_copy().unwrap();
+    assert_eq!(writes(), before + 1, "a dirty victim was written");
+    assert!(e.pool().resident(clean).is_some(), "the clean frame stays");
+    drop(copy);
+    e.accountant().release(spare);
 }

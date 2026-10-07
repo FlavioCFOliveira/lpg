@@ -26,11 +26,14 @@
 //! or 1. The valid slot with the higher sequence number is authoritative.
 //! Each write goes to the other slot with the next sequence number, with
 //! `write_at` and then `sync_data`, so a torn write can damage only the
-//! slot that is not authoritative.
+//! slot that is not authoritative. The file itself is created whole under
+//! a temporary name and renamed ([`write_new`]).
 
+use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
+use super::engine::{CONTROL, CONTROL_TMP};
 use super::error::{Error, Health, Result};
 use super::{Storage, StorageFile};
 use crate::obs::MetricsSink;
@@ -75,7 +78,7 @@ fn u32_at(b: &[u8], at: usize) -> u32 {
 }
 
 /// Encodes one slot.
-fn encode(c: &Control, sequence: u64) -> [u8; SLOT_SIZE] {
+pub(crate) fn encode(c: &Control, sequence: u64) -> [u8; SLOT_SIZE] {
     let mut s = [0u8; SLOT_SIZE];
     s[4..12].copy_from_slice(&MAGIC);
     s[12..20].copy_from_slice(&sequence.to_le_bytes());
@@ -96,7 +99,7 @@ fn encode(c: &Control, sequence: u64) -> [u8; SLOT_SIZE] {
 
 /// Decodes one slot: its record and sequence number, or `None` if the slot
 /// is invalid.
-fn decode(s: &[u8]) -> Option<(Control, u64)> {
+pub(crate) fn decode(s: &[u8]) -> Option<(Control, u64)> {
     if u32_at(s, 0) != crc32c::crc32c(&s[4..SLOT_SIZE]) || s[4..12] != MAGIC || s[52] > 1 {
         return None;
     }
@@ -115,6 +118,31 @@ fn decode(s: &[u8]) -> Option<(Control, u64)> {
     Some((control, u64_at(s, 12)))
 }
 
+/// Creates `CONTROL` in `dir` holding `both` atomically: the bytes are
+/// written to [`CONTROL_TMP`] and synced, which is then renamed to
+/// `CONTROL` and made durable with `sync_dir`. A failure or a crash at any
+/// point leaves either no `CONTROL` or a complete, synced one, so a location
+/// is a database exactly when its `CONTROL` is valid (TS-05, TS-26 restore
+/// step 5). A [`CONTROL_TMP`] left by an interrupted run is replaced, and
+/// open removes one. This is PostgreSQL's `durable_rename` (R-PG
+/// `src/common/file_utils.c:483`), the way `wal-temp` and `MANIFEST` are
+/// written. Returns the open file, now named `CONTROL`.
+fn write_new(storage: &dyn Storage, dir: &Path, both: &[u8]) -> io::Result<Box<dyn StorageFile>> {
+    let tmp = dir.join(CONTROL_TMP);
+    let file = match storage.create(&tmp) {
+        Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {
+            storage.remove(&tmp)?;
+            storage.create(&tmp)?
+        }
+        r => r?,
+    };
+    file.write_at(both, 0)?;
+    file.sync_data()?;
+    storage.rename(&tmp, &dir.join(CONTROL))?;
+    storage.sync_dir(dir)?;
+    Ok(file)
+}
+
 /// An open `CONTROL` file.
 pub(crate) struct ControlSlots {
     file: Box<dyn StorageFile>,
@@ -126,9 +154,8 @@ pub(crate) struct ControlSlots {
 }
 
 impl ControlSlots {
-    /// Creates `path` holding `control` in both slots, with sequence
-    /// numbers 0 and 1, and syncs it. Making the name durable is the
-    /// caller's `sync_dir`.
+    /// Creates `CONTROL` in the directory `dir` holding `control` in both
+    /// slots, with sequence numbers 0 and 1, atomically ([`write_new`]).
     ///
     /// # Errors
     ///
@@ -136,17 +163,14 @@ impl ControlSlots {
     /// unusable latch.
     pub(crate) fn create(
         storage: &dyn Storage,
-        path: &Path,
+        dir: &Path,
         control: Control,
         health: Arc<Health>,
     ) -> Result<ControlSlots> {
-        let file = storage.create(path)?;
         let mut both = [0u8; 2 * SLOT_SIZE];
         both[..SLOT_SIZE].copy_from_slice(&encode(&control, 0));
         both[SLOT_SIZE..].copy_from_slice(&encode(&control, 1));
-        file.write_at(&both, 0)
-            .and_then(|()| file.sync_data())
-            .map_err(|e| health.fail(e.into()))?;
+        let file = write_new(storage, dir, &both).map_err(|e| health.fail(e.into()))?;
         Ok(ControlSlots {
             file,
             current: control,
@@ -197,6 +221,40 @@ impl ControlSlots {
             slot,
             health,
         })
+    }
+
+    /// Creates `CONTROL` in the directory `dir` holding one valid slot,
+    /// slot 0, with `control` and sequence number `sequence`; slot 1 is
+    /// zeroed, so it is invalid (TS-26 restore step 5). Atomic, as
+    /// [`ControlSlots::create`].
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Io`] from the storage.
+    pub(crate) fn create_single(
+        storage: &dyn Storage,
+        dir: &Path,
+        control: &Control,
+        sequence: u64,
+    ) -> Result<()> {
+        let mut both = [0u8; 2 * SLOT_SIZE];
+        both[..SLOT_SIZE].copy_from_slice(&encode(control, sequence));
+        write_new(storage, dir, &both)?;
+        Ok(())
+    }
+
+    /// Both slots as stored, read through the open file: the `CONTROL`
+    /// copy of a backup (TS-26 step 2). The caller holds the `CONTROL`
+    /// latch, so no slot write is in progress.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Io`] from the storage.
+    pub(crate) fn raw(&self) -> Result<Vec<u8>> {
+        let mut both = vec![0u8; 2 * SLOT_SIZE];
+        let n = self.file.read_at(&mut both, 0)?;
+        both.truncate(n);
+        Ok(both)
     }
 
     /// The authoritative record.
@@ -300,12 +358,12 @@ pub(crate) mod tests {
 
     #[test]
     fn writes_alternate_and_higher_sequence_wins() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("CONTROL");
         let sink = RecordingSink::default();
         let mut cf = ControlSlots::create(
             &crate::test_support::NoFlush,
-            &path,
+            dir.path(),
             sample(),
             Arc::default(),
         )
@@ -333,12 +391,12 @@ pub(crate) mod tests {
     #[test]
     fn one_invalid_slot_opens_from_the_other_counts_and_is_rewritten() {
         for torn in [0, 1] {
-            let dir = tempfile::tempdir().unwrap();
+            let dir = crate::test_support::graph_dir();
             let path = dir.path().join("CONTROL");
             let sink = RecordingSink::default();
             let mut cf = ControlSlots::create(
                 &crate::test_support::NoFlush,
-                &path,
+                dir.path(),
                 sample(),
                 Arc::default(),
             )
@@ -378,11 +436,11 @@ pub(crate) mod tests {
 
     #[test]
     fn both_slots_invalid_is_corruption() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("CONTROL");
         ControlSlots::create(
             &crate::test_support::NoFlush,
-            &path,
+            dir.path(),
             sample(),
             Arc::default(),
         )
@@ -396,12 +454,10 @@ pub(crate) mod tests {
     #[test]
     fn failed_sync_sets_the_latch() {
         use crate::storage::fault::FaultStorage;
-        let dir = tempfile::tempdir().unwrap();
+        let dir = crate::test_support::graph_dir();
         let s = FaultStorage::new(Box::new(FsStorage));
         let health = Arc::new(Health::default());
-        let mut cf =
-            ControlSlots::create(&s, &dir.path().join("CONTROL"), sample(), health.clone())
-                .unwrap();
+        let mut cf = ControlSlots::create(&s, dir.path(), sample(), health.clone()).unwrap();
         s.fail_sync_data(2);
         assert!(matches!(cf.write(sample()), Err(Error::Io(_))));
         assert!(health.is_unusable());

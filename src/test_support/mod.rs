@@ -2,7 +2,7 @@
 
 use std::ffi::OsString;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::storage::{FsStorage, Storage, StorageFile, StorageLock};
@@ -38,8 +38,52 @@ pub(crate) fn thread_names() -> Vec<String> {
     names
 }
 
+/// The seed of a seeded fault test (TS-30 R5): `LPG_SEED` if set, else a
+/// random one. It is printed, so a failing test shows the seed that
+/// reproduces it (the test harness shows the output of failed tests).
+/// Turso takes its test seed from `SEED` or the clock the same way (R-TURSO
+/// `tests/integration/common.rs:535-547`).
+pub(crate) fn seed() -> u64 {
+    let seed = std::env::var("LPG_SEED").map_or_else(
+        |_| rand::random(),
+        |v| v.parse().expect("LPG_SEED is a u64"),
+    );
+    eprintln!("LPG_SEED={seed}");
+    seed
+}
+
+/// Base directory of the tests' graph data files (CLAUDE.md, "Graph data
+/// files in `/tmp/lpgram`"). `/tmp` is a RAM-backed `tmpfs` on the
+/// development machine: it only accelerates the file I/O of tests and is
+/// never a production scenario.
+pub(crate) const GRAPH_DIR: &str = "/tmp/lpgram";
+
+/// A new directory for one test's graph data files under [`GRAPH_DIR`],
+/// removed with its content when the returned guard is dropped. Every test
+/// that creates graph data files gets its directory here, unless it needs
+/// persistent storage or a named file system ([`test_dirs`]).
+///
+/// # Panics
+///
+/// If the directory cannot be created.
+pub(crate) fn graph_dir() -> tempfile::TempDir {
+    tempfile::tempdir_in(graph_base()).expect("create a test directory in /tmp/lpgram")
+}
+
+/// [`GRAPH_DIR`], created if missing, for a caller that makes its own
+/// per-run subdirectory in it and removes it ([`tempfile::tempdir_in`]).
+///
+/// # Panics
+///
+/// If [`GRAPH_DIR`] cannot be created.
+pub(crate) fn graph_base() -> &'static Path {
+    std::fs::create_dir_all(GRAPH_DIR).expect("create /tmp/lpgram");
+    Path::new(GRAPH_DIR)
+}
+
 /// Directories a test runs in: one under `LPG_LAB_EXT4` and one under
-/// `LPG_LAB_XFS` when set, else one under the system temporary directory.
+/// `LPG_LAB_XFS` when set, which name persistent ext4 and XFS directories
+/// (NFR-PLAT-004); else one under [`GRAPH_DIR`] ([`graph_dir`]).
 pub(crate) fn test_dirs() -> Vec<tempfile::TempDir> {
     let dirs: Vec<_> = ["LPG_LAB_EXT4", "LPG_LAB_XFS"]
         .iter()
@@ -47,7 +91,7 @@ pub(crate) fn test_dirs() -> Vec<tempfile::TempDir> {
         .map(|d| tempfile::tempdir_in(d).expect("create test directory"))
         .collect();
     if dirs.is_empty() {
-        vec![tempfile::tempdir().expect("create test directory")]
+        vec![graph_dir()]
     } else {
         dirs
     }
@@ -86,15 +130,49 @@ pub(crate) fn no_flush() -> Arc<dyn Storage> {
     Arc::new(NoFlush)
 }
 
-struct NoFlushFile(Box<dyn StorageFile>);
+struct NoFlushFile(Box<dyn StorageFile>, PathBuf);
+
+/// [`StorageFile::reserve`] as the test storages ([`NoFlush`] and
+/// [`crate::storage::fault::FaultStorage`]) pass it to the file system.
+/// Under [`GRAPH_DIR`] it only extends the file length, as `set_len` does,
+/// which reads back the same zeros: a `tmpfs` `fallocate` takes real memory
+/// (the 64 MiB first extent of every test database, TS-05), and a `tmpfs`
+/// says nothing about the space guarantees of a real disk anyway
+/// (CLAUDE.md). Those guarantees are tested on the model of `FaultStorage`
+/// (its space budget) and on [`FsStorage`] itself, which always calls
+/// `fallocate`. Elsewhere (`LPG_LAB_EXT4`, `LPG_LAB_XFS`) the call is
+/// passed unchanged.
+pub(crate) fn reserve(
+    file: &dyn StorageFile,
+    path: &Path,
+    offset: u64,
+    len: u64,
+) -> io::Result<()> {
+    if !path.starts_with(GRAPH_DIR) {
+        return file.reserve(offset, len);
+    }
+    let end = offset
+        .checked_add(len)
+        .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidInput))?;
+    if file.len()? < end {
+        file.set_len(end)?;
+    }
+    Ok(())
+}
 
 impl Storage for NoFlush {
     fn open(&self, path: &Path) -> io::Result<Box<dyn StorageFile>> {
-        Ok(Box::new(NoFlushFile(FsStorage.open(path)?)))
+        Ok(Box::new(NoFlushFile(
+            FsStorage.open(path)?,
+            path.to_path_buf(),
+        )))
     }
 
     fn create(&self, path: &Path) -> io::Result<Box<dyn StorageFile>> {
-        Ok(Box::new(NoFlushFile(FsStorage.create(path)?)))
+        Ok(Box::new(NoFlushFile(
+            FsStorage.create(path)?,
+            path.to_path_buf(),
+        )))
     }
 
     fn remove(&self, path: &Path) -> io::Result<()> {
@@ -144,6 +222,6 @@ impl StorageFile for NoFlushFile {
     }
 
     fn reserve(&self, offset: u64, len: u64) -> io::Result<()> {
-        self.0.reserve(offset, len)
+        reserve(&*self.0, &self.1, offset, len)
     }
 }

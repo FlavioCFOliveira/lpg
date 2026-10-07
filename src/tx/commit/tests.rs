@@ -359,7 +359,7 @@ fn sixteen_threads_committing_disjoint_batches_apply_each_exactly_once() {
 /// 4 MiB value), so with it the reserve would never drop below `left`. Each
 /// value takes about half of the unused pages above `left`, so no fill
 /// commit overruns the reserve.
-fn use_up_reserve(e: &Engine, tree: Tree, model: &mut Model, left: u64) {
+pub(crate) fn use_up_reserve(e: &Engine, tree: Tree, model: &mut Model, left: u64) {
     e.core().skip_reserve.store(true, Ordering::Relaxed);
     let mut i = 0;
     loop {
@@ -601,7 +601,7 @@ fn commits_raise_counters_and_failed_commits_do_not() {
 /// Joins a batch to the open group under the commit latch `st`, as TS-16
 /// step 7 does, without step 8: the group stays open and is not durable,
 /// as it is while the committer has not yet been served by the writer.
-fn audit_join(st: &mut crate::storage::btree::WriteState) -> u64 {
+pub(crate) fn audit_join(st: &mut crate::storage::btree::WriteState) -> u64 {
     let log = st.log();
     let ts = log.counters.commit_ts + 1;
     log.counters.commit_ts = ts;
@@ -1128,6 +1128,13 @@ fn an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact() {
         assert_eq!(st.free_list().trunk_pages().collect::<Vec<_>>(), [trunk]);
     }
     evict_all(&e);
+    // The frames left at the pool's floor are replaced by misses: reading
+    // the tree turns the clock over them. Which frames remain at the floor
+    // depends on the order of earlier evictions (task #15 changed it for
+    // page copies), so the trunk may be one of them.
+    for _ in 0..2 {
+        e.store().scan_prefix(tree, b"", |_, _| true).unwrap();
+    }
     assert!(
         e.pool().resident(trunk).is_none(),
         "precondition: the trunk left the pool"
@@ -1297,4 +1304,285 @@ fn pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable() {
     }
     assert!(evicted > 0, "precondition: a taken page was evicted");
     assert_state(&e, tree, &model);
+}
+
+/// [`crate::test_support::NoFlush`] whose `sync_data` takes `delay`, as a
+/// device flush does: the writer's gather window is half the last group's
+/// write and sync (task #15).
+struct SlowSync(Duration);
+
+struct SlowFile(Box<dyn crate::storage::StorageFile>, Duration);
+
+impl crate::storage::Storage for SlowSync {
+    fn open(&self, p: &Path) -> std::io::Result<Box<dyn crate::storage::StorageFile>> {
+        Ok(Box::new(SlowFile(
+            crate::test_support::NoFlush.open(p)?,
+            self.0,
+        )))
+    }
+    fn create(&self, p: &Path) -> std::io::Result<Box<dyn crate::storage::StorageFile>> {
+        Ok(Box::new(SlowFile(
+            crate::test_support::NoFlush.create(p)?,
+            self.0,
+        )))
+    }
+    fn remove(&self, p: &Path) -> std::io::Result<()> {
+        crate::test_support::NoFlush.remove(p)
+    }
+    fn rename(&self, a: &Path, b: &Path) -> std::io::Result<()> {
+        crate::test_support::NoFlush.rename(a, b)
+    }
+    fn list(&self, d: &Path) -> std::io::Result<Vec<std::ffi::OsString>> {
+        crate::test_support::NoFlush.list(d)
+    }
+    fn sync_dir(&self, _: &Path) -> std::io::Result<()> {
+        Ok(())
+    }
+    fn try_lock(&self, p: &Path) -> std::io::Result<Box<dyn crate::storage::StorageLock>> {
+        crate::test_support::NoFlush.try_lock(p)
+    }
+    fn available_space(&self, d: &Path) -> std::io::Result<u64> {
+        crate::test_support::NoFlush.available_space(d)
+    }
+}
+
+impl crate::storage::StorageFile for SlowFile {
+    fn read_at(&self, b: &mut [u8], o: u64) -> std::io::Result<usize> {
+        self.0.read_at(b, o)
+    }
+    fn write_at(&self, b: &[u8], o: u64) -> std::io::Result<()> {
+        self.0.write_at(b, o)
+    }
+    fn sync_data(&self) -> std::io::Result<()> {
+        std::thread::sleep(self.1);
+        Ok(())
+    }
+    fn set_len(&self, l: u64) -> std::io::Result<()> {
+        self.0.set_len(l)
+    }
+    fn len(&self) -> std::io::Result<u64> {
+        self.0.len()
+    }
+    fn reserve(&self, o: u64, l: u64) -> std::io::Result<()> {
+        self.0.reserve(o, l)
+    }
+}
+
+/// Commits `n` one-key batches from each of `threads` threads into a new
+/// database on [`SlowSync`] and returns the engine, the sink and the
+/// commits per WAL group.
+fn closed_loop(dir: &Path, threads: usize, n: usize) -> (Engine, Arc<RecordingSink>, f64) {
+    use crate::obs::names::transaction_log::GROUPS;
+    let sink = sink();
+    let storage: Arc<dyn crate::storage::Storage> = Arc::new(SlowSync(Duration::from_millis(2)));
+    let e = Engine::create(dir, storage, CAP, sink.clone()).unwrap();
+    let tree = e.create_trees(1).unwrap()[0];
+    let before = sink.snapshot();
+    std::thread::scope(|s| {
+        for t in 0..threads {
+            let e = &e;
+            s.spawn(move || {
+                for i in 0..n {
+                    let k = key(t, i, 0);
+                    e.commit(&[put(tree, &k, b"v")], Ids::default()).unwrap();
+                }
+            });
+        }
+    });
+    let groups = sink.snapshot().since(&before).counter(GROUPS);
+    let per_group = (threads * n) as f64 / groups as f64;
+    (e, sink, per_group)
+}
+
+/// Task #15 gather window: committers woken by one group rejoin before the
+/// writer closes the next, so four committers in a closed loop share one
+/// flush instead of waiting for two (laboratory report, #15 "Open point
+/// 1": 2.00 commits per group before, 3.98 with a window). Fails with the
+/// window removed (2.0 commits per group).
+#[test]
+fn four_closed_loop_committers_share_one_flush() {
+    let dir = test_dirs().remove(0);
+    let (e, _, per_group) = closed_loop(dir.path(), 4, 25);
+    assert!(
+        e.wal().points.gathers.load(Ordering::Relaxed) > 0,
+        "the writer never gathered"
+    );
+    assert!(per_group >= 2.5, "{per_group:.2} commits per group");
+}
+
+/// Task #15: a lone committer never waits in a gather window, so its
+/// latency stays one flush. Fails if the window opens whatever the number
+/// of recent committers.
+#[test]
+fn a_lone_committer_never_waits_in_a_gather_window() {
+    let dir = test_dirs().remove(0);
+    let (e, _, per_group) = closed_loop(dir.path(), 1, 20);
+    assert_eq!(e.wal().points.gathers.load(Ordering::Relaxed), 0);
+    assert!((per_group - 1.0).abs() < f64::EPSILON);
+}
+
+/// Task #15, D4: a segment created ahead of use is filled outside the
+/// segment map and off the WAL writer thread, so commits that do not need
+/// it become durable while it is being created. Before the fix the writer
+/// created it while holding the map, and these commits waited 18-40 ms per
+/// creation (laboratory report, #15 "Open point 4"); with the creation
+/// held at its pause point they never return, and the test fails.
+#[test]
+fn commits_become_durable_while_a_segment_is_created_ahead_of_use() {
+    use std::sync::mpsc;
+    let dir = test_dirs().remove(0);
+    let e = Arc::new(Engine::create(dir.path(), fault(), CAP, sink()).unwrap());
+    let tree = e.create_trees(1).unwrap()[0];
+    let value = [1u8; 400];
+    let keys: Vec<Vec<u8>> = (0..2_000u32).map(|i| i.to_be_bytes().to_vec()).collect();
+    for chunk in keys.chunks(500) {
+        let batch: Vec<Write<'_>> = chunk.iter().map(|k| put(tree, k, &value)).collect();
+        e.commit(&batch, Ids::default()).unwrap();
+    }
+    // The creation ahead of use stops at its pause point until released.
+    // Only the checkpointer thread's creation stops: a committer that had to
+    // create the segment itself would block under the commit latch.
+    let (entered_tx, entered) = mpsc::channel();
+    let release = Arc::new((Mutex::new(false), std::sync::Condvar::new()));
+    /// Releases the paused creation when dropped, also when an assertion
+    /// below fails: otherwise the engine's drop would wait for the paused
+    /// checkpointer forever and the test would hang instead of failing.
+    struct Release(Arc<(Mutex<bool>, std::sync::Condvar)>);
+    impl Drop for Release {
+        fn drop(&mut self) {
+            let (m, cv) = &*self.0;
+            *m.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = true;
+            cv.notify_all();
+        }
+    }
+    {
+        let release = Arc::clone(&release);
+        let entered_tx = Mutex::new(entered_tx);
+        *e.wal().points.segment_created.lock().unwrap() = Some(Box::new(move || {
+            if std::thread::current().name() != Some("lpg-checkpoint") {
+                return;
+            }
+            let _ = entered_tx.lock().unwrap().send(());
+            let (m, cv) = &*release;
+            let mut go = m.lock().unwrap();
+            while !*go {
+                go = cv.wait(go).unwrap();
+            }
+        }));
+    }
+    // Declared after `e`, so it is dropped, and the creation released,
+    // before `e` is.
+    let released = Release(Arc::clone(&release));
+    // 100-page commits (one key per leaf) until the WAL end passes three
+    // quarters of the first segment, where the writer asks the
+    // checkpointer for the next one; then wait for that creation to start.
+    let stride: Vec<&Vec<u8>> = keys.iter().step_by(20).collect();
+    let mut fill = 2u8;
+    while e.wal().durable_lsn() < SEGMENT_SPAN / 4 * 3 {
+        let v = [fill; 400];
+        let batch: Vec<Write<'_>> = stride.iter().map(|k| put(tree, k, &v)).collect();
+        e.commit(&batch, Ids::default()).unwrap();
+        fill = fill.wrapping_add(1);
+    }
+    entered
+        .recv_timeout(Duration::from_secs(20))
+        .expect("the checkpointer starts creating the next segment");
+    assert!(e.wal().durable_lsn() < SEGMENT_SPAN, "precondition");
+    let (done_tx, done) = mpsc::channel();
+    {
+        let e = Arc::clone(&e);
+        std::thread::spawn(move || {
+            for i in 0..3u8 {
+                let r = e.commit(&[put(tree, &keys[0], &[i; 400])], Ids::default());
+                let _ = done_tx.send(r.map(|_| ()).map_err(|x| x.to_string()));
+            }
+        });
+    }
+    let r = (0..3).map(|_| done.recv_timeout(Duration::from_secs(10)));
+    let results: Vec<_> = r.collect();
+    drop(released);
+    for r in results {
+        assert!(
+            matches!(r, Ok(Ok(()))),
+            "a commit waited for the segment creation: {r:?}"
+        );
+    }
+}
+
+/// TS-30 R10 pause points `after_apply` and `checkpoint_revisit`: a page a
+/// commit changed before it joined is skipped by a checkpoint, which waits
+/// for the commit's group and writes the page on its revisit (TS-11 step
+/// 2). The interleaving is set by the points, without sleeps.
+#[test]
+fn a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit() {
+    use std::sync::mpsc;
+    let dir = test_dirs().remove(0);
+    let e = Arc::new(Engine::create(dir.path(), fault(), CAP, sink()).unwrap());
+    let tree = e.create_trees(1).unwrap()[0];
+    e.commit(&[put(tree, b"k", b"0")], Ids::default()).unwrap();
+    e.checkpoint().unwrap();
+    let (revisit_tx, revisit) = mpsc::channel::<()>();
+    let revisit_tx = Mutex::new(revisit_tx);
+    *e.wal().points.checkpoint_revisit.lock().unwrap() = Some(Box::new(move || {
+        let _ = revisit_tx.lock().unwrap().send(());
+    }));
+    let checkpoint = Arc::new(Mutex::new(None));
+    {
+        let (e2, checkpoint) = (Arc::clone(&e), Arc::clone(&checkpoint));
+        let revisit = Mutex::new(revisit);
+        *e.wal().points.after_apply.lock().unwrap() = Some(Box::new(move || {
+            // Under the commit latch, the page is changed and not durable.
+            let e3 = Arc::clone(&e2);
+            let h = std::thread::spawn(move || e3.checkpoint());
+            revisit.lock().unwrap().recv().unwrap();
+            *checkpoint.lock().unwrap() = Some(h);
+        }));
+    }
+    e.commit(&[put(tree, b"k", b"1")], Ids::default()).unwrap();
+    *e.wal().points.after_apply.lock().unwrap() = None;
+    let h = checkpoint
+        .lock()
+        .unwrap()
+        .take()
+        .expect("the checkpoint ran");
+    let stats = h.join().unwrap().unwrap();
+    assert!(stats.pages_waited >= 1, "{stats:?}");
+    assert!(stats.pages_written >= 1, "{stats:?}");
+    let mut skipped = Vec::new();
+    assert_eq!(e.pool().checkpoint_pass(None, &mut skipped).unwrap(), 0);
+    assert!(skipped.is_empty(), "every page was written: {skipped:?}");
+}
+
+/// Audit (2026-10-03), known item of rmp #20 confirmed: ENOSPC on the WAL
+/// group write sets the unusable latch, yet the commit returns
+/// `StorageFull`, which `Engine::commit` documents as "nothing applied and
+/// the database usable" (FR-REC-007). A caller that retries on ENOSPC, as
+/// the contract invites, meets a database that refuses everything until
+/// reopened. Fails until a commit whose group failed returns an error that
+/// is not ENOSPC (for example `Error::Unusable` or an `Io` of another
+/// kind).
+#[test]
+fn audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc() {
+    use crate::storage::fault::{Fault, Kind};
+    let dir = test_dirs().remove(0);
+    let f = fault();
+    let e = Engine::create(dir.path(), f.clone(), CAP, sink()).unwrap();
+    let tree = e.create_trees(1).unwrap()[0];
+    e.commit(&[put(tree, b"k", b"0")], Ids::default()).unwrap();
+    {
+        let f = f.clone();
+        // After the apply, under the commit latch: the next write is the
+        // writer's group write (the pool writes nothing at this size).
+        *e.wal().points.after_apply.lock().unwrap() = Some(Box::new(move || {
+            f.fail_nth(Kind::WriteAt, f.count(Kind::WriteAt) + 1, Fault::NoSpace);
+        }));
+    }
+    let r = e.commit(&[put(tree, b"k", b"1")], Ids::default());
+    *e.wal().points.after_apply.lock().unwrap() = None;
+    let err = r.expect_err("the group write failed");
+    assert!(e.check().is_err(), "precondition: the database is unusable");
+    assert!(
+        !err.is_no_space(),
+        "the commit reports ENOSPC ({err}) while the database is unusable"
+    );
 }

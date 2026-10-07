@@ -28,6 +28,7 @@
 //!
 //! Keys are byte strings compared byte-wise, at most 1 024 bytes (TS-05).
 
+pub(crate) mod bulk;
 pub(crate) mod node;
 mod write;
 
@@ -46,7 +47,7 @@ use super::datafile::{Datafile, Header};
 use super::error::{Error, Health, Result};
 use super::freelist::{FreeList, Readers, Registered};
 use super::memory::Reservation;
-use super::page::{self, PAGE_BYTES, PageType};
+use super::page::{self, PageType};
 use super::pool::{PinnedPage, Pool};
 use super::wal::{Counters, OpenGroup};
 
@@ -152,7 +153,7 @@ impl<'p> PageWriter<'p> {
 
     /// Reserves a page from the accountant for one more copy.
     fn reserve_copy(&mut self) -> Result<()> {
-        let reservation = self.pool.reserve(PAGE_BYTES)?;
+        let reservation = self.pool.reserve_page_copy()?;
         match &mut self.undo.reserved {
             Some(r) => r.absorb(reservation),
             None => self.undo.reserved = Some(reservation),

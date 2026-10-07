@@ -126,8 +126,9 @@ mod tests {
 
     const PAGE: usize = 8192;
 
-    /// Test directory: `LPG_TEST_DIR` if set, else the system temporary
-    /// directory.
+    /// Directory of the laboratory runs below: `LPG_TEST_DIR` if set, else
+    /// the system temporary directory. The other tests use
+    /// [`crate::test_support::graph_dir`].
     fn test_dir() -> tempfile::TempDir {
         match std::env::var_os("LPG_TEST_DIR") {
             Some(dir) => tempfile::tempdir_in(dir),
@@ -138,7 +139,7 @@ mod tests {
 
     #[test]
     fn file_round_trip() {
-        let dir = test_dir();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("f");
         let storage: Box<dyn Storage> = Box::new(FsStorage);
         let file = storage.create(&path).unwrap();
@@ -161,7 +162,7 @@ mod tests {
 
     #[test]
     fn create_and_open_errors() {
-        let dir = test_dir();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("f");
         assert_eq!(
             FsStorage.open(&path).err().unwrap().kind(),
@@ -176,7 +177,7 @@ mod tests {
 
     #[test]
     fn namespace_operations() {
-        let dir = test_dir();
+        let dir = crate::test_support::graph_dir();
         let d = dir.path();
         FsStorage.create(&d.join("b")).unwrap();
         FsStorage.create(&d.join("a")).unwrap();
@@ -191,7 +192,7 @@ mod tests {
 
     #[test]
     fn try_lock_is_exclusive_within_the_process() {
-        let dir = test_dir();
+        let dir = crate::test_support::graph_dir();
         let path = dir.path().join("LOCK");
         FsStorage.create(&path).unwrap();
         let lock = FsStorage.try_lock(&path).unwrap();

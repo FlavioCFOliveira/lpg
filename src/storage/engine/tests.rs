@@ -444,3 +444,102 @@ fn open_with_data_file_missing_is_corruption_and_creates_nothing() {
         assert_eq!(names(d), ["CONTROL", "LOCK", "wal-1-0000000000000000"]);
     }
 }
+
+/// Audit finding 1 (2026-10-03), at create: `CONTROL` is written whole as
+/// `CONTROL.tmp`, synced, renamed and the directory synced, so a failure
+/// or a crash anywhere in that step leaves either no `CONTROL`, and the
+/// location can be created again, or a whole one, and it opens. Each of
+/// the step's calls fails once (ENOSPC on the creation and the write, EIO
+/// on the others),
+/// and the storage stops after each of them, before a power loss in each
+/// crash mode. Before the fix, `CONTROL` was created in place, and an
+/// ENOSPC on its write left an empty `CONTROL`: create refused the
+/// location and open failed on it.
+#[test]
+fn audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location() {
+    use crate::storage::fault::{Call, Crash, Fault, Kind};
+    let is_control = |p: &Path| {
+        p.file_name()
+            .is_some_and(|n| n == CONTROL || n == CONTROL_TMP)
+    };
+    let fault = || {
+        let f = Arc::new(FaultStorage::new(Box::new(FsStorage)));
+        f.skip_device_sync();
+        f
+    };
+    let dir = crate::test_support::graph_dir();
+    // Dry run: the calls of the `CONTROL` step.
+    let dry = tempfile::tempdir_in(dir.path()).unwrap();
+    let f = fault();
+    drop(Engine::create(dry.path(), f.clone(), CAP, sink()).unwrap());
+    let calls = f.calls();
+    let kind = |c: &Call| match c {
+        Call::WriteAt { .. } => Some(Kind::WriteAt),
+        Call::SyncData(_) => Some(Kind::SyncData),
+        Call::SyncDir(_) => Some(Kind::SyncDir),
+        Call::Rename(..) => Some(Kind::Rename),
+        Call::Create(_) => Some(Kind::Create),
+        Call::Remove(_) => Some(Kind::Remove),
+        _ => None,
+    };
+    let first = calls
+        .iter()
+        .position(|c| matches!(c, Call::Create(path) if is_control(path)))
+        .expect("create creates CONTROL");
+    // The step ends with the `sync_dir` after the write of `CONTROL`.
+    let last = first
+        + calls[first..]
+            .iter()
+            .position(|c| matches!(c, Call::SyncDir(_)))
+            .expect("create syncs the directory after CONTROL");
+    let points_before = calls[..first].iter().filter(|c| kind(c).is_some()).count() as u64;
+    let mut runs = 0;
+    for (i, c) in calls.iter().enumerate().take(last + 1).skip(first) {
+        let Some(k) = kind(c) else { continue };
+        let nth = calls[..=i].iter().filter(|x| kind(x) == Some(k)).count() as u64;
+        let fail = if k == Kind::WriteAt {
+            Fault::NoSpace
+        } else {
+            Fault::Eio
+        };
+        let point = points_before
+            + calls[first..=i]
+                .iter()
+                .filter(|c| kind(c).is_some())
+                .count() as u64;
+        let arms = [
+            ("fail", Crash::DropAll, true),
+            ("crash drop-all", Crash::DropAll, false),
+            ("crash keep-random", Crash::KeepRandom { seed: nth }, false),
+            ("crash tear", Crash::Tear { seed: nth }, false),
+        ];
+        for (what, mode, fails) in arms {
+            let what = format!("{what} at {c:?}");
+            let sub = tempfile::tempdir_in(dir.path()).unwrap();
+            let d = sub.path();
+            let f = fault();
+            if fails {
+                f.fail_nth(k, nth, fail);
+            } else {
+                f.crash_after(point);
+            }
+            let r = Engine::create(d, f.clone(), CAP, sink());
+            if fails {
+                assert!(r.is_err(), "{what}: precondition: create failed");
+            }
+            drop(r);
+            f.crash(mode).unwrap();
+            // The location is now a whole database or none.
+            let e = match Engine::open(d, fs(), CAP, sink()) {
+                Ok(e) => e,
+                Err(Error::NoDatabase) => Engine::create(d, fs(), CAP, sink())
+                    .unwrap_or_else(|e| panic!("{what}: create again: {e}")),
+                Err(e) => panic!("{what}: the location is stuck: {e}"),
+            };
+            e.create_trees(1).unwrap();
+            e.check().unwrap();
+            runs += 1;
+        }
+    }
+    assert!(runs >= 20, "the CONTROL step has 5 calls, each with 4 arms");
+}

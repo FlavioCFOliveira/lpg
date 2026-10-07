@@ -43,6 +43,31 @@
 //! `XLogFlush` (R-PG `src/backend/access/transam/xlog.c:2893-2899`) and of
 //! InnoDB's log writer and flusher threads (R-INNO `log/log0write.cc`,
 //! "Background redo log threads").
+//!
+//! **Gather window** (task #15). The committers a durable group wakes
+//! rejoin only after the writer has closed the next group, so without a
+//! window each of them waits for two flushes (laboratory report, #15 "Open
+//! point 1"). Before it closes a group, the writer therefore waits until as
+//! many commits have joined it as were active around the previous group
+//! (that group's commits plus those that joined while it was written), for
+//! at most half the duration of the previous group's write and sync. It
+//! does not wait when that number is below 2, so a lone committer pays
+//! nothing. This is PostgreSQL's `commit_delay`, a sleep before the flush
+//! taken only when at least `commit_siblings` other transactions are active
+//! (R-PG `src/backend/access/transam/xlog.c:2954-2966`), with the delay set
+//! to half a flush, the starting value its documentation recommends (R-PG
+//! `doc/src/sgml/wal.sgml:946-950`), and ended early once the expected
+//! commits have joined.
+//!
+//! **Segment creation** (task #15, D4). Creating a segment zero-fills 16 MiB
+//! and syncs it (18-40 ms measured). It holds only the creation latch, not
+//! the segment map that the writer and committers read, so a committer
+//! waits only for a segment it needs. The creation ahead of use runs on the
+//! checkpointer thread when the writer asks for it, not on the writer
+//! thread: PostgreSQL's checkpointer preallocates segments (`PreallocXlogFiles`,
+//! R-PG `src/backend/access/transam/xlog.c:3802-3824`, called at `8208`),
+//! fills the temporary file without a lock and takes `ControlFileLock` only
+//! to install it (`InstallXLogFileSegment`, `xlog.c:3675-3700`).
 
 use std::collections::{BTreeMap, HashMap};
 use std::ffi::OsStr;
@@ -50,6 +75,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
+use std::time::{Duration, Instant};
 
 use super::error::{Error, Health, Result};
 use super::page::PAGE_SIZE;
@@ -432,6 +458,12 @@ type SegmentMap = BTreeMap<u64, Arc<dyn StorageFile>>;
 struct Flow {
     /// Highest group number a committer has joined.
     joined: u64,
+    /// Commits that have joined a group that is not yet durable.
+    pending: u64,
+    /// Commits the writer expects in the next group before it closes it:
+    /// the last durable group's commits plus those that joined while it was
+    /// written (gather window, module documentation).
+    gather_target: u64,
     /// Highest group number that is durable.
     durable: u64,
     /// Counters of the last durable group.
@@ -477,6 +509,13 @@ pub(crate) struct Wal {
     /// Salt of this open (TS-09); set before the writer starts.
     salt: AtomicU64,
     segments: Mutex<SegmentMap>,
+    /// Held for the whole creation of a segment and for recycling, so that
+    /// one name change of the segment files runs at a time. The segment map
+    /// is locked only to read or insert, never across a creation.
+    create: Mutex<()>,
+    /// Redo points of running backups: no segment that holds an LSN at or
+    /// above the lowest one is recycled (TS-26 backup step 1).
+    holds: Mutex<Vec<u64>>,
     health: Arc<Health>,
     sink: Arc<dyn MetricsSink>,
     /// The durable LSN, read by eviction (TS-08).
@@ -510,11 +549,21 @@ pub(crate) struct TestPoints {
     /// In the writer, after its health check and before it takes the
     /// commit latch to close a group.
     pub(crate) before_close: Mutex<Option<Hook>>,
+    /// Gather windows the writer has opened.
+    pub(crate) gathers: AtomicU64,
+    /// In a commit, after its apply step and before it joins the open
+    /// group, with the commit latch held (TS-16 between steps 6 and 7).
+    pub(crate) after_apply: Mutex<Option<Hook>>,
+    /// In a checkpoint's step 2, before each wait of the revisit loop.
+    pub(crate) checkpoint_revisit: Mutex<Option<Hook>>,
+    /// In a backup, after step 1, with the backup-or-load latch held.
+    pub(crate) backup_started: Mutex<Option<Hook>>,
 }
 
 #[cfg(test)]
 impl TestPoints {
-    fn run(point: &Mutex<Option<Hook>>) {
+    /// Runs the hook installed at `point`, if any.
+    pub(crate) fn run(point: &Mutex<Option<Hook>>) {
         if let Some(hook) = point
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -553,6 +602,8 @@ impl Wal {
             generation,
             salt: AtomicU64::new(0),
             segments: Mutex::new(segments),
+            create: Mutex::new(()),
+            holds: Mutex::new(Vec::new()),
             health,
             sink,
             durable_lsn,
@@ -578,6 +629,55 @@ impl Wal {
 
     fn segments(&self) -> MutexGuard<'_, SegmentMap> {
         self.segments.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// The creation latch. A creation that panicked left at most a
+    /// `wal-temp` file, which the next creation or open removes.
+    fn create_lock(&self) -> MutexGuard<'_, ()> {
+        self.create.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// The newest segment's first LSN.
+    fn newest(&self) -> u64 {
+        *self
+            .segments()
+            .keys()
+            .next_back()
+            .expect("open creates the first segment")
+    }
+
+    /// The path of segment `lsn`.
+    pub(crate) fn segment_path(&self, lsn: u64) -> PathBuf {
+        self.path(lsn)
+    }
+
+    /// Holds recycling at `lsn`: until [`Wal::release`], no segment that
+    /// holds an LSN at or above it is recycled or removed (TS-26 backup
+    /// step 1).
+    pub(crate) fn hold(&self, lsn: u64) {
+        self.holds
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(lsn);
+    }
+
+    /// Releases one hold at `lsn` (TS-26 backup step 4).
+    pub(crate) fn release(&self, lsn: u64) {
+        let mut h = self.holds.lock().unwrap_or_else(PoisonError::into_inner);
+        if let Some(i) = h.iter().position(|&x| x == lsn) {
+            h.swap_remove(i);
+        }
+    }
+
+    /// The lowest held LSN, `u64::MAX` if none.
+    fn lowest_hold(&self) -> u64 {
+        self.holds
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter()
+            .copied()
+            .min()
+            .unwrap_or(u64::MAX)
     }
 
     /// Sets the salt of this open: the sequence number of the `CONTROL`
@@ -635,8 +735,9 @@ impl Wal {
     ///
     /// On ENOSPC the temporary file is removed and the error returned with
     /// the database usable (FR-REC-007); any other failure sets the unusable
-    /// latch. Called with the segment list locked, so one segment is
-    /// created at a time.
+    /// latch. Called with the creation latch held, so one segment is
+    /// created at a time; the segment map stays free for the writer and the
+    /// committers meanwhile.
     fn create_segment(&self, lsn: u64) -> Result<Box<dyn StorageFile>> {
         let temp = self.location.join(TEMP_SEGMENT);
         let path = self.path(lsn);
@@ -692,27 +793,28 @@ impl Wal {
     /// Makes sure the segment that holds LSN `end` exists, creating the
     /// missing segments after the newest one (TS-09 creation order). Called
     /// by a committer under the commit latch, before its commit joins, so
-    /// that ENOSPC fails only that commit (FR-REC-007).
+    /// that ENOSPC fails only that commit (FR-REC-007). A segment that
+    /// already exists costs one look at the map; a creation in progress is
+    /// waited for only when this commit needs a segment beyond the newest.
     ///
     /// # Errors
     ///
     /// ENOSPC, with the database usable; [`Error::Io`], which sets the
     /// unusable latch.
     pub(crate) fn ensure_through(&self, end: u64) -> Result<()> {
-        let mut segs = self.segments();
         loop {
-            let (&newest, _) = segs
-                .last_key_value()
-                .expect("open creates the first segment");
-            if newest + SEGMENT_SPAN > end {
+            if self.newest() + SEGMENT_SPAN > end {
                 return Ok(());
             }
-            let lsn = newest + SEGMENT_SPAN;
+            let _creating = self.create_lock();
+            // Another creator may have added it while this one waited.
+            let lsn = self.newest() + SEGMENT_SPAN;
+            if lsn > end {
+                continue;
+            }
             let file = self.create_segment(lsn)?;
-            segs.insert(lsn, Arc::from(file));
-            drop(segs);
+            self.segments().insert(lsn, Arc::from(file));
             self.report_size();
-            segs = self.segments();
         }
     }
 
@@ -723,8 +825,9 @@ impl Wal {
     ///
     /// As [`Wal::ensure_through`].
     pub(crate) fn create_first(&self, lsn: u64) -> Result<()> {
-        let mut segs = self.segments();
-        if segs
+        let _creating = self.create_lock();
+        if self
+            .segments()
             .range(..=lsn)
             .next_back()
             .is_some_and(|(&f, _)| f + SEGMENT_SPAN > lsn)
@@ -732,8 +835,7 @@ impl Wal {
             return Ok(());
         }
         let file = self.create_segment(lsn)?;
-        segs.insert(lsn, Arc::from(file));
-        drop(segs);
+        self.segments().insert(lsn, Arc::from(file));
         self.report_size();
         Ok(())
     }
@@ -779,13 +881,21 @@ impl Wal {
 
     /// The writer loop of thread `lpg-wal` (TS-09 Writer). `close` takes the
     /// commit latch and closes the open group, reusing the given buffer.
-    /// Returns when [`Wal::stop`] is called and every joined group is
-    /// durable, or after a failure.
-    pub(crate) fn run_writer(&self, mut close: impl FnMut(Vec<u8>) -> Option<ClosedGroup>) {
+    /// `precreate` asks another thread to run [`Wal::precreate`]. Returns
+    /// when [`Wal::stop`] is called and every joined group is durable, or
+    /// after a failure.
+    pub(crate) fn run_writer(
+        &self,
+        mut close: impl FnMut(Vec<u8>) -> Option<ClosedGroup>,
+        precreate: impl Fn(),
+    ) {
         // A panic of this thread fails every waiter instead of leaving it
         // blocked: no group can become durable any more.
         let _guard = FailWaitersOnPanic(self);
         let mut spare = Vec::new();
+        // Half the duration of the last group's write and sync: the longest
+        // gather window (module documentation).
+        let mut window = Duration::ZERO;
         loop {
             {
                 let mut f = self.flow();
@@ -804,6 +914,26 @@ impl Wal {
                         .wait(f)
                         .unwrap_or_else(PoisonError::into_inner);
                 }
+                // The gather window: committers join under the commit latch
+                // and count themselves in `pending` before they release it.
+                if f.gather_target >= 2 && !window.is_zero() {
+                    #[cfg(test)]
+                    self.points.gathers.fetch_add(1, Ordering::Relaxed);
+                    let deadline = Instant::now() + window;
+                    while f.pending < f.gather_target && !f.stop && f.failed.is_none() {
+                        let Some(left) = deadline.checked_duration_since(Instant::now()) else {
+                            break;
+                        };
+                        if left.is_zero() {
+                            break;
+                        }
+                        f = self
+                            .writer_cv
+                            .wait_timeout(f, left)
+                            .unwrap_or_else(PoisonError::into_inner)
+                            .0;
+                    }
+                }
             }
             if self.health.is_unusable() {
                 self.fail_waiters(io::ErrorKind::Other, "the database is unusable".into());
@@ -821,8 +951,10 @@ impl Wal {
                 continue;
             };
             g.seal(self.salt());
+            let started = Instant::now();
             match self.write_group(&g) {
                 Ok(syncs) => {
+                    window = started.elapsed() / 2;
                     let end = g.end();
                     // The group's metrics are sent before its commits are
                     // woken, so a commit that has returned is counted
@@ -847,14 +979,26 @@ impl Wal {
                             .fetch_max(g.counters.commit_ts, Ordering::AcqRel);
                         f.durable = g.seq;
                         f.durable_counters = g.counters;
+                        f.pending = f.pending.saturating_sub(g.commits);
+                        f.gather_target = g.commits + f.pending;
                     }
                     self.durable_cv.notify_all();
                     spare = g.frames;
-                    self.precreate(end);
+                    if self.needs_precreate(end) {
+                        precreate();
+                    }
                 }
                 Err(e) => {
-                    let msg = e.to_string();
-                    let kind = e.kind();
+                    // The database is unusable now (TS-12), so the waiters'
+                    // error must not read as the ENOSPC that `Engine::commit`
+                    // documents as "nothing applied, database usable"
+                    // (FR-REC-007): a full device is reported as another
+                    // kind, its cause kept in the message.
+                    let kind = match e.kind() {
+                        io::ErrorKind::StorageFull => io::ErrorKind::Other,
+                        k => k,
+                    };
+                    let msg = format!("the WAL group write failed: {e}; the database is unusable");
                     let _ = self.health.fail(Error::Io(e));
                     self.fail_waiters(kind, msg);
                     return;
@@ -863,26 +1007,43 @@ impl Wal {
         }
     }
 
-    /// Creates the segment after the newest one once the WAL end is past
-    /// three quarters of the newest, so that committers rarely create one
-    /// (PostgreSQL `PreallocXlogFiles`, R-PG
-    /// `src/backend/access/transam/xlog.c:3802-3824`). A failure here fails
+    /// Whether the WAL end `end` is past three quarters of the newest
+    /// segment, so that the next one should be created ahead of use.
+    fn needs_precreate(&self, end: u64) -> bool {
+        end >= self.newest() + SEGMENT_SPAN / 4 * 3
+    }
+
+    /// Creates the segment after the newest one once the durable LSN is
+    /// past three quarters of the newest, so that committers rarely create
+    /// one (PostgreSQL `PreallocXlogFiles`, R-PG
+    /// `src/backend/access/transam/xlog.c:3802-3824`). Runs on the
+    /// checkpointer thread when the writer asks for it. A failure here fails
     /// no commit: ENOSPC is left for the committer that needs the segment;
     /// any other error sets the unusable latch.
-    fn precreate(&self, end: u64) {
-        let mut segs = self.segments();
-        let Some((&newest, _)) = segs.last_key_value() else {
-            return;
-        };
-        if end < newest + SEGMENT_SPAN / 4 * 3 {
+    pub(crate) fn precreate(&self) {
+        if self.health.is_unusable() {
             return;
         }
-        let lsn = newest + SEGMENT_SPAN;
+        let _creating = self.create_lock();
+        if !self.needs_precreate(self.durable_lsn()) {
+            return;
+        }
+        let lsn = self.newest() + SEGMENT_SPAN;
         if let Ok(file) = self.create_segment(lsn) {
-            segs.insert(lsn, Arc::from(file));
-            drop(segs);
+            self.segments().insert(lsn, Arc::from(file));
             self.report_size();
         }
+    }
+
+    /// Counts a commit that has just joined group `seq` (TS-16 step 7).
+    /// Called under the commit latch, so the writer cannot close the group
+    /// before the commit is counted; wakes the writer.
+    pub(crate) fn note_join(&self, seq: u64) {
+        let mut f = self.flow();
+        f.pending += 1;
+        f.joined = f.joined.max(seq);
+        drop(f);
+        self.writer_cv.notify_one();
     }
 
     /// Makes every current and later waiter of [`Wal::wait_durable`] fail
@@ -971,22 +1132,25 @@ impl Wal {
         self.writer_cv.notify_all();
     }
 
-    /// Step 5 of TS-11: each segment that holds only LSNs below `redo` is
-    /// renamed to follow the newest segment, or removed when the segments
-    /// after the one holding `wal_end` already hold at least `used` LSNs,
-    /// the WAL used since the previous checkpoint. Each rename or removal is
-    /// made durable with its own `sync_dir` before the next one, and before
-    /// a renamed segment can be written.
+    /// Step 5 of TS-11: each segment that holds only LSNs below `redo` and
+    /// below every backup hold ([`Wal::hold`]) is renamed to follow the
+    /// newest segment, or removed when the segments after the one holding
+    /// `wal_end` already hold at least `used` LSNs, the WAL used since the
+    /// previous checkpoint. Each rename or removal is made durable with its
+    /// own `sync_dir` before the next one, and before a renamed segment can
+    /// be written.
     ///
     /// # Errors
     ///
     /// [`Error::Io`], which sets the unusable latch.
     pub(crate) fn recycle(&self, redo: u64, wal_end: u64, used: u64) -> Result<Recycled> {
+        let _creating = self.create_lock();
+        let limit = redo.min(self.lowest_hold());
         let mut segs = self.segments();
         let old: Vec<u64> = segs
             .keys()
             .copied()
-            .filter(|&f| f + SEGMENT_SPAN <= redo)
+            .filter(|&f| f + SEGMENT_SPAN <= limit)
             .collect();
         if old.is_empty() {
             return Ok(Recycled::default());

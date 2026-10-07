@@ -20,9 +20,18 @@
 //! 4. The next `CONTROL` slot: R, the counters and the clean-shutdown flag.
 //! 5. Segments below R are recycled or removed ([`Wal::recycle`]).
 //!
+//! Each checkpoint also sends the buffer pool's hit and miss counts to the
+//! metrics sink ([`super::pool::Pool::publish_metrics`]).
+//!
 //! Checkpoints run one at a time. Triggers: every 15 minutes or every
 //! 100 000 commits, whichever comes first (the thread); at clean close and
-//! at open (the engine); on request ([`super::engine::Engine::checkpoint`]).
+//! at open (the engine); on request ([`super::engine::Engine::checkpoint`]);
+//! at the start of a backup ([`run_held`]).
+//!
+//! The thread `lpg-checkpoint` also creates WAL segments ahead of use when
+//! the WAL writer asks for it ([`Checkpoints::request_precreate`]), so the
+//! zero fill of a new segment never runs on the writer thread (task #15,
+//! D4).
 //!
 //! [`Wal::recycle`]: super::wal::Wal::recycle
 
@@ -58,6 +67,8 @@ pub(crate) struct Stats {
 #[derive(Default)]
 struct Trigger {
     stop: bool,
+    /// Set by the WAL writer: create the next segment ahead of use.
+    precreate: bool,
 }
 
 /// The checkpoint state of one database.
@@ -96,6 +107,13 @@ impl Checkpoints {
         }
     }
 
+    /// Asks the thread to create the next WAL segment ahead of use
+    /// ([`super::wal::Wal::precreate`]).
+    pub(crate) fn request_precreate(&self) {
+        self.trigger().precreate = true;
+        self.cv.notify_one();
+    }
+
     /// Asks the thread to stop.
     pub(crate) fn stop(&self) {
         self.trigger().stop = true;
@@ -111,6 +129,23 @@ impl Checkpoints {
 /// [`super::error::Error::Unusable`]; an I/O error, which sets the unusable
 /// latch; the WAL writer's failure while step 2 waits for it.
 pub(crate) fn run(core: &Core, clean: bool) -> Result<Stats> {
+    run_with(core, clean, false)
+}
+
+/// Runs one checkpoint at the start of a backup (TS-11 trigger, TS-26
+/// backup step 1) and holds WAL recycling at its redo point R: the hold is
+/// placed before step 5, under the checkpoint latch, so no checkpoint
+/// recycles a segment that holds an LSN at or above R until
+/// [`super::wal::Wal::release`]. Returns R in [`Stats::redo`].
+///
+/// # Errors
+///
+/// As [`run`]; no hold is left after an error.
+pub(crate) fn run_held(core: &Core) -> Result<Stats> {
+    run_with(core, false, true)
+}
+
+fn run_with(core: &Core, clean: bool, hold: bool) -> Result<Stats> {
     let mut prev_redo = core
         .checkpoints
         .run
@@ -137,6 +172,8 @@ pub(crate) fn run(core: &Core, clean: bool) -> Result<Stats> {
     let mut written = core.pool.checkpoint_pass(None, &mut skipped)?;
     let waited = skipped.len() as u64;
     while let Some(target) = skipped.iter().map(|&(_, lsn)| lsn).max() {
+        #[cfg(test)]
+        super::wal::TestPoints::run(&core.wal.points.checkpoint_revisit);
         let undone = !core.wal.wait_lsn(target, epoch)?;
         epoch = core.wal.undo_epoch();
         let pages = std::mem::take(&mut skipped);
@@ -162,8 +199,19 @@ pub(crate) fn run(core: &Core, clean: bool) -> Result<Stats> {
         })?;
     }
     // Step 5.
+    if hold {
+        core.wal.hold(redo);
+    }
     let used = redo - *prev_redo;
-    let recycled = core.wal.recycle(redo, core.wal.durable_lsn(), used)?;
+    let recycled = match core.wal.recycle(redo, core.wal.durable_lsn(), used) {
+        Ok(r) => r,
+        Err(e) => {
+            if hold {
+                core.wal.release(redo);
+            }
+            return Err(e);
+        }
+    };
     *prev_redo = redo;
     let stats = Stats {
         redo,
@@ -180,6 +228,11 @@ pub(crate) fn run(core: &Core, clean: bool) -> Result<Stats> {
     sink.counter(FLUSHED_BYTES, written * PAGE_BYTES);
     sink.counter(SEGMENTS_RECYCLED, recycled.renamed);
     sink.counter(SEGMENTS_REMOVED, recycled.removed);
+    // The pool counts hits and misses without a sink call per access; each
+    // checkpoint sends what it counted since the last one (FR-OBS-001), as
+    // PostgreSQL's checkpointer reports its pending statistics on each
+    // cycle (R-PG `src/backend/postmaster/checkpointer.c:575-577`).
+    core.pool.publish_metrics();
     Ok(stats)
 }
 
@@ -197,6 +250,13 @@ pub(crate) fn run_thread(core: &Core) {
             loop {
                 if t.stop {
                     return;
+                }
+                if t.precreate && !broken {
+                    t.precreate = false;
+                    drop(t);
+                    core.wal.precreate();
+                    t = cp.trigger();
+                    continue;
                 }
                 if !broken {
                     if cp.commits.load(Ordering::Relaxed) >= cp.tuning.checkpoint_commits {

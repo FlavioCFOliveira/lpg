@@ -17,8 +17,8 @@
 //! - [`btree_fixed`]: a fixed run for `perf` and heaptrack:
 //!   `LPG_BTREE_DIST` (`zipf`, `uniform`), `LPG_BTREE_SHARE` (100, 10, 1),
 //!   `LPG_BTREE_MODE` (`get`, `scan`, `put`), `LPG_PERF_N` operations (0
-//!   gives the setup to subtract). Puts run only at 100 %, where no frame is
-//!   evicted, so the database on disk is not changed.
+//!   gives the setup to subtract). Below 100 %, puts evict and write
+//!   frames, so they change the database on disk: run them on a copy.
 
 use std::fmt::Write as _;
 use std::hint::black_box;
@@ -462,15 +462,20 @@ fn btree_fixed() {
     let percent: u64 = std::env::var("LPG_BTREE_SHARE").map_or(100, |v| v.parse().unwrap());
     let mode = std::env::var("LPG_BTREE_MODE").expect("set LPG_BTREE_MODE");
     let n: u64 = std::env::var("LPG_PERF_N").map_or(100_000, |v| v.parse().unwrap());
+    if let Some(line) = build(&dist) {
+        println!("LAB build {line}");
+    }
     let keys = sample_keys(&dist);
     let pages = data_pages(&dist);
-    let cap = if mode == "put" {
-        assert_eq!(percent, 100, "puts run only at 100 %");
+    // Puts below 100 % evict and write frames, so they change the database
+    // on disk: run them on a copy (task #15 A/B, `LPG_BTREE_SHARE` 10 or 1).
+    let cap = if mode == "put" && percent == 100 {
         BUILD_CAP
     } else {
         cap_for((pages * percent).div_ceil(100))
     };
-    let e = open(&dist, cap, sink());
+    let snk = sink();
+    let e = open(&dist, cap, snk.clone());
     let s = e.store();
     let tree = s.tree(1).expect("dir").expect("tree 1");
     warm(&s, tree);
@@ -489,6 +494,16 @@ fn btree_fixed() {
         other => panic!("unknown LPG_BTREE_MODE {other}"),
     }
     let ns = t.elapsed().as_nanos() as f64 / n.max(1) as f64;
-    println!("LAB dist={dist} share={percent} mode={mode} n={n} ns_per_op={ns:.0}");
-    // Nothing is written back: at 100 % no frame was evicted.
+    let m = snk.snapshot();
+    println!(
+        "LAB dist={dist} share={percent} mode={mode} n={n} ns_per_op={ns:.0} evictions={} \
+         flushes={} page_faults={} accountant_used={} accountant_peak={}",
+        m.counter(crate::obs::names::cache::EVICTIONS),
+        m.counter(crate::obs::names::cache::FLUSHES),
+        m.counter(crate::obs::names::cache::PAGE_FAULTS),
+        e.accountant().used(),
+        e.accountant().peak(),
+    );
+    // Nothing is written back: at 100 % no frame was evicted; below it the
+    // run used a copy of the database.
 }

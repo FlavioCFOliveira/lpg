@@ -10,27 +10,82 @@
 //! The accountant only counts. Making room when a reservation fails is the
 //! buffer pool's job ([`super::pool::Pool::reserve`]), since only the pool
 //! holds memory it can give back.
+//!
+//! Every change of the reserved total is published to the database's
+//! metrics sink as the gauge [`ACCOUNTED_BYTES`], as the store-size gauges
+//! are published on each change ([`super::datafile`]). Before task #15 the
+//! gauge was set only when the pool was created, so it read 6 875 136
+//! while the accountant held 49 956 864 bytes (laboratory report, #15
+//! "Open point 6").
 
-use std::sync::Arc;
+use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, PoisonError};
+
+use crate::obs::MetricsSink;
+use crate::obs::names::cache::ACCOUNTED_BYTES;
 
 /// The byte budget of one database.
-#[derive(Debug)]
 pub(crate) struct MemoryAccountant {
     cap: u64,
     used: AtomicU64,
     /// Highest value `used` ever reached, for tests and the laboratory.
     peak: AtomicU64,
+    /// Receives [`ACCOUNTED_BYTES`] after every change, if set.
+    sink: Option<Arc<dyn MetricsSink>>,
+    /// Serialises the gauge publications. Each change publishes the total it
+    /// reads under this latch after making the change, so the last
+    /// publication reads the total after the last change: the gauge never
+    /// stays at a stale value once the changes stop.
+    publish: Mutex<()>,
+}
+
+impl fmt::Debug for MemoryAccountant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MemoryAccountant")
+            .field("cap", &self.cap)
+            .field("used", &self.used)
+            .field("peak", &self.peak)
+            .finish_non_exhaustive()
+    }
 }
 
 impl MemoryAccountant {
-    /// An accountant with budget `cap` bytes.
+    /// An accountant with budget `cap` bytes that publishes nothing.
     pub(crate) fn new(cap: u64) -> Arc<MemoryAccountant> {
         Arc::new(MemoryAccountant {
             cap,
             used: AtomicU64::new(0),
             peak: AtomicU64::new(0),
+            sink: None,
+            publish: Mutex::new(()),
         })
+    }
+
+    /// An accountant with budget `cap` bytes that publishes the reserved
+    /// total to `sink` after every change (FR-OBS-001, cache category).
+    pub(crate) fn with_sink(cap: u64, sink: Arc<dyn MetricsSink>) -> Arc<MemoryAccountant> {
+        let a = Arc::new(MemoryAccountant {
+            cap,
+            used: AtomicU64::new(0),
+            peak: AtomicU64::new(0),
+            sink: Some(sink),
+            publish: Mutex::new(()),
+        });
+        a.publish();
+        a
+    }
+
+    /// Sends the reserved total to the sink.
+    fn publish(&self) {
+        if let Some(sink) = &self.sink {
+            // A panic in a sink cannot leave `()` inconsistent.
+            let _one_at_a_time = self.publish.lock().unwrap_or_else(PoisonError::into_inner);
+            // Relaxed suffices: the change this publication follows is
+            // ordered before the latch by program order, and the latch
+            // orders every earlier publication's change before this load.
+            sink.gauge(ACCOUNTED_BYTES, self.used.load(Ordering::Relaxed));
+        }
     }
 
     /// The memory cap in bytes.
@@ -69,6 +124,7 @@ impl MemoryAccountant {
             {
                 Ok(_) => {
                     self.peak.fetch_max(total, Ordering::Relaxed);
+                    self.publish();
                     return true;
                 }
                 Err(now) => used = now,
@@ -80,6 +136,7 @@ impl MemoryAccountant {
     pub(crate) fn release(&self, bytes: u64) {
         let before = self.used.fetch_sub(bytes, Ordering::Relaxed);
         debug_assert!(before >= bytes, "released more than was charged");
+        self.publish();
     }
 
     /// Reserves `bytes` as a guard that releases them when dropped, or
@@ -140,6 +197,33 @@ mod tests {
         drop(r2);
         assert_eq!(a.used(), 0);
         assert!(!a.try_charge(u64::MAX));
+    }
+
+    /// The gauge follows every change and ends at the final total (task
+    /// #15: it was set only when the pool was created).
+    #[test]
+    fn the_gauge_follows_every_change() {
+        let sink = Arc::new(crate::obs::recording::RecordingSink::default());
+        let a = MemoryAccountant::with_sink(100, sink.clone());
+        assert_eq!(sink.snapshot().gauge(ACCOUNTED_BYTES), Some(0));
+        let r = a.try_reserve(60).unwrap();
+        assert_eq!(sink.snapshot().gauge(ACCOUNTED_BYTES), Some(60));
+        assert!(a.try_reserve(41).is_none());
+        assert_eq!(sink.snapshot().gauge(ACCOUNTED_BYTES), Some(60));
+        drop(r);
+        assert_eq!(sink.snapshot().gauge(ACCOUNTED_BYTES), Some(0));
+        std::thread::scope(|s| {
+            for _ in 0..8 {
+                s.spawn(|| {
+                    for _ in 0..1000 {
+                        drop(a.try_reserve(3));
+                    }
+                });
+            }
+            let _held = a.try_reserve(10).unwrap();
+        });
+        let _held = a.try_reserve(7).unwrap();
+        assert_eq!(sink.snapshot().gauge(ACCOUNTED_BYTES), Some(7));
     }
 
     /// 16 threads reserve and release concurrently; every successful

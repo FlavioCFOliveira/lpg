@@ -599,7 +599,7 @@ impl Entries {
 
     /// Bytes entry `i` takes when encoded after entry `i - 1`, as a
     /// restart point if `restart`.
-    fn encoded_len(&self, i: usize, restart: bool) -> usize {
+    pub(crate) fn encoded_len(&self, i: usize, restart: bool) -> usize {
         let key = self.key(i);
         let shared = if restart { 0 } else { self.shared(i) };
         varint_len(shared as u64)
