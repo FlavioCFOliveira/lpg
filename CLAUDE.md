@@ -38,6 +38,27 @@ Profiling tooling:
 - For each need, use the most effective tool available, from flame graphs to memory and heap dumps and any other suitable instrument.
 - If the best tool for a need is not installed or not available, ask the user to make it available. Do not silently fall back to a weaker tool.
 
+## Graph data files on a RAM drive
+
+> **When the graph is exercised, its data files live on a RAM drive. Only its data files.**
+> **The RAM drive is only a support that accelerates file I/O during development. It is never a realistic production scenario and must never be treated as one.**
+
+- **Scope.** Every exercise of the graph — experiments, tests, reproductions, error validation, examples (when they exist) and similar runs — creates and uses its graph data files (WAL, snapshots, graph store, indexes and any other file the graph persists) on the RAM drive.
+- **RAM drive.** A dedicated `tmpfs` named `LPGRAM`, mounted at `/dev/shm/LPGRAM/`. Create a separate subdirectory per run and delete it when the run ends.
+- **Size.** 1 GiB by default. A scenario may use a larger size only when it needs one and the user has approved that size for that scenario; the approval does not extend to other scenarios. Return to 1 GiB when the scenario ends.
+- **Clean environment.** Whenever scenarios must be cleared and rebuilt from a clean state, unmount and remount the RAM drive; only do so when no run is using it. Mounting needs root privileges; if they are not available, ask the user to run the commands:
+
+  ```sh
+  sudo umount /dev/shm/LPGRAM                    # discard every file on the RAM drive
+  mkdir -p /dev/shm/LPGRAM
+  sudo mount -t tmpfs -o size=1G,mode=1777 LPGRAM /dev/shm/LPGRAM
+  ```
+
+  For an approved larger size, change only `size=` in the mount command. Never unmount `/dev/shm` itself: the system and other processes use it.
+- **Exclusive content.** The RAM drive holds only the graph data files of the run in progress. Never place on it build output (`target/`), caches, logs, executables, reports, evidence, reference clones or any other file.
+- **Purpose.** The RAM drive only accelerates the file I/O of this crate, so that exercises are faster to create, run and observe. It has no other role.
+- **Not a production scenario.** Never consider, design for, document or present the RAM drive as a realistic production setup, nor use results obtained on it to describe production behaviour. The crate is designed to run on persistent storage. On `tmpfs`, data does not survive a reboot or power loss and `fsync` does not reach a disk, so results obtained on the RAM drive say nothing about real-disk durability or I/O performance. Any claim about those properties must be measured on persistent storage and must state that it was.
+
 ## Simplicity (code strategy)
 
 > **Avoid over-engineering. Always choose the simplest solution that meets the project's strict needs.**
