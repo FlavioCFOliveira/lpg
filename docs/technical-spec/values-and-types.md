@@ -1,7 +1,7 @@
 ---
 title: Values and types
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-07
 related:
   - query-engine.md
   - bolt.md
@@ -16,7 +16,7 @@ related:
   - **Runtime value.** A 24-byte `enum Value`:
     - inline: null, boolean, `i64`, `f64`, node and edge identifiers, date, local time, local date-time, and both duration types;
     - reference-counted slices (`Arc<str>`, `Arc<[u8]>`, `Arc<[Value]>`): strings, byte strings, lists, records, paths;
-    - boxed: rare types (zoned values with a named time zone, points, and any wider numeric types).
+    - boxed: rare types (zoned values with a named time zone, and points).
   - **Temporal.** Arithmetic, IANA time zones and the current time come from `jiff`. Zone data is read from the operating system (`/usr/share/zoneinfo`, or `TZDIR`). New sessions use UTC. Transaction, statement and realtime clocks read the system clock.
   - **Spatial.**
     - `Point2D` and `Point3D` carry an SRID: 7203, 9157, 4326 or 4979.
@@ -32,16 +32,38 @@ related:
     - temporal values: ISO 8601 text, with an IANA zone name in brackets for named zones;
     - points: `{srid, x, y[, z]}`.
   - **Features.** The temporal types implement features GV39, GV40 and GV41, verified against the ISO features insert [S45].
-  - **Open points.** Wider numeric types (`INT128`, `INT256`, unsigned, `DECIMAL`, `FLOAT16`/`128`/`256`), any crate for them, cross-type comparison and the total order for `ORDER BY` are provisional (OQ-005) and wait for the user's approval of the implementation-defined items (BR-GQL-002). Whether Point2D and Point3D conflict with the norm is OQ-006.
-- **Satisfies**: FR-TYPE-001, FR-TYPE-002, FR-TYPE-004, FR-TYPE-006, FR-TYPE-007, FR-SES-003, FR-BOLT-005, BR-BOLT-001, FR-IMP-006, NFR-PERF-003.
+  - **Implementation-defined choices** (BR-GQL-002). Each was approved by the user on 2026-10-07 (rmp task #26). Codes and line numbers are those of the ISO implementation-defined insert [S45], `docs/standards/iso-iec-39075/ed-1/ISO_IEC_39075(en)-implementation-defined.xml`.
+
+    | Item | Codes (insert line) | Choice |
+    |---|---|---|
+    | Comparison across types | IV002 (398), IV010 (410) | Values of different type groups are not comparable: `=` is false, and `<`, `<=`, `>`, `>=` are null. Integers and floats are one group and compare by exact numeric value. |
+    | Null ordering | IS001 (390) | NULL sorts after every other value in ascending order. |
+    | Group order of the total order (`ORDER BY`, index keys) | IS001 (390) | Neo4j's: record, node, edge, list, path, point, zoned date-time, local date-time, date, zoned time, local time, duration, character string, byte string, boolean, number, then NULL. Neo4j has no byte-string group; its place right after character strings is a project decision from references (below). |
+    | Order within a group | IA015 (98), IA016 (102) | Character strings by Unicode code point, which is the byte order of their UTF-8 encoding, with no padding. Byte strings that differ only in trailing X'00' bytes are different. Lists lexicographically, element by element. Byte strings by unsigned byte, a proper prefix first (project decision from references, below). NaN sorts above every number. −0.0 equals +0.0: the user's decision, which deviates from Neo4j's order (below). Zoned values with the same instant by offset, then offset-only zones before named zones, then named zones by their zone identifiers normalised through Neo4j's `TimeZones.map` (applied twice) and compared as strings, then by chronology (Neo4j). Durations by average length in seconds (months × 2 629 746 + days × 86 400 + seconds), then nanoseconds, months, days and seconds (Neo4j). Points by CRS, then coordinates in axis order. |
+    | Numeric types | features GV11, GV13–GV17, GV20, GV25, GV26 (features insert lines 777–837); ID028 (174), ID034 (178), ID037 (182), IL011 (362), IL023 (382) | INT64 (64-bit two's complement) and FLOAT64 (IEEE 754 binary64) only. The listed features are not supported; the record encoding reserves a type tag for each of their types. There is no decimal type, so ID034 has no value. |
+    | Temporal | IL024 (386), IA026 (130), ID048 (186) | Fractional seconds to nanoseconds (9 digits); no leap seconds; default time zone displacement UTC. |
+    | Sizes | IL001 (342), IL002 (346), IL013 (366), IL015 (370) | Label-set and property-set cardinality, string length (in UTF-8 bytes) and the cardinality of lists and records are each bounded by a `u32` count or length field of the record encoding (2<sup>32</sup> − 1) and by the memory cap ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). An edge has exactly one edge type ([TS-06](storage.md#ts-06-graph-layout)), so its label set has one label. No other minimum is set: the minimum the standard requires is in its rules, which are not available (OQ-005). |
+    | Transactions | ID006 (154), IE002 (306), IE004 (314) | Serializable by default; snapshot isolation is the one relaxation, selected per transaction through the Rust API only ([FR-TX-003, FR-TX-004](../functional-spec/functional-requirements.md#transactions); [TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)). Confirmed by the user on 2026-10-07. |
+    | Directory nesting | IL020 (378) | No fixed maximum depth. The 1 024-byte key limit ([TS-05](storage.md#ts-05-files-and-pages)) bounds each name, not the depth, because a catalog key holds the parent's identifier and the name ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)). |
+
+  - **Not decided.** Whether Point2D and Point3D conflict with the norm is OQ-006.
+- **Satisfies**: FR-TYPE-001, FR-TYPE-002, FR-TYPE-004, FR-TYPE-006, FR-TYPE-007, FR-SES-003, FR-BOLT-005, BR-BOLT-001, FR-IMP-006, NFR-PERF-003, BR-GQL-002.
 - **Evidence**:
-  - jiff reads `/usr/share/zoneinfo`, or `TZDIR`, by default on Unix, and bundles zone data only with the `tzdb-bundle-*` features (D-JIFF).
+  - jiff reads `/usr/share/zoneinfo`, or `TZDIR`, by default on Unix, and bundles zone data only with the `tzdb-bundle-*` features (D-JIFF). A jiff `Timestamp` has nanosecond precision, and "Jiff does not support leap seconds" (D-JIFF).
+  - Implementation-defined choices, Neo4j behaviour (R-NEO `community/values/src/main/java/org/neo4j/values/`):
+    - Different value groups compare as undefined, which yields null (`storable/ValueComparator.java:52-64`). Integers and floats are one group and compare by value (`storable/NumberValue.java:61-70`), exactly also beyond 2<sup>53</sup> (`storable/NumberValues.java:178-194`).
+    - Group order: virtual values (`MAP`, `NODE`, `EDGE`, `LIST`, `PATH`, `virtual/VirtualValueGroup.java:26-33`) before stored values (`AnyValueComparator.java:69-84`), stored values in `storable/ValueGroup.java:55-66` order, lists placed in the `LIST` position (`AnyValueComparator.java:151-158`), and NULL above every value (`AnyValueComparator.java:45-55`).
+    - Floats compare with Java `Double.compare` (`storable/FloatingPointValue.java:75-77`), which places NaN above every number and −0.0 below +0.0. Measured with OpenJDK 25.0.4.1: `Double.compare(Double.NaN, Double.POSITIVE_INFINITY)` is 1 and `Double.compare(-0.0, 0.0)` is −1. lpg's −0.0 = +0.0 is the user's decision of 2026-10-07, part of the option the user chose, and deviates from Neo4j.
+    - Durations compare by average length in seconds, then nanoseconds, months, days and seconds (`storable/DurationValue.java:86-93`). The average length is seconds + days × `SECONDS_PER_DAY` + months × `AVG_SECONDS_PER_MONTH` (`DurationValue.java:263-271`), with `AVG_SECONDS_PER_MONTH = 2_629_746` and `SECONDS_PER_DAY` = `ChronoUnit.DAYS.getDuration().getSeconds()` (`utils/TemporalUtil.java:33-34`); measured with OpenJDK 25.0.4.1, the latter is 86 400.
+    - Zoned date-times compare by instant, then offset, then offset-only zones before named zones, then the normalised zone identifiers, `TimeZones.map(TimeZones.map(id))` compared with `String.compareTo`, then chronology (`storable/DateTimeValue.java:477-507, 509-513`). Points compare by CRS code, then coordinates (`storable/PointValue.java:179-199`).
+  - Byte strings. Neo4j has no byte-string value group (`storable/ValueGroup.java:32-66`), and Memgraph has no byte-string property type (R-MG @ `847e224` `src/storage/v2/property_value.cppm:42-59`). PostgreSQL orders `bytea` by `memcmp` over the common length, then the shorter first (R-PG @ `1f22453` `src/backend/utils/adt/bytea.c:959-978`); `memcmp` compares bytes "each interpreted as unsigned char" (Linux man-pages 6.17, memcmp(3)). The group sits after character strings, the other string type in GQL, so the two string groups are adjacent.
+  - The byte order of UTF-8 strings equals their code-point order: "The byte-value lexicographic sorting order of UTF-8 strings is the same as if ordered by character numbers" (RFC 3629, §1).
   - chrono-tz compiles the IANA database into the binary (D-CTZ). time offers UTC offsets only (D-TIME).
   - Neo4j geographic distance (R-NEO `community/values/.../storable/CRSCalculator.java:130-166`).
   - Memgraph's compact property store (R-MG `src/storage/v2/property_store.cpp:63-118`).
   - Measured `Value` sizes (M-QE §Q5): 24 bytes with `Arc` slices, 32 bytes with owned `String` and `Vec`.
 - **Crates**:
-  - `jiff` 0.2.37 (Unlicense OR MIT, 209.3 M downloads): dependency.
+  - `jiff` 0.2.38 (Unlicense OR MIT, 216.0 M downloads, crates.io 2026-10-07): dependency.
   - `chrono` with `chrono-tz`: rejected, bundled zone data fails FR-TYPE-007.
   - `time`: rejected, no IANA zone names.
   - `geo` 0.33.1: not used; the two Neo4j formulas must be reproduced exactly and need no dependency.

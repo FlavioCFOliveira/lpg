@@ -1,7 +1,7 @@
 ---
 title: Transactions and recovery
 status: draft
-last-reviewed: 2026-10-03
+last-reviewed: 2026-10-07
 related:
   - storage.md
   - catalog-and-indexes.md
@@ -14,8 +14,12 @@ related:
 
 - **Decision**: a redo-only write-ahead log of full page images, under NO-STEAL: a change reaches disk only after its commit is durable, and is visible only after its commit is published ([TS-16](#ts-16-commit-protocol)).
   - **Group.** The unit of durability. A group holds:
-    - the final image of every page changed by its commits, each page once;
+    - the final image of every page changed by its members, each page once;
     - one commit frame, which records the group's range of commit timestamps and the high-water marks of the element-identifier, catalog-object and token counters ([TS-05](storage.md#ts-05-files-and-pages)).
+  - **Members.** A group's members are commits and internal batches. The internal batches are the garbage-collection batches ([TS-14](#ts-14-mvcc)) and the statistics batch of each checkpoint ([TS-11](#ts-11-checkpoint)).
+    - An internal batch draws no `commit_ts`. It is applied under the commit latch like step 6 of a commit ([TS-16](#ts-16-commit-protocol)), joins the open group, and does not wait for the group to be durable.
+    - The writer closes the open group when any member has joined it. Sprint 1 closes it only when a commit has joined (`Core::close_group`, `src/storage/engine.rs:252-260`; `OpenGroup::has_commits`, `src/storage/wal.rs:380`). A group without commits records an empty range of commit timestamps.
+    - A crash before the group is durable loses the batch's changes, and no commit depends on them: a later group that uses a page the batch freed is durable only after this group ([Ordering](#ts-09-wal-and-group-commit)). Garbage collection then finds the same entries again; the statistics follow [TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics).
   - **Frames.**
     - Every frame has the same size: a header plus 8 KiB, with the commit frame padded. A frame's position is therefore known without reading the frames before it.
     - The header holds the frame's LSN, its salt, the page number of a page frame, and a CRC-32C of the frame. A commit frame also records the LSN of its group's first frame. A frame is valid when its CRC-32C matches and its LSN equals its position.
@@ -27,11 +31,11 @@ related:
     - The next segment's first LSN is this segment's first LSN plus that number of frame sizes. Segment boundaries are therefore not multiples of 16 MiB; each segment's first LSN is read from its name.
     - A segment *holds* the LSNs from its first LSN up to the next segment's first LSN.
     - The **WAL end** is the LSN of the next frame to write; after the last frame of a segment, it is the next segment's first LSN. The **durable LSN** is the WAL end after the last synced group.
-    - Group *k*+1 starts at the WAL end after group *k*. A page takes the next frame position of the open group the first time it changes under the commit latch ([TS-16](#ts-16-commit-protocol) step 6, or garbage collection); a page already in the open group keeps its position. The commit frame takes the last position when the writer closes the group.
+    - Group *k*+1 starts at the WAL end after group *k*. A page takes the next frame position of the open group the first time it changes under the commit latch ([TS-16](#ts-16-commit-protocol) step 6, or an internal batch); a page already in the open group keeps its position. The commit frame takes the last position when the writer closes the group.
     - **Page LSN** (page header, [TS-05](storage.md#ts-05-files-and-pages)): the LSN that follows the frame holding the page's latest image. It is set in the same latched write that changes the page, so a changed page can never be written to `data` before its group is durable: a cache slot is written only when its page LSN is at most the durable LSN ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). A page never logged holds 0.
     - **Start.** Create writes redo point 0 ([TS-05](storage.md#ts-05-files-and-pages)), so the first segment of generation 1 is `wal-1-0000000000000000`. A migrated generation starts at the redo point R ([TS-28](operations.md#ts-28-format-versioning-and-migration)).
   - **Ordering.** Group *k*+1 is written only after the `sync_data` of group *k* has returned, so only the last group can be partly on disk.
-  - **Capture.** Images are copied under the commit latch ([TS-16](#ts-16-commit-protocol)), so an image never holds a change from a later group. Image memory is outside the memory cap ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). Garbage collection changes pages under the same latch, so its changes also belong to exactly one group.
+  - **Capture.** Images are copied under the commit latch ([TS-16](#ts-16-commit-protocol)), so an image never holds a change from a later group. Image memory is outside the memory cap ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). Internal batches change pages under the same latch, so their changes also belong to exactly one group.
   - **Writer.** One dedicated thread per database writes each group and calls `sync_data`. Committers wait on a notification, so no tokio worker blocks on a flush.
   - **Segments.** 16 MiB each. A recycled segment ([TS-11](#ts-11-checkpoint) step 5) keeps its old frames, which are invalid at their new positions because their LSNs differ. Each is a file `wal-<g>-<lsn>` in the database location ([TS-05](storage.md#ts-05-files-and-pages)): `<g>` is the generation, in decimal as in `data-<g>`; `<lsn>` is the segment's first LSN, a `u64`, written as 16 lowercase hexadecimal digits, zero-padded. A byte-wise sort of the names `list` returns therefore orders the segments of one generation by LSN. The writer creates every segment, the first one included.
     - **Creation.** A new segment is written as `wal-temp` ([TS-05](storage.md#ts-05-files-and-pages)): zeros, then `sync_data`. It is then renamed to its name, and `sync_dir` makes the name durable. A crash therefore never leaves a partial file under a segment name; open removes a leftover `wal-temp` ([TS-05](storage.md#ts-05-files-and-pages)). On ENOSPC, `wal-temp` is removed and the directory synced before the error is returned (`create_segment`, `src/storage/wal.rs:640-680`).
@@ -48,6 +52,7 @@ related:
   - Neo4j appends to its log, then applies to the store (R-NEO `kernel/.../api/InternalTransactionCommitProcess.java:77-80`). A dedicated `LOG_WRITER` thread drains commits in batches (`kernel/.../wal/TransactionLogQueue.java:111, 220`).
   - InnoDB: dedicated `log_writer` and `log_flusher` threads (R-INNO `log/log0write.cc:108-122`).
   - turso: leader and waiter group commit (R-TURSO `core/mvcc/database/group_commit.rs`).
+  - Members without a commit. PostgreSQL logs heap pruning as its own WAL record, outside any commit record (R-PG @ `1f22453` `src/backend/access/heap/pruneheap.c:1354-1359`; `log_heap_prune_and_freeze`, `:2618-2619`).
   - Memgraph writes its WAL under `engine_lock_`, so commits are ordered by timestamp (R-MG `src/storage/v2/inmemory/storage.cpp:1081-1100`).
   - LSN as a byte position: PostgreSQL `XLogRecPtr` (R-PG `src/include/access/xlogdefs.h:17-21`) and InnoDB `lsn_t` (R-INNO `include/log0types.h:62-63`). SQLite numbers frames instead (`mxFrame`, R-SQLITE `src/wal.c:328`; `walFrameOffset`, `src/wal.c:498-500`).
   - Bytes outside the log are outside the LSN space: an InnoDB redo file's LSN capacity is its size minus its header, and each file starts at the end LSN of the file before it (R-INNO `log/log0files_dict.cc:252-277`).
@@ -91,6 +96,7 @@ related:
 ## TS-11 Checkpoint
 
 - **Decision**:
+  - **Statistics first.** Before step 1, the checkpoint writes the statistics ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)) to the statistics tree as an internal batch ([TS-09](#ts-09-wal-and-group-commit) Members). The batch is built under the commit latch, so the statistics include exactly the commits applied so far, and it records the last `commit_ts` drawn. The checkpoint then waits until the batch's group is durable, so the batch's page images lie below the redo point R of step 1.
   - A fuzzy checkpoint runs these steps:
     1. Record the redo point R: the **durable LSN**, read together with the counters of the same durable group (`src/storage/checkpoint.rs:122-123`, `durable_point`, `src/storage/wal.rs:601-604`). Every group below R is durable, so every image not yet durable is in a group at or after R. Step 2 relies on this when it skips a slot.
     2. Write every cache slot dirty at that point, following the WAL-before-data rule. Pages are written into space already reserved ([TS-05](storage.md#ts-05-files-and-pages)), so a checkpoint never extends a file.
@@ -100,7 +106,7 @@ related:
     4. Write the next `CONTROL` slot ([TS-05](storage.md#ts-05-files-and-pages)).
     5. Recycle each segment that holds only LSNs below the redo point ([TS-09](#ts-09-wal-and-group-commit)). Rename it to the name after the newest segment, so that it becomes a later segment of the WAL. If the segments after the one holding the WAL end already hold at least as many LSNs as the WAL used since the previous checkpoint's redo point, remove it instead. Each rename or removal is followed by its own `sync_dir` before the next one (`recycle`, `src/storage/wal.rs:984-1027`): with one `sync_dir` for several, a crash could keep a later rename without an earlier one, and open would find a gap in the segments ([TS-13](#ts-13-recovery) step 4).
   - Triggers: every 15 minutes or every 100 000 transactions, whichever comes first; at clean close; at the start of a backup.
-  - Each checkpoint saves the statistics ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)) and the counters ([TS-05](storage.md#ts-05-files-and-pages)).
+  - Each checkpoint saves the statistics (above) and, at step 4, the counters ([TS-05](storage.md#ts-05-files-and-pages)).
   - **Clean-shutdown flag** (in each `CONTROL` slot, [TS-05](storage.md#ts-05-files-and-pages)):
     - Clean close ends or aborts every transaction (FR-DB-008), stops accepting commits and waits until the last group is durable. It then runs the checkpoint, and writes that checkpoint's `CONTROL` slot with the flag set. No commit can follow it.
     - Every other `CONTROL` write has the flag cleared. The first one after open is the checkpoint of [TS-13](#ts-13-recovery) step 8, which completes before open returns, so the flag is clear on disk before any commit.
@@ -147,7 +153,7 @@ related:
      - Otherwise the group at X was not synced. It is a torn tail and is discarded, and the WAL end is X. Leftover frames beyond X are overwritten by later groups; until then the salt and first-LSN rules keep them from forming a valid group.
   6. Restore every counter (commit timestamp, element identifier, catalog object, token) as the maximum of `CONTROL` and the applied commit frames.
      - If `BACKUP_END` was read, fail if the WAL end is below its `stop` ([TS-26](operations.md#ts-26-backup-restore-import-and-export) Backup end; `src/storage/engine.rs:546-554`).
-  7. Start with an empty old-version store.
+  7. Start with an empty old-version store. Load the statistics from the statistics tree ([TS-11](#ts-11-checkpoint)). If the highest recovered commit timestamp is above the last `commit_ts` they include, recount them before open returns ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)).
   8. If the log was empty, create `wal-<g>-<R>` ([TS-09](#ts-09-wal-and-group-commit)). Then run a checkpoint; its `CONTROL` slot clears the clean-shutdown flag ([TS-11](#ts-11-checkpoint)).
      - Then, if `BACKUP_END` was read, remove it ([TS-26](operations.md#ts-26-backup-restore-import-and-export) Backup end; `src/storage/engine.rs:517-522`).
 
@@ -174,18 +180,22 @@ related:
 
 - **Decision**:
   - **Private write sets.** A transaction's writes (records, adjacency, index and catalog entries) stay in memory until commit. The transaction's reads merge them over its snapshot.
-    - When a write enters the write set, the transaction reserves from the memory accountant the write itself, the before-image that applying it will create, and its entry in the committed write-key set.
+    - When a write enters the write set, the transaction reserves from the memory accountant the write itself, the before-image that applying it will create, its entry in the committed write-key set, and the lock-table entry of each lock it takes for the write ([TS-15](#ts-15-serializable-isolation-and-write-locks)).
     - A failed reservation fails that statement (FR-LIM-005, FR-LIM-007), so applying the commit needs new memory only for its page copies, whose failure is undone ([TS-16](#ts-16-commit-protocol) step 6).
   - **Immutable entries.** Adjacency, index and catalog entries are never edited in place. Visibility is a comparison of their stamps ([TS-06](storage.md#ts-06-graph-layout)) with the snapshot. An update is a delete stamp plus a new entry.
-  - **Mutable records.** For node and edge labels and properties, the newest committed version is in the page, with its `version_ts`. Older versions live in an in-memory, non-durable old-version store, as before-image chains from newest to oldest.
+  - **Mutable records.** For node and edge labels and properties, the newest committed version is in the page, with its `version_ts` in the `created_ts` field ([TS-06](storage.md#ts-06-graph-layout)). Older versions live in an in-memory, non-durable old-version store, as before-image chains from newest to oldest.
+    - A before-image holds the whole record, overflow bytes included, so no old version refers to a page ([TS-05](storage.md#ts-05-files-and-pages) Reuse). The before-image of a creation is "absent".
   - **Committed write-key sets.** Each read-write commit registers the keys it wrote, for validation ([TS-15](#ts-15-serializable-isolation-and-write-locks)). They are charged to the cap.
-  - **Garbage collection.** Runs after commits and every 30 seconds, under the commit latch:
-    - frees old versions below the oldest active snapshot;
+  - **Snapshot registry.** A slot registry with the protocol of the page-reuse registry (`Readers`, `src/storage/freelist.rs:423-461`). Every atomic operation below, and the store that publishes a `commit_ts`, is `SeqCst`:
+    - **Begin.** A transaction loads the highest published `commit_ts` p ([TS-16](#ts-16-commit-protocol) step 9), stores p in a free slot with a compare-and-swap, issues a fence, and then loads the highest published `commit_ts` again. That second value is its snapshot; it is at least p. The slot is freed when the transaction ends.
+    - **Horizon.** Garbage collection loads the highest published `commit_ts` P, issues a fence, then reads every slot. Its horizon is the minimum of P and the registered values.
+    - **Why it is safe.** If garbage collection misses a slot, its fence precedes the transaction's fence, so the transaction's second load returns at least P (store buffering with fences on both sides, as `freelist.rs:436-441` states for page reuse), and nothing that snapshot can read is freed. A `loom` model checks it ([TS-30](quality-and-testing.md#ts-30-testing-and-conformance)).
+  - **Garbage collection.** Runs after commits and every 30 seconds, under the commit latch, on its own thread ([TS-02](architecture.md#ts-02-async-api-and-threading)):
+    - frees old versions below the horizon;
     - frees write-key sets older than the oldest snapshot of any active serializable transaction;
-    - removes entries whose `deleted_ts` is below the oldest active snapshot, logged like any page change;
+    - removes entries whose `deleted_ts` is below the horizon, as an internal batch ([TS-09](#ts-09-wal-and-group-commit) Members);
     - freezes stamps ([TS-06](storage.md#ts-06-graph-layout)) when a page is next rewritten.
   - **No escape from the cap.** No other transaction is aborted, and nothing is spilled to storage.
-  - **Snapshot.** The highest published commit timestamp ([TS-16](#ts-16-commit-protocol)).
 - **Satisfies**: FR-TX-001, FR-TX-003, FR-TX-004, FR-TX-006, FR-TX-010, FR-LIM-003, FR-LIM-005, FR-LIM-007, FR-ALG-004, NFR-PERF-003, NFR-PERF-004.
 - **Evidence**:
   - Memgraph keeps newest-to-oldest delta chains and collects garbage from the oldest active start timestamp (R-MG `src/storage/v2/delta.hpp`; `inmemory/storage.cpp:3044, 3115`), every 30 s by default (`src/flags/general.cpp:105`).
@@ -193,6 +203,7 @@ related:
   - Kuzu keeps uncommitted inserts in local storage (P-TX §L1.1).
   - HyPer keeps undo buffers and recently committed changes only while an older transaction is active (D-HYPER §2.3, §2.4).
   - Wu et al.: newest-to-oldest delta storage performs better (P-TX §L2.1).
+  - Snapshot registry. Sprint 1's `Readers` registers with a `SeqCst` compare-and-swap followed by a `SeqCst` fence, and the writer fences before it reads the slots (`src/storage/freelist.rs:434-441, 454-461`).
 - **Crates**: turso `core/mvcc` (an in-memory MVCC after Larson et al., MIT), surrealkv and fjall snapshots: study only. None can be used without its own storage ([TS-04](storage.md#ts-04-own-storage-engine)).
 - **Rejected**:
   - Versions kept in the pages (PostgreSQL heap): space in pages and vacuum.
@@ -204,9 +215,11 @@ related:
 
 - **Decision**:
   - **Read sets.** A serializable transaction records its reads as `(tree, key range)` intervals: point reads, adjacency prefixes, label-index prefixes, index ranges, Hilbert ranges and whole trees.
+    - Each interval is half-open, `[lo, hi)`, over the encoded keys of one tree; `hi` may be unbounded. A point read of key `k` is `[k, k ‖ 0x00)`. A read of prefix `p` is `[p, p⁺)`, where `p⁺` is `p` with its last byte below 0xFF incremented and the bytes after that byte removed; `hi` is unbounded if every byte of `p` is 0xFF. A whole tree is `[empty key, unbounded)`.
     - Read-set memory is reserved from the accountant.
-    - When a reservation fails, the transaction merges ranges up to whole trees. Only if merging frees nothing does the statement fail (FR-LIM-001).
-  - **Validation.** Under the commit latch, after `commit_ts` is drawn ([TS-16](#ts-16-commit-protocol)), the read set is checked against the write-key sets of every commit with a timestamp between this transaction's snapshot and its own `commit_ts`. Any overlap fails the commit with GQLSTATUS 25N11, provisional (OQ-005), and aborts the transaction (FR-TX-008, FR-TX-009).
+    - **Merging.** When a reservation fails, the transaction replaces all intervals of the tree with the most intervals by one interval, from their lowest `lo` to their highest `hi`, and retries; it repeats this tree by tree. Merging only widens intervals, so it can add false conflicts and never misses one. If every tree holds one interval and the reservation still fails, the statement fails (FR-LIM-001).
+  - **Write keys.** Every `(tree, key)` of a commit's batch is a write key: records, adjacency, index and catalog entries, including the index entries the committer adds under the latch ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) step 2).
+  - **Validation.** Under the commit latch, after `commit_ts` is drawn ([TS-16](#ts-16-commit-protocol)), the read set is checked against the write-key sets of every commit with a timestamp between this transaction's snapshot and its own `commit_ts`. A write key inside a read interval of the same tree is an overlap. Any overlap fails the commit with GQLSTATUS 25N11, provisional (OQ-005), and aborts the transaction (FR-TX-008, FR-TX-009).
   - **No validation for** read-only transactions (FR-TX-010) or snapshot-isolation transactions (FR-TX-004).
   - **Lock table.** Keyed by `(graph, resource)`, with X and S modes; locks are held until the commit ends.
 
@@ -218,8 +231,19 @@ related:
     | unique value `(constraint, value)` | X | writer of a constrained value |
     | label or edge type (schema) | S / X | every writer of that label or type / constraint creation ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints)) |
     | graph | S / X | every writer of the graph / fast initial load ([TS-26](operations.md#ts-26-backup-restore-import-and-export)) |
+    | catalog name `(parent_id, name)` | X | creation or drop of the catalog object with that name ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)) |
 
-  - **Write-write rule.** A transaction that obtains a lock on an element whose `version_ts` is newer than its snapshot fails with GQLSTATUS 25N11.
+  - **Queue.** A request is granted when it conflicts with no lock that another transaction holds and with no earlier waiting request; otherwise it waits, in arrival order.
+    - **Upgrade.** A request for X by a holder of S waits only for the other holders of S, and goes ahead of every waiting request. Two holders of S that both request X therefore wait for each other, and the second requester aborts (Deadlocks, below).
+    - Waits-for edges run from a waiting request to every other transaction that holds a conflicting lock and, except for an upgrade, to every earlier waiting request that conflicts with it.
+  - **Write-write rule.** A transaction that obtains a lock fails with GQLSTATUS 25N11 when the locked resource changed after its snapshot:
+
+    | Lock | Changed after the snapshot |
+    |---|---|
+    | node content X, edge X | the record's `version_ts` is above the snapshot |
+    | node existence S or X | the node's `deleted_ts` is above the snapshot; label and property changes do not count |
+    | catalog name X | the `(parent_id, name)` entry has a `created_ts` or `deleted_ts` above the snapshot |
+    | unique value, schema, graph | not checked; a unique value is checked again when the commit is applied ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints)) |
   - **Deadlocks.** Checked when a lock request would wait: a depth-first search of the waits-for graph from the requester. If the request closes a cycle, the requester aborts with GQLSTATUS 50N05. Waiters wake on cancellation.
 - **Satisfies**: FR-TX-003, FR-TX-004, FR-TX-005, FR-TX-006, FR-TX-007, FR-TX-008, FR-TX-009, FR-TX-010, BR-TX-001, FR-STO-003, FR-IDX-006, FR-IMP-002.
 - **Evidence**:
@@ -229,6 +253,10 @@ related:
   - Neo4j detects deadlocks while a lock request waits (R-NEO `community/lock/.../forseti/ForsetiClient.java:836`). Its writers take shared label and relationship-type schema locks (`kernel/.../newapi/Operations.java:505, 792`). GQLSTATUS 50N05 and 25N11 come from the Neo4j status codes [S48]; the ISO conditions insert has no serialisation-failure subclass [S45].
   - Memgraph has no serializable level and does not wait for locks (R-MG `src/storage/v2/isolation_level.hpp:20`, `mvcc.hpp:170-212`).
   - PostgreSQL SSI uses predicate locks at tuple, page or relation granularity (R-PG `src/backend/storage/lmgr/README-SSI:300-322`).
+  - Read intervals and write keys. fjall records each read as a single key, a range with its two bounds, or a whole keyspace, and every written key as a conflict key (R-FJALL @ `17ae672` `src/tx/optimistic/conflict_manager.rs:14-22, 46-55`; `src/tx/optimistic/write_tx.rs:238, 305, 348, 386, 431`). A commit fails when its reads overlap the conflict keys of any transaction that committed after its snapshot (`src/tx/optimistic/oracle.rs:40-53`). fjall has no memory cap and never merges reads; the merging rule is lpg's.
+  - Lock queue. PostgreSQL makes a request that conflicts with an earlier waiter's request wait (`lock->waitMask`, R-PG @ `1f22453` `src/backend/storage/lmgr/lock.c:1135-1145`), and puts a requester that already holds a lock conflicting with a waiter's request ahead of that waiter (`src/backend/storage/lmgr/proc.c:1251-1266`). Neo4j upgrades S to X in place: the upgrader sets an update flag and waits until it is the only holder (R-NEO `community/lock/.../forseti/ForsetiClient.java:784-802`), and no new shared holder is admitted while the flag is set (`SharedLock.java:200-211`).
+  - Existence locks. PostgreSQL's `FOR KEY SHARE` lock does not block an update that changes no key column, which takes the weaker `LockTupleNoKeyExclusive` (R-PG @ `1f22453` `src/backend/access/heap/heapam.c:129-159, 3458-3473, 3643-3648`). An edge needs only its endpoints to exist, so label and property changes do not count.
+  - Lock-table memory. PostgreSQL's lock table is bounded; a request that finds no room fails with "out of shared memory" (R-PG @ `1f22453` `src/backend/storage/lmgr/lock.c:1120-1127`). lpg charges each entry to the cap instead ([TS-14](#ts-14-mvcc)).
 - **Crates**: fjall `OptimisticTxDatabase` records single, range and whole reads and rejects a commit that overlaps a later commit's writes (R-FJALL `src/tx/optimistic/conflict_manager.rs`, `oracle.rs`). It is the same family of method; study only ([TS-04](storage.md#ts-04-own-storage-engine)). `txn` and `skipdb` (about 7 k downloads each) see too little use (NFR-DEP-001).
 - **Rejected**:
   - Validation before `commit_ts` is drawn: a transaction committing in the gap would be missed, and serial order would no longer be commit order.
@@ -236,6 +264,9 @@ related:
   - One writer at a time (Kuzu, redb, LMDB): fails FR-STO-003 and FR-TX-005.
   - Strict two-phase locking: read locks fail FR-TX-006.
   - Timeout-then-check deadlock detection (PostgreSQL `deadlock_timeout`): late, and its victim is not necessarily the requester (FR-TX-007).
+  - Granting a request that conflicts only with a waiting request: a stream of S requests could keep an X request, such as a constraint creation, waiting without bound (FR-IDX-006).
+  - Queuing an upgrade behind waiters: a waiter for X already waits for the upgrader's S, so the upgrade would close a cycle that does not exist (R-PG `proc.c:1251-1266`, above).
+  - Comparing `version_ts` for node-existence locks (the earlier rule): a label or property change of an endpoint would fail a concurrent edge creation or deletion.
 
 ## TS-16 Commit protocol
 
@@ -244,7 +275,7 @@ related:
   2. **Reserve file space.** Outside the latch, make sure the free-page reserve covers this commit's estimate ([TS-05](storage.md#ts-05-files-and-pages)). ENOSPC fails the transaction before it takes the latch; reads continue (FR-REC-007). The estimate is not a bound; step 6 meets an overrun.
   3. Take the commit latch and draw `commit_ts`. A commit that fails while it holds the latch (steps 4 and 6) gives `commit_ts` back before releasing the latch: no other commit has drawn or used it, so the next commit draws the same value and the published timestamps have no gap.
   4. **Serializable transactions only:** validate the read set ([TS-15](#ts-15-serializable-isolation-and-write-locks)). On failure, release the latch and abort.
-  5. Register the write-key set.
+  5. Add to the batch the index changes that the write set lacks ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) step 2), then register the write-key set.
   6. **Apply the batch** to pages, copying each record's before-image into the old-version memory reserved earlier ([TS-14](#ts-14-mvcc)). Nothing is pinned or reserved up front: pages are fetched as the apply reaches them, and a root-to-leaf path is pinned only while a split runs (user decision 2026-10-02).
      - **Page copies.** Before its first change in this step, each existing page is copied, with its dirty flag, into memory reserved from the accountant ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap); `mark`, `src/storage/btree/mod.rs:179-196`). A page the step takes from the free list or the reserve is copied only when the undo makes it live again:
        - a page this step freed (`create`, `src/storage/btree/mod.rs:231-250`);
@@ -255,7 +286,7 @@ related:
      - **Undo.** If anything fails in this step (ENOSPC from that extension, a refused memory reservation, an I/O or checksum error), the committer:
        1. restores every changed page, newest first change first (`undo`, `src/storage/btree/write.rs:335-368`):
           - a copied page gets back its image, and so its page LSN, and its dirty flag;
-          - every other taken page keeps the image the step wrote, because a reader may already have followed a link to it (item 3; `PinnedPage::undo_keep`, `src/storage/pool.rs:849-869`). Let L be `OpenGroup::joined_durable_lsn()` (`src/storage/wal.rs:320-326`), read when the step began: the end of the open group if a commit has joined it, else its start. Once L is durable, so is every commit that freed the page. If L is durable already, the image is written to `data` and the slot is clean. Otherwise the slot is dirty with page LSN L, so eviction and checkpoints write it only once L is durable ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)); before that, a crash could lose a commit that freed the page, which is then live after recovery and needs its own image in `data`. On an unusable database the slot is marked clean and nothing is written ([TS-12](storage.md#ts-12-checksums-corruption-and-integrity-check)).
+          - every other taken page keeps the image the step wrote, because a reader may already have followed a link to it (item 3; `PinnedPage::undo_keep`, `src/storage/pool.rs:849-869`). Let L be `OpenGroup::joined_durable_lsn()` (`src/storage/wal.rs:346-352`), read when the step began: the end of the open group if a member ([TS-09](#ts-09-wal-and-group-commit) Members) has joined it, else its start. Once L is durable, so is every member that freed the page. If L is durable already, the image is written to `data` and the slot is clean. Otherwise the slot is dirty with page LSN L, so eviction and checkpoints write it only once L is durable ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)); before that, a crash could lose a member that freed the page, which is then live after recovery and needs its own image in `data`. On an unusable database the slot is marked clean and nothing is written ([TS-12](storage.md#ts-12-checksums-corruption-and-integrity-check)).
 
           No page ends with a page LSN below the one it had before the step: a lower one could let eviction write a page before the group that last changed it is durable ([TS-09](#ts-09-wal-and-group-commit));
        2. restores the in-memory state the step changed: the free list and its reuse tags, `page_count` and the data file's allocation position, the next tree identifier, the next frame position of the open group ([TS-09](#ts-09-wal-and-group-commit)), and the old versions it added. The tree directory, the roots and the persisted free list are pages, so step 1 restores them;

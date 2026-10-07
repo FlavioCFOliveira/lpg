@@ -1,7 +1,7 @@
 ---
 title: Technical specification
 status: draft
-last-reviewed: 2026-10-03
+last-reviewed: 2026-10-07
 related:
   - ../../README.md
   - ../functional-spec/README.md
@@ -49,15 +49,16 @@ Functional terms are in the [functional glossary](../functional-spec/glossary.md
 
 - **Cache slot**: a buffer-pool slot that holds one page in memory ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
 - **Frame**: a fixed-size WAL record holding one page image or a group's commit record ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
-- **Group**: the unit of durability in the WAL: page images of one or more commits plus one commit frame ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
+- **Group**: the unit of durability in the WAL: page images of one or more members (commits and internal batches) plus one commit frame ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
+- **Internal batch**: a logged page change made under the commit latch without a commit timestamp: a garbage-collection batch or a checkpoint's statistics batch ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **LSN**: log sequence number, a byte position in the WAL's stream of frames ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **NO-STEAL**: the rule that a change reaches disk only after its commit is durable, and is visible only after its commit is published ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)).
 - **Redo point**: the LSN from which recovery replays the WAL ([TS-11](transactions-and-recovery.md#ts-11-checkpoint)).
-- **Stamp**: the `created_ts` and `deleted_ts` commit timestamps carried by an entry ([TS-06](storage.md#ts-06-graph-layout)).
+- **Stamp**: the `created_ts` and `deleted_ts` commit timestamps carried by an entry of a stamped tree; in a node or edge record, `created_ts` holds the record's `version_ts` ([TS-06](storage.md#ts-06-graph-layout)).
 
 ## Sources
 
-Checked between 2026-09-24 and 2026-10-03.
+Checked between 2026-09-24 and 2026-10-07. Citations added on 2026-10-07 that use a later commit than the table below name it, as `R-PG @ 1f22453` (2026-10-07), `R-FJALL @ 17ae672` (2026-10-05) and `R-MG @ 847e224` (2026-10-07).
 
 ### Reference source code (shallow clones, read for study only)
 
@@ -98,7 +99,7 @@ Checked between 2026-09-24 and 2026-10-03.
 | D-APOC | APOC 2026.09, `apoc.export.json` and `apoc.export.graphml`: <https://neo4j.com/docs/apoc/current/export/> |
 | D-GML | GraphML Primer: <http://graphml.ethz.ch/primer/graphml-primer.html> |
 | D-GDS | Neo4j Graph Data Science 2026.09: "Graph management", "Running algorithms", and the pages of KNN, Approximate Maximum k-cut, SLLPA, Label Propagation and Betweenness Centrality: <https://neo4j.com/docs/graph-data-science/current/> |
-| D-JIFF | jiff 0.2.37, `TimeZoneDatabase`: <https://docs.rs/jiff/0.2.37/jiff/tz/struct.TimeZoneDatabase.html> |
+| D-JIFF | jiff 0.2.38, `TimeZoneDatabase`: <https://docs.rs/jiff/0.2.38/jiff/tz/struct.TimeZoneDatabase.html>; `Timestamp` (nanosecond precision; "Jiff does not support leap seconds"): <https://docs.rs/jiff/0.2.38/jiff/struct.Timestamp.html> (checked 2026-10-07) |
 | D-CTZ | chrono-tz 0.10.4: <https://docs.rs/chrono-tz/0.10.4/chrono_tz/> |
 | D-TIME | time 0.3.55: <https://docs.rs/time/0.3.55/time/> |
 | D-TOKIO | tokio 1.53.1, `task::spawn_blocking`: <https://docs.rs/tokio/1.53.1/tokio/task/fn.spawn_blocking.html> |

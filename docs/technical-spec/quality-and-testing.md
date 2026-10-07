@@ -1,7 +1,7 @@
 ---
 title: Quality and testing
 status: draft
-last-reviewed: 2026-10-03
+last-reviewed: 2026-10-07
 related:
   - dependencies.md
   - ../functional-spec/non-functional-requirements.md
@@ -47,7 +47,7 @@ related:
   - **Regression tests.** A test added for a defect must fail when the defect's fix is reverted (mutation) in the default test build, where debug assertions are on (Speed, below). Audit finding m-c: `audit_a_failed_capture_never_reaches_the_wal` detected its defect only in release builds, because in debug a debug assertion in the WAL writer failed first; it now fails under the mutation in debug and in release (TEST 83 and 84 on rmp task #15).
   - **Concurrency.**
     - **`crate::sync` facade** (R11). The crate imports every synchronisation primitive (`Mutex`, `RwLock`, `Condvar`, atomics, `Arc`) from `crate::sync`, which re-exports `std::sync`, or `loom::sync` under `cfg(loom)`, or `shuttle::sync` under `cfg(shuttle)`.
-    - `loom` explores every interleaving of small models: commit latch and publish order, the lock table, deadlock detection and the index side-tree protocol.
+    - `loom` explores every interleaving of small models: commit latch and publish order, the lock table, deadlock detection, the snapshot registry against garbage collection ([TS-14](transactions-and-recovery.md#ts-14-mvcc)) and the index side-tree protocol.
     - `shuttle` runs randomised schedules of larger tests: the commit latch, the WAL writer and the checkpointer (D-SHUTTLE).
     - **Stress profile** (R7). The concurrency tests also run as at least 16 concurrent copies, outside the default run, before a task closes.
   - **Isolation** (from Sprint 2, with [TS-14](transactions-and-recovery.md#ts-14-mvcc) and [TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks); R12).
@@ -97,7 +97,7 @@ related:
 
 ## Unverified points
 
-1. Everything that needs the ISO/IEC 39075:2024 text, which is not available (OQ-005): Syntax, General and Conformance Rules; the content of minimum conformance; closed-graph-type matching; cross-type comparison and ordering; numeric types beyond 64 bits; the permission for GQLSTATUS 25N11 and a "feature not supported" code; the validity of procedure names. These affect [TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics), [TS-19](query-engine.md#ts-19-parser), [TS-20](query-engine.md#ts-20-binder-planner-and-execution), [TS-21](values-and-types.md#ts-21-values-and-types), [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events) and [TS-25](algorithms.md#ts-25-graph-algorithms).
+1. Everything that needs the ISO/IEC 39075:2024 text, which is not available (OQ-005): Syntax, General and Conformance Rules; the content of minimum conformance; closed-graph-type matching; the minimum label-set cardinality (IL001); the permission for GQLSTATUS 25N11 and a "feature not supported" code; the validity of procedure names. These affect [TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics), [TS-19](query-engine.md#ts-19-parser), [TS-20](query-engine.md#ts-20-binder-planner-and-execution), [TS-21](values-and-types.md#ts-21-values-and-types), [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events) and [TS-25](algorithms.md#ts-25-graph-algorithms). Cross-type comparison, ordering and numeric types are decided ([TS-21](values-and-types.md#ts-21-values-and-types), user decision 2026-10-07); only their context in the General Rules remains unverified.
 2. WAL behaviour with full page images ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)): volume and commit latency; WAL bytes between checkpoints, since the triggers count transactions; WAL growth while a backup holds recycling; recovery time.
 3. The throughput of the serial commit section, now including validation and the page copies of step 6 ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)).
 4. Compressed leaves with readers running concurrently with the single committer, the garbage collector, the index builder and the fast load ([TS-06](storage.md#ts-06-graph-layout)).

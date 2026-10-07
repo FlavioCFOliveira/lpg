@@ -1,7 +1,7 @@
 ---
 title: Storage
 status: draft
-last-reviewed: 2026-10-03
+last-reviewed: 2026-10-07
 related:
   - architecture.md
   - transactions-and-recovery.md
@@ -70,11 +70,12 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - Pages 0 and 1 change like any other page: under the commit latch, with their images in the WAL ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). Each change is therefore atomic with its commit.
   - **Free space.**
     - Free pages are kept in a persisted free list plus an in-memory set. The persisted list is a chain of trunk pages; each holds free page numbers and the next trunk page.
-    - **Reuse.** A page freed by the commit with timestamp `c` enters the persisted list in that commit. It enters the in-memory set, and may be reused, only when no tree reader can still hold its number ([TS-06](#ts-06-graph-layout)):
-      - each tree read operation registers, when it starts, the `commit_ts` of the last commit whose apply step has finished ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol));
-      - the page becomes reusable when every registered value is at least `c`.
+    - **Reuse.** A page freed by write batch `b` enters the persisted list in that batch. It enters the in-memory set, and may be reused, only when no tree reader can still hold its number ([TS-06](#ts-06-graph-layout)):
+      - every write batch has a number, one above the batch before it, whether it succeeds or is undone. Write batches are a commit's apply step ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol) step 6) and the internal batches of [TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit) (Members);
+      - each tree read operation registers, when it starts, the number of the last batch whose apply has finished, and withdraws it when it ends (`Readers`, `src/storage/freelist.rs:423-461`);
+      - the page becomes reusable when every registered value is at least `b`.
 
-      With MVCC the registered value is the snapshot, so the rule becomes the garbage-collection horizon ([TS-14](transactions-and-recovery.md#ts-14-mvcc)). At open no reader exists, so every listed page is reusable.
+      The rule counts batches, not commit timestamps: an undone batch gives its `commit_ts` back but must advance the reuse fence ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol) step 6 undo, item 3); internal batches draw no `commit_ts`; and the index builder ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) step 3) and the page checks of the integrity check ([TS-12](#ts-12-checksums-corruption-and-integrity-check)) hold page numbers but no snapshot. A transaction holds no page number between two tree read operations, and no old version refers to a page ([TS-14](transactions-and-recovery.md#ts-14-mvcc)), so snapshots bound garbage collection only, through their own registry ([TS-14](transactions-and-recovery.md#ts-14-mvcc) Snapshot registry). At open no reader exists, so every listed page is reusable.
     - **Underflow.** A delete never merges or redistributes pages. A page is freed only when it is empty:
       - it is removed from its parent, and its key range passes to its right sibling;
       - it is unlinked from its left sibling, keeps its right link and is marked deleted, so a reader that reaches it moves right ([TS-06](#ts-06-graph-layout));
@@ -93,7 +94,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - E is not a bound. One put or delete can split a full leaf and every level above it, and the overflow chains a batch frees are known only when it reads the old entries. When the reserve runs out during apply, the committer extends the file again under the commit latch; ENOSPC there is undone ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol) step 6).
     - If an extension hits ENOSPC, that transaction fails and reads continue (FR-REC-007).
     - Checkpoints and eviction write only into reserved space.
-  - **Create** fails, leaving everything unchanged, if `CONTROL` already exists (FR-DB-003). Otherwise it creates and locks `LOCK`, checks again that `CONTROL` does not exist, removes the leftovers (above), creates `data-1` with `sync_data`, and calls `sync_dir`. It then writes `CONTROL` last, with redo point 0 ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)) and the clean-shutdown flag set (`src/storage/engine.rs:330-381`). The first `sync_dir` ensures `CONTROL` can never be durable while `data-1` is not. Create writes no WAL segment; the WAL writer creates the first one ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). A location is a database exactly when `CONTROL` exists.
+  - **Create** fails, leaving everything unchanged, if `CONTROL` already exists (FR-DB-003). Otherwise it creates and locks `LOCK`, checks again that `CONTROL` does not exist, removes the leftovers (above), creates `data-1` with `sync_data`, and calls `sync_dir`. `data-1` holds the header page, the tree directory and the catalog tree with the default schema and default graph, written directly, not through the WAL ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics) Creation). It then writes `CONTROL` last, with redo point 0 ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)), the clean-shutdown flag set, and the next catalog object identifier above the two objects (`src/storage/engine.rs:330-381`; the catalog pages are not yet in the code). The first `sync_dir` ensures `CONTROL` can never be durable while `data-1` is not. Create writes no WAL segment; the WAL writer creates the first one ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)). A location is a database exactly when `CONTROL` exists.
     - **Atomic `CONTROL` creation.** Create and restore ([TS-26](operations.md#ts-26-backup-restore-import-and-export) step 5) write both slots to `CONTROL.tmp`, call `sync_data`, rename it to `CONTROL`, and call `sync_dir` (`write_new`, `src/storage/control.rs:130-144`). A failure or a crash at any point leaves either no `CONTROL` or a complete, synced one. An existing `CONTROL.tmp` is replaced.
 - **Satisfies**: FR-STO-001, FR-STO-003, FR-DB-003, FR-DB-004, FR-REC-003, FR-REC-007, FR-REC-008, FR-OPS-004, FR-OPS-011, FR-TYPE-003.
 - **Evidence**:
@@ -110,7 +111,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - Leftovers. PostgreSQL removes leftover temporary files at postmaster startup (`RemovePgTempFiles`, R-PG `src/backend/storage/file/fd.c:3300-3321`, called at `src/backend/postmaster/postmaster.c:1332`).
   - Missing data file. PostgreSQL reports an error when the first segment of a relation is missing, and never creates one in its place (R-PG `src/backend/storage/smgr/md.c:665-697`).
   - Underflow. PostgreSQL deletes only empty pages: merging "might miss the items" in a concurrent scan; it never deletes the right-most page of a level, so height never decreases (R-PG `src/backend/access/nbtree/README:234-241, 247-253, 365-367`).
-  - Reuse. PostgreSQL recycles a deleted page only when "there is no possible scan or search that has a reference to it" (R-PG `src/backend/access/nbtree/README:386-391`). LMDB reuses freed pages only below its oldest reader (R-LMDB `libraries/liblmdb/mdb.c:2640-2656, 2802-2812`). redb reuses a freed page "only after all read transactions that could reference it have completed" (R-REDB `docs/design.md:388-389`).
+  - Reuse. PostgreSQL recycles a deleted page only when "there is no possible scan or search that has a reference to it" (R-PG `src/backend/access/nbtree/README:386-391`). LMDB reuses freed pages only below its oldest reader (R-LMDB `libraries/liblmdb/mdb.c:2640-2656, 2802-2812`). redb reuses a freed page "only after all read transactions that could reference it have completed" (R-REDB `docs/design.md:388-389`). Sprint 1 implements the rule with batch numbers (`src/storage/btree/write.rs:207, 266, 301`).
 - **Rejected**:
   - A `wal-<g>/` directory (PostgreSQL `pg_wal`, R-PG `src/include/access/xlog_internal.h:148`; RocksDB `Env::CreateDir` and `CreateDirIfMissing`, R-ROCKS `include/rocksdb/env.h:360-365`, used for the WAL directory at `db/db_impl/db_impl_open.cc:2687`): [TS-03](interfaces.md#ts-03-storage-abstraction) would need `create_dir` and `remove_dir`, which every application storage would have to implement, and each segment would need a `sync_dir` of a second directory (user decision 2026-10-02).
   - Replacing `CONTROL` by rename at each checkpoint: it creates a file, which can hit ENOSPC outside any transaction.
@@ -118,6 +119,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - One file per graph or per tree: more files to sync, rename and back up, for no requirement.
   - Tree roots or the free-list head in `CONTROL`: `CONTROL` is written only at checkpoints and is not logged, so a commit's change to them would not be atomic with the commit.
   - Moving roots (PostgreSQL metapage, LMDB, redb): the directory would change at every root split.
+  - Tagging freed pages with commit timestamps and registering snapshots (PostgreSQL recycles a page when its deletion XID is no longer visible to any snapshot, R-PG @ `1f22453` `src/include/access/nbtree.h:292-315`): undone batches and internal batches would need a second counter and a timestamp of their own, and the index builder's registration would also hold old versions, which [TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) excludes.
   - Counting one split per delete in the estimate (the worst case): the reserve would grow by up to (height + 1) pages per delete and stay in the file, which never shrinks, while deletes rarely split and an overrun is handled at apply.
   - Merging or redistributing underfull pages (LMDB below 25 % fill, R-LMDB `mdb.c:1136-1139, 10335-10348`; SQLite at less than one third full, R-SQLITE `src/btree.c:9175-9179`): moving entries across page boundaries can make a concurrent scan miss or repeat them.
   - Keeping only a value prefix inline (SQLite): two places to read one value, for no requirement.
@@ -130,14 +132,23 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - **Node tree**, keyed by `node_id`: label tokens and properties ([TS-21](values-and-types.md#ts-21-values-and-types)).
     - **Edge tree**, keyed by `edge_id`: source, target, type and properties.
     - **Adjacency tree**, keyed `(node_id, direction, edge_type, neighbour_id, edge_id)`, with two entries per edge (OUT at the source, IN at the target).
-  - Every entry carries the **stamps** `created_ts` and `deleted_ts`.
+  - **Stamps** ([TS-14](transactions-and-recovery.md#ts-14-mvcc)): two optional commit timestamps per entry, `created_ts` and `deleted_ts`.
+
+    | Trees | Entry | `created_ts` field | `deleted_ts` |
+    |---|---|---|---|
+    | adjacency, index, catalog except tokens | immutable | the commit that inserted it | the commit that deleted it |
+    | node, edge | record, mutable | `version_ts`: the commit that wrote the newest version | the commit that deleted the element |
+    | tree directory, free list, side trees, statistics tree, token entries | not stamped | — | — |
+
+    A record's older versions are in memory ([TS-14](transactions-and-recovery.md#ts-14-mvcc)). The before-image of a creation is "absent", so a snapshot older than the creation does not see the element.
   - **Compressed leaves from the start**, in every tree:
     - entries are sorted; every 16th entry is a restart point holding its full key;
     - in the adjacency tree, the other entries store their key fields as deltas from the previous key, with integers as varints (M-LAYOUT layout B);
     - in every other tree, whose keys are byte strings, the other entries store the length of the prefix shared with the previous key, the length of the rest of the key, and the rest; both lengths are varints;
     - `created_ts` is omitted once the entry is visible to every snapshot ("frozen"), and `deleted_ts` is omitted while the entry is live.
   - **A delete can split a leaf.** Removing an entry moves every later entry one position earlier, so each later restart point becomes a different entry, which then stores its full key instead of a suffix. The leaf can therefore grow; if it no longer fits, it splits as for a put.
-  - **Stamp encoding.** The leaf format has no stamp fields until MVCC is built ([TS-14](transactions-and-recovery.md#ts-14-mvcc)); the stamp encoding is added with it. The tree directory and the free list ([TS-05](#ts-05-files-and-pages)) never carry stamps.
+  - **Stamp encoding.** Each leaf entry has a `tag` varint (`src/storage/btree/node.rs:20-30`). Bit 0 marks a value in an overflow chain, bit 1 a present `created_ts`, bit 2 a present `deleted_ts`; the value length is `tag >> 3`. Present stamps follow the tag as varints, `created_ts` first. Unstamped trees never set bits 1 and 2.
+    - The format version stays 1: no release exists (the repository has no git tag, and crates.io has no crate `lpg`, 2026-10-07), so no file in the earlier leaf format exists outside development ([TS-28](operations.md#ts-28-format-versioning-and-migration)).
   - **Fill.** Bulk-built leaves are filled to 90 %. When the right-most leaf of any tree splits, the left page is left 90 % full. There is no per-tree setting.
   - **Concurrent readers** (Lehman and Yao's B-link tree):
     - every page holds a high key, the upper bound of its keys, and a link to its right sibling;
@@ -166,6 +177,8 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
     - Kuzu's columnar CSR allows one write transaction at a time (R-KUZU `src/transaction/transaction_manager.cpp:35-38`).
     - Memgraph keeps adjacency in memory (R-MG `src/storage/v2/vertex.hpp`).
     - Shared-prefix keys with a restart point every 16 entries: LevelDB blocks (R-LEVELDB `table/block_builder.cc:5-22`; `block_restart_interval = 16`, `include/leveldb/options.h:106`).
+    - Stamps beside the key: LevelDB packs a 56-bit sequence number and an 8-bit value type (value or deletion) into one 64-bit tag after each key (R-LEVELDB `db/dbformat.cc:15-19`, `db/dbformat.h:54, 67`).
+    - An "absent" before-image for a creation: Memgraph's first delta of a new object is `DELETE_OBJECT` (R-MG @ `847e224` `src/storage/v2/mvcc.hpp:237-242`).
     - A delete that needs new pages: InnoDB reserves file space before a pessimistic delete "so that the node pointer updates will not fail because of lack of space" (R-INNO `btr/btr0cur.cc:4686-4697`, `btr_cur_pessimistic_delete`).
     - Right-most leaf split. PostgreSQL leaves the left page fillfactor full whenever the right-most leaf of any B-tree index splits, default 90 (R-PG `src/backend/access/nbtree/nbtsplitloc.c:95-100, 287-291`; `src/include/access/nbtree.h:201`). SQLite's `balance_quick` applies to every rowid table when a row is appended to the right-most leaf (R-SQLITE `src/btree.c:9217-9238`).
     - Concurrent readers. PostgreSQL implements Lehman and Yao's right links and high keys (R-PG `src/backend/access/nbtree/README:17-29`), holds one read latch at a time and couples latches only when moving right or up (`README:106-110`), and makes a scan follow the right link recorded when it read the page (`README:88-101`).
@@ -191,12 +204,19 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 - **Decision**:
   - One 64-bit counter per database serves nodes and edges in every graph. It is monotonic, never reused, and kept below 2^63.
   - Its high-water mark is stored in each WAL commit frame and in `CONTROL` ([TS-05](#ts-05-files-and-pages)), and recovery takes the highest. The commit-timestamp, catalog-object and token counters follow the same rule.
+  - **Drawing.** Element, catalog-object and token identifiers are drawn from in-memory atomic counters when the write that needs them enters the write set ([TS-14](transactions-and-recovery.md#ts-14-mvcc)). Under the commit latch, each commit records the counters' current values as its high-water marks (`Ids`, `src/tx/commit.rs:29-40`).
+    - An identifier drawn by a transaction that aborts is skipped: the counters never decrease while the database is open.
+    - After a crash, the counters restart from the high-water marks of durable commits ([TS-13](transactions-and-recovery.md#ts-13-recovery) step 6). An identifier drawn by a transaction whose commit was not durable can then be drawn again; it never identified a committed element, so no element identifier is reused (BR-TYPE-001).
   - The Bolt `element_id` is the decimal text of the identifier, and the legacy integer `id` field is the same value.
   - Backup, restore and migration copy identifiers unchanged. Import assigns new ones ([TS-26](operations.md#ts-26-backup-restore-import-and-export)).
 - **Satisfies**: FR-TYPE-003, BR-TYPE-001, BR-TYPE-002, FR-IMP-005, FR-BOLT-001.
-- **Evidence**: Neo4j reuses the identifiers of deleted elements ([S11] of the functional specification), which BR-TYPE-001 forbids. Bolt carries `element_id` from version 5.0 (D-SS).
+- **Evidence**:
+  - Neo4j reuses the identifiers of deleted elements ([S11] of the functional specification), which BR-TYPE-001 forbids. Bolt carries `element_id` from version 5.0 (D-SS).
+  - Drawing at write time. Neo4j allocates an entity's identifier when the transaction reserves it, marks it used at commit, and marks it unallocated, for reuse, when the transaction rolls back (R-NEO `community/id-generator/.../IdGenerator.java:206-216`). PostgreSQL sequences hand out values outside transaction control; "In the event of crash we can lose (skip over) as many values as we pre-logged" (R-PG @ `1f22453` `src/backend/commands/sequence.c:52-58`).
 - **Rejected**:
   - One counter per graph: the same value would identify elements in two graphs.
+  - Drawing identifiers at commit: a transaction's own statements need the identifier of an element they create before the transaction commits.
+  - Returning the identifiers of an aborted transaction for reuse (Neo4j): it needs a free list of identifiers, while skipping them needs nothing (NFR-SIMP-001).
   - Identifiers equal to record positions (Neo4j): reuse would be needed to reclaim space.
 
 ## TS-08 Buffer pool and memory cap
@@ -206,7 +226,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - **Eviction.** A clock sweep. Before a dirty cache slot is written, its page LSN must be durable in the WAL. Cache slots are written only by eviction and by checkpoints, always into reserved space ([TS-05](#ts-05-files-and-pages)).
   - **I/O.** Positional `read_at` and `write_at` through the storage trait ([TS-03](interfaces.md#ts-03-storage-abstraction)), using the operating-system cache. No mmap and no direct I/O.
   - **Memory accountant.** One per database, an atomic byte budget equal to the memory cap. The cap is a required argument of create and open; there is no default (FR-LIM-003).
-    - Users that reserve from it: cache slots, operator state, commit batches and the page copies of a commit's apply step ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)), private write sets with their before-image and write-key reservations, old versions, committed write-key sets, read sets, sort buffers, and algorithm projections.
+    - Users that reserve from it: cache slots, operator state, commit batches and the page copies of a commit's apply step ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol)), private write sets with their before-image, write-key and lock-table entry reservations ([TS-14](transactions-and-recovery.md#ts-14-mvcc)), old versions, committed write-key sets, read sets, sort buffers, and algorithm projections.
     - When a reservation fails, the pool evicts clean cache slots, then dirty cache slots whose WAL is durable. If the reservation still fails, the statement that asked fails (FR-LIM-001, FR-LIM-005, FR-LIM-007).
     - **Page copies** ([TS-16](transactions-and-recovery.md#ts-16-commit-protocol) step 6): one page for each existing page the commit changes, held only while step 6 runs. Their number is not known in advance, so nothing is reserved up front: a refused reservation, for a copy or for a cache slot, fails that commit and undoes its changes.
     - The pool never shrinks below a minimum, provisionally 1 % of the cap, to be fixed by measurement.
@@ -242,11 +262,15 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
   - The on-demand integrity check reads every page and checks:
     - its checksum;
     - the B+tree invariants: key order, separators, sibling links, free-list membership;
-    - the consistency between trees: adjacency against the edge tree, each index against the data.
+    - the consistency between trees. This part runs as a read-only transaction and compares what its snapshot sees ([TS-14](transactions-and-recovery.md#ts-14-mvcc)), because a record's `version_ts` is not its creation stamp and garbage collection freezes stamps page by page ([TS-06](#ts-06-graph-layout)):
+      - each edge has exactly one OUT entry at its source and one IN entry at its target, with its type; each adjacency entry belongs to such an edge;
+      - where an edge record and its adjacency entries carry `deleted_ts`, the values are equal, because one commit deletes all three;
+      - each entry of an ONLINE index matches a record with the indexed values, and each record that an ONLINE index of its graph covers has its entry there ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints)). POPULATING indexes are not compared.
 - **Satisfies**: FR-REC-003, FR-REC-005, FR-REC-006, FR-REC-007, FR-REC-008, FR-REC-010.
 - **Evidence**:
   - CRC-32C is used by the PostgreSQL WAL (R-PG `src/include/access/xlogrecord.h:49`), InnoDB pages, and Neo4j log entries (R-NEO `community/wal/.../CommitLogEntrySerializerV4_2.java:67`). redb uses XXH3-128 (P-STO §Q6).
   - Neo4j ships a consistency checker (R-NEO `community/consistency-check`).
+  - Cross-tree checks by visibility. PostgreSQL amcheck fingerprints every index tuple, then "a heap scan later uses Bloom filter probes to verify that every visible heap tuple has a matching index tuple", with a snapshot for that scan (R-PG @ `1f22453` `contrib/amcheck/verify_nbtree.c:11-14, 98`).
   - Page number binding. PostgreSQL mixes the block number into every page checksum "to detect the case where a page is somehow moved to a different location" (R-PG `src/include/storage/checksum_impl.h:167-169, 172, 193`). InnoDB stores the page number in the page header (`FIL_PAGE_OFFSET`, R-INNO `include/fil0types.h:44-46`) and stops when a page it reads holds another number (`buf/buf0buf.cc:5800-5821`). Turso passes the page number to its checksum functions but does not use it (R-TURSO `core/storage/checksum.rs:35, 81-83`); neither did lpg before task #23 (`src/storage/page.rs:8, 79-81`) ([P-TEST](../evidence/research/research-04-turso-libsql.md) §2, R9). The page format changes before it is frozen (user decision 2026-10-03, rmp task #23).
 - **Crates**:
   - `crc32c` 0.6.8: dependency. Apache-2.0/MIT, 85.9 M downloads, no runtime dependencies, repository active in 2026-02.

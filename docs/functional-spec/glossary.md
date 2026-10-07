@@ -1,7 +1,7 @@
 ---
 title: Glossary
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-07
 related:
   - README.md
 ---
@@ -36,9 +36,9 @@ related:
 - **Multiversion concurrency control (MVCC)**: keeping several committed versions of the data so that a transaction reads the versions of its snapshot without waiting for writers ([NFR-PERF-003](non-functional-requirements.md#performance), [FR-TX-006](functional-requirements.md#transactions)).
 - **Old version**: a committed version of data that a later commit has replaced, kept while a transaction's snapshot may still read it ([FR-LIM-005](functional-requirements.md#resource-limits)).
 - **Native dump**: the crate's own import and export format ([FR-IMP-001](functional-requirements.md#import-and-export)).
-- **Owner**: the principal recorded on a catalog object, passed to the authorisation abstraction ([FR-AUTH-002](functional-requirements.md#authorisation)).
+- **Owner**: the principal recorded on a catalog object, passed to the authorisation abstraction ([FR-AUTH-002](functional-requirements.md#authorisation)). The owner of the default schema and the default graph is the principal passed to the create operation ([FR-DB-005](functional-requirements.md#database-lifecycle)).
 - **PackStream**: the binary encoding used by Bolt.
-- **Principal**: the identity under which a session runs, returned by the authentication and authorisation abstraction (Bolt) or supplied by the application (Rust API).
+- **Principal**: the identity under which a session runs, returned by the authentication and authorisation abstraction (Bolt) or supplied by the application (Rust API). The owner principal passed to the create operation exists without a session ([FR-DB-005](functional-requirements.md#database-lifecycle), [FR-AUTH-001](functional-requirements.md#authorisation), [FR-AUTH-002](functional-requirements.md#authorisation)).
 - **Read set**: the data that a transaction has read, validated when a read-write transaction commits ([FR-TX-009](functional-requirements.md#transactions)).
 - **Read-only procedure, read-write procedure**: a registered procedure declared unable, or able, to modify data ([FR-PROC-002](functional-requirements.md#procedures-and-functions)).
 - **Read-only transaction, read-write transaction**: a transaction that has written no data, or has written data, when it commits ([FR-TX-009](functional-requirements.md#transactions), [FR-TX-010](functional-requirements.md#transactions)).

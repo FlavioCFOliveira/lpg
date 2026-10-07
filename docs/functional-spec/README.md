@@ -1,7 +1,7 @@
 ---
 title: Functional specification
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-07
 related:
   - ../../README.md
 ---
@@ -88,5 +88,10 @@ These sources were checked on 2026-10-02:
 - [S46] Neo4j Operations Manual 2026.09, "Database privileges": <https://neo4j.com/docs/operations-manual/current/authentication-authorization/database-administration/> (`CREATE INDEX`, `DROP INDEX`, `SHOW INDEX`, `CREATE CONSTRAINT`, `DROP CONSTRAINT`, `SHOW TRANSACTION` and `TERMINATE TRANSACTION` are privileges granted to users on a database).
 - [S47] PostgreSQL source, `src/bin/pg_upgrade/controldata.c` on branch `REL_18_STABLE`: <https://github.com/postgres/postgres/blob/REL_18_STABLE/src/bin/pg_upgrade/controldata.c> (unless the control data reports "shut down", `pg_upgrade` stops with "The source cluster was not shut down cleanly").
 - [S48] Neo4j Status Codes, "GQLSTATUS error codes": <https://neo4j.com/docs/status-codes/current/errors/gql-errors/> (50N05 "general processing exception - deadlock detected"; 25N11 "invalid transaction state - conflicting transaction state", "There was a conflict detected between the transaction state and applied updates. Please retry the transaction."; no code for a serialisation failure).
+
+These sources were checked on 2026-10-07:
+
+- [S49] PostgreSQL source <https://github.com/postgres/postgres> at commit `1f2245371e31f0def347546f5ad250552a4eb8a4` (2026-10-07): in bootstrap and standalone mode the backend uses a fixed superuser identity, and only the multi-user case calls `PerformAuthentication` (`src/backend/utils/init/postinit.c:907-949`); `initdb` runs the backend with `--boot` and writes the bootstrap superuser's name, given by `-U`, into the initial catalog (`src/bin/initdb/initdb.c:1588-1589, 1614, 3302-3303`); `byteacmp` compares the common length with `memcmp` and then orders the shorter value first (`src/backend/utils/adt/bytea.c:959-978`).
+- [S50] Neo4j community source <https://github.com/neo4j/neo4j> at commit `54a7dcf7c2501b31866199143364c5332da8936f` (2026-09-14), directory `community/values/src/main/java/org/neo4j/values/storable/`: the value groups in `ValueGroup.java` include no byte-string group (lines 32-66); durations compare by average length in seconds, then nanoseconds, months, days and seconds (`DurationValue.java:86-93`); zoned date-times with the same instant compare by offset, then offset-only zones before named zones, then named zones by their zone identifiers normalised through `TimeZones.map` (applied twice) and compared as strings, then by chronology (`DateTimeValue.java:477-513`).
 
 The ISO/IEC 39075:2024 text is not available to the project. The authority for GQL syntax is opengql/grammar [S4] ([NFR-VER-002](non-functional-requirements.md#verification)). The ISO electronic inserts [S45], consulted on 2026-10-02, are a supplementary source for the GQLSTATUS conditions, the feature identifiers and the implementation-defined items cited in this folder. What still depends on the standard's Syntax Rules, General Rules and Conformance Rules, or on ISO/IEC 39075:2024/Cor 1:2026, is listed in [OQ-005](open-questions.md#oq-005) (user decision 2026-10-02).
