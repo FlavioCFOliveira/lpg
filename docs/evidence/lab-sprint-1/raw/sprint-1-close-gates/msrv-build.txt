@@ -1,0 +1,2 @@
+   Compiling lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.19s

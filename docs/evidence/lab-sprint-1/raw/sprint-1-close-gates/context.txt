@@ -1,0 +1,7 @@
+commit 3d7249544cdbb4c538f306375f1b7db65ceb7ac4
+2026-10-07T21:35:50+01:00
+msrv exit=0
+deny exit=0
+forbid exit=0
+grep exit=0
+suite exit=0
