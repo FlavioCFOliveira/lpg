@@ -1,0 +1,1797 @@
+info: experimental features enabled: wrapper-scripts
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.01s
+────────────
+ Nextest run ID 0f453d28-74ce-48e0-85ef-8329342fe1b5 with nextest profile: default
+    Starting 216 tests across 1 binary (24 tests skipped)
+       START [         ] (  1/216) lpg lab::generator::tests::memory_cap_for_cache_shares
+
+running 1 test
+test lab::generator::tests::memory_cap_for_cache_shares ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (  1/216) lpg lab::generator::tests::memory_cap_for_cache_shares
+       START [         ] (  2/216) lpg lab::generator::tests::samplers_are_deterministic_and_in_range
+
+running 1 test
+test lab::generator::tests::samplers_are_deterministic_and_in_range ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (  2/216) lpg lab::generator::tests::samplers_are_deterministic_and_in_range
+       START [         ] (  3/216) lpg lab::generator::tests::zipf_is_skewed_and_uniform_is_not
+
+running 1 test
+test lab::generator::tests::zipf_is_skewed_and_uniform_is_not ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.008s] (  3/216) lpg lab::generator::tests::zipf_is_skewed_and_uniform_is_not
+       START [         ] (  4/216) lpg lab::tests::median_range_of_three
+
+running 1 test
+test lab::tests::median_range_of_three ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (  4/216) lpg lab::tests::median_range_of_three
+       START [         ] (  5/216) lpg lab::tests::percentile_by_nearest_rank
+
+running 1 test
+test lab::tests::percentile_by_nearest_rank ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (  5/216) lpg lab::tests::percentile_by_nearest_rank
+       START [         ] (  6/216) lpg lab::tests::probe_reads_proc
+
+running 1 test
+test lab::tests::probe_reads_proc ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (  6/216) lpg lab::tests::probe_reads_proc
+       START [         ] (  7/216) lpg lab::tests::text_round_trip
+
+running 1 test
+test lab::tests::text_round_trip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (  7/216) lpg lab::tests::text_round_trip
+       START [         ] (  8/216) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+
+running 1 test
+test obs::recording::tests::concurrent_calls_are_all_recorded ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (  8/216) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+       START [         ] (  9/216) lpg obs::recording::tests::difference_and_display
+
+running 1 test
+test obs::recording::tests::difference_and_display ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (  9/216) lpg obs::recording::tests::difference_and_display
+       START [         ] ( 10/216) lpg obs::tests::every_call_kind_through_dyn_sink
+
+running 1 test
+test obs::tests::every_call_kind_through_dyn_sink ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 10/216) lpg obs::tests::every_call_kind_through_dyn_sink
+       START [         ] ( 11/216) lpg obs::tests::names_are_unique
+
+running 1 test
+test obs::tests::names_are_unique ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 11/216) lpg obs::tests::names_are_unique
+       START [         ] ( 12/216) lpg ops::backup::tests::a_backup_requested_during_a_bulk_build_fails_at_once
+
+running 1 test
+test ops::backup::tests::a_backup_requested_during_a_bulk_build_fails_at_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.09s
+
+        PASS [   0.095s] ( 12/216) lpg ops::backup::tests::a_backup_requested_during_a_bulk_build_fails_at_once
+       START [         ] ( 13/216) lpg ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point
+
+running 1 test
+test ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.19s
+
+        PASS [   0.194s] ( 13/216) lpg ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point
+       START [         ] ( 14/216) lpg ops::backup::tests::audit_a_bulk_build_waits_for_a_running_backup
+
+running 1 test
+test ops::backup::tests::audit_a_bulk_build_waits_for_a_running_backup ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.09s
+
+        PASS [   0.097s] ( 14/216) lpg ops::backup::tests::audit_a_bulk_build_waits_for_a_running_backup
+       START [         ] ( 15/216) lpg ops::backup::tests::the_backup_hold_keeps_segments_from_its_start
+
+running 1 test
+test ops::backup::tests::the_backup_hold_keeps_segments_from_its_start ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.029s] ( 15/216) lpg ops::backup::tests::the_backup_hold_keeps_segments_from_its_start
+       START [         ] ( 16/216) lpg ops::backup::tests::the_backup_target_must_be_empty
+
+running 1 test
+test ops::backup::tests::the_backup_target_must_be_empty ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.011s] ( 16/216) lpg ops::backup::tests::the_backup_target_must_be_empty
+       START [         ] ( 17/216) lpg ops::backup::tests::the_manifest_round_trips_and_any_change_is_refused
+
+running 1 test
+test ops::backup::tests::the_manifest_round_trips_and_any_change_is_refused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 17/216) lpg ops::backup::tests::the_manifest_round_trips_and_any_change_is_refused
+       START [         ] ( 18/216) lpg ops::migrate::tests::a_cleanly_closed_older_database_migrates_and_opens_unchanged
+
+running 1 test
+test ops::migrate::tests::a_cleanly_closed_older_database_migrates_and_opens_unchanged ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.039s] ( 18/216) lpg ops::migrate::tests::a_cleanly_closed_older_database_migrates_and_opens_unchanged
+       START [         ] ( 19/216) lpg ops::migrate::tests::a_database_without_a_clean_shutdown_names_the_previous_crate_version
+
+running 1 test
+test ops::migrate::tests::a_database_without_a_clean_shutdown_names_the_previous_crate_version ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.15s
+
+        PASS [   0.155s] ( 19/216) lpg ops::migrate::tests::a_database_without_a_clean_shutdown_names_the_previous_crate_version
+       START [         ] ( 20/216) lpg ops::migrate::tests::a_format_two_versions_older_names_the_intermediate_crate_version
+
+running 1 test
+test ops::migrate::tests::a_format_two_versions_older_names_the_intermediate_crate_version ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.17s
+
+        PASS [   0.175s] ( 20/216) lpg ops::migrate::tests::a_format_two_versions_older_names_the_intermediate_crate_version
+       START [         ] ( 21/216) lpg ops::migrate::tests::an_open_database_is_not_migrated
+
+running 1 test
+test ops::migrate::tests::an_open_database_is_not_migrated ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.010s] ( 21/216) lpg ops::migrate::tests::an_open_database_is_not_migrated
+       START [         ] ( 22/216) lpg ops::migrate::tests::audit_the_leftovers_of_an_interrupted_migration_are_removed_before_the_space_check
+
+running 1 test
+test ops::migrate::tests::audit_the_leftovers_of_an_interrupted_migration_are_removed_before_the_space_check ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.030s] ( 22/216) lpg ops::migrate::tests::audit_the_leftovers_of_an_interrupted_migration_are_removed_before_the_space_check
+       START [         ] ( 23/216) lpg ops::migrate::tests::too_little_space_fails_before_any_write
+
+running 1 test
+test ops::migrate::tests::too_little_space_fails_before_any_write ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.15s
+
+        PASS [   0.154s] ( 23/216) lpg ops::migrate::tests::too_little_space_fails_before_any_write
+       START [         ] ( 24/216) lpg ops::restore::tests::a_restore_into_a_database_fails_and_changes_nothing
+
+running 1 test
+test ops::restore::tests::a_restore_into_a_database_fails_and_changes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.19s
+
+        PASS [   0.195s] ( 24/216) lpg ops::restore::tests::a_restore_into_a_database_fails_and_changes_nothing
+       START [         ] ( 25/216) lpg ops::restore::tests::a_restore_overwrites_what_an_interrupted_restore_left
+
+running 1 test
+test ops::restore::tests::a_restore_overwrites_what_an_interrupted_restore_left ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.10s
+
+        PASS [   0.102s] ( 25/216) lpg ops::restore::tests::a_restore_overwrites_what_an_interrupted_restore_left
+       START [         ] ( 26/216) lpg ops::restore::tests::an_artefact_does_not_open_as_a_database
+
+running 1 test
+test ops::restore::tests::an_artefact_does_not_open_as_a_database ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.05s
+
+        PASS [   0.056s] ( 26/216) lpg ops::restore::tests::an_artefact_does_not_open_as_a_database
+       START [         ] ( 27/216) lpg ops::restore::tests::an_incomplete_or_damaged_artefact_is_refused_before_any_write
+
+running 1 test
+test ops::restore::tests::an_incomplete_or_damaged_artefact_is_refused_before_any_write ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.06s
+
+        PASS [   0.069s] ( 27/216) lpg ops::restore::tests::an_incomplete_or_damaged_artefact_is_refused_before_any_write
+       START [         ] ( 28/216) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_from_lsn_0_replays_nothing
+
+running 1 test
+test ops::restore::tests::audit_a_create_after_an_interrupted_restore_from_lsn_0_replays_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.20s
+
+        PASS [   0.204s] ( 28/216) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_from_lsn_0_replays_nothing
+       START [         ] ( 29/216) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_ignores_its_segments
+
+running 1 test
+test ops::restore::tests::audit_a_create_after_an_interrupted_restore_ignores_its_segments ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.21s
+
+        PASS [   0.215s] ( 29/216) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_ignores_its_segments
+       START [         ] ( 30/216) lpg ops::restore::tests::audit_a_failed_control_write_in_step_5_leaves_a_restorable_target
+
+running 1 test
+test ops::restore::tests::audit_a_failed_control_write_in_step_5_leaves_a_restorable_target ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.25s
+
+        PASS [   0.258s] ( 30/216) lpg ops::restore::tests::audit_a_failed_control_write_in_step_5_leaves_a_restorable_target
+       START [         ] ( 31/216) lpg ops::restore::tests::audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact
+
+running 1 test
+test ops::restore::tests::audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.07s
+
+        PASS [   0.078s] ( 31/216) lpg ops::restore::tests::audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact
+       START [         ] ( 32/216) lpg ops::restore::tests::audit_a_restore_never_replaces_a_database_created_after_its_first_check
+
+running 1 test
+test ops::restore::tests::audit_a_restore_never_replaces_a_database_created_after_its_first_check ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.07s
+
+        PASS [   0.073s] ( 32/216) lpg ops::restore::tests::audit_a_restore_never_replaces_a_database_created_after_its_first_check
+       START [         ] ( 33/216) lpg ops::restore::tests::audit_a_wal_ending_before_stop_is_refused_by_the_restore_and_every_later_open
+
+running 1 test
+test ops::restore::tests::audit_a_wal_ending_before_stop_is_refused_by_the_restore_and_every_later_open ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.15s
+
+        PASS [   0.158s] ( 33/216) lpg ops::restore::tests::audit_a_wal_ending_before_stop_is_refused_by_the_restore_and_every_later_open
+       START [         ] ( 34/216) lpg ops::restore::tests::audit_an_out_of_bounds_segment_or_an_oversized_manifest_is_refused_before_any_write
+
+running 1 test
+test ops::restore::tests::audit_an_out_of_bounds_segment_or_an_oversized_manifest_is_refused_before_any_write ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.06s
+
+        PASS [   0.068s] ( 34/216) lpg ops::restore::tests::audit_an_out_of_bounds_segment_or_an_oversized_manifest_is_refused_before_any_write
+       START [         ] ( 35/216) lpg storage::btree::bulk::tests::a_bulk_built_tree_answers_like_a_tree_built_by_puts
+
+running 1 test
+LPG_SEED=3805077474915091289
+test storage::btree::bulk::tests::a_bulk_built_tree_answers_like_a_tree_built_by_puts ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.06s
+
+        PASS [   0.062s] ( 35/216) lpg storage::btree::bulk::tests::a_bulk_built_tree_answers_like_a_tree_built_by_puts
+       START [         ] ( 36/216) lpg storage::btree::bulk::tests::a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free
+
+running 1 test
+LPG_SEED=3595845647411318146
+LPG_SEED=6149324564486007016
+test storage::btree::bulk::tests::a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.037s] ( 36/216) lpg storage::btree::bulk::tests::a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free
+       START [         ] ( 37/216) lpg storage::btree::bulk::tests::a_sorted_spill_feeds_the_build
+
+running 1 test
+LPG_SEED=5974226075723691149
+test storage::btree::bulk::tests::a_sorted_spill_feeds_the_build ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.030s] ( 37/216) lpg storage::btree::bulk::tests::a_sorted_spill_feeds_the_build
+       START [         ] ( 38/216) lpg storage::btree::bulk::tests::audit_a_stale_frame_never_overwrites_a_bulk_built_page
+
+running 1 test
+test storage::btree::bulk::tests::audit_a_stale_frame_never_overwrites_a_bulk_built_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.36s
+
+        PASS [   0.361s] ( 38/216) lpg storage::btree::bulk::tests::audit_a_stale_frame_never_overwrites_a_bulk_built_page
+       START [         ] ( 39/216) lpg storage::btree::bulk::tests::bulk_built_leaves_are_filled_to_ninety_percent
+
+running 1 test
+LPG_SEED=8309831793594074011
+test storage::btree::bulk::tests::bulk_built_leaves_are_filled_to_ninety_percent ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.019s] ( 39/216) lpg storage::btree::bulk::tests::bulk_built_leaves_are_filled_to_ninety_percent
+       START [         ] ( 40/216) lpg storage::btree::bulk::tests::unsorted_input_fails_the_build_and_empty_input_builds_an_empty_tree
+
+running 1 test
+test storage::btree::bulk::tests::unsorted_input_fails_the_build_and_empty_input_builds_an_empty_tree ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.011s] ( 40/216) lpg storage::btree::bulk::tests::unsorted_input_fails_the_build_and_empty_input_builds_an_empty_tree
+       START [         ] ( 41/216) lpg storage::btree::node::tests::apply_keeps_every_16th_entry_a_restart_point
+
+running 1 test
+test storage::btree::node::tests::apply_keeps_every_16th_entry_a_restart_point ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 41/216) lpg storage::btree::node::tests::apply_keeps_every_16th_entry_a_restart_point
+       START [         ] ( 42/216) lpg storage::btree::node::tests::apply_matches_the_full_reencode
+
+running 1 test
+test storage::btree::node::tests::apply_matches_the_full_reencode ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 1.20s
+
+        PASS [   1.208s] ( 42/216) lpg storage::btree::node::tests::apply_matches_the_full_reencode
+       START [         ] ( 43/216) lpg storage::btree::node::tests::common_prefix_matches_the_bytewise_definition
+
+running 1 test
+test storage::btree::node::tests::common_prefix_matches_the_bytewise_definition ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 43/216) lpg storage::btree::node::tests::common_prefix_matches_the_bytewise_definition
+       START [         ] ( 44/216) lpg storage::btree::node::tests::deletes_that_grow_the_leaf_match_the_full_reencode
+
+running 1 test
+test storage::btree::node::tests::deletes_that_grow_the_leaf_match_the_full_reencode ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 44/216) lpg storage::btree::node::tests::deletes_that_grow_the_leaf_match_the_full_reencode
+       START [         ] ( 45/216) lpg storage::btree::node::tests::full_leaf_is_left_unchanged
+
+running 1 test
+test storage::btree::node::tests::full_leaf_is_left_unchanged ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 45/216) lpg storage::btree::node::tests::full_leaf_is_left_unchanged
+       START [         ] ( 46/216) lpg storage::btree::node::tests::inner_pages_route_keys
+
+running 1 test
+test storage::btree::node::tests::inner_pages_route_keys ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 46/216) lpg storage::btree::node::tests::inner_pages_route_keys
+       START [         ] ( 47/216) lpg storage::btree::node::tests::restart_points_hold_full_keys_every_16_entries
+
+running 1 test
+test storage::btree::node::tests::restart_points_hold_full_keys_every_16_entries ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 47/216) lpg storage::btree::node::tests::restart_points_hold_full_keys_every_16_entries
+       START [         ] ( 48/216) lpg storage::btree::node::tests::separator_is_shortest_between
+
+running 1 test
+test storage::btree::node::tests::separator_is_shortest_between ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 48/216) lpg storage::btree::node::tests::separator_is_shortest_between
+       START [         ] ( 49/216) lpg storage::btree::node::tests::varints_round_trip
+
+running 1 test
+test storage::btree::node::tests::varints_round_trip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 49/216) lpg storage::btree::node::tests::varints_round_trip
+       START [         ] ( 50/216) lpg storage::btree::tests::a_failure_after_the_first_change_makes_the_database_unusable
+
+running 1 test
+test storage::btree::tests::a_failure_after_the_first_change_makes_the_database_unusable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.011s] ( 50/216) lpg storage::btree::tests::a_failure_after_the_first_change_makes_the_database_unusable
+       START [         ] ( 51/216) lpg storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+
+running 1 test
+test storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 5.07s
+
+        PASS [   5.079s] ( 51/216) lpg storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+       START [         ] ( 52/216) lpg storage::btree::tests::a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key
+
+running 1 test
+test storage::btree::tests::a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.05s
+
+        PASS [   0.058s] ( 52/216) lpg storage::btree::tests::a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key
+       START [         ] ( 53/216) lpg storage::btree::tests::a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away
+
+running 1 test
+test storage::btree::tests::a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.015s] ( 53/216) lpg storage::btree::tests::a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away
+       START [         ] ( 54/216) lpg storage::btree::tests::a_second_undo_extends_the_reuse_fence
+
+running 1 test
+test storage::btree::tests::a_second_undo_extends_the_reuse_fence ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 54/216) lpg storage::btree::tests::a_second_undo_extends_the_reuse_fence
+       START [         ] ( 55/216) lpg storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+
+running 1 test
+test storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 2.67s
+
+        PASS [   2.675s] ( 55/216) lpg storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+       START [         ] ( 56/216) lpg storage::btree::tests::audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable
+
+running 1 test
+test storage::btree::tests::audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.054s] ( 56/216) lpg storage::btree::tests::audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable
+       START [         ] ( 57/216) lpg storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once
+
+running 1 test
+test storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.38s
+
+        PASS [   0.381s] ( 57/216) lpg storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once
+       START [         ] ( 58/216) lpg storage::btree::tests::directory_maps_tree_ids_to_roots_and_survives_reopen
+
+running 1 test
+test storage::btree::tests::directory_maps_tree_ids_to_roots_and_survives_reopen ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.035s] ( 58/216) lpg storage::btree::tests::directory_maps_tree_ids_to_roots_and_survives_reopen
+       START [         ] ( 59/216) lpg storage::btree::tests::emptying_a_subtree_frees_its_inner_pages
+
+running 1 test
+test storage::btree::tests::emptying_a_subtree_frees_its_inner_pages ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.09s
+
+        PASS [   0.090s] ( 59/216) lpg storage::btree::tests::emptying_a_subtree_frees_its_inner_pages
+       START [         ] ( 60/216) lpg storage::btree::tests::keys_at_the_limit_work_and_longer_keys_are_refused
+
+running 1 test
+test storage::btree::tests::keys_at_the_limit_work_and_longer_keys_are_refused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.021s] ( 60/216) lpg storage::btree::tests::keys_at_the_limit_work_and_longer_keys_are_refused
+       START [         ] ( 61/216) lpg storage::btree::tests::overflow_values_round_trip
+
+running 1 test
+test storage::btree::tests::overflow_values_round_trip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.026s] ( 61/216) lpg storage::btree::tests::overflow_values_round_trip
+       START [         ] ( 62/216) lpg storage::btree::tests::rightmost_split_fills_left_page_to_90_percent_and_others_to_half
+
+running 1 test
+test storage::btree::tests::rightmost_split_fills_left_page_to_90_percent_and_others_to_half ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.11s
+
+        PASS [   0.118s] ( 62/216) lpg storage::btree::tests::rightmost_split_fills_left_page_to_90_percent_and_others_to_half
+       START [         ] ( 63/216) lpg storage::btree::tests::stale_descents_recover_by_moving_right
+
+running 1 test
+test storage::btree::tests::stale_descents_recover_by_moving_right ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.017s] ( 63/216) lpg storage::btree::tests::stale_descents_recover_by_moving_right
+       START [         ] ( 64/216) lpg storage::check::tests::a_broken_sibling_link_is_reported
+
+running 1 test
+test storage::check::tests::a_broken_sibling_link_is_reported ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.11s
+
+        PASS [   0.113s] ( 64/216) lpg storage::check::tests::a_broken_sibling_link_is_reported
+       START [         ] ( 65/216) lpg storage::check::tests::a_clean_database_passes_with_its_figures
+
+running 1 test
+test storage::check::tests::a_clean_database_passes_with_its_figures ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.10s
+
+        PASS [   0.102s] ( 65/216) lpg storage::check::tests::a_clean_database_passes_with_its_figures
+       START [         ] ( 66/216) lpg storage::check::tests::a_flipped_bit_is_reported
+
+running 1 test
+test storage::check::tests::a_flipped_bit_is_reported ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.12s
+
+        PASS [   0.122s] ( 66/216) lpg storage::check::tests::a_flipped_bit_is_reported
+       START [         ] ( 67/216) lpg storage::check::tests::a_high_key_that_differs_from_the_parent_is_reported
+
+running 1 test
+test storage::check::tests::a_high_key_that_differs_from_the_parent_is_reported ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.05s
+
+        PASS [   0.057s] ( 67/216) lpg storage::check::tests::a_high_key_that_differs_from_the_parent_is_reported
+       START [         ] ( 68/216) lpg storage::check::tests::a_leaked_page_and_a_stale_header_are_reported
+
+running 1 test
+test storage::check::tests::a_leaked_page_and_a_stale_header_are_reported ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.06s
+
+        PASS [   0.067s] ( 68/216) lpg storage::check::tests::a_leaked_page_and_a_stale_header_are_reported
+       START [         ] ( 69/216) lpg storage::check::tests::a_page_in_a_tree_and_the_free_list_is_reported
+
+running 1 test
+test storage::check::tests::a_page_in_a_tree_and_the_free_list_is_reported ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.10s
+
+        PASS [   0.108s] ( 69/216) lpg storage::check::tests::a_page_in_a_tree_and_the_free_list_is_reported
+       START [         ] ( 70/216) lpg storage::check::tests::swapped_keys_are_reported
+
+running 1 test
+test storage::check::tests::swapped_keys_are_reported ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.10s
+
+        PASS [   0.106s] ( 70/216) lpg storage::check::tests::swapped_keys_are_reported
+       START [         ] ( 71/216) lpg storage::checkpoint::tests::a_checkpoint_publishes_the_page_cache_hits_and_faults
+
+running 1 test
+test storage::checkpoint::tests::a_checkpoint_publishes_the_page_cache_hits_and_faults ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.025s] ( 71/216) lpg storage::checkpoint::tests::a_checkpoint_publishes_the_page_cache_hits_and_faults
+       START [         ] ( 72/216) lpg storage::checkpoint::tests::a_hundred_thousand_commits_trigger_exactly_one_checkpoint
+
+running 1 test
+test storage::checkpoint::tests::a_hundred_thousand_commits_trigger_exactly_one_checkpoint ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 1.06s
+
+        PASS [   1.069s] ( 72/216) lpg storage::checkpoint::tests::a_hundred_thousand_commits_trigger_exactly_one_checkpoint
+       START [         ] ( 73/216) lpg storage::checkpoint::tests::checkpoints_recycle_segments_and_their_old_frames_are_never_replayed
+
+running 1 test
+test storage::checkpoint::tests::checkpoints_recycle_segments_and_their_old_frames_are_never_replayed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 1.03s
+
+        PASS [   1.031s] ( 73/216) lpg storage::checkpoint::tests::checkpoints_recycle_segments_and_their_old_frames_are_never_replayed
+       START [         ] ( 74/216) lpg storage::checkpoint::tests::close_records_a_clean_shutdown_and_the_next_open_clears_it
+
+running 1 test
+test storage::checkpoint::tests::close_records_a_clean_shutdown_and_the_next_open_clears_it ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.041s] ( 74/216) lpg storage::checkpoint::tests::close_records_a_clean_shutdown_and_the_next_open_clears_it
+       START [         ] ( 75/216) lpg storage::checkpoint::tests::every_kernel_metric_category_reports
+
+running 1 test
+test storage::checkpoint::tests::every_kernel_metric_category_reports ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.019s] ( 75/216) lpg storage::checkpoint::tests::every_kernel_metric_category_reports
+       START [         ] ( 76/216) lpg storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing
+
+running 1 test
+test storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.26s
+
+        PASS [   0.260s] ( 76/216) lpg storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing
+       START [         ] ( 77/216) lpg storage::checkpoint::tests::recycling_makes_each_rename_and_removal_durable_before_the_next
+
+running 1 test
+test storage::checkpoint::tests::recycling_makes_each_rename_and_removal_durable_before_the_next ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.22s
+
+        PASS [   0.228s] ( 77/216) lpg storage::checkpoint::tests::recycling_makes_each_rename_and_removal_durable_before_the_next
+       START [         ] ( 78/216) lpg storage::checkpoint::tests::the_interval_triggers_checkpoints
+
+running 1 test
+test storage::checkpoint::tests::the_interval_triggers_checkpoints ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.33s
+
+        PASS [   0.336s] ( 78/216) lpg storage::checkpoint::tests::the_interval_triggers_checkpoints
+       START [         ] ( 79/216) lpg storage::checkpoint::tests::the_wal_writer_and_checkpointer_threads_are_named
+
+running 1 test
+test storage::checkpoint::tests::the_wal_writer_and_checkpointer_threads_are_named ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.019s] ( 79/216) lpg storage::checkpoint::tests::the_wal_writer_and_checkpointer_threads_are_named
+       START [         ] ( 80/216) lpg storage::control::tests::both_slots_invalid_is_corruption
+
+running 1 test
+test storage::control::tests::both_slots_invalid_is_corruption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 80/216) lpg storage::control::tests::both_slots_invalid_is_corruption
+       START [         ] ( 81/216) lpg storage::control::tests::failed_sync_sets_the_latch
+
+running 1 test
+test storage::control::tests::failed_sync_sets_the_latch ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 81/216) lpg storage::control::tests::failed_sync_sets_the_latch
+       START [         ] ( 82/216) lpg storage::control::tests::one_invalid_slot_opens_from_the_other_counts_and_is_rewritten
+
+running 1 test
+test storage::control::tests::one_invalid_slot_opens_from_the_other_counts_and_is_rewritten ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 82/216) lpg storage::control::tests::one_invalid_slot_opens_from_the_other_counts_and_is_rewritten
+       START [         ] ( 83/216) lpg storage::control::tests::slot_round_trip_and_flag_check
+
+running 1 test
+test storage::control::tests::slot_round_trip_and_flag_check ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 83/216) lpg storage::control::tests::slot_round_trip_and_flag_check
+       START [         ] ( 84/216) lpg storage::control::tests::writes_alternate_and_higher_sequence_wins
+
+running 1 test
+test storage::control::tests::writes_alternate_and_higher_sequence_wins ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 84/216) lpg storage::control::tests::writes_alternate_and_higher_sequence_wins
+       START [         ] ( 85/216) lpg storage::datafile::tests::a_valid_image_of_another_page_fails_the_read_as_corruption
+
+running 1 test
+test storage::datafile::tests::a_valid_image_of_another_page_fails_the_read_as_corruption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 85/216) lpg storage::datafile::tests::a_valid_image_of_another_page_fails_the_read_as_corruption
+       START [         ] ( 86/216) lpg storage::datafile::tests::allocate_without_reserve_is_enospc
+
+running 1 test
+test storage::datafile::tests::allocate_without_reserve_is_enospc ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 86/216) lpg storage::datafile::tests::allocate_without_reserve_is_enospc
+       START [         ] ( 87/216) lpg storage::datafile::tests::checksum_and_io_failures_set_the_latch
+
+running 1 test
+test storage::datafile::tests::checksum_and_io_failures_set_the_latch ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 87/216) lpg storage::datafile::tests::checksum_and_io_failures_set_the_latch
+       START [         ] ( 88/216) lpg storage::datafile::tests::create_writes_header_and_reserves_first_extent
+
+running 1 test
+test storage::datafile::tests::create_writes_header_and_reserves_first_extent ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 88/216) lpg storage::datafile::tests::create_writes_header_and_reserves_first_extent
+       START [         ] ( 89/216) lpg storage::datafile::tests::ensure_enospc_has_no_side_effects_and_reads_continue
+
+running 1 test
+test storage::datafile::tests::ensure_enospc_has_no_side_effects_and_reads_continue ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 89/216) lpg storage::datafile::tests::ensure_enospc_has_no_side_effects_and_reads_continue
+       START [         ] ( 90/216) lpg storage::datafile::tests::ensure_grows_by_whole_extents_in_one_reserve
+
+running 1 test
+test storage::datafile::tests::ensure_grows_by_whole_extents_in_one_reserve ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 90/216) lpg storage::datafile::tests::ensure_grows_by_whole_extents_in_one_reserve
+       START [         ] ( 91/216) lpg storage::datafile::tests::extent_rule
+
+running 1 test
+test storage::datafile::tests::extent_rule ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 91/216) lpg storage::datafile::tests::extent_rule
+       START [         ] ( 92/216) lpg storage::datafile::tests::misdirected_and_lost_writes_are_detected_by_the_page_checksum
+
+running 1 test
+test storage::datafile::tests::misdirected_and_lost_writes_are_detected_by_the_page_checksum ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 92/216) lpg storage::datafile::tests::misdirected_and_lost_writes_are_detected_by_the_page_checksum
+       START [         ] ( 93/216) lpg storage::datafile::tests::open_rejects_bad_page_count
+
+running 1 test
+test storage::datafile::tests::open_rejects_bad_page_count ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] ( 93/216) lpg storage::datafile::tests::open_rejects_bad_page_count
+       START [         ] ( 94/216) lpg storage::datafile::tests::writes_outside_reserved_space_are_refused
+
+running 1 test
+test storage::datafile::tests::writes_outside_reserved_space_are_refused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] ( 94/216) lpg storage::datafile::tests::writes_outside_reserved_space_are_refused
+       START [         ] ( 95/216) lpg storage::engine::tests::audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location
+
+running 1 test
+test storage::engine::tests::audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.18s
+
+        PASS [   0.180s] ( 95/216) lpg storage::engine::tests::audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location
+       START [         ] ( 96/216) lpg storage::engine::tests::both_control_slots_invalid_is_corruption
+
+running 1 test
+test storage::engine::tests::both_control_slots_invalid_is_corruption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.026s] ( 96/216) lpg storage::engine::tests::both_control_slots_invalid_is_corruption
+       START [         ] ( 97/216) lpg storage::engine::tests::create_over_an_existing_database_fails_and_changes_nothing
+
+running 1 test
+test storage::engine::tests::create_over_an_existing_database_fails_and_changes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.27s
+
+        PASS [   0.273s] ( 97/216) lpg storage::engine::tests::create_over_an_existing_database_fails_and_changes_nothing
+       START [         ] ( 98/216) lpg storage::engine::tests::create_replaces_what_an_interrupted_create_left
+
+running 1 test
+test storage::engine::tests::create_replaces_what_an_interrupted_create_left ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.012s] ( 98/216) lpg storage::engine::tests::create_replaces_what_an_interrupted_create_left
+       START [         ] ( 99/216) lpg storage::engine::tests::create_then_open_round_trip
+
+running 1 test
+test storage::engine::tests::create_then_open_round_trip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.021s] ( 99/216) lpg storage::engine::tests::create_then_open_round_trip
+       START [         ] (100/216) lpg storage::engine::tests::enospc_on_ensure_keeps_reads_working
+
+running 1 test
+test storage::engine::tests::enospc_on_ensure_keeps_reads_working ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.08s
+
+        PASS [   0.088s] (100/216) lpg storage::engine::tests::enospc_on_ensure_keeps_reads_working
+       START [         ] (101/216) lpg storage::engine::tests::lock_deleted_under_an_open_handle_refuses_a_second_open
+
+running 1 test
+test storage::engine::tests::lock_deleted_under_an_open_handle_refuses_a_second_open ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.27s
+
+        PASS [   0.276s] (101/216) lpg storage::engine::tests::lock_deleted_under_an_open_handle_refuses_a_second_open
+       START [         ] (102/216) lpg storage::engine::tests::memory_cap_too_small_is_refused_before_any_file
+
+running 1 test
+test storage::engine::tests::memory_cap_too_small_is_refused_before_any_file ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.26s
+
+        PASS [   0.271s] (102/216) lpg storage::engine::tests::memory_cap_too_small_is_refused_before_any_file
+       START [         ] (103/216) lpg storage::engine::tests::newer_format_fails_and_changes_nothing
+
+running 1 test
+test storage::engine::tests::newer_format_fails_and_changes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.28s
+
+        PASS [   0.292s] (103/216) lpg storage::engine::tests::newer_format_fails_and_changes_nothing
+       START [         ] (104/216) lpg storage::engine::tests::older_format_requires_migration
+
+running 1 test
+test storage::engine::tests::older_format_requires_migration ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.28s
+
+        PASS [   0.284s] (104/216) lpg storage::engine::tests::older_format_requires_migration
+       START [         ] (105/216) lpg storage::engine::tests::one_invalid_control_slot_opens_from_the_other_and_is_counted
+
+running 1 test
+test storage::engine::tests::one_invalid_control_slot_opens_from_the_other_and_is_counted ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.042s] (105/216) lpg storage::engine::tests::one_invalid_control_slot_opens_from_the_other_and_is_counted
+       START [         ] (106/216) lpg storage::engine::tests::open_removes_other_generations_data_and_wal_segment_files
+
+running 1 test
+test storage::engine::tests::open_removes_other_generations_data_and_wal_segment_files ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.025s] (106/216) lpg storage::engine::tests::open_removes_other_generations_data_and_wal_segment_files
+       START [         ] (107/216) lpg storage::engine::tests::open_with_data_file_missing_is_corruption_and_creates_nothing
+
+running 1 test
+test storage::engine::tests::open_with_data_file_missing_is_corruption_and_creates_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.05s
+
+        PASS [   0.056s] (107/216) lpg storage::engine::tests::open_with_data_file_missing_is_corruption_and_creates_nothing
+       START [         ] (108/216) lpg storage::engine::tests::open_with_lock_missing_fails_and_creates_nothing
+
+running 1 test
+test storage::engine::tests::open_with_lock_missing_fails_and_creates_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.26s
+
+        PASS [   0.270s] (108/216) lpg storage::engine::tests::open_with_lock_missing_fails_and_creates_nothing
+       START [         ] (109/216) lpg storage::engine::tests::open_without_a_database_fails_and_creates_nothing
+
+running 1 test
+test storage::engine::tests::open_without_a_database_fails_and_creates_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (109/216) lpg storage::engine::tests::open_without_a_database_fails_and_creates_nothing
+       START [         ] (110/216) lpg storage::engine::tests::page_zero_checksum_failure_is_corruption
+
+running 1 test
+test storage::engine::tests::page_zero_checksum_failure_is_corruption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.031s] (110/216) lpg storage::engine::tests::page_zero_checksum_failure_is_corruption
+       START [         ] (111/216) lpg storage::engine::tests::page_zero_version_differing_from_control_is_corruption
+
+running 1 test
+test storage::engine::tests::page_zero_version_differing_from_control_is_corruption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.030s] (111/216) lpg storage::engine::tests::page_zero_version_differing_from_control_is_corruption
+       START [         ] (112/216) lpg storage::engine::tests::second_open_from_a_child_process_fails
+
+running 1 test
+test storage::engine::tests::second_open_from_a_child_process_fails ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.029s] (112/216) lpg storage::engine::tests::second_open_from_a_child_process_fails
+       START [         ] (113/216) lpg storage::engine::tests::second_open_in_the_same_process_fails_and_the_first_keeps_working
+
+running 1 test
+test storage::engine::tests::second_open_in_the_same_process_fails_and_the_first_keeps_working ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.021s] (113/216) lpg storage::engine::tests::second_open_in_the_same_process_fails_and_the_first_keeps_working
+       START [         ] (114/216) lpg storage::error::tests::latch_fails_every_later_check
+
+running 1 test
+test storage::error::tests::latch_fails_every_later_check ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (114/216) lpg storage::error::tests::latch_fails_every_later_check
+       START [         ] (115/216) lpg storage::error::tests::only_storage_full_is_no_space
+
+running 1 test
+test storage::error::tests::only_storage_full_is_no_space ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (115/216) lpg storage::error::tests::only_storage_full_is_no_space
+       START [         ] (116/216) lpg storage::fault::tests::after_the_crash_point_every_call_fails_until_the_crash
+
+running 1 test
+test storage::fault::tests::after_the_crash_point_every_call_fails_until_the_crash ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.020s] (116/216) lpg storage::fault::tests::after_the_crash_point_every_call_fails_until_the_crash
+       START [         ] (117/216) lpg storage::fault::tests::calls_are_logged_in_order
+
+running 1 test
+test storage::fault::tests::calls_are_logged_in_order ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.025s] (117/216) lpg storage::fault::tests::calls_are_logged_in_order
+       START [         ] (118/216) lpg storage::fault::tests::crash_drops_unsynced_writes
+
+running 1 test
+test storage::fault::tests::crash_drops_unsynced_writes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.014s] (118/216) lpg storage::fault::tests::crash_drops_unsynced_writes
+       START [         ] (119/216) lpg storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes
+
+running 1 test
+LPG_SEED=13089810469236918604
+LPG_SEED=1621888956670885951
+test storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.017s] (119/216) lpg storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes
+       START [         ] (120/216) lpg storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+
+running 1 test
+test storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.011s] (120/216) lpg storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+       START [         ] (121/216) lpg storage::fault::tests::crash_loses_unsynced_rename_create_and_remove
+
+running 1 test
+test storage::fault::tests::crash_loses_unsynced_rename_create_and_remove ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.036s] (121/216) lpg storage::fault::tests::crash_loses_unsynced_rename_create_and_remove
+       START [         ] (122/216) lpg storage::fault::tests::crash_tears_writes_at_sector_boundaries
+
+running 1 test
+LPG_SEED=11896395116415134265
+LPG_SEED=5464249107358107978
+test storage::fault::tests::crash_tears_writes_at_sector_boundaries ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.014s] (122/216) lpg storage::fault::tests::crash_tears_writes_at_sector_boundaries
+       START [         ] (123/216) lpg storage::fault::tests::failed_sync_data_forgets_the_unsynced_writes
+
+running 1 test
+test storage::fault::tests::failed_sync_data_forgets_the_unsynced_writes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.017s] (123/216) lpg storage::fault::tests::failed_sync_data_forgets_the_unsynced_writes
+       START [         ] (124/216) lpg storage::fault::tests::failed_write_is_not_applied
+
+running 1 test
+test storage::fault::tests::failed_write_is_not_applied ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.017s] (124/216) lpg storage::fault::tests::failed_write_is_not_applied
+       START [         ] (125/216) lpg storage::fault::tests::same_contract_through_both_impls
+
+running 1 test
+test storage::fault::tests::same_contract_through_both_impls ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.038s] (125/216) lpg storage::fault::tests::same_contract_through_both_impls
+       START [         ] (126/216) lpg storage::fault::tests::space_budget_returns_enospc
+
+running 1 test
+test storage::fault::tests::space_budget_returns_enospc ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.014s] (126/216) lpg storage::fault::tests::space_budget_returns_enospc
+       START [         ] (127/216) lpg storage::fault::tests::the_nth_call_of_each_kind_fails_without_effect
+
+running 1 test
+test storage::fault::tests::the_nth_call_of_each_kind_fails_without_effect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.033s] (127/216) lpg storage::fault::tests::the_nth_call_of_each_kind_fails_without_effect
+       START [         ] (128/216) lpg storage::freelist::tests::a_cyclic_chain_fails_the_open
+
+running 1 test
+test storage::freelist::tests::a_cyclic_chain_fails_the_open ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.015s] (128/216) lpg storage::freelist::tests::a_cyclic_chain_fails_the_open
+       START [         ] (129/216) lpg storage::freelist::tests::freed_pages_wait_for_older_readers
+
+running 1 test
+test storage::freelist::tests::freed_pages_wait_for_older_readers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.022s] (129/216) lpg storage::freelist::tests::freed_pages_wait_for_older_readers
+       START [         ] (130/216) lpg storage::freelist::tests::registry_horizon_is_the_lowest_registered_value
+
+running 1 test
+test storage::freelist::tests::registry_horizon_is_the_lowest_registered_value ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.008s] (130/216) lpg storage::freelist::tests::registry_horizon_is_the_lowest_registered_value
+       START [         ] (131/216) lpg storage::freelist::tests::trunk_chain_grows_persists_and_is_consumed
+
+running 1 test
+test storage::freelist::tests::trunk_chain_grows_persists_and_is_consumed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.08s
+
+        PASS [   0.086s] (131/216) lpg storage::freelist::tests::trunk_chain_grows_persists_and_is_consumed
+       START [         ] (132/216) lpg storage::fs::tests::create_and_open_errors
+
+running 1 test
+test storage::fs::tests::create_and_open_errors ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (132/216) lpg storage::fs::tests::create_and_open_errors
+       START [         ] (133/216) lpg storage::fs::tests::file_round_trip
+
+running 1 test
+test storage::fs::tests::file_round_trip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (133/216) lpg storage::fs::tests::file_round_trip
+       START [         ] (134/216) lpg storage::fs::tests::namespace_operations
+
+running 1 test
+test storage::fs::tests::namespace_operations ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (134/216) lpg storage::fs::tests::namespace_operations
+       START [         ] (135/216) lpg storage::fs::tests::try_lock_is_exclusive_within_the_process
+
+running 1 test
+test storage::fs::tests::try_lock_is_exclusive_within_the_process ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (135/216) lpg storage::fs::tests::try_lock_is_exclusive_within_the_process
+       START [         ] (136/216) lpg storage::memory::tests::concurrent_reservations_never_exceed_the_cap
+
+running 1 test
+test storage::memory::tests::concurrent_reservations_never_exceed_the_cap ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.035s] (136/216) lpg storage::memory::tests::concurrent_reservations_never_exceed_the_cap
+       START [         ] (137/216) lpg storage::memory::tests::reservations_stop_at_the_cap_and_release_on_drop
+
+running 1 test
+test storage::memory::tests::reservations_stop_at_the_cap_and_release_on_drop ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (137/216) lpg storage::memory::tests::reservations_stop_at_the_cap_and_release_on_drop
+       START [         ] (138/216) lpg storage::memory::tests::the_gauge_follows_every_change
+
+running 1 test
+test storage::memory::tests::the_gauge_follows_every_change ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (138/216) lpg storage::memory::tests::the_gauge_follows_every_change
+       START [         ] (139/216) lpg storage::page::tests::a_valid_image_fails_at_any_other_page_number
+
+running 1 test
+test storage::page::tests::a_valid_image_fails_at_any_other_page_number ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.016s] (139/216) lpg storage::page::tests::a_valid_image_fails_at_any_other_page_number
+       START [         ] (140/216) lpg storage::page::tests::changes_after_seal_need_a_new_seal
+
+running 1 test
+test storage::page::tests::changes_after_seal_need_a_new_seal ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (140/216) lpg storage::page::tests::changes_after_seal_need_a_new_seal
+       START [         ] (141/216) lpg storage::page::tests::every_single_bit_flip_is_detected
+
+running 1 test
+test storage::page::tests::every_single_bit_flip_is_detected ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.006s] (141/216) lpg storage::page::tests::every_single_bit_flip_is_detected
+       START [         ] (142/216) lpg storage::page::tests::header_round_trip
+
+running 1 test
+test storage::page::tests::header_round_trip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (142/216) lpg storage::page::tests::header_round_trip
+       START [         ] (143/216) lpg storage::page::tests::init_keeps_the_page_lsn_and_clears_the_rest
+
+running 1 test
+test storage::page::tests::init_keeps_the_page_lsn_and_clears_the_rest ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (143/216) lpg storage::page::tests::init_keeps_the_page_lsn_and_clears_the_rest
+       START [         ] (144/216) lpg storage::page::tests::zero_page_fails_verification_and_has_no_type
+
+running 1 test
+test storage::page::tests::zero_page_fails_verification_and_has_no_type ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (144/216) lpg storage::page::tests::zero_page_fails_verification_and_has_no_type
+       START [         ] (145/216) lpg storage::pool::tests::a_page_copy_reservation_takes_the_first_victim_dirty_or_clean
+
+running 1 test
+test storage::pool::tests::a_page_copy_reservation_takes_the_first_victim_dirty_or_clean ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.045s] (145/216) lpg storage::pool::tests::a_page_copy_reservation_takes_the_first_victim_dirty_or_clean
+       START [         ] (146/216) lpg storage::pool::tests::flipped_bit_fails_the_read_and_every_later_operation_until_reopen
+
+running 1 test
+test storage::pool::tests::flipped_bit_fails_the_read_and_every_later_operation_until_reopen ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.031s] (146/216) lpg storage::pool::tests::flipped_bit_fails_the_read_and_every_later_operation_until_reopen
+       START [         ] (147/216) lpg storage::pool::tests::frame_with_lsn_above_durable_is_never_written
+
+running 1 test
+test storage::pool::tests::frame_with_lsn_above_durable_is_never_written ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.11s
+
+        PASS [   0.119s] (147/216) lpg storage::pool::tests::frame_with_lsn_above_durable_is_never_written
+       START [         ] (148/216) lpg storage::pool::tests::hits_and_misses_are_counted_and_published
+
+running 1 test
+test storage::pool::tests::hits_and_misses_are_counted_and_published ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.015s] (148/216) lpg storage::pool::tests::hits_and_misses_are_counted_and_published
+       START [         ] (149/216) lpg storage::pool::tests::pages_worth_ten_times_the_cap_are_returned_intact
+
+running 1 test
+test storage::pool::tests::pages_worth_ten_times_the_cap_are_returned_intact ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.10s
+
+        PASS [   0.106s] (149/216) lpg storage::pool::tests::pages_worth_ten_times_the_cap_are_returned_intact
+       START [         ] (150/216) lpg storage::pool::tests::pinned_frames_stay_and_all_pinned_is_a_memory_limit
+
+running 1 test
+test storage::pool::tests::pinned_frames_stay_and_all_pinned_is_a_memory_limit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.012s] (150/216) lpg storage::pool::tests::pinned_frames_stay_and_all_pinned_is_a_memory_limit
+       START [         ] (151/216) lpg storage::pool::tests::reserve_shrinks_the_pool_down_to_its_floor
+
+running 1 test
+test storage::pool::tests::reserve_shrinks_the_pool_down_to_its_floor ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.043s] (151/216) lpg storage::pool::tests::reserve_shrinks_the_pool_down_to_its_floor
+       START [         ] (152/216) lpg storage::pool::tests::reserve_takes_clean_frames_before_dirty_ones
+
+running 1 test
+test storage::pool::tests::reserve_takes_clean_frames_before_dirty_ones ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.048s] (152/216) lpg storage::pool::tests::reserve_takes_clean_frames_before_dirty_ones
+       START [         ] (153/216) lpg storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap
+
+running 1 test
+reservations: 2352 granted, 2475 refused; peak 4194301 of 4194304
+test storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.10s
+
+        PASS [   0.109s] (153/216) lpg storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap
+       START [         ] (154/216) lpg storage::pool::tests::waiter_on_a_failed_load_fails
+
+running 1 test
+test storage::pool::tests::waiter_on_a_failed_load_fails ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.010s] (154/216) lpg storage::pool::tests::waiter_on_a_failed_load_fails
+       START [         ] (155/216) lpg storage::recovery::tests::a_corrupt_frame_followed_by_a_valid_group_fails_the_open
+
+running 1 test
+test storage::recovery::tests::a_corrupt_frame_followed_by_a_valid_group_fails_the_open ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.09s
+
+        PASS [   0.098s] (155/216) lpg storage::recovery::tests::a_corrupt_frame_followed_by_a_valid_group_fails_the_open
+       START [         ] (156/216) lpg storage::recovery::tests::a_missing_segment_at_or_after_the_redo_point_fails_the_open
+
+running 1 test
+test storage::recovery::tests::a_missing_segment_at_or_after_the_redo_point_fails_the_open ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.67s
+
+        PASS [   0.677s] (156/216) lpg storage::recovery::tests::a_missing_segment_at_or_after_the_redo_point_fails_the_open
+       START [         ] (157/216) lpg storage::recovery::tests::a_segment_gets_its_name_only_once_complete_and_synced
+
+running 1 test
+test storage::recovery::tests::a_segment_gets_its_name_only_once_complete_and_synced ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.11s
+
+        PASS [   0.116s] (157/216) lpg storage::recovery::tests::a_segment_gets_its_name_only_once_complete_and_synced
+       START [         ] (158/216) lpg storage::recovery::tests::a_torn_data_page_is_repaired_from_the_wal
+
+running 1 test
+test storage::recovery::tests::a_torn_data_page_is_repaired_from_the_wal ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.028s] (158/216) lpg storage::recovery::tests::a_torn_data_page_is_repaired_from_the_wal
+       START [         ] (159/216) lpg storage::recovery::tests::a_torn_last_group_is_discarded
+
+running 1 test
+test storage::recovery::tests::a_torn_last_group_is_discarded ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.16s
+
+        PASS [   0.169s] (159/216) lpg storage::recovery::tests::a_torn_last_group_is_discarded
+       START [         ] (160/216) lpg storage::recovery::tests::audit_a_crc_valid_frame_with_a_hostile_page_number_fails_the_open_as_corruption
+
+running 1 test
+test storage::recovery::tests::audit_a_crc_valid_frame_with_a_hostile_page_number_fails_the_open_as_corruption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.049s] (160/216) lpg storage::recovery::tests::audit_a_crc_valid_frame_with_a_hostile_page_number_fails_the_open_as_corruption
+       START [         ] (161/216) lpg storage::recovery::tests::counters_are_the_maximum_of_control_and_the_commit_frames
+
+running 1 test
+test storage::recovery::tests::counters_are_the_maximum_of_control_and_the_commit_frames ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.029s] (161/216) lpg storage::recovery::tests::counters_are_the_maximum_of_control_and_the_commit_frames
+       START [         ] (162/216) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commit
+
+running 1 test
+test storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.30s
+
+        PASS [   0.303s] (162/216) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commit
+       START [         ] (163/216) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_some_writes_keeps_every_returned_commit
+
+running 1 test
+LPG_SEED=15022086481911419386
+test storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_some_writes_keeps_every_returned_commit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.30s
+
+        PASS [   0.308s] (163/216) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_some_writes_keeps_every_returned_commit
+       START [         ] (164/216) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit
+
+running 1 test
+LPG_SEED=9424925350379918541
+test storage::recovery::tests::drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.62s
+
+        PASS [   0.625s] (164/216) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit
+       START [         ] (165/216) lpg storage::recovery::tests::leftover_frames_at_reused_positions_are_never_replayed
+
+running 1 test
+test storage::recovery::tests::leftover_frames_at_reused_positions_are_never_replayed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.14s
+
+        PASS [   0.146s] (165/216) lpg storage::recovery::tests::leftover_frames_at_reused_positions_are_never_replayed
+       START [         ] (166/216) lpg storage::recovery::tests::open_removes_a_partial_segment_left_by_a_crash
+
+running 1 test
+test storage::recovery::tests::open_removes_a_partial_segment_left_by_a_crash ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.038s] (166/216) lpg storage::recovery::tests::open_removes_a_partial_segment_left_by_a_crash
+       START [         ] (167/216) lpg storage::sort::tests::a_failed_sort_removes_its_files_and_releases_its_memory
+
+running 1 test
+LPG_SEED=14779248327155686600
+test storage::sort::tests::a_failed_sort_removes_its_files_and_releases_its_memory ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.024s] (167/216) lpg storage::sort::tests::a_failed_sort_removes_its_files_and_releases_its_memory
+       START [         ] (168/216) lpg storage::sort::tests::a_reservation_beyond_the_cap_fails
+
+running 1 test
+test storage::sort::tests::a_reservation_beyond_the_cap_fails ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.010s] (168/216) lpg storage::sort::tests::a_reservation_beyond_the_cap_fails
+       START [         ] (169/216) lpg storage::sort::tests::a_sort_that_fits_in_memory_writes_no_file
+
+running 1 test
+LPG_SEED=469746662208644580
+test storage::sort::tests::a_sort_that_fits_in_memory_writes_no_file ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.011s] (169/216) lpg storage::sort::tests::a_sort_that_fits_in_memory_writes_no_file
+       START [         ] (170/216) lpg storage::sort::tests::an_input_twenty_times_the_reservation_spills_runs_and_comes_back_sorted
+
+running 1 test
+LPG_SEED=11878850924789799016
+test storage::sort::tests::an_input_twenty_times_the_reservation_spills_runs_and_comes_back_sorted ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.045s] (170/216) lpg storage::sort::tests::an_input_twenty_times_the_reservation_spills_runs_and_comes_back_sorted
+       START [         ] (171/216) lpg storage::sort::tests::audit_a_run_file_left_by_a_crashed_sort_does_not_fail_the_next_sort
+
+running 1 test
+LPG_SEED=3869572042579158264
+test storage::sort::tests::audit_a_run_file_left_by_a_crashed_sort_does_not_fail_the_next_sort ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.028s] (171/216) lpg storage::sort::tests::audit_a_run_file_left_by_a_crashed_sort_does_not_fail_the_next_sort
+       START [         ] (172/216) lpg storage::wal::tests::counters_max_is_per_field
+
+running 1 test
+test storage::wal::tests::counters_max_is_per_field ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (172/216) lpg storage::wal::tests::counters_max_is_per_field
+       START [         ] (173/216) lpg storage::wal::tests::frame_geometry
+
+running 1 test
+test storage::wal::tests::frame_geometry ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (173/216) lpg storage::wal::tests::frame_geometry
+       START [         ] (174/216) lpg storage::wal::tests::frames_round_trip_and_every_bit_flip_or_wrong_position_is_rejected
+
+running 1 test
+test storage::wal::tests::frames_round_trip_and_every_bit_flip_or_wrong_position_is_rejected ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.006s] (174/216) lpg storage::wal::tests::frames_round_trip_and_every_bit_flip_or_wrong_position_is_rejected
+       START [         ] (175/216) lpg storage::wal::tests::open_group_positions_rollback_and_close
+
+running 1 test
+test storage::wal::tests::open_group_positions_rollback_and_close ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (175/216) lpg storage::wal::tests::open_group_positions_rollback_and_close
+       START [         ] (176/216) lpg storage::wal::tests::segment_names_round_trip_and_reject_near_misses
+
+running 1 test
+test storage::wal::tests::segment_names_round_trip_and_reject_near_misses ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.004s] (176/216) lpg storage::wal::tests::segment_names_round_trip_and_reject_near_misses
+       START [         ] (177/216) lpg suites::fault::a_backup_with_only_manifest_tmp_is_refused
+
+running 1 test
+test suites::fault::a_backup_with_only_manifest_tmp_is_refused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.10s
+
+        PASS [   0.106s] (177/216) lpg suites::fault::a_backup_with_only_manifest_tmp_is_refused
+       START [         ] (178/216) lpg suites::fault::a_corrupt_data_page_read_makes_the_database_unusable_until_reopened
+
+running 1 test
+test suites::fault::a_corrupt_data_page_read_makes_the_database_unusable_until_reopened ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.03s
+
+        PASS [   0.038s] (178/216) lpg suites::fault::a_corrupt_data_page_read_makes_the_database_unusable_until_reopened
+       START [         ] (179/216) lpg suites::fault::backup
+
+running 1 test
+LPG_SEED=256427170400387075
+SUITE fault fs=ext4 workload=Backup crash_points=106 runs: drop-all 106, keep-random 106, tear-512 106 failure_runs=162 copy_failure_runs=0 seconds=25.9
+LPG_SEED=13898400530082571274
+SUITE fault fs=xfs workload=Backup crash_points=106 runs: drop-all 106, keep-random 106, tear-512 106 failure_runs=162 copy_failure_runs=0 seconds=25.5
+test suites::fault::backup ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 51.40s
+
+        PASS [  51.405s] (179/216) lpg suites::fault::backup
+       START [         ] (180/216) lpg suites::fault::bulk_load
+
+running 1 test
+LPG_SEED=17645238599902231033
+SUITE fault fs=ext4 workload=BulkLoad crash_points=104 runs: drop-all 104, keep-random 104, tear-512 104 failure_runs=185 copy_failure_runs=0 seconds=10.9
+LPG_SEED=14080924270943327650
+SUITE fault fs=xfs workload=BulkLoad crash_points=104 runs: drop-all 104, keep-random 104, tear-512 104 failure_runs=185 copy_failure_runs=0 seconds=10.4
+test suites::fault::bulk_load ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 21.29s
+
+        PASS [  21.298s] (180/216) lpg suites::fault::bulk_load
+       START [         ] (181/216) lpg suites::fault::checkpoint
+
+running 1 test
+LPG_SEED=11239605662088793503
+SUITE fault fs=ext4 workload=Checkpoint crash_points=31 runs: drop-all 31, keep-random 31, tear-512 31 failure_runs=29 copy_failure_runs=0 seconds=6.9
+LPG_SEED=3658856701854980794
+SUITE fault fs=xfs workload=Checkpoint crash_points=31 runs: drop-all 31, keep-random 31, tear-512 31 failure_runs=29 copy_failure_runs=0 seconds=6.6
+test suites::fault::checkpoint ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 13.54s
+
+        PASS [  13.541s] (181/216) lpg suites::fault::checkpoint
+       START [         ] (182/216) lpg suites::fault::checkpoint_call_order
+
+running 1 test
+test suites::fault::checkpoint_call_order ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.05s
+
+        PASS [   0.057s] (182/216) lpg suites::fault::checkpoint_call_order
+       START [         ] (183/216) lpg suites::fault::commits
+
+running 1 test
+LPG_SEED=1312190045706699033
+        SLOW [> 60.000s] (───────) lpg suites::fault::commits
+test suites::fault::commits has been running for over 60 seconds
+SUITE fault fs=ext4 workload=Commits crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=236 copy_failure_runs=1380 seconds=61.8
+LPG_SEED=5209754465265008865
+        SLOW [>120.000s] (───────) lpg suites::fault::commits
+SUITE fault fs=xfs workload=Commits crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=236 copy_failure_runs=1380 seconds=60.9
+test suites::fault::commits ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 122.68s
+
+        PASS [ 122.686s] (183/216) lpg suites::fault::commits
+       START [         ] (184/216) lpg suites::fault::corruption_fails_the_open_or_is_handled_as_recorded
+
+running 1 test
+test suites::fault::corruption_fails_the_open_or_is_handled_as_recorded ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.07s
+
+        PASS [   0.073s] (184/216) lpg suites::fault::corruption_fails_the_open_or_is_handled_as_recorded
+       START [         ] (185/216) lpg suites::fault::migration
+
+running 1 test
+LPG_SEED=14889832635680599918
+SUITE fault fs=ext4 workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, tear-512 9 failure_runs=6 copy_failure_runs=0 seconds=1.2
+LPG_SEED=4858117437682226860
+SUITE fault fs=xfs workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, tear-512 9 failure_runs=6 copy_failure_runs=0 seconds=1.2
+test suites::fault::migration ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 2.37s
+
+        PASS [   2.370s] (185/216) lpg suites::fault::migration
+       START [         ] (186/216) lpg suites::fault::recovery_checkpoint
+
+running 1 test
+LPG_SEED=6603231209959014936
+SUITE fault fs=ext4 workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=2 copy_failure_runs=0 seconds=9.5
+LPG_SEED=12379871749439171693
+SUITE fault fs=xfs workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=2 copy_failure_runs=0 seconds=9.1
+test suites::fault::recovery_checkpoint ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 18.61s
+
+        PASS [  18.615s] (186/216) lpg suites::fault::recovery_checkpoint
+       START [         ] (187/216) lpg suites::fault::restore_
+
+running 1 test
+LPG_SEED=10615692876657819266
+        SLOW [> 60.000s] (───────) lpg suites::fault::restore_
+test suites::fault::restore_ has been running for over 60 seconds
+SUITE fault fs=ext4 workload=Restore crash_points=169 runs: drop-all 169, keep-random 169, tear-512 169 failure_runs=159 copy_failure_runs=0 seconds=87.4
+LPG_SEED=15214408220289085720
+        SLOW [>120.000s] (───────) lpg suites::fault::restore_
+SUITE fault fs=xfs workload=Restore crash_points=169 runs: drop-all 169, keep-random 169, tear-512 169 failure_runs=159 copy_failure_runs=0 seconds=75.4
+test suites::fault::restore_ ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 162.77s
+
+        PASS [ 162.779s] (187/216) lpg suites::fault::restore_
+       START [         ] (188/216) lpg suites::fault::the_oracle_sees_an_undone_batch_that_came_back
+
+running 1 test
+
+thread 'suites::fault::the_oracle_sees_an_undone_batch_that_came_back' (1352501) panicked at src/suites/fault.rs:439:5:
+batch 2 came back: the state is not a prefix with every returned commit
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test suites::fault::the_oracle_sees_an_undone_batch_that_came_back ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.025s] (188/216) lpg suites::fault::the_oracle_sees_an_undone_batch_that_came_back
+       START [         ] (189/216) lpg suites::kill::kill_and_reopen
+
+running 1 test
+LPG_SEED=17903758098474584790
+SUITE kill fs=ext4 dir=/data/tmp/lpg-lab iterations=200 printed_commits=32791 recovery_ms_p50=10.1 recovery_ms_p99=13.6 replayed_bytes_p50=238496 replayed_bytes_p99=501664 child_commits_per_s_p50=2285 kills_in_checkpoint=200 kills_in_backup=199 recycling_checkpoints=21 seconds=23.7
+LPG_SEED=11596818462288955952
+SUITE kill fs=xfs dir=/mnt/lpg-xfs iterations=200 printed_commits=9289 recovery_ms_p50=20.4 recovery_ms_p99=29.8 replayed_bytes_p50=123360 replayed_bytes_p99=287840 child_commits_per_s_p50=478 kills_in_checkpoint=199 kills_in_backup=200 recycling_checkpoints=1 seconds=26.6
+test suites::kill::kill_and_reopen ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 50.39s
+
+        PASS [  50.395s] (189/216) lpg suites::kill::kill_and_reopen
+       START [         ] (190/216) lpg test_support::child::tests::child_failure_is_reported
+
+running 1 test
+test test_support::child::tests::child_failure_is_reported ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.006s] (190/216) lpg test_support::child::tests::child_failure_is_reported
+       START [         ] (191/216) lpg test_support::child::tests::child_runs_the_named_test_with_its_role
+
+running 1 test
+test test_support::child::tests::child_runs_the_named_test_with_its_role ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.00s
+
+        PASS [   0.005s] (191/216) lpg test_support::child::tests::child_runs_the_named_test_with_its_role
+       START [         ] (192/216) lpg tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit
+
+running 1 test
+test tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.019s] (192/216) lpg tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit
+       START [         ] (193/216) lpg tx::commit::tests::a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image
+
+running 1 test
+test tx::commit::tests::a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.35s
+
+        PASS [   0.357s] (193/216) lpg tx::commit::tests::a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image
+       START [         ] (194/216) lpg tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window
+
+running 1 test
+test tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.09s
+
+        PASS [   0.098s] (194/216) lpg tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window
+       START [         ] (195/216) lpg tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers
+
+running 1 test
+test tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.17s
+
+        PASS [   0.181s] (195/216) lpg tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers
+       START [         ] (196/216) lpg tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable
+
+running 1 test
+
+thread '<unnamed>' (1357961) panicked at src/tx/commit/tests.rs:989:13:
+a committer panics under the commit latch
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.019s] (196/216) lpg tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable
+       START [         ] (197/216) lpg tx::commit::tests::a_refused_memory_reservation_in_the_apply_step_is_undone
+
+running 1 test
+test tx::commit::tests::a_refused_memory_reservation_in_the_apply_step_is_undone ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.05s
+
+        PASS [   0.057s] (197/216) lpg tx::commit::tests::a_refused_memory_reservation_in_the_apply_step_is_undone
+       START [         ] (198/216) lpg tx::commit::tests::an_overrun_extends_the_file_under_the_latch
+
+running 1 test
+test tx::commit::tests::an_overrun_extends_the_file_under_the_latch ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.53s
+
+        PASS [   0.535s] (198/216) lpg tx::commit::tests::an_overrun_extends_the_file_under_the_latch
+       START [         ] (199/216) lpg tx::commit::tests::an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean
+
+running 1 test
+test tx::commit::tests::an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.28s
+
+        PASS [   0.288s] (199/216) lpg tx::commit::tests::an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean
+       START [         ] (200/216) lpg tx::commit::tests::an_undone_batch_that_took_a_page_it_freed_restores_that_page
+
+running 1 test
+test tx::commit::tests::an_undone_batch_that_took_a_page_it_freed_restores_that_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.02s
+
+        PASS [   0.025s] (200/216) lpg tx::commit::tests::an_undone_batch_that_took_a_page_it_freed_restores_that_page
+       START [         ] (201/216) lpg tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+
+running 1 test
+test tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.57s
+
+        PASS [   0.577s] (201/216) lpg tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+       START [         ] (202/216) lpg tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal
+
+running 1 test
+test tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.05s
+
+        PASS [   0.054s] (202/216) lpg tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal
+       START [         ] (203/216) lpg tx::commit::tests::audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction
+
+running 1 test
+test tx::commit::tests::audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.23s
+
+        PASS [   0.236s] (203/216) lpg tx::commit::tests::audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction
+       START [         ] (204/216) lpg tx::commit::tests::audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc
+
+running 1 test
+test tx::commit::tests::audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.019s] (204/216) lpg tx::commit::tests::audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc
+       START [         ] (205/216) lpg tx::commit::tests::audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data
+
+running 1 test
+test tx::commit::tests::audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.27s
+
+        PASS [   0.279s] (205/216) lpg tx::commit::tests::audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data
+       START [         ] (206/216) lpg tx::commit::tests::audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable
+
+running 1 test
+test tx::commit::tests::audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.18s
+
+        PASS [   0.184s] (206/216) lpg tx::commit::tests::audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable
+       START [         ] (207/216) lpg tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use
+
+running 1 test
+test tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.044s] (207/216) lpg tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use
+       START [         ] (208/216) lpg tx::commit::tests::commits_raise_counters_and_failed_commits_do_not
+
+running 1 test
+test tx::commit::tests::commits_raise_counters_and_failed_commits_do_not ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.019s] (208/216) lpg tx::commit::tests::commits_raise_counters_and_failed_commits_do_not
+       START [         ] (209/216) lpg tx::commit::tests::create_sets_the_page_lsn_in_the_write_that_zeroes_the_frame
+
+running 1 test
+test tx::commit::tests::create_sets_the_page_lsn_in_the_write_that_zeroes_the_frame ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.01s
+
+        PASS [   0.018s] (209/216) lpg tx::commit::tests::create_sets_the_page_lsn_in_the_write_that_zeroes_the_frame
+       START [         ] (210/216) lpg tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds
+
+running 1 test
+test tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.23s
+
+        PASS [   0.239s] (210/216) lpg tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds
+       START [         ] (211/216) lpg tx::commit::tests::enospc_in_the_apply_step_is_undone_and_the_database_stays_usable
+
+running 1 test
+test tx::commit::tests::enospc_in_the_apply_step_is_undone_and_the_database_stays_usable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 1.32s
+
+        PASS [   1.326s] (211/216) lpg tx::commit::tests::enospc_in_the_apply_step_is_undone_and_the_database_stays_usable
+       START [         ] (212/216) lpg tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame
+
+running 1 test
+test tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.040s] (212/216) lpg tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame
+       START [         ] (213/216) lpg tx::commit::tests::failed_wal_sync_fails_the_commit_and_every_later_operation_until_reopen
+
+running 1 test
+test tx::commit::tests::failed_wal_sync_fails_the_commit_and_every_later_operation_until_reopen ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.04s
+
+        PASS [   0.041s] (213/216) lpg tx::commit::tests::failed_wal_sync_fails_the_commit_and_every_later_operation_until_reopen
+       START [         ] (214/216) lpg tx::commit::tests::four_closed_loop_committers_share_one_flush
+
+running 1 test
+test tx::commit::tests::four_closed_loop_committers_share_one_flush ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.08s
+
+        PASS [   0.080s] (214/216) lpg tx::commit::tests::four_closed_loop_committers_share_one_flush
+       START [         ] (215/216) lpg tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable
+
+running 1 test
+test tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.40s
+
+        PASS [   0.403s] (215/216) lpg tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable
+       START [         ] (216/216) lpg tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once
+
+running 1 test
+test tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 239 filtered out; finished in 0.08s
+
+        PASS [   0.087s] (216/216) lpg tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once
+────────────
+     Summary [ 471.274s] 216 tests run: 216 passed (2 slow), 24 skipped

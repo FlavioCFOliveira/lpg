@@ -1,0 +1,48 @@
+# cargo-nextest configuration (TS-30).
+#
+# The `stress` profile is the stress profile of TS-30 R7 (rmp #20): it runs
+# every concurrency test of the crate as 16 concurrent copies of its process
+# (`LPG_STRESS_COPIES` changes the number), each with its own seed, through
+# the wrapper script `.config/stress-copies.sh`, and prints the seeds:
+#
+#     cargo nextest run -p lpg --profile stress
+#
+# The default profile is unchanged.
+
+experimental = ["wrapper-scripts"]
+
+[scripts.wrapper.copies]
+command = { command-line = ".config/stress-copies.sh", relative-to = "workspace-root" }
+
+[profile.stress]
+# The tests that run threads against one database or one structure.
+default-filter = '''
+test(=obs::recording::tests::concurrent_calls_are_all_recorded)
+| test(=ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point)
+| test(=storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once)
+| test(=storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing)
+| test(=storage::freelist::tests::registry_horizon_is_the_lowest_registered_value)
+| test(=storage::memory::tests::concurrent_reservations_never_exceed_the_cap)
+| test(=storage::memory::tests::the_gauge_follows_every_change)
+| test(=storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap)
+| test(=tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit)
+| test(=tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window)
+| test(=tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers)
+| test(=tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable)
+| test(=tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal)
+| test(=tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use)
+| test(=tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds)
+| test(=tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame)
+| test(=tx::commit::tests::four_closed_loop_committers_share_one_flush)
+| test(=tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable)
+| test(=tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once)
+'''
+# Sixteen copies share the machine: one test at a time.
+test-threads = 1
+success-output = "immediate"
+failure-output = "immediate"
+slow-timeout = { period = "60s", terminate-after = 10 }
+
+[[profile.stress.scripts]]
+filter = 'all()'
+run-wrapper = "copies"

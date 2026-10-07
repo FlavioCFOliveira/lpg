@@ -38,6 +38,20 @@ Profiling tooling:
 - For each need, use the most effective tool available, from flame graphs to memory and heap dumps and any other suitable instrument.
 - If the best tool for a need is not installed or not available, ask the user to make it available. Do not silently fall back to a weaker tool.
 
+## Graph data files in `/tmp/lpgram`
+
+> **When the graph is exercised, its data files live in `/tmp/lpgram/`. Only its data files.**
+> **`/tmp` is a RAM-backed `tmpfs` on this machine. It only accelerates file I/O during development. It is never a realistic production scenario and must never be treated as one.**
+
+- **Correctness first (mandatory).** `/tmp/lpgram` must never reduce the effectiveness of any test or scenario; it may only make it faster. When a test or scenario depends on behaviour that `tmpfs` does not reproduce (for example real `fsync`, disk-full or file-system-specific behaviour), or when `tmpfs` would weaken it in any other way, **do not use `/tmp/lpgram` for it**: run it on persistent storage. When in doubt, do not use it.
+- **Scope.** Subject to the rule above, every exercise of the graph — experiments, tests, reproductions, error validation, examples (when they exist) and similar runs — creates and uses its graph data files (WAL, snapshots, graph store, indexes and any other file the graph persists) in `/tmp/lpgram/`.
+- **Location.** `/tmp/lpgram/`, created with `mkdir -p` when missing; no mount and no root are needed. Create a separate subdirectory per run and delete it when the run ends.
+- **Size.** At most 1 GiB in `/tmp/lpgram/` at any time. A scenario may use more only when it needs it and the user has approved that size for that scenario; the approval does not extend to other scenarios. `/tmp` is shared with the system and enforces user quotas, so measure the peak space a run uses.
+- **Clean environment.** Whenever scenarios must be cleared and rebuilt from a clean state, run `rm -rf /tmp/lpgram && mkdir -p /tmp/lpgram`; only do so when no run is using it. Never delete anything else in `/tmp`.
+- **Exclusive content.** `/tmp/lpgram/` holds only the graph data files of the run in progress. Never place in it build output (`target/`), caches, logs, executables, reports, evidence, reference clones or any other file.
+- **Purpose.** `/tmp/lpgram` only accelerates the file I/O of this crate, so that exercises are faster to create, run and observe. It has no other role.
+- **Not a production scenario.** Never consider, design for, document or present `/tmp/lpgram` as a realistic production setup, nor use results obtained in it to describe production behaviour. The crate is designed to run on persistent storage. On `tmpfs`, data does not survive a reboot or power loss and `fsync` does not reach a disk, so results obtained in `/tmp/lpgram` say nothing about real-disk durability or I/O performance. Any claim about those properties must be measured on persistent storage and must state that it was.
+
 ## Simplicity (code strategy)
 
 > **Avoid over-engineering. Always choose the simplest solution that meets the project's strict needs.**
@@ -49,14 +63,30 @@ Profiling tooling:
 ## Synergy and convergence
 
 - **Group related tasks.** Whenever tasks (in `rmp` or requested ad hoc by the user) have verifiable functional or technical proximity, or complementary or convergent goals, combine them into a single development effort.
-- **Group work of the same type, across and within tasks.** Write all the code at once, then test all the changes at once, instead of writing and testing small pieces in isolation. Write all the documentation at once; if its scope is too large, split it into a few coherent blocks and handle each block at once. Apply this principle to every kind of work.
+- **Group work of the same type, across and within tasks (mandatory).** When several tasks need activities of the same type, do that activity for all of them at once, never task by task:
+  - **Code:** write the code of every task in one pass.
+  - **Tests:** test every resulting implementation in one run, never test by test.
+  - **Documentation:** write it all at once; if its scope is too large, split it into a few coherent blocks and handle each block at once.
+  - **Every other operation** in this project (specification, audits, measurements, `rmp` updates, commits): the same rule.
+
+  Apply it only when the delivery keeps its full quality and effectiveness; where grouping would compromise either, split the work and state why.
 - **Minimise tasks and iterations.** Reach every goal with the fewest possible tasks and iterations.
 - **Never trade quality for speed.** Aggregate work only when the result is faster and of equal or better quality than task-by-task delivery.
 - **Use available resources fully.** Make the most of the internal resources available, so that delivery is faster and costs the user less.
 
 ## Open-source references
 
-> **Copying is forbidden.** Never copy code, text or any other content from another project. Consult other projects only to study them and draw inspiration from their reference approaches, so that this project's own implementation is of the highest quality.
+> **Copying is forbidden, except as stated below.** Never copy code, text or any other content from another project. Consult other projects only to study them and draw inspiration from their reference approaches, so that this project's own implementation is of the highest quality.
+
+- **Copying a component.** A component that a reference project implements, and its tests, may be copied when it either:
+  - matches a component this project needs **exactly (100 %)**; or
+  - is a good starting point for a development that is in progress or about to start.
+
+  Copy only when **all** of these hold:
+  - its licence is compatible with this project's MIT licence (for example MIT, Apache-2.0, BSD, public domain); never copy GPL-only code;
+  - its licence and attribution are preserved;
+  - its source (project, path, commit) is recorded where it is copied and in the task's `rmp` log;
+  - the copy then meets every rule of this file, including [Laboratory development](#laboratory-development-primary-principle-for-code).
 
 - **Sole exceptions:** the following Apache-2.0 projects may be used as test artefacts for GQL conformance verification. Preserve their licence and attribution unchanged.
   - `opengql/grammar`: the GQL grammar, including a parser generated from it in a test-only crate.
@@ -71,9 +101,9 @@ Profiling tooling:
   2. **Open-source databases**: the approaches of the most recognised databases for the relevant task or functionality, such as Memgraph, Neo4j, PostgreSQL, InnoDB, MariaDB and MySQL.
   3. **Other open-source projects**: any project that reveals a relevant strategy, architecture or approach.
 - Follow this decision order for every code and architecture decision:
-  1. **Learn first.** The first approach must never reinvent the wheel. Make an informed decision by studying the references above and identifying **only the best** approaches of each project, then implement them originally in this project.
+  1. **Learn first.** The first approach must never reinvent the wheel. Make an informed decision by studying the references above and identifying **only the best** approaches of each project, then implement them originally in this project, or copy them where [Copying a component](#open-source-references) allows.
   2. **Improve second.** Only when that process reveals a measurable improvement opportunity (see [Honest empiricism](#honest-empiricism-mandatory)), proceed to improve on the chosen approach.
-- Treat source code as the most reliable source of truth. Clone each reference repository locally under `/tmp/` (for example, `/tmp/<project>`) and read the code directly, for study only.
+- Treat source code as the most reliable source of truth. Whenever a reference project's code needs study, clone its public repository into a local folder under `/tmp/` (for example, `/tmp/<project>`), or reuse an existing clone there, and read the code directly. Use it for study, or to copy as [Copying a component](#open-source-references) allows.
 
 ### Research and decision-making (modus operandi)
 

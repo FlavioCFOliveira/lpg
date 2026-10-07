@@ -1,0 +1,12 @@
+dir=/mnt/lpg-xfs prep=4096 sync=0 n=200 write_bytes/write=16466 after_final_sync/write=16466 wchar/write=16448
+dir=/mnt/lpg-xfs prep=4096 sync=1 n=200 write_bytes/write=20480 after_final_sync/write=20480 wchar/write=16448
+dir=/mnt/lpg-xfs prep=65536 sync=0 n=200 write_bytes/write=16712 after_final_sync/write=16712 wchar/write=16448
+dir=/mnt/lpg-xfs prep=65536 sync=1 n=200 write_bytes/write=81920 after_final_sync/write=81920 wchar/write=16448
+dir=/mnt/lpg-xfs prep=1048576 sync=0 n=200 write_bytes/write=18350 after_final_sync/write=18350 wchar/write=16448
+dir=/mnt/lpg-xfs prep=1048576 sync=1 n=200 write_bytes/write=1040712 after_final_sync/write=1040712 wchar/write=16448
+dir=/data/tmp/lpg-lab prep=4096 sync=0 n=200 write_bytes/write=16466 after_final_sync/write=16466 wchar/write=16448
+dir=/data/tmp/lpg-lab prep=4096 sync=1 n=200 write_bytes/write=20480 after_final_sync/write=20480 wchar/write=16448
+dir=/data/tmp/lpg-lab prep=65536 sync=0 n=200 write_bytes/write=16466 after_final_sync/write=16466 wchar/write=16448
+dir=/data/tmp/lpg-lab prep=65536 sync=1 n=200 write_bytes/write=20480 after_final_sync/write=20480 wchar/write=16448
+dir=/data/tmp/lpg-lab prep=1048576 sync=0 n=200 write_bytes/write=16466 after_final_sync/write=16466 wchar/write=16448
+dir=/data/tmp/lpg-lab prep=1048576 sync=1 n=200 write_bytes/write=20480 after_final_sync/write=20480 wchar/write=16448

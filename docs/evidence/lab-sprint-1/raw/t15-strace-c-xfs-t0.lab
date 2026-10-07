@@ -1,0 +1,1 @@
+LAB fs=xfs threads=1 pages=1 n=0 start_ms=1791017155661 end_ms=1791017155663 seconds=0.001 commits=0 commits_per_s=0 p50_us=0.0 p99_us=0.0 groups=0 frames=0 wal_bytes=0 wal_sync_data=0 segments_created=0 write_bytes=0

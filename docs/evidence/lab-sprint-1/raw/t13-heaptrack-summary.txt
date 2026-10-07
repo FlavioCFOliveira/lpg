@@ -1,0 +1,12 @@
+share=100 mode=hit n=1000000 | calls to allocation functions: 33570 (71884/s) | peak heap memory consumption: 293.45M
+share=100 mode=hit n=0 | calls to allocation functions: 33569 (85635/s) | peak heap memory consumption: 285.45M
+share=100 mode=miss n=30000 | calls to allocation functions: 96337 (106567/s) | peak heap memory consumption: 799.65M
+share=100 mode=miss n=0 | calls to allocation functions: 66337 (97554/s) | peak heap memory consumption: 553.89M
+share=10 mode=hit n=1000000 | calls to allocation functions: 4079 (22915/s) | peak heap memory consumption: 36.31M
+share=10 mode=hit n=0 | calls to allocation functions: 4077 (28510/s) | peak heap memory consumption: 28.31M
+share=10 mode=miss n=30000 | calls to allocation functions: 13909 (44155/s) | peak heap memory consumption: 108.85M
+share=10 mode=miss n=0 | calls to allocation functions: 13909 (62093/s) | peak heap memory consumption: 108.85M
+share=1 mode=hit n=1000000 | calls to allocation functions: 1129 (32257/s) | peak heap memory consumption: 10.94M
+share=1 mode=hit n=0 | calls to allocation functions: 1127 (187833/s) | peak heap memory consumption: 2.94M
+share=1 mode=miss n=30000 | calls to allocation functions: 2112 (18526/s) | peak heap memory consumption: 11.01M
+share=1 mode=miss n=0 | calls to allocation functions: 2111 (18848/s) | peak heap memory consumption: 11.01M

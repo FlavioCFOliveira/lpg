@@ -1,0 +1,39 @@
+# lab::btree build, shape and in-leaf costs
+
+## Build (random order, one edge = two entries per batch, full cache)
+
+| dist | entries | seconds | entries/s | ns/entry | write_dirty | VmHWM growth KiB |
+|---|---|---|---|---|---|---|
+| zipf | 20000000 | 117.8 | 169802 | 5889 | 61234 pages, 0.6 s | 506788 |
+| uniform | 20000000 | 106.4 | 188008 | 5319 | 63892 pages, 0.6 s | 0 |
+
+## Shape (integrity check figures)
+
+| dist | entries | height | leaves | inner | pages | leaf B/entry | leaf fill | file B/entry | check s |
+|---|---|---|---|---|---|---|---|---|---|
+| zipf | 20000000 | 3 | 60970 | 262 | 61234 | 16.81 | 0.673 | 25.08 | 1.2 |
+| uniform | 20000000 | 3 | 63618 | 272 | 63892 | 17.88 | 0.686 | 26.17 | 1.2 |
+
+## In-leaf costs (2 000 resident leaf images, 3 rounds)
+
+| dist | entries/leaf | ns per leaf_get median [min, max] | ns per entry decoded median [min, max] |
+|---|---|---|---|
+| zipf | 347 | 236 [235, 276] | 10.4 [10.3, 10.5] |
+| uniform | 329 | 249 [237, 283] | 11.2 [11.0, 11.3] |
+
+## Entries per prefix scan
+
+| dist | cache | mode | entries/scan |
+|---|---|---|---|
+| zipf | 100 % | warm OS cache | 1007.1 |
+| zipf | 100 % | cold | 961.1 |
+| zipf | 10 % | warm OS cache | 1010.4 |
+| zipf | 10 % | cold | 964.3 |
+| zipf | 1 % | warm OS cache | 1013.7 |
+| zipf | 1 % | cold | 967.5 |
+| uniform | 100 % | warm OS cache | 3.5 |
+| uniform | 100 % | cold | 3.6 |
+| uniform | 10 % | warm OS cache | 3.5 |
+| uniform | 10 % | cold | 3.6 |
+| uniform | 1 % | warm OS cache | 3.5 |
+| uniform | 1 % | cold | 3.6 |

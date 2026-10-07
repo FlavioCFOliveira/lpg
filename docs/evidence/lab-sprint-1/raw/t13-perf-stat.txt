@@ -1,0 +1,216 @@
+### round=1 share=100 mode=hit n=1000000
+1587654123,,cycles,354019397,100.00,,
+1408393033,,instructions,354019397,100.00,0.89,insn per cycle
+16359051,,branch-misses,354019397,100.00,,
+5499939,,ls_any_fills_from_sys.mem_io_local,354019397,100.00,,
+LAB share=100 mode=hit n=1000000 hits=1000000 misses=32768 evictions=0 buffers=32768 accounted=285338500 rss_before_open_kib=3532 rss_end_kib=282864 rss_growth_bytes=286035968
+### round=1 share=100 mode=hit n=0
+1411380925,,cycles,312556756,100.00,,
+1255123928,,instructions,312556756,100.00,0.89,insn per cycle
+17112013,,branch-misses,312556756,100.00,,
+5230866,,ls_any_fills_from_sys.mem_io_local,312556756,100.00,,
+LAB share=100 mode=hit n=0 hits=0 misses=32768 evictions=0 buffers=32768 accounted=285338500 rss_before_open_kib=3540 rss_end_kib=282936 rss_growth_bytes=286101504
+### round=1 share=100 mode=miss n=30000
+3769776025,,cycles,832500375,100.00,,
+3418774521,,instructions,832500375,100.00,0.91,insn per cycle
+46486008,,branch-misses,832500375,100.00,,
+12197255,,ls_any_fills_from_sys.mem_io_local,832500375,100.00,,
+LAB share=100 mode=miss n=30000 hits=0 misses=95536 evictions=0 buffers=95536 accounted=799533956 rss_before_open_kib=3476 rss_end_kib=786064 rss_growth_bytes=801370112
+### round=1 share=100 mode=miss n=0
+2658104855,,cycles,589303408,100.00,,
+2383050298,,instructions,589303408,100.00,0.90,insn per cycle
+32409108,,branch-misses,589303408,100.00,,
+9282735,,ls_any_fills_from_sys.mem_io_local,589303408,100.00,,
+LAB share=100 mode=miss n=0 hits=0 misses=65536 evictions=0 buffers=65536 accounted=553773956 rss_before_open_kib=3444 rss_end_kib=545624 rss_growth_bytes=555192320
+### round=1 share=10 mode=hit n=1000000
+293148212,,cycles,65734018,100.00,,
+377437172,,instructions,65734018,100.00,1.29,insn per cycle
+1978664,,branch-misses,65734018,100.00,,
+680317,,ls_any_fills_from_sys.mem_io_local,65734018,100.00,,
+LAB share=10 mode=hit n=1000000 hits=1000000 misses=3277 evictions=0 buffers=3277 accounted=28200668 rss_before_open_kib=3408 rss_end_kib=31348 rss_growth_bytes=28610560
+### round=1 share=10 mode=hit n=0
+158334180,,cycles,36069893,100.00,,
+140043736,,instructions,36069893,100.00,0.88,insn per cycle
+1926523,,branch-misses,36069893,100.00,,
+661310,,ls_any_fills_from_sys.mem_io_local,36069893,100.00,,
+LAB share=10 mode=hit n=0 hits=0 misses=3277 evictions=0 buffers=3277 accounted=28200668 rss_before_open_kib=3412 rss_end_kib=31352 rss_growth_bytes=28610560
+### round=1 share=10 mode=miss n=30000
+903152314,,cycles,201075808,100.00,,
+950922290,,instructions,201075808,100.00,1.05,insn per cycle
+8174589,,branch-misses,201075808,100.00,,
+4665341,,ls_any_fills_from_sys.mem_io_local,201075808,100.00,,
+LAB share=10 mode=miss n=30000 hits=0 misses=43108 evictions=30000 buffers=13108 accounted=108736220 rss_before_open_kib=3516 rss_end_kib=110196 rss_growth_bytes=109240320
+### round=1 share=10 mode=miss n=0
+500914620,,cycles,111107363,100.00,,
+452757038,,instructions,111107363,100.00,0.90,insn per cycle
+6172456,,branch-misses,111107363,100.00,,
+2018878,,ls_any_fills_from_sys.mem_io_local,111107363,100.00,,
+LAB share=10 mode=miss n=0 hits=0 misses=13108 evictions=0 buffers=13108 accounted=108736220 rss_before_open_kib=3392 rss_end_kib=110136 rss_growth_bytes=109305856
+### round=1 share=1 mode=hit n=1000000
+135731732,,cycles,31129581,100.00,,
+274767769,,instructions,31129581,100.00,2.02,insn per cycle
+560318,,branch-misses,31129581,100.00,,
+107524,,ls_any_fills_from_sys.mem_io_local,31129581,100.00,,
+LAB share=1 mode=hit n=1000000 hits=1000000 misses=327 evictions=0 buffers=327 accounted=2830204 rss_before_open_kib=3480 rss_end_kib=6532 rss_growth_bytes=3125248
+### round=1 share=1 mode=hit n=0
+16987483,,cycles,4228812,100.00,,
+14533813,,instructions,4228812,100.00,0.86,insn per cycle
+230872,,branch-misses,4228812,100.00,,
+69143,,ls_any_fills_from_sys.mem_io_local,4228812,100.00,,
+LAB share=1 mode=hit n=0 hits=0 misses=327 evictions=0 buffers=327 accounted=2830204 rss_before_open_kib=3516 rss_end_kib=6632 rss_growth_bytes=3190784
+### round=1 share=1 mode=miss n=30000
+428549813,,cycles,95987785,100.00,,
+540576362,,instructions,95987785,100.00,1.26,insn per cycle
+2645714,,branch-misses,95987785,100.00,,
+3348025,,ls_any_fills_from_sys.mem_io_local,95987785,100.00,,
+LAB share=1 mode=miss n=30000 hits=0 misses=31311 evictions=30000 buffers=1311 accounted=10891132 rss_before_open_kib=3512 rss_end_kib=14512 rss_growth_bytes=11264000
+### round=1 share=1 mode=miss n=0
+53657332,,cycles,12441562,100.00,,
+47786832,,instructions,12441562,100.00,0.89,insn per cycle
+689143,,branch-misses,12441562,100.00,,
+217359,,ls_any_fills_from_sys.mem_io_local,12441562,100.00,,
+LAB share=1 mode=miss n=0 hits=0 misses=1311 evictions=0 buffers=1311 accounted=10891132 rss_before_open_kib=3516 rss_end_kib=14516 rss_growth_bytes=11264000
+### round=2 share=100 mode=hit n=1000000
+1734171595,,cycles,385032068,100.00,,
+1518749466,,instructions,385032068,100.00,0.88,insn per cycle
+17565099,,branch-misses,385032068,100.00,,
+5517662,,ls_any_fills_from_sys.mem_io_local,385032068,100.00,,
+LAB share=100 mode=hit n=1000000 hits=1000000 misses=32768 evictions=0 buffers=32768 accounted=285338500 rss_before_open_kib=3540 rss_end_kib=282936 rss_growth_bytes=286101504
+### round=2 share=100 mode=hit n=0
+1350461318,,cycles,299318817,100.00,,
+1215474564,,instructions,299318817,100.00,0.90,insn per cycle
+16575973,,branch-misses,299318817,100.00,,
+4790816,,ls_any_fills_from_sys.mem_io_local,299318817,100.00,,
+LAB share=100 mode=hit n=0 hits=0 misses=32768 evictions=0 buffers=32768 accounted=285338500 rss_before_open_kib=3512 rss_end_kib=282972 rss_growth_bytes=286167040
+### round=2 share=100 mode=miss n=30000
+3797556534,,cycles,838772707,100.00,,
+3419623152,,instructions,838772707,100.00,0.90,insn per cycle
+46390091,,branch-misses,838772707,100.00,,
+12459871,,ls_any_fills_from_sys.mem_io_local,838772707,100.00,,
+LAB share=100 mode=miss n=30000 hits=0 misses=95536 evictions=0 buffers=95536 accounted=799533956 rss_before_open_kib=3416 rss_end_kib=786068 rss_growth_bytes=801435648
+### round=2 share=100 mode=miss n=0
+2642619727,,cycles,586195092,100.00,,
+2387281469,,instructions,586195092,100.00,0.90,insn per cycle
+32457535,,branch-misses,586195092,100.00,,
+8503309,,ls_any_fills_from_sys.mem_io_local,586195092,100.00,,
+LAB share=100 mode=miss n=0 hits=0 misses=65536 evictions=0 buffers=65536 accounted=553773956 rss_before_open_kib=3540 rss_end_kib=545528 rss_growth_bytes=554995712
+### round=2 share=10 mode=hit n=1000000
+294878847,,cycles,66038987,100.00,,
+378017542,,instructions,66038987,100.00,1.28,insn per cycle
+1986459,,branch-misses,66038987,100.00,,
+693647,,ls_any_fills_from_sys.mem_io_local,66038987,100.00,,
+LAB share=10 mode=hit n=1000000 hits=1000000 misses=3277 evictions=0 buffers=3277 accounted=28200668 rss_before_open_kib=3532 rss_end_kib=31404 rss_growth_bytes=28540928
+### round=2 share=10 mode=hit n=0
+156794231,,cycles,36029058,100.00,,
+140185649,,instructions,36029058,100.00,0.89,insn per cycle
+1925453,,branch-misses,36029058,100.00,,
+631913,,ls_any_fills_from_sys.mem_io_local,36029058,100.00,,
+LAB share=10 mode=hit n=0 hits=0 misses=3277 evictions=0 buffers=3277 accounted=28200668 rss_before_open_kib=3544 rss_end_kib=31416 rss_growth_bytes=28540928
+### round=2 share=10 mode=miss n=30000
+986828620,,cycles,219916661,100.00,,
+1012014266,,instructions,219916661,100.00,1.03,insn per cycle
+8809105,,branch-misses,219916661,100.00,,
+4829488,,ls_any_fills_from_sys.mem_io_local,219916661,100.00,,
+LAB share=10 mode=miss n=30000 hits=0 misses=43108 evictions=30000 buffers=13108 accounted=108736220 rss_before_open_kib=3524 rss_end_kib=110076 rss_growth_bytes=109109248
+### round=2 share=10 mode=miss n=0
+505482752,,cycles,112663387,100.00,,
+451735144,,instructions,112663387,100.00,0.89,insn per cycle
+6204459,,branch-misses,112663387,100.00,,
+2263630,,ls_any_fills_from_sys.mem_io_local,112663387,100.00,,
+LAB share=10 mode=miss n=0 hits=0 misses=13108 evictions=0 buffers=13108 accounted=108736220 rss_before_open_kib=3452 rss_end_kib=110196 rss_growth_bytes=109305856
+### round=2 share=1 mode=hit n=1000000
+135859264,,cycles,31377501,100.00,,
+274687542,,instructions,31377501,100.00,2.02,insn per cycle
+558263,,branch-misses,31377501,100.00,,
+121929,,ls_any_fills_from_sys.mem_io_local,31377501,100.00,,
+LAB share=1 mode=hit n=1000000 hits=1000000 misses=327 evictions=0 buffers=327 accounted=2830204 rss_before_open_kib=3456 rss_end_kib=6572 rss_growth_bytes=3190784
+### round=2 share=1 mode=hit n=0
+16776380,,cycles,3889835,100.00,,
+14516800,,instructions,3889835,100.00,0.87,insn per cycle
+229481,,branch-misses,3889835,100.00,,
+66485,,ls_any_fills_from_sys.mem_io_local,3889835,100.00,,
+LAB share=1 mode=hit n=0 hits=0 misses=327 evictions=0 buffers=327 accounted=2830204 rss_before_open_kib=3576 rss_end_kib=6564 rss_growth_bytes=3059712
+### round=2 share=1 mode=miss n=30000
+432036421,,cycles,96722689,100.00,,
+541183898,,instructions,96722689,100.00,1.25,insn per cycle
+2656618,,branch-misses,96722689,100.00,,
+3355097,,ls_any_fills_from_sys.mem_io_local,96722689,100.00,,
+LAB share=1 mode=miss n=30000 hits=0 misses=31311 evictions=30000 buffers=1311 accounted=10891132 rss_before_open_kib=3540 rss_end_kib=14412 rss_growth_bytes=11132928
+### round=2 share=1 mode=miss n=0
+53821181,,cycles,12547131,100.00,,
+47737008,,instructions,12547131,100.00,0.89,insn per cycle
+686548,,branch-misses,12547131,100.00,,
+246608,,ls_any_fills_from_sys.mem_io_local,12547131,100.00,,
+LAB share=1 mode=miss n=0 hits=0 misses=1311 evictions=0 buffers=1311 accounted=10891132 rss_before_open_kib=3576 rss_end_kib=14384 rss_growth_bytes=11067392
+### round=3 share=100 mode=hit n=1000000
+1708969422,,cycles,379849610,100.00,,
+1522001284,,instructions,379849610,100.00,0.89,insn per cycle
+17620422,,branch-misses,379849610,100.00,,
+5680539,,ls_any_fills_from_sys.mem_io_local,379849610,100.00,,
+LAB share=100 mode=hit n=1000000 hits=1000000 misses=32768 evictions=0 buffers=32768 accounted=285338500 rss_before_open_kib=3460 rss_end_kib=282920 rss_growth_bytes=286167040
+### round=3 share=100 mode=hit n=0
+1361589410,,cycles,301791222,100.00,,
+1203612351,,instructions,301791222,100.00,0.88,insn per cycle
+16511030,,branch-misses,301791222,100.00,,
+5420950,,ls_any_fills_from_sys.mem_io_local,301791222,100.00,,
+LAB share=100 mode=hit n=0 hits=0 misses=32768 evictions=0 buffers=32768 accounted=285338500 rss_before_open_kib=3452 rss_end_kib=282976 rss_growth_bytes=286232576
+### round=3 share=100 mode=miss n=30000
+3766396048,,cycles,831919924,100.00,,
+3423136794,,instructions,831919924,100.00,0.91,insn per cycle
+46659003,,branch-misses,831919924,100.00,,
+11203286,,ls_any_fills_from_sys.mem_io_local,831919924,100.00,,
+LAB share=100 mode=miss n=30000 hits=0 misses=95536 evictions=0 buffers=95536 accounted=799533956 rss_before_open_kib=3572 rss_end_kib=786096 rss_growth_bytes=801304576
+### round=3 share=100 mode=miss n=0
+2631434945,,cycles,582547754,100.00,,
+2387730120,,instructions,582547754,100.00,0.91,insn per cycle
+32389664,,branch-misses,582547754,100.00,,
+8359944,,ls_any_fills_from_sys.mem_io_local,582547754,100.00,,
+LAB share=100 mode=miss n=0 hits=0 misses=65536 evictions=0 buffers=65536 accounted=553773956 rss_before_open_kib=3580 rss_end_kib=545632 rss_growth_bytes=555061248
+### round=3 share=10 mode=hit n=1000000
+292965486,,cycles,66254074,100.00,,
+378162415,,instructions,66254074,100.00,1.29,insn per cycle
+1982838,,branch-misses,66254074,100.00,,
+674866,,ls_any_fills_from_sys.mem_io_local,66254074,100.00,,
+LAB share=10 mode=hit n=1000000 hits=1000000 misses=3277 evictions=0 buffers=3277 accounted=28200668 rss_before_open_kib=3512 rss_end_kib=31388 rss_growth_bytes=28545024
+### round=3 share=10 mode=hit n=0
+130768881,,cycles,29756344,100.00,,
+116366307,,instructions,29756344,100.00,0.89,insn per cycle
+1654132,,branch-misses,29756344,100.00,,
+605561,,ls_any_fills_from_sys.mem_io_local,29756344,100.00,,
+LAB share=10 mode=hit n=0 hits=0 misses=3277 evictions=0 buffers=3277 accounted=28200668 rss_before_open_kib=3576 rss_end_kib=31324 rss_growth_bytes=28413952
+### round=3 share=10 mode=miss n=30000
+911163850,,cycles,202584869,100.00,,
+952149878,,instructions,202584869,100.00,1.04,insn per cycle
+8147032,,branch-misses,202584869,100.00,,
+4753716,,ls_any_fills_from_sys.mem_io_local,202584869,100.00,,
+LAB share=10 mode=miss n=30000 hits=0 misses=43108 evictions=30000 buffers=13108 accounted=108736220 rss_before_open_kib=3516 rss_end_kib=110196 rss_growth_bytes=109240320
+### round=3 share=10 mode=miss n=0
+500930923,,cycles,111588087,100.00,,
+451748724,,instructions,111588087,100.00,0.90,insn per cycle
+6189584,,branch-misses,111588087,100.00,,
+2262670,,ls_any_fills_from_sys.mem_io_local,111588087,100.00,,
+LAB share=10 mode=miss n=0 hits=0 misses=13108 evictions=0 buffers=13108 accounted=108736220 rss_before_open_kib=3572 rss_end_kib=110188 rss_growth_bytes=109174784
+### round=3 share=1 mode=hit n=1000000
+135959188,,cycles,34059165,100.00,,
+275365267,,instructions,34059165,100.00,2.03,insn per cycle
+563518,,branch-misses,34059165,100.00,,
+113481,,ls_any_fills_from_sys.mem_io_local,34059165,100.00,,
+LAB share=1 mode=hit n=1000000 hits=1000000 misses=327 evictions=0 buffers=327 accounted=2830204 rss_before_open_kib=3516 rss_end_kib=6632 rss_growth_bytes=3190784
+### round=3 share=1 mode=hit n=0
+16802820,,cycles,4199537,100.00,,
+14508285,,instructions,4199537,100.00,0.86,insn per cycle
+231482,,branch-misses,4199537,100.00,,
+67395,,ls_any_fills_from_sys.mem_io_local,4199537,100.00,,
+LAB share=1 mode=hit n=0 hits=0 misses=327 evictions=0 buffers=327 accounted=2830204 rss_before_open_kib=3540 rss_end_kib=6588 rss_growth_bytes=3121152
+### round=3 share=1 mode=miss n=30000
+430444159,,cycles,95875225,100.00,,
+541078631,,instructions,95875225,100.00,1.26,insn per cycle
+2647455,,branch-misses,95875225,100.00,,
+3377621,,ls_any_fills_from_sys.mem_io_local,95875225,100.00,,
+LAB share=1 mode=miss n=30000 hits=0 misses=31311 evictions=30000 buffers=1311 accounted=10891132 rss_before_open_kib=3452 rss_end_kib=14452 rss_growth_bytes=11264000
+### round=3 share=1 mode=miss n=0
+54601564,,cycles,12722406,100.00,,
+47923277,,instructions,12722406,100.00,0.88,insn per cycle
+688093,,branch-misses,12722406,100.00,,
+249617,,ls_any_fills_from_sys.mem_io_local,12722406,100.00,,
+LAB share=1 mode=miss n=0 hits=0 misses=1311 evictions=0 buffers=1311 accounted=10891132 rss_before_open_kib=3452 rss_end_kib=14452 rss_growth_bytes=11264000

@@ -50,8 +50,8 @@ Each requirement records a user decision unless it states otherwise. External fa
 ## Dependencies
 
 - NFR-DEP-001 Dependencies SHALL be minimal, widely used and maintained.
-- NFR-DEP-002 Each dependency's licence SHALL be compatible with the MIT licence. `cargo-deny` SHALL check this.
-  - Acceptance: Given the dependency tree, when `cargo-deny` checks licences, then it reports no licence incompatible with MIT.
+- NFR-DEP-002 Each dependency's licence SHALL be compatible with the MIT licence. `cargo-deny` SHALL check this. The licences counted as compatible are MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, 0BSD, BSL-1.0, CC0-1.0 and Unicode-3.0. Copyleft licences SHALL be excluded. A dependency offered under alternative licences SHALL pass when one alternative is on the list (user decision 2026-10-02).
+  - Acceptance: Given the dependency tree, when `cargo-deny` checks licences, then every dependency has a licence on the list, or, if it offers alternatives, at least one alternative on the list.
 
 ## Release
 

@@ -1,0 +1,77 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+────────────
+ Nextest run ID 840cae88-f08b-4f77-a6ce-4b5ed5660838 with nextest profile: default
+    Starting 71 tests across 1 binary (12 tests skipped)
+        PASS [   0.005s] ( 1/71) lpg lab::generator::tests::memory_cap_for_cache_shares
+        PASS [   0.005s] ( 2/71) lpg lab::tests::median_range_of_three
+        PASS [   0.005s] ( 3/71) lpg obs::tests::every_call_kind_through_dyn_sink
+        PASS [   0.005s] ( 4/71) lpg obs::recording::tests::difference_and_display
+        PASS [   0.005s] ( 5/71) lpg lab::tests::probe_reads_proc
+        PASS [   0.010s] ( 6/71) lpg lab::generator::tests::samplers_are_deterministic_and_in_range
+        PASS [   0.005s] ( 7/71) lpg storage::datafile::tests::extent_rule
+        PASS [   0.015s] ( 8/71) lpg storage::datafile::tests::ensure_grows_by_whole_extents_in_one_reserve
+        PASS [   0.015s] ( 9/71) lpg storage::datafile::tests::create_writes_header_and_reserves_first_extent
+        PASS [   0.020s] (10/71) lpg lab::tests::text_round_trip
+        PASS [   0.025s] (11/71) lpg obs::tests::names_are_unique
+        PASS [   0.025s] (12/71) lpg storage::control::tests::slot_round_trip_and_flag_check
+        PASS [   0.019s] (13/71) lpg storage::datafile::tests::writes_outside_reserved_space_are_refused
+        PASS [   0.024s] (14/71) lpg storage::datafile::tests::ensure_enospc_has_no_side_effects_and_reads_continue
+        PASS [   0.029s] (15/71) lpg storage::control::tests::failed_sync_sets_the_latch
+        PASS [   0.029s] (16/71) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+        PASS [   0.034s] (17/71) lpg storage::datafile::tests::allocate_without_reserve_is_enospc
+        PASS [   0.025s] (18/71) lpg storage::datafile::tests::open_rejects_bad_page_count
+        PASS [   0.034s] (19/71) lpg storage::datafile::tests::checksum_and_io_failures_set_the_latch
+        PASS [   0.042s] (20/71) lpg storage::control::tests::both_slots_invalid_is_corruption
+        PASS [   0.004s] (21/71) lpg storage::engine::tests::open_without_a_database_fails_and_creates_nothing
+        PASS [   0.045s] (22/71) lpg storage::control::tests::one_invalid_slot_opens_from_the_other_counts_and_is_rewritten
+        PASS [   0.047s] (23/71) lpg storage::control::tests::writes_alternate_and_higher_sequence_wins
+        PASS [   0.059s] (24/71) lpg storage::engine::tests::enospc_on_ensure_keeps_reads_working
+        PASS [   0.067s] (25/71) lpg storage::engine::tests::create_replaces_what_an_interrupted_create_left
+        PASS [   0.088s] (26/71) lpg lab::generator::tests::zipf_is_skewed_and_uniform_is_not
+        PASS [   0.062s] (27/71) lpg storage::engine::tests::create_then_open_round_trip
+        PASS [   0.061s] (28/71) lpg storage::engine::tests::missing_lock_or_data_file_is_corruption
+        PASS [   0.043s] (29/71) lpg storage::engine::tests::second_open_in_the_same_process_fails_and_the_first_keeps_working
+        PASS [   0.008s] (30/71) lpg storage::error::tests::latch_fails_every_later_check
+        PASS [   0.074s] (31/71) lpg storage::engine::tests::both_control_slots_invalid_is_corruption
+        PASS [   0.007s] (32/71) lpg storage::error::tests::only_storage_full_is_no_space
+        PASS [   0.057s] (33/71) lpg storage::engine::tests::page_zero_checksum_failure_is_corruption
+        PASS [   0.065s] (34/71) lpg storage::engine::tests::one_invalid_control_slot_opens_from_the_other_and_is_counted
+        PASS [   0.056s] (35/71) lpg storage::engine::tests::second_open_from_a_child_process_fails
+        PASS [   0.060s] (36/71) lpg storage::engine::tests::page_zero_version_differing_from_control_is_corruption
+        PASS [   0.005s] (37/71) lpg storage::fs::tests::create_and_open_errors
+        PASS [   0.074s] (38/71) lpg storage::engine::tests::open_removes_data_files_of_other_generations
+        PASS [   0.010s] (39/71) lpg storage::fs::tests::file_round_trip
+        PASS [   0.005s] (40/71) lpg storage::fs::tests::try_lock_is_exclusive_within_the_process
+        PASS [   0.016s] (41/71) lpg storage::fs::tests::namespace_operations
+        PASS [   0.034s] (42/71) lpg storage::fault::tests::crash_drops_unsynced_writes
+        PASS [   0.008s] (43/71) lpg storage::memory::tests::reservations_stop_at_the_cap_and_release_on_drop
+        PASS [   0.006s] (44/71) lpg storage::page::tests::header_round_trip
+        PASS [   0.007s] (45/71) lpg storage::page::tests::changes_after_seal_need_a_new_seal
+        PASS [   0.036s] (46/71) lpg storage::fault::tests::space_budget_returns_enospc
+        PASS [   0.044s] (47/71) lpg storage::fault::tests::crash_tears_writes_at_sector_boundaries
+        PASS [   0.043s] (48/71) lpg storage::fault::tests::failed_sync_data_leaves_writes_unsynced
+        PASS [   0.011s] (49/71) lpg storage::page::tests::zero_page_fails_verification_and_has_no_type
+        PASS [   0.049s] (50/71) lpg storage::fault::tests::failed_write_is_not_applied
+        PASS [   0.058s] (51/71) lpg storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes
+        PASS [   0.061s] (52/71) lpg storage::fault::tests::calls_are_logged_in_order
+        PASS [   0.032s] (53/71) lpg storage::page::tests::every_single_bit_flip_is_detected
+        PASS [   0.029s] (54/71) lpg storage::pool::tests::waiter_on_a_failed_load_fails
+        PASS [   0.048s] (55/71) lpg storage::pool::tests::pinned_frames_stay_and_all_pinned_is_a_memory_limit
+        PASS [   0.075s] (56/71) lpg storage::memory::tests::concurrent_reservations_never_exceed_the_cap
+        PASS [   0.041s] (57/71) lpg storage::pool::tests::reserve_takes_clean_frames_before_dirty_ones
+        PASS [   0.008s] (58/71) lpg test_support::child::tests::child_failure_is_reported
+        PASS [   0.007s] (59/71) lpg test_support::child::tests::child_runs_the_named_test_with_its_role
+        PASS [   0.102s] (60/71) lpg storage::fault::tests::same_contract_through_both_impls
+        PASS [   0.110s] (61/71) lpg storage::fault::tests::crash_loses_unsynced_rename_create_and_remove
+        PASS [   0.087s] (62/71) lpg storage::pool::tests::flipped_bit_fails_the_read_and_every_later_operation_until_reopen
+        PASS [   0.108s] (63/71) lpg storage::pool::tests::hits_and_misses_are_counted_and_published
+        PASS [   0.143s] (64/71) lpg storage::pool::tests::reserve_shrinks_the_pool_down_to_its_floor
+        PASS [   0.206s] (65/71) lpg storage::pool::tests::frame_with_lsn_above_durable_is_never_written
+        PASS [   0.421s] (66/71) lpg storage::engine::tests::older_format_requires_migration
+        PASS [   0.443s] (67/71) lpg storage::engine::tests::memory_cap_too_small_is_refused_before_any_file
+        PASS [   0.458s] (68/71) lpg storage::engine::tests::newer_format_fails_and_changes_nothing
+        PASS [   0.356s] (69/71) lpg storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap
+        PASS [   0.491s] (70/71) lpg storage::engine::tests::create_over_an_existing_database_fails_and_changes_nothing
+        PASS [   0.521s] (71/71) lpg storage::pool::tests::pages_worth_ten_times_the_cap_are_returned_intact
+────────────
+     Summary [   0.659s] 71 tests run: 71 passed, 12 skipped

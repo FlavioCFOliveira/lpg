@@ -1,0 +1,2 @@
+TARGET SOURCE FSTYPE OPTIONS
+/tmp   tmpfs  tmpfs  rw,nosuid,nodev,nr_inodes=1048576,inode64,usrquota

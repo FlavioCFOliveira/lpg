@@ -1,0 +1,16 @@
+# Build of the lab::btree databases (2x10^7 entries each, one edge = two entries per batch) by the code before and after the put optimisation.
+## before (pre-change copy)
+test lab::btree::btree_build_only ... zipf: Some("| zipf | 20000000 | 117.1 | 170755 | 5856 | 61234 pages, 0.6 s | 506760 |")
+uniform: Some("| uniform | 20000000 | 110.9 | 180286 | 5547 | 63892 pages, 0.6 s | 13528 |")
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 115 filtered out; finished in 229.38s
+## after
+test lab::btree::btree_build_only ... zipf: Some("| zipf | 20000000 | 76.8 | 260454 | 3839 | 61234 pages, 0.6 s | 506840 |")
+uniform: Some("| uniform | 20000000 | 70.2 | 285069 | 3508 | 63892 pages, 0.6 s | 13712 |")
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 117 filtered out; finished in 148.24s
+## sha256 of data-1, before build
+e81cf7f37e8559379a8ca119c1afa06391200cbf50dcf531ee81a1e526621dc5  btree-uniform/data-1
+fd5448233c6cc6b8879d46010379e05ccb605e6ed0e0776494272706475f4f0f  btree-zipf/data-1
+## after build: data-1 compared with cmp
+zipf data-1 identical
+uniform data-1 identical
+## CONTROL differs from byte 1 (not compared further; not a tree page)

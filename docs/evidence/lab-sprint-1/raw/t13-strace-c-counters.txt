@@ -1,0 +1,6 @@
+LAB share=100 mode=hit n=30000 hits=30000 misses=32768 evictions=0 buffers=32768 accounted=285338500 rss_before_open_kib=3528 rss_end_kib=282860 rss_growth_bytes=286035968
+LAB share=100 mode=miss n=30000 hits=0 misses=95536 evictions=0 buffers=95536 accounted=799533956 rss_before_open_kib=3544 rss_end_kib=786068 rss_growth_bytes=801304576
+LAB share=10 mode=hit n=30000 hits=30000 misses=3277 evictions=0 buffers=3277 accounted=28200668 rss_before_open_kib=3580 rss_end_kib=31392 rss_growth_bytes=28479488
+LAB share=10 mode=miss n=30000 hits=0 misses=43108 evictions=30000 buffers=13108 accounted=108736220 rss_before_open_kib=3480 rss_end_kib=110160 rss_growth_bytes=109240320
+LAB share=1 mode=hit n=30000 hits=30000 misses=327 evictions=0 buffers=327 accounted=2830204 rss_before_open_kib=3460 rss_end_kib=6512 rss_growth_bytes=3125248
+LAB share=1 mode=miss n=30000 hits=0 misses=31311 evictions=30000 buffers=1311 accounted=10891132 rss_before_open_kib=3448 rss_end_kib=14448 rss_growth_bytes=11264000

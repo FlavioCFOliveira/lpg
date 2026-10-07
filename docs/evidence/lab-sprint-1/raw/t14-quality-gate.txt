@@ -1,0 +1,26 @@
+$ cargo fmt --all -- --check
+exit 0
+$ cargo clippy --all-targets -- -D warnings
+    Checking lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.44s
+exit 0
+$ cargo +1.89 build --all-targets
+   Compiling lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.88s
+exit 0
+$ cargo doc --no-deps
+ Documenting lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
+   Generated /data/dev/xumiga/lpg/target/doc/lpg/index.html
+exit 0
+$ cargo deny check licenses
+licenses ok
+exit 0
+$ grep -rnE 'std::fs|OpenOptions|File::(open|create)' src --include=*.rs
+src/storage/fs.rs:8:use std::fs::{self, File, OpenOptions};
+src/storage/fs.rs:35:        let file = OpenOptions::new().read(true).write(true).open(path)?;
+src/storage/fs.rs:40:        let file = OpenOptions::new()
+src/storage/fs.rs:65:        File::open(dir)?.sync_all()
+src/storage/fs.rs:69:        let file = File::open(path)?;
+src/storage/fs.rs:75:        let stat = fstatvfs(File::open(dir)?)?;
+src/storage/fs.rs:265:                let raw = File::open(&path).unwrap();

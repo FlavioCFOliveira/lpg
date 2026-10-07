@@ -1,0 +1,24 @@
+fs=ext4 mib=16 mode=strace segments=4 wal_bytes_on_disk=67108864
+LAB cold=true open_ms=351.3 open_checkpoint_ms=17.1 wal_bytes=17443104 groups=21 pages=2100 read_bytes=51253248
+fs=ext4 mib=16 mode=perf segments=4 wal_bytes_on_disk=67108864
+LAB cold=true open_ms=69.9 open_checkpoint_ms=18.6 wal_bytes=17443104 groups=21 pages=2100 read_bytes=51253248
+fs=ext4 mib=64 mode=strace segments=6 wal_bytes_on_disk=100663296
+LAB cold=true open_ms=748.9 open_checkpoint_ms=32.6 wal_bytes=67280544 groups=81 pages=8100 read_bytes=84807680
+fs=ext4 mib=64 mode=perf segments=6 wal_bytes_on_disk=100663296
+LAB cold=true open_ms=139.9 open_checkpoint_ms=30.7 wal_bytes=67280544 groups=81 pages=8100 read_bytes=84807680
+fs=ext4 mib=256 mode=strace segments=18 wal_bytes_on_disk=301989888
+LAB cold=true open_ms=2664.3 open_checkpoint_ms=65.0 wal_bytes=269122176 groups=324 pages=32400 read_bytes=286134272
+fs=ext4 mib=256 mode=perf segments=18 wal_bytes_on_disk=301989888
+LAB cold=true open_ms=379.5 open_checkpoint_ms=63.5 wal_bytes=269122176 groups=324 pages=32400 read_bytes=286134272
+fs=xfs mib=16 mode=strace segments=4 wal_bytes_on_disk=67108864
+LAB cold=true open_ms=347.7 open_checkpoint_ms=24.4 wal_bytes=17443104 groups=21 pages=2100 read_bytes=51253248
+fs=xfs mib=16 mode=perf segments=4 wal_bytes_on_disk=67108864
+LAB cold=true open_ms=71.9 open_checkpoint_ms=22.3 wal_bytes=17443104 groups=21 pages=2100 read_bytes=51253248
+fs=xfs mib=64 mode=strace segments=6 wal_bytes_on_disk=100663296
+LAB cold=true open_ms=740.0 open_checkpoint_ms=33.2 wal_bytes=67280544 groups=81 pages=8100 read_bytes=84807680
+fs=xfs mib=64 mode=perf segments=6 wal_bytes_on_disk=100663296
+LAB cold=true open_ms=120.0 open_checkpoint_ms=31.3 wal_bytes=67280544 groups=81 pages=8100 read_bytes=84807680
+fs=xfs mib=256 mode=strace segments=18 wal_bytes_on_disk=301989888
+LAB cold=true open_ms=2588.0 open_checkpoint_ms=72.7 wal_bytes=269122176 groups=324 pages=32400 read_bytes=286134272
+fs=xfs mib=256 mode=perf segments=18 wal_bytes_on_disk=301989888
+LAB cold=true open_ms=356.5 open_checkpoint_ms=70.0 wal_bytes=269122176 groups=324 pages=32400 read_bytes=286134272

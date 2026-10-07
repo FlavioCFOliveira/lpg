@@ -1,0 +1,108 @@
+rep=1 variant=base f_await_ms=1.97 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=4.150 commits=2000 commits_per_s=482 p50_us=2526.2 p99_us=4051.3 max_us=6140.4 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55816 hwm_kib=55816 rss_start_kib=55604 write_bytes=41086976
+rep=1 variant=base f_await_ms=1.17 
+rep=1 variant=slots f_await_ms=0.91 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=2.044 commits=2000 commits_per_s=979 p50_us=980.8 p99_us=3987.4 max_us=4247.6 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55916 hwm_kib=55916 rss_start_kib=55704 write_bytes=41086976
+rep=1 variant=slots f_await_ms=1.18 
+rep=1 variant=d20 f_await_ms=0.91 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=2.221 commits=2000 commits_per_s=900 p50_us=1071.9 p99_us=1900.3 max_us=4777.5 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55960 hwm_kib=55960 rss_start_kib=55748 write_bytes=41086976
+rep=1 variant=d20 f_await_ms=1.23 
+rep=1 variant=d50 f_await_ms=0.92 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=2.293 commits=2000 commits_per_s=872 p50_us=1093.5 p99_us=4139.8 max_us=4429.2 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55912 hwm_kib=55912 rss_start_kib=55700 write_bytes=41086976
+rep=1 variant=d50 f_await_ms=1.15 
+rep=1 variant=d100 f_await_ms=0.91 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=2.414 commits=2000 commits_per_s=828 p50_us=1149.1 p99_us=4196.8 max_us=4864.2 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55900 hwm_kib=55900 rss_start_kib=55688 write_bytes=41086976
+rep=1 variant=d100 f_await_ms=1.23 
+rep=1 variant=d200 f_await_ms=0.91 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=2.610 commits=2000 commits_per_s=766 p50_us=1252.4 p99_us=4280.8 max_us=4523.3 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55972 hwm_kib=55972 rss_start_kib=55760 write_bytes=41086976
+rep=1 variant=d200 f_await_ms=1.16 
+rep=1 variant=base f_await_ms=0.92 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=2.048 commits=4000 commits_per_s=1953 p50_us=1910.7 p99_us=5273.0 max_us=38346.0 groups=2000 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56132 hwm_kib=56132 rss_start_kib=55752 write_bytes=74305536
+rep=1 variant=base f_await_ms=1.23 
+rep=1 variant=slots f_await_ms=0.91 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=2.027 commits=4000 commits_per_s=1973 p50_us=1913.5 p99_us=5243.2 max_us=28954.4 groups=2000 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56020 hwm_kib=56020 rss_start_kib=55640 write_bytes=74305536
+rep=1 variant=slots f_await_ms=1.18 
+rep=1 variant=d20 f_await_ms=0.92 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=1.128 commits=4000 commits_per_s=3547 p50_us=1082.2 p99_us=2088.7 max_us=8358.5 groups=1005 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56132 hwm_kib=56132 rss_start_kib=55764 write_bytes=45248512
+rep=1 variant=d20 f_await_ms=1.19 
+rep=1 variant=d50 f_await_ms=2.65 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=3.823 commits=4000 commits_per_s=1046 p50_us=3298.3 p99_us=6694.9 max_us=19013.9 groups=1267 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56184 hwm_kib=56184 rss_start_kib=55812 write_bytes=48451584
+rep=1 variant=d50 f_await_ms=4.30 
+rep=1 variant=d100 f_await_ms=2.71 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=3.967 commits=4000 commits_per_s=1008 p50_us=3071.6 p99_us=6839.3 max_us=18786.7 groups=1345 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56068 hwm_kib=56068 rss_start_kib=55696 write_bytes=49422336
+rep=1 variant=d100 f_await_ms=4.45 
+rep=1 variant=d200 f_await_ms=2.85 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=4.041 commits=4000 commits_per_s=990 p50_us=3533.2 p99_us=7011.5 max_us=23422.5 groups=1216 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56180 hwm_kib=56180 rss_start_kib=55808 write_bytes=47804416
+rep=1 variant=d200 f_await_ms=4.10 
+rep=1 variant=base f_await_ms=2.95 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.477 commits=6400 commits_per_s=2584 p50_us=5803.0 p99_us=12716.4 max_us=50370.8 groups=799 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56684 hwm_kib=56684 rss_start_kib=55836 write_bytes=79171584
+rep=1 variant=base f_await_ms=4.09 
+rep=1 variant=slots f_await_ms=2.99 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.568 commits=6400 commits_per_s=2492 p50_us=5935.2 p99_us=13220.6 max_us=48436.4 groups=799 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56540 hwm_kib=56540 rss_start_kib=55696 write_bytes=79196160
+rep=1 variant=slots f_await_ms=4.24 
+rep=1 variant=d20 f_await_ms=3.03 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.028 commits=6400 commits_per_s=3155 p50_us=4683.6 p99_us=10924.0 max_us=44014.7 groups=619 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56680 hwm_kib=56680 rss_start_kib=55816 write_bytes=76980224
+rep=1 variant=d20 f_await_ms=4.17 
+rep=1 variant=d50 f_await_ms=3.07 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.053 commits=6400 commits_per_s=3118 p50_us=4383.6 p99_us=9321.5 max_us=44252.1 groups=620 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56672 hwm_kib=56672 rss_start_kib=55808 write_bytes=76955648
+rep=1 variant=d50 f_await_ms=4.20 
+rep=1 variant=d100 f_await_ms=3.06 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.015 commits=6400 commits_per_s=3176 p50_us=4102.0 p99_us=9316.8 max_us=48291.1 groups=585 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56640 hwm_kib=56640 rss_start_kib=55776 write_bytes=76546048
+rep=1 variant=d100 f_await_ms=4.47 
+rep=1 variant=d200 f_await_ms=3.14 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.205 commits=6400 commits_per_s=2902 p50_us=4487.7 p99_us=10293.3 max_us=48864.8 groups=611 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56716 hwm_kib=56716 rss_start_kib=55832 write_bytes=76873728
+rep=1 variant=d200 f_await_ms=4.25 
+rep=2 variant=base f_await_ms=2.87 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.346 commits=2000 commits_per_s=315 p50_us=3099.9 p99_us=6397.6 max_us=20814.0 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55860 hwm_kib=55860 rss_start_kib=55648 write_bytes=41086976
+rep=2 variant=base f_await_ms=4.12 
+rep=2 variant=slots f_await_ms=2.79 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.106 commits=2000 commits_per_s=328 p50_us=3003.4 p99_us=6035.0 max_us=13018.9 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55844 hwm_kib=55844 rss_start_kib=55632 write_bytes=41086976
+rep=2 variant=slots f_await_ms=4.27 
+rep=2 variant=d20 f_await_ms=2.77 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.130 commits=2000 commits_per_s=326 p50_us=2870.2 p99_us=6094.0 max_us=8367.6 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56000 hwm_kib=56000 rss_start_kib=55788 write_bytes=41086976
+rep=2 variant=d20 f_await_ms=4.26 
+rep=2 variant=d50 f_await_ms=2.76 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.035 commits=2000 commits_per_s=331 p50_us=2849.8 p99_us=6160.6 max_us=17729.9 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55908 hwm_kib=55908 rss_start_kib=55696 write_bytes=41086976
+rep=2 variant=d50 f_await_ms=4.24 
+rep=2 variant=d100 f_await_ms=2.75 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.186 commits=2000 commits_per_s=323 p50_us=2935.5 p99_us=6282.6 max_us=12056.2 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56024 hwm_kib=56024 rss_start_kib=55812 write_bytes=41086976
+rep=2 variant=d100 f_await_ms=4.24 
+rep=2 variant=d200 f_await_ms=2.81 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.652 commits=2000 commits_per_s=301 p50_us=3165.2 p99_us=6306.0 max_us=9457.0 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55992 hwm_kib=55992 rss_start_kib=55780 write_bytes=41086976
+rep=2 variant=d200 f_await_ms=4.03 
+rep=2 variant=base f_await_ms=2.86 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=6.177 commits=4000 commits_per_s=648 p50_us=6117.5 p99_us=9547.3 max_us=46246.9 groups=1999 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56012 hwm_kib=56012 rss_start_kib=55632 write_bytes=74293248
+rep=2 variant=base f_await_ms=4.40 
+rep=2 variant=slots f_await_ms=2.94 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=6.303 commits=4000 commits_per_s=635 p50_us=6137.1 p99_us=12479.8 max_us=48496.8 groups=2000 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56220 hwm_kib=56220 rss_start_kib=55840 write_bytes=74305536
+rep=2 variant=slots f_await_ms=4.35 
+rep=2 variant=d20 f_await_ms=2.80 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=4.256 commits=4000 commits_per_s=940 p50_us=3386.6 p99_us=8520.6 max_us=14179.2 groups=1379 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56152 hwm_kib=56152 rss_start_kib=55784 write_bytes=49844224
+rep=2 variant=d20 f_await_ms=4.23 
+rep=2 variant=d50 f_await_ms=2.84 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=4.072 commits=4000 commits_per_s=982 p50_us=3425.7 p99_us=7059.1 max_us=13393.1 groups=1291 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56056 hwm_kib=56056 rss_start_kib=55692 write_bytes=48750592
+rep=2 variant=d50 f_await_ms=4.33 
+rep=2 variant=d100 f_await_ms=2.77 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=3.917 commits=4000 commits_per_s=1021 p50_us=3334.1 p99_us=6709.4 max_us=12823.3 groups=1272 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56004 hwm_kib=56004 rss_start_kib=55636 write_bytes=48513024
+rep=2 variant=d100 f_await_ms=4.27 
+rep=2 variant=d200 f_await_ms=2.88 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=3.924 commits=4000 commits_per_s=1019 p50_us=3521.6 p99_us=6851.4 max_us=12794.4 groups=1162 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56144 hwm_kib=56144 rss_start_kib=55764 write_bytes=47157248
+rep=2 variant=d200 f_await_ms=4.34 
+rep=2 variant=base f_await_ms=2.96 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.519 commits=6400 commits_per_s=2541 p50_us=5928.2 p99_us=11126.1 max_us=54377.1 groups=799 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56432 hwm_kib=56432 rss_start_kib=55596 write_bytes=79208448
+rep=2 variant=base f_await_ms=4.31 
+rep=2 variant=slots f_await_ms=3.17 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.699 commits=6400 commits_per_s=2371 p50_us=6577.1 p99_us=13089.8 max_us=49285.9 groups=800 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56632 hwm_kib=56632 rss_start_kib=55800 write_bytes=79192064
+rep=2 variant=slots f_await_ms=4.88 
+rep=2 variant=d20 f_await_ms=3.13 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.196 commits=6400 commits_per_s=2914 p50_us=5627.0 p99_us=10930.2 max_us=52563.0 groups=637 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56616 hwm_kib=56616 rss_start_kib=55752 write_bytes=77189120
+rep=2 variant=d20 f_await_ms=4.45 
+rep=2 variant=d50 f_await_ms=3.14 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.064 commits=6400 commits_per_s=3100 p50_us=4244.2 p99_us=9491.9 max_us=49110.4 groups=604 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56700 hwm_kib=56700 rss_start_kib=55816 write_bytes=76771328
+rep=2 variant=d50 f_await_ms=4.45 
+rep=2 variant=d100 f_await_ms=3.15 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.070 commits=6400 commits_per_s=3092 p50_us=3935.9 p99_us=10563.9 max_us=47858.5 groups=592 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56464 hwm_kib=56464 rss_start_kib=55596 write_bytes=76611584
+rep=2 variant=d100 f_await_ms=4.26 
+rep=2 variant=d200 f_await_ms=3.17 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.064 commits=6400 commits_per_s=3100 p50_us=3988.4 p99_us=9457.9 max_us=50533.3 groups=570 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56596 hwm_kib=56596 rss_start_kib=55736 write_bytes=76361728
+rep=2 variant=d200 f_await_ms=4.48 
+rep=3 variant=base f_await_ms=2.86 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.315 commits=2000 commits_per_s=317 p50_us=3117.7 p99_us=5908.7 max_us=9137.6 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56000 hwm_kib=56000 rss_start_kib=55788 write_bytes=41086976
+rep=3 variant=base f_await_ms=4.33 
+rep=3 variant=slots f_await_ms=2.81 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.085 commits=2000 commits_per_s=329 p50_us=2917.5 p99_us=6023.9 max_us=20682.1 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56020 hwm_kib=56020 rss_start_kib=55808 write_bytes=41086976
+rep=3 variant=slots f_await_ms=4.29 
+rep=3 variant=d20 f_await_ms=2.82 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.212 commits=2000 commits_per_s=322 p50_us=2909.8 p99_us=6226.2 max_us=16741.7 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56000 hwm_kib=56000 rss_start_kib=55788 write_bytes=41086976
+rep=3 variant=d20 f_await_ms=4.35 
+rep=3 variant=d50 f_await_ms=2.83 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.435 commits=2000 commits_per_s=311 p50_us=3173.7 p99_us=6291.8 max_us=11907.8 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55968 hwm_kib=55968 rss_start_kib=55756 write_bytes=41086976
+rep=3 variant=d50 f_await_ms=4.29 
+rep=3 variant=d100 f_await_ms=2.78 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.354 commits=2000 commits_per_s=315 p50_us=2989.4 p99_us=6489.7 max_us=15624.6 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=55980 hwm_kib=55980 rss_start_kib=55768 write_bytes=41086976
+rep=3 variant=d100 f_await_ms=4.24 
+rep=3 variant=d200 f_await_ms=2.77 LAB fs=ext4 threads=1 pages=1 n=2000 seconds=6.361 commits=2000 commits_per_s=314 p50_us=3053.6 p99_us=6264.6 max_us=11765.4 groups=2000 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56048 hwm_kib=56048 rss_start_kib=55836 write_bytes=41086976
+rep=3 variant=d200 f_await_ms=4.50 
+rep=3 variant=base f_await_ms=2.93 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=6.310 commits=4000 commits_per_s=634 p50_us=6237.3 p99_us=9880.1 max_us=48948.7 groups=1999 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56168 hwm_kib=56168 rss_start_kib=55788 write_bytes=74280960
+rep=3 variant=base f_await_ms=4.45 
+rep=3 variant=slots f_await_ms=2.94 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=6.338 commits=4000 commits_per_s=631 p50_us=6183.9 p99_us=12623.1 max_us=48885.9 groups=2000 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56140 hwm_kib=56140 rss_start_kib=55760 write_bytes=74305536
+rep=3 variant=slots f_await_ms=4.32 
+rep=3 variant=d20 f_await_ms=2.78 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=4.326 commits=4000 commits_per_s=925 p50_us=3388.9 p99_us=7279.1 max_us=13511.8 groups=1441 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56000 hwm_kib=56000 rss_start_kib=55632 write_bytes=50585600
+rep=3 variant=d20 f_await_ms=4.22 
+rep=3 variant=d50 f_await_ms=2.85 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=4.156 commits=4000 commits_per_s=963 p50_us=3507.9 p99_us=7088.2 max_us=13893.3 groups=1294 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56068 hwm_kib=56068 rss_start_kib=55696 write_bytes=48779264
+rep=3 variant=d50 f_await_ms=4.33 
+rep=3 variant=d100 f_await_ms=2.84 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=4.154 commits=4000 commits_per_s=963 p50_us=3516.1 p99_us=7004.4 max_us=16719.7 groups=1309 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56072 hwm_kib=56072 rss_start_kib=55700 write_bytes=48971776
+rep=3 variant=d100 f_await_ms=4.24 
+rep=3 variant=d200 f_await_ms=2.86 LAB fs=ext4 threads=4 pages=1 n=1000 seconds=4.048 commits=4000 commits_per_s=988 p50_us=3516.8 p99_us=6806.1 max_us=15777.6 groups=1229 segments=0 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56064 hwm_kib=56064 rss_start_kib=55692 write_bytes=47992832
+rep=3 variant=d200 f_await_ms=4.32 
+rep=3 variant=base f_await_ms=3.01 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.592 commits=6400 commits_per_s=2469 p50_us=6132.3 p99_us=12942.2 max_us=48128.5 groups=799 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56580 hwm_kib=56580 rss_start_kib=55736 write_bytes=79187968
+rep=3 variant=base f_await_ms=4.33 
+rep=3 variant=slots f_await_ms=3.09 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.691 commits=6400 commits_per_s=2378 p50_us=6569.5 p99_us=13431.9 max_us=46787.3 groups=799 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56540 hwm_kib=56540 rss_start_kib=55732 write_bytes=79196160
+rep=3 variant=slots f_await_ms=4.42 
+rep=3 variant=d20 f_await_ms=3.11 LAB fs=ext4 threads=16 pages=1 n=400 seconds=1.901 commits=6400 commits_per_s=3366 p50_us=3813.9 p99_us=8733.9 max_us=46288.0 groups=562 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56552 hwm_kib=56552 rss_start_kib=55688 write_bytes=76206080
+rep=3 variant=d20 f_await_ms=4.19 
+rep=3 variant=d50 f_await_ms=3.14 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.072 commits=6400 commits_per_s=3089 p50_us=4476.5 p99_us=9973.0 max_us=46974.4 groups=600 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56680 hwm_kib=56680 rss_start_kib=55808 write_bytes=76689408
+rep=3 variant=d50 f_await_ms=4.18 
+rep=3 variant=d100 f_await_ms=3.06 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.103 commits=6400 commits_per_s=3043 p50_us=5338.9 p99_us=11136.2 max_us=46367.3 groups=626 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56640 hwm_kib=56640 rss_start_kib=55756 write_bytes=77029376
+rep=3 variant=d100 f_await_ms=4.44 
+rep=3 variant=d200 f_await_ms=3.11 LAB fs=ext4 threads=16 pages=1 n=400 seconds=2.050 commits=6400 commits_per_s=3123 p50_us=3868.5 p99_us=9573.6 max_us=44524.6 groups=579 segments=1 accountant_used=49956864 accountant_peak=49989632 accounted_gauge=Some(6875136) rss_kib=56648 hwm_kib=56648 rss_start_kib=55784 write_bytes=76402688
+rep=3 variant=d200 f_await_ms=4.50 

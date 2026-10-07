@@ -1,0 +1,13 @@
+src/ops/restore/tests.rs:584:    let ino = std::fs::metadata(&lock).unwrap().ino();
+src/ops/restore/tests.rs:585:    assert_eq!(std::fs::metadata(&lock).unwrap().len(), 0);
+src/ops/restore/tests.rs:605:    assert_eq!(std::fs::metadata(&lock).unwrap().ino(), ino);
+src/storage/fs.rs:8:use std::fs::{self, File, OpenOptions};
+src/storage/fs.rs:35:        let file = OpenOptions::new().read(true).write(true).open(path)?;
+src/storage/fs.rs:40:        let file = OpenOptions::new()
+src/storage/fs.rs:65:        File::open(dir)?.sync_all()
+src/storage/fs.rs:69:        let file = File::open(path)?;
+src/storage/fs.rs:75:        let stat = fstatvfs(File::open(dir)?)?;
+src/storage/fs.rs:266:                let raw = File::open(&path).unwrap();
+src/test_support/mod.rs:80:    std::fs::create_dir_all(GRAPH_DIR).expect("create /tmp/lpgram");
+src/suites/kill.rs:122:                std::fs::create_dir(&target).unwrap();
+src/suites/kill.rs:126:                std::fs::remove_dir_all(&target).unwrap();

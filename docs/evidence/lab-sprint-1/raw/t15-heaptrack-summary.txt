@@ -1,0 +1,84 @@
+# heaptrack 1.5.0 of lab::commit::commit_fixed (ext4), lab profile; n0 = same setup with 0 commits
+# command: LPG_LAB_FS=ext4 LPG_COMMIT_THREADS=T LPG_COMMIT_PAGES=P LPG_PERF_N=N heaptrack -o commit-tT-pP-nN BIN --exact lab::commit::commit_fixed --ignored --test-threads=1
+
+## commit-t16-p1-n1000
+total runtime: 3.06s.
+calls to allocation functions: 135489 (44234/s)
+temporary memory allocations: 39241 (12811/s)
+peak heap memory consumption: 52.70M
+peak RSS (including heaptrack overhead): 65.59M
+total memory leaked: 7.28K
+
+## commit-t16-p1-n0
+total runtime: 0.68s.
+calls to allocation functions: 26380 (38851/s)
+temporary memory allocations: 6781 (9986/s)
+peak heap memory consumption: 51.28M
+peak RSS (including heaptrack overhead): 62.12M
+total memory leaked: 5.52K
+
+## commit-t1-p100-n300
+total runtime: 1.82s.
+calls to allocation functions: 65118 (35857/s)
+temporary memory allocations: 10742 (5915/s)
+peak heap memory consumption: 54.13M
+peak RSS (including heaptrack overhead): 63.46M
+total memory leaked: 2.00K
+
+## commit-t1-p100-n0
+total runtime: 0.69s.
+calls to allocation functions: 26250 (38209/s)
+temporary memory allocations: 6779 (9867/s)
+peak heap memory consumption: 51.28M
+peak RSS (including heaptrack overhead): 60.67M
+total memory leaked: 2.00K
+
+## commit-t16-p100-n50
+total runtime: 2.43s.
+calls to allocation functions: 120482 (49621/s)
+temporary memory allocations: 16326 (6724/s)
+peak heap memory consumption: 85.86M
+peak RSS (including heaptrack overhead): 110.99M
+total memory leaked: 7.28K
+
+## allocation calls by source site (heaptrack_print -p 0 -a 1 -n 80, aggregated by the first three src/ frames)
+### commit-t16-p1-n1000
+32000 src/lab/commit.rs:177
+16000 src/tx/commit.rs:114 <- src/tx/commit.rs:65 <- src/lab/commit.rs:177
+16000 src/storage/btree/mod.rs:200 <- src/storage/btree/write.rs:163 <- src/tx/commit.rs:120
+16000 src/tx/commit.rs:120 <- src/tx/commit.rs:65 <- src/lab/commit.rs:177
+5554 src/storage/pool.rs:406 <- src/storage/btree/mod.rs:249 <- src/storage/btree/write.rs:669
+2247 src/storage/btree/mod.rs:166 <- src/storage/btree/mod.rs:200 <- src/storage/btree/write.rs:163
+800 src/tx/commit.rs:120 <- src/tx/commit.rs:65 <- src/lab/commit.rs:125
+445 
+397 src/storage/btree/mod.rs:166 <- src/storage/btree/write.rs:669 <- src/storage/btree/write.rs:654
+50 src/storage/wal.rs:881 <- src/storage/engine.rs:480
+32 src/lab/commit.rs:171 <- src/lab/commit.rs:325 <- src/lab/commit.rs:313
+25 src/storage/pool.rs:406 <- src/storage/btree/mod.rs:249 <- src/storage/btree/write.rs:762
+### commit-t1-p100-n300
+30000 src/storage/btree/mod.rs:200 <- src/storage/btree/write.rs:163 <- src/tx/commit.rs:120
+11110 src/storage/btree/write.rs:559 <- src/storage/btree/write.rs:163 <- src/tx/commit.rs:120
+5555 src/storage/btree/write.rs:628 <- src/storage/btree/write.rs:559 <- src/storage/btree/write.rs:163
+5554 src/storage/pool.rs:406 <- src/storage/btree/mod.rs:249 <- src/storage/btree/write.rs:669
+3300 src/storage/btree/mod.rs:166 <- src/storage/btree/mod.rs:200 <- src/storage/btree/write.rs:163
+3000 src/tx/commit.rs:120 <- src/tx/commit.rs:65 <- src/lab/commit.rs:177
+800 src/tx/commit.rs:120 <- src/tx/commit.rs:65 <- src/lab/commit.rs:125
+370 
+80 src/storage/wal.rs:881 <- src/storage/engine.rs:480
+25 src/storage/pool.rs:406 <- src/storage/btree/mod.rs:249 <- src/storage/btree/write.rs:762
+24 src/lib.rs:781 <- src/lib.rs:860
+23 src/lib.rs:777 <- src/lib.rs:860
+
+## peak consumers, commit-t16-p100-n50 (heaptrack_print -a 0 -p 1)
+46.81M peak memory consumed over 5624 calls from
+45.50M consumed over 5554 calls from:
+1.05M consumed over 20 calls from:
+204.80K consumed over 25 calls from:
+8.19K consumed over 1 calls from:
+8.19K consumed over 1 calls from:
+33.76M peak memory consumed over 9959 calls from
+33.69M consumed over 10 calls from:
+16.38K consumed over 669 calls from:
+13.18K consumed over 4 calls from:
+13.06K consumed over 1 calls from:
+8.19K consumed over 3 calls from:

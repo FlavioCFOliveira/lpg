@@ -1,0 +1,84 @@
+info: experimental features enabled: wrapper-scripts
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.01s
+────────────
+ Nextest run ID 0d02ed9f-bfb9-4d0d-8d4d-73584b487f1d with nextest profile: stress
+    Starting 19 tests across 1 binary (216 tests skipped, including 192 tests via profile.stress.default-filter)
+        PASS [   0.022s] ( 1/19) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+  stdout ───
+    stress: 16 copies, LPG_SEED 601900608 to 601900623, 0 failed
+
+        PASS [   2.123s] ( 2/19) lpg ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point
+  stdout ───
+    stress: 16 copies, LPG_SEED 1545072137 to 1545072152, 0 failed
+
+        PASS [   4.273s] ( 3/19) lpg storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once
+  stdout ───
+    stress: 16 copies, LPG_SEED 1043787721 to 1043787736, 0 failed
+
+        PASS [   0.818s] ( 4/19) lpg storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing
+  stdout ───
+    stress: 16 copies, LPG_SEED 3014809064 to 3014809079, 0 failed
+
+        PASS [   0.040s] ( 5/19) lpg storage::freelist::tests::registry_horizon_is_the_lowest_registered_value
+  stdout ───
+    stress: 16 copies, LPG_SEED 1433717403 to 1433717418, 0 failed
+
+        PASS [   0.075s] ( 6/19) lpg storage::memory::tests::concurrent_reservations_never_exceed_the_cap
+  stdout ───
+    stress: 16 copies, LPG_SEED 3544333817 to 3544333832, 0 failed
+
+        PASS [   0.024s] ( 7/19) lpg storage::memory::tests::the_gauge_follows_every_change
+  stdout ───
+    stress: 16 copies, LPG_SEED 1655041766 to 1655041781, 0 failed
+
+        PASS [   0.548s] ( 8/19) lpg storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap
+  stdout ───
+    stress: 16 copies, LPG_SEED 78922113 to 78922128, 0 failed
+
+        PASS [   0.094s] ( 9/19) lpg tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit
+  stdout ───
+    stress: 16 copies, LPG_SEED 337208942 to 337208957, 0 failed
+
+        PASS [   0.114s] (10/19) lpg tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window
+  stdout ───
+    stress: 16 copies, LPG_SEED 71538553 to 71538568, 0 failed
+
+        PASS [   1.058s] (11/19) lpg tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers
+  stdout ───
+    stress: 16 copies, LPG_SEED 2986320617 to 2986320632, 0 failed
+
+        PASS [   0.092s] (12/19) lpg tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable
+  stdout ───
+    stress: 16 copies, LPG_SEED 1366232137 to 1366232152, 0 failed
+
+        PASS [   0.171s] (13/19) lpg tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal
+  stdout ───
+    stress: 16 copies, LPG_SEED 4232831211 to 4232831226, 0 failed
+
+        PASS [   0.259s] (14/19) lpg tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use
+  stdout ───
+    stress: 16 copies, LPG_SEED 3515051349 to 3515051364, 0 failed
+
+        PASS [   0.652s] (15/19) lpg tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds
+  stdout ───
+    stress: 16 copies, LPG_SEED 3120999223 to 3120999238, 0 failed
+
+        PASS [   0.109s] (16/19) lpg tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame
+  stdout ───
+    stress: 16 copies, LPG_SEED 739759063 to 739759078, 0 failed
+
+        PASS [   0.130s] (17/19) lpg tx::commit::tests::four_closed_loop_committers_share_one_flush
+  stdout ───
+    stress: 16 copies, LPG_SEED 1455110556 to 1455110571, 0 failed
+
+        PASS [   1.927s] (18/19) lpg tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable
+  stdout ───
+    stress: 16 copies, LPG_SEED 860218539 to 860218554, 0 failed
+
+        PASS [   0.159s] (19/19) lpg tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once
+  stdout ───
+    stress: 16 copies, LPG_SEED 4109359441 to 4109359456, 0 failed
+
+────────────
+     Summary [  12.693s] 19 tests run: 19 passed, 216 skipped
+exit 0

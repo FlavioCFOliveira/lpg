@@ -1,0 +1,110 @@
+# perf record -g of the fio write+fdatasync job, 10 s, unprivileged (uid 1000)
+# kernel.kptr_restrict=0 kernel.perf_event_paranoid=1 lockdown: none [integrity] confidentiality
+
+## Run log (nvme0n1_flush_ios = field 16 of /sys/block/nvme0n1/stat)
+== ext4 start 2026-10-02T17:21:17+01:00 loadavg=0.87 0.53 0.48 nvme0n1_flush_ios=66051
+== ext4 end 2026-10-02T17:21:28+01:00 rc=0 loadavg=1.04 0.58 0.50 nvme0n1_flush_ios=69377 delta=3326
+== xfs start 2026-10-02T17:21:28+01:00 loadavg=1.04 0.58 0.50 nvme0n1_flush_ios=69377
+== xfs end 2026-10-02T17:21:39+01:00 rc=0 loadavg=1.42 0.67 0.53 nvme0n1_flush_ios=72626 delta=3249
+
+## ext4: perf record stderr
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0,521 MB perf/ext4.perf.data (2565 samples) ]
+## ext4: sample CPU modes from 'perf report -D' (misc 0x1/0x4001 = kernel, 0x4002 = user)
+      1 PERF_RECORD_SAMPLE(IP, 0x1)
+   2198 PERF_RECORD_SAMPLE(IP, 0x4001)
+    366 PERF_RECORD_SAMPLE(IP, 0x4002)
+## ext4: kernel callchain entries (ip >= ffffffff00000000) and how many lack a symbol
+kernel_entries=20830 unresolved=0
+## ext4: share of sampled cycles whose folded stack passes through fdatasync
+fdatasync-path weight=317097314 total=1483738404 share=21,4%
+## ext4: kernel functions below fdatasync, inclusive weight (cycles), top 25
+312498577 entry_SYSCALL_64_after_hwframe
+311996325 do_syscall_64
+306375793 __x64_sys_fdatasync
+306375793 x64_sys_call
+305526180 ext4_sync_file
+241460855 file_write_and_wait_range
+195867224 __filemap_fdatawrite_range
+194070483 filemap_fdatawrite_wbc
+187237569 do_writepages
+186600792 ext4_writepages
+182962097 ext4_do_writepages
+90680263 mpage_map_and_submit_extent
+78437488 schedule
+75205068 __schedule
+59490947 ext4_fc_commit
+58080183 jbd2_complete_transaction
+48428512 mpage_map_one_extent
+45086631 ext4_map_blocks
+45040241 jbd2_log_wait_commit
+43492937 __filemap_fdatawait_range
+41096591 folio_wait_writeback
+39471939 folio_wait_bit_common
+39471939 folio_wait_bit
+39435265 mpage_map_and_submit_buffers
+36859291 io_schedule
+
+## xfs: perf record stderr
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0,419 MB perf/xfs.perf.data (2116 samples) ]
+## xfs: sample CPU modes from 'perf report -D' (misc 0x1/0x4001 = kernel, 0x4002 = user)
+      2 PERF_RECORD_SAMPLE(IP, 0x1)
+   1780 PERF_RECORD_SAMPLE(IP, 0x4001)
+    334 PERF_RECORD_SAMPLE(IP, 0x4002)
+## xfs: kernel callchain entries (ip >= ffffffff00000000) and how many lack a symbol
+kernel_entries=15556 unresolved=0
+## xfs: share of sampled cycles whose folded stack passes through fdatasync
+fdatasync-path weight=190066355 total=1418682179 share=13,4%
+## xfs: kernel functions below fdatasync, inclusive weight (cycles), top 25
+187548537 entry_SYSCALL_64_after_hwframe
+187548537 do_syscall_64
+183139732 x64_sys_call
+182368715 __x64_sys_fdatasync
+181752636 xfs_file_fsync
+96641911 xfs_log_force_seq
+82675676 file_write_and_wait_range
+64533685 schedule
+63787310 __schedule
+55424380 xlog_force_lsn
+52016037 submit_bio
+50080018 submit_bio_noacct
+49983232 filemap_fdatawrite_wbc
+49983232 __filemap_fdatawrite_range
+48766711 submit_bio_noacct_nocheck
+47936986 do_writepages
+47621543 xfs_vm_writepages
+47000052 iomap_writepages
+46983652 __submit_bio
+45543819 blk_mq_submit_bio
+39692402 xlog_cil_force_seq
+38299435 xlog_cil_push_now.isra.0
+31711028 xlog_state_release_iclog
+31426789 xlog_sync
+30976988 __filemap_fdatawait_range
+
+## ext4: heaviest folded stack reaching the NVMe driver below fdatasync
+fdatasync;entry_SYSCALL_64_after_hwframe;do_syscall_64;x64_sys_call;__x64_sys_fdatasync;ext4_sync_file;file_write_and_wait_range;__filemap_fdatawrite_range;filemap_fdatawrite_wbc;do_writepages;ext4_writepages;ext4_do_writepages;blk_finish_plug;__blk_flush_plug;blk_mq_flush_plug_list;blk_mq_flush_plug_list.part.0;nvme_queue_rqs;nvme_prep_rq.part.0;blk_mq_start_request;ktime_get;read_hpet 2331414
+## xfs: folded stacks below fdatasync reaching the loop driver (first) and the XFS log write (second)
+fdatasync;entry_SYSCALL_64_after_hwframe;do_syscall_64;x64_sys_call;__x64_sys_fdatasync;xfs_file_fsync;file_write_and_wait_range;__filemap_fdatawrite_range;filemap_fdatawrite_wbc;do_writepages;xfs_vm_writepages;iomap_writepages;iomap_submit_ioend;submit_bio;submit_bio_noacct;submit_bio_noacct_nocheck;__submit_bio;blk_mq_submit_bio;blk_mq_try_issue_directly;__blk_mq_issue_directly;loop_queue_rq;blk_mq_start_request;ktime_get;read_hpet 2880831
+fdatasync;entry_SYSCALL_64_after_hwframe;do_syscall_64;x64_sys_call;__x64_sys_fdatasync;xfs_file_fsync;xfs_log_force_seq;xlog_force_lsn;xlog_state_release_iclog;xlog_sync;xlog_write_iclog;submit_bio;submit_bio_noacct;submit_bio_noacct_nocheck;__submit_bio;blk_mq_submit_bio;blk_insert_flush;blk_flush_complete_seq;blk_rq_init;ktime_get;read_hpet 3499745
+
+## Frames absent from the fio process: blkdev_issue_flush, submit_bio_wait, jbd2_journal_commit_transaction
+ext4 blkdev_issue_flush folded_lines=0
+ext4 submit_bio_wait folded_lines=0
+ext4 jbd2_journal_commit_transaction folded_lines=0
+xfs blkdev_issue_flush folded_lines=0
+xfs submit_bio_wait folded_lines=0
+xfs jbd2_journal_commit_transaction folded_lines=0
+## System-wide capture (perf record -a) without sudo
+$ perf record -a -g -o <scratch>/sysw.perf.data -- sleep 0.2
+Error:
+Access to performance monitoring and observability operations is limited.
+[exit=255]
+
+## sysctl persistence
+/proc/sys/kernel/kptr_restrict=0
+/proc/sys/kernel/perf_event_paranoid=1
+$ grep -rn "kptr_restrict\|perf_event_paranoid" /etc/sysctl.conf /etc/sysctl.d/
+/etc/sysctl.d/99-lpg-perf.conf:1:kernel.perf_event_paranoid = 1
+/etc/sysctl.d/10-kernel-hardening.conf:15:kernel.kptr_restrict = 1

@@ -1,0 +1,26 @@
+tmpfs: wall 9.240 [9.220-9.280] s, user 38.270 [38.230-38.770] s, sys 38.660 [38.130-38.980] s, user+sys 76.930 [76.360-77.750]
+ssd: wall 10.220 [10.080-10.320] s, user 42.490 [41.970-42.930] s, sys 44.240 [43.910-44.880] s, user+sys 86.400 [86.210-87.810]
+speed-up ssd/tmpfs wall: median-ratio 1.106, all 9 pairwise ratios [1.086-1.119], paired by rep [1.106, 1.086, 1.119]
+sum of per-test median durations: tmpfs 79.33 s, ssd 91.36 s
+top 15 by ssd-tmpfs median difference (s): diff | tmpfs median [range] | ssd median [range] | test
++1.205 | 0.043 [0.036-0.046] | 1.248 [1.218-1.250] | storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
++0.820 | 8.874 [8.849-8.929] | 9.694 [9.545-9.795] | storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
++0.818 | 5.917 [5.910-6.047] | 6.735 [6.734-6.761] | storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
++0.408 | 1.904 [1.899-1.909] | 2.312 [2.276-2.371] | suites::fault::migration
++0.401 | 1.752 [1.692-1.763] | 2.153 [2.125-2.155] | tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
++0.368 | 2.797 [2.775-2.842] | 3.165 [3.140-3.211] | suites::fault::backup
++0.341 | 1.295 [1.204-1.349] | 1.636 [1.596-1.666] | tx::commit::tests::a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image
++0.302 | 2.708 [2.686-2.798] | 3.010 [2.995-3.023] | suites::fault::checkpoint
++0.278 | 1.063 [1.020-1.179] | 1.341 [1.187-1.355] | storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commit
++0.277 | 0.449 [0.429-0.483] | 0.726 [0.726-0.742] | ops::restore::tests::a_restore_into_a_database_fails_and_changes_nothing
++0.265 | 2.435 [2.390-2.465] | 2.700 [2.675-2.815] | storage::recovery::tests::drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit
++0.259 | 0.357 [0.357-0.373] | 0.616 [0.591-0.633] | ops::migrate::tests::too_little_space_fails_before_any_write
++0.251 | 1.156 [1.129-1.194] | 1.407 [1.371-1.444] | tx::commit::tests::an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean
++0.250 | 0.353 [0.347-0.388] | 0.603 [0.587-0.652] | ops::migrate::tests::a_database_without_a_clean_shutdown_names_the_previous_crate_version
++0.249 | 2.236 [2.211-2.290] | 2.485 [2.376-2.531] | suites::fault::commits
+bottom 5:
+-0.040 | 2.283 [2.272-2.429] | 2.243 [2.181-2.345] | storage::btree::node::tests::apply_matches_the_full_reencode
+-0.041 | 0.199 [0.160-0.245] | 0.158 [0.146-0.175] | storage::freelist::tests::trunk_chain_grows_persists_and_is_consumed
+-0.093 | 4.802 [4.751-4.816] | 4.709 [4.701-4.728] | suites::fault::restore_
+-0.111 | 0.512 [0.406-0.544] | 0.401 [0.336-0.451] | suites::kill::kill_and_reopen
+-0.148 | 0.685 [0.595-0.711] | 0.537 [0.533-0.570] | storage::recovery::tests::a_torn_last_group_is_discarded

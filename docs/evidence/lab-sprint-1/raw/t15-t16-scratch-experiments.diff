@@ -1,0 +1,308 @@
+diff -ru /data/dev/xumiga/lpg/src/lab/btree.rs lpgx/src/lab/btree.rs
+--- /data/dev/xumiga/lpg/src/lab/btree.rs	2026-10-02 19:32:51.712556820 +0100
++++ lpgx/src/lab/btree.rs	2026-10-03 10:02:43.571649800 +0100
+@@ -464,13 +464,14 @@
+     let n: u64 = std::env::var("LPG_PERF_N").map_or(100_000, |v| v.parse().unwrap());
+     let keys = sample_keys(&dist);
+     let pages = data_pages(&dist);
+-    let cap = if mode == "put" {
+-        assert_eq!(percent, 100, "puts run only at 100 %");
++    // LAB EXPERIMENT (scratch copy): puts at any share; run on a copy.
++    let cap = if mode == "put" && percent == 100 {
+         BUILD_CAP
+     } else {
+         cap_for((pages * percent).div_ceil(100))
+     };
+-    let e = open(&dist, cap, sink());
++    let snk = sink();
++    let e = open(&dist, cap, snk.clone());
+     let s = e.store();
+     let tree = s.tree(1).expect("dir").expect("tree 1");
+     warm(&s, tree);
+@@ -489,6 +490,14 @@
+         other => panic!("unknown LPG_BTREE_MODE {other}"),
+     }
+     let ns = t.elapsed().as_nanos() as f64 / n.max(1) as f64;
+-    println!("LAB dist={dist} share={percent} mode={mode} n={n} ns_per_op={ns:.0}");
++    let m = snk.snapshot();
++    println!(
++        "LAB dist={dist} share={percent} mode={mode} n={n} ns_per_op={ns:.0} evictions={} flushes={} page_faults={} accountant_used={} accountant_peak={}",
++        m.counter(crate::obs::names::cache::EVICTIONS),
++        m.counter(crate::obs::names::cache::FLUSHES),
++        m.counter(crate::obs::names::cache::PAGE_FAULTS),
++        e.accountant().used(),
++        e.accountant().peak(),
++    );
+     // Nothing is written back: at 100 % no frame was evicted.
+ }
+diff -ru /data/dev/xumiga/lpg/src/lab/commit.rs lpgx/src/lab/commit.rs
+--- /data/dev/xumiga/lpg/src/lab/commit.rs	2026-10-02 22:58:41.624670396 +0100
++++ lpgx/src/lab/commit.rs	2026-10-03 09:47:34.131473972 +0100
+@@ -346,3 +346,85 @@
+     drop(db.engine);
+     drop(db.dir);
+ }
++
++/// LAB EXPERIMENT ONLY (scratch copy): per-commit trace for the D4 spike,
++/// group commit variants and memory. `LPG_LAB_FS`, `LPG_COMMIT_THREADS`,
++/// `LPG_COMMIT_PAGES`, `LPG_PERF_N` as `commit_fixed`; `LPG_X_TRACE` names
++/// the output file (lines `c <end unix ns> <latency ns>` and
++/// `s <start unix ns> <end unix ns>`).
++#[test]
++#[ignore = "laboratory experiment"]
++fn commit_trace() {
++    let fs: String = env_or("LPG_LAB_FS", "ext4".to_owned());
++    let base = match fs.as_str() {
++        "ext4" => env_dir("LPG_LAB_EXT4"),
++        "xfs" => env_dir("LPG_LAB_XFS"),
++        other => panic!("unknown LPG_LAB_FS {other}"),
++    };
++    let threads: u64 = env_or("LPG_COMMIT_THREADS", 16);
++    let pages: u64 = env_or("LPG_COMMIT_PAGES", 1);
++    let n: u64 = env_or("LPG_PERF_N", 1_000);
++    let db = build(&base, KEYS, CAP, no_trigger());
++    crate::storage::x::SEGMENTS.lock().unwrap().clear();
++    let before = db.sink.snapshot();
++    let p0 = Probe::now();
++    let t = Instant::now();
++    let traces: Vec<Vec<(u128, u128)>> = std::thread::scope(|s| {
++        let hs: Vec<_> = (0..threads)
++            .map(|th| {
++                let (e, tree) = (&db.engine, db.tree);
++                s.spawn(move || {
++                    let mut rng = StdRng::seed_from_u64(th);
++                    let mut v = Vec::with_capacity(n as usize);
++                    for i in 0..n {
++                        let a = Instant::now();
++                        commit_pages(e, tree, KEYS, pages, (th + i) as u8, &mut rng);
++                        let lat = a.elapsed().as_nanos();
++                        v.push((crate::storage::x::unix_ns(), lat));
++                    }
++                    v
++                })
++            })
++            .collect();
++        hs.into_iter().map(|h| h.join().unwrap()).collect()
++    });
++    let seconds = t.elapsed().as_secs_f64();
++    let p1 = Probe::now();
++    let m = db.sink.snapshot().since(&before);
++    let mut lats: Vec<u64> = traces.iter().flatten().map(|&(_, l)| l as u64).collect();
++    let commits = lats.len() as u64;
++    lats.sort_unstable();
++    let segs = crate::storage::x::SEGMENTS.lock().unwrap().clone();
++    let mut out = String::new();
++    for v in &traces {
++        for &(e, l) in v {
++            writeln!(out, "c {e} {l}").unwrap();
++        }
++    }
++    for &(a, b) in &segs {
++        writeln!(out, "s {a} {b}").unwrap();
++    }
++    if let Ok(p) = std::env::var("LPG_X_TRACE") {
++        write_text(Path::new(&p), &out);
++    }
++    println!(
++        "LAB fs={fs} threads={threads} pages={pages} n={n} seconds={seconds:.3} commits={commits} \
++         commits_per_s={:.0} p50_us={:.1} p99_us={:.1} max_us={:.1} groups={} segments={} \
++         accountant_used={} accountant_peak={} accounted_gauge={:?} rss_kib={} hwm_kib={} rss_start_kib={} write_bytes={}",
++        commits as f64 / seconds,
++        percentile(&lats, 0.5) as f64 / 1e3,
++        percentile(&lats, 0.99) as f64 / 1e3,
++        *lats.last().unwrap() as f64 / 1e3,
++        m.counter(GROUPS),
++        segs.len(),
++        db.engine.accountant().used(),
++        db.engine.accountant().peak(),
++        db.sink.snapshot().gauge(crate::obs::names::cache::ACCOUNTED_BYTES),
++        p1.rss_kib,
++        p1.hwm_kib,
++        p0.rss_kib,
++        p1.write_bytes - p0.write_bytes,
++    );
++    drop(db.engine);
++    drop(db.dir);
++}
+diff -ru /data/dev/xumiga/lpg/src/lab/recovery.rs lpgx/src/lab/recovery.rs
+--- /data/dev/xumiga/lpg/src/lab/recovery.rs	2026-10-02 23:24:49.065617847 +0100
++++ lpgx/src/lab/recovery.rs	2026-10-03 10:30:04.813864164 +0100
+@@ -462,6 +462,17 @@
+             );
+             drop(e);
+         }
++        // LAB EXPERIMENT (scratch copy): open an existing database (it
++        // recovers and runs the open checkpoint, which recycles segments),
++        // commit MiB more WAL, drop without close.
++        "more" => {
++            let sink = Arc::new(RecordingSink::default());
++            let e = Engine::open_tuned(&dir, Arc::new(FsStorage), CAP, sink, no_trigger()).expect("open");
++            let tree = e.store().tree(1).expect("dir").expect("tree 1");
++            fill_wal(&e, tree, mib, 1);
++            println!("LAB more {mib} MiB");
++            drop(e);
++        }
+         "open" => {
+             let cold = env_or("LPG_LAB_COLD", 1u8) != 0;
+             let o = timed_open(&dir, cold);
+diff -ru /data/dev/xumiga/lpg/src/storage/btree/mod.rs lpgx/src/storage/btree/mod.rs
+--- /data/dev/xumiga/lpg/src/storage/btree/mod.rs	2026-10-03 09:04:13.933856225 +0100
++++ lpgx/src/storage/btree/mod.rs	2026-10-03 09:47:12.817536042 +0100
+@@ -180,10 +180,17 @@
+         if self.undo.touched.contains_key(&p) {
+             return Ok(());
+         }
+-        self.reserve_copy()?;
++        let nocopy = crate::storage::x::nocopy();
++        if !nocopy {
++            self.reserve_copy()?;
++        }
+         let pin = self.pool.fetch(p)?;
+         let (mut g, was_dirty) = pin.write_noting_dirty()?;
+-        self.undo.copies.push((Box::from(&g[..]), was_dirty));
++        if nocopy {
++            self.undo.copies.push((Box::from(&[][..]), was_dirty));
++        } else {
++            self.undo.copies.push((Box::from(&g[..]), was_dirty));
++        }
+         self.undo
+             .touched
+             .insert(p, Saved::Copy(self.undo.copies.len() - 1));
+diff -ru /data/dev/xumiga/lpg/src/storage/mod.rs lpgx/src/storage/mod.rs
+--- /data/dev/xumiga/lpg/src/storage/mod.rs	2026-10-02 21:25:42.335890070 +0100
++++ lpgx/src/storage/mod.rs	2026-10-03 09:47:12.804536080 +0100
+@@ -225,3 +225,33 @@
+ 
+ /// A lock taken by [`Storage::try_lock`]; dropping it releases the lock.
+ pub trait StorageLock: Send + Sync {}
++
++/// LAB EXPERIMENT ONLY (scratch copy, not the repository): switches read
++/// once from the environment.
++pub(crate) mod x {
++    use std::sync::OnceLock;
++    use std::sync::Mutex;
++    fn flag(cell: &'static OnceLock<u64>, var: &str) -> u64 {
++        *cell.get_or_init(|| std::env::var(var).ok().and_then(|v| v.parse().ok()).unwrap_or(0))
++    }
++    /// Skip the step-6 page copies (no undo possible; failure-free runs only).
++    pub(crate) fn nocopy() -> bool {
++        static C: OnceLock<u64> = OnceLock::new();
++        flag(&C, "LPG_X_NOCOPY") != 0
++    }
++    /// Writer sleeps this many µs before closing a group (PostgreSQL commit_delay).
++    pub(crate) fn delay_us() -> u64 {
++        static C: OnceLock<u64> = OnceLock::new();
++        flag(&C, "LPG_X_DELAY_US")
++    }
++    /// Committers wait on per-group condvar slots (InnoDB flush_events).
++    pub(crate) fn slots() -> bool {
++        static C: OnceLock<u64> = OnceLock::new();
++        flag(&C, "LPG_X_SLOTS") != 0
++    }
++    /// Segment creations: (start, end) in Unix ns.
++    pub(crate) static SEGMENTS: Mutex<Vec<(u128, u128)>> = Mutex::new(Vec::new());
++    pub(crate) fn unix_ns() -> u128 {
++        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
++    }
++}
+diff -ru /data/dev/xumiga/lpg/src/storage/recovery.rs lpgx/src/storage/recovery.rs
+--- /data/dev/xumiga/lpg/src/storage/recovery.rs	2026-10-03 08:22:21.148806152 +0100
++++ lpgx/src/storage/recovery.rs	2026-10-03 10:29:00.258083815 +0100
+@@ -264,7 +264,10 @@
+         x = g.end;
+     }
+     // Step 5.
+-    if let Some(first) = reader.later_valid_group(x, last_salt.unwrap_or(0))? {
++    let x_t = std::time::Instant::now();
++    let x_r = reader.later_valid_group(x, last_salt.unwrap_or(0))?;
++    eprintln!("XSTEP5 step5_ms={:.2} scanned_bytes={} replay_end={x} stream_end={}", x_t.elapsed().as_secs_f64() * 1e3, expected - x, expected);
++    if let Some(first) = x_r {
+         return Err(Error::Corruption(format!(
+             "WAL corrupt: the group at LSN {x:#x} is not valid, but a later group at \
+              LSN {first:#x} is"
+diff -ru /data/dev/xumiga/lpg/src/storage/wal.rs lpgx/src/storage/wal.rs
+--- /data/dev/xumiga/lpg/src/storage/wal.rs	2026-10-03 09:12:36.410932183 +0100
++++ lpgx/src/storage/wal.rs	2026-10-03 09:47:12.817536042 +0100
+@@ -488,6 +488,8 @@
+     writer_cv: Condvar,
+     /// Committers and the checkpointer wait here for durability.
+     durable_cv: Condvar,
++    /// LAB EXPERIMENT: per-group wait slots.
++    x_slots: Vec<Condvar>,
+     /// Tests only: pause points (TS-30 R10).
+     #[cfg(test)]
+     pub(crate) points: TestPoints,
+@@ -563,6 +565,7 @@
+             }),
+             writer_cv: Condvar::new(),
+             durable_cv: Condvar::new(),
++            x_slots: (0..64).map(|_| Condvar::new()).collect(),
+             #[cfg(test)]
+             points: TestPoints::default(),
+         };
+@@ -638,6 +641,13 @@
+     /// latch. Called with the segment list locked, so one segment is
+     /// created at a time.
+     fn create_segment(&self, lsn: u64) -> Result<Box<dyn StorageFile>> {
++        let x_start = crate::storage::x::unix_ns();
++        let r = self.create_segment_inner(lsn);
++        crate::storage::x::SEGMENTS.lock().unwrap().push((x_start, crate::storage::x::unix_ns()));
++        r
++    }
++
++    fn create_segment_inner(&self, lsn: u64) -> Result<Box<dyn StorageFile>> {
+         let temp = self.location.join(TEMP_SEGMENT);
+         let path = self.path(lsn);
+         let file = match self.storage.create(&temp) {
+@@ -811,6 +821,10 @@
+             }
+             #[cfg(test)]
+             TestPoints::run(&self.points.before_close);
++            let d = crate::storage::x::delay_us();
++            if d > 0 {
++                std::thread::sleep(std::time::Duration::from_micros(d));
++            }
+             let Some(mut g) = close(std::mem::take(&mut spare)) else {
+                 // `close` refuses a group once the database is unusable
+                 // (TS-12): its commits fail instead of becoming durable.
+@@ -848,7 +862,12 @@
+                         f.durable = g.seq;
+                         f.durable_counters = g.counters;
+                     }
+-                    self.durable_cv.notify_all();
++                    if crate::storage::x::slots() {
++                        self.x_slots[(g.seq % 64) as usize].notify_all();
++                        self.durable_cv.notify_all();
++                    } else {
++                        self.durable_cv.notify_all();
++                    }
+                     spare = g.frames;
+                     self.precreate(end);
+                 }
+@@ -890,6 +909,9 @@
+     fn fail_waiters(&self, kind: io::ErrorKind, msg: String) {
+         self.flow().failed = Some((kind, msg));
+         self.durable_cv.notify_all();
++        for c in &self.x_slots {
++            c.notify_all();
++        }
+     }
+ 
+     /// Step 8 of TS-16: wakes the writer for group `seq` and waits until it
+@@ -911,10 +933,12 @@
+             if let Some((kind, msg)) = &f.failed {
+                 return Err(Error::Io(io::Error::new(*kind, msg.clone())));
+             }
+-            f = self
+-                .durable_cv
+-                .wait(f)
+-                .unwrap_or_else(PoisonError::into_inner);
++            let cv = if crate::storage::x::slots() {
++                &self.x_slots[(seq % 64) as usize]
++            } else {
++                &self.durable_cv
++            };
++            f = cv.wait(f).unwrap_or_else(PoisonError::into_inner);
+         }
+     }
+ 

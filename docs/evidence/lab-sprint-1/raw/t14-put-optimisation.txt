@@ -1,0 +1,11 @@
+# lab::btree::btree_fixed, LPG_BTREE_DIST=uniform LPG_BTREE_SHARE=100 LPG_BTREE_MODE=put LPG_PERF_N=200000, 3 runs each
+# Profile before step 1: raw/t14-perf-put-before.folded (common_prefix 35.9 % inclusive of put_loop).
+before (byte-wise common_prefix, shared recomputed):      6694 6714 6747 ns/put
+step 1 (common_prefix 8 bytes at a time):                  6030 6034 6008 ns/put
+step 2 (+ shared lengths reused from the decoded entries): 5840 5866 5847 ns/put
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=6694
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=6714
+LAB dist=uniform share=100 mode=put n=200000 ns_per_op=6747
+LAB dist=uniform share=100 mode=get n=200000 ns_per_op=1421
+LAB dist=uniform share=100 mode=get n=200000 ns_per_op=1443
+LAB dist=uniform share=100 mode=get n=200000 ns_per_op=1435

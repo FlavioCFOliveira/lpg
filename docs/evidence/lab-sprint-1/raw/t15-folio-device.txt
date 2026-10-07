@@ -1,0 +1,6 @@
+prep=4096 loop80: sectors_written=8004 KiB/write=20 write_ios=400 flushes=201; nvme0n1 KiB/write=32
+prep=1048576 loop80: sectors_written=8004 KiB/write=20 write_ios=400 flushes=201; nvme0n1 KiB/write=32
+prep=4096 loop80: sectors_written=8004 KiB/write=20 write_ios=400 flushes=201; nvme0n1 KiB/write=32
+prep=1048576 loop80: sectors_written=8004 KiB/write=20 write_ios=400 flushes=201; nvme0n1 KiB/write=32
+prep=4096 loop80: sectors_written=8004 KiB/write=20 write_ios=400 flushes=201; nvme0n1 KiB/write=32
+prep=1048576 loop80: sectors_written=8004 KiB/write=20 write_ios=400 flushes=201; nvme0n1 KiB/write=32

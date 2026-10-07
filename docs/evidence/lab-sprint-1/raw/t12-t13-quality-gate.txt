@@ -1,0 +1,37 @@
+$ cargo fmt --all -- --check
+exit 0
+$ cargo clippy --all-targets -- -D warnings
+    Checking lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.31s
+exit 0
+$ cargo +1.89 build
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s
+exit 0
+$ cargo +1.89 build --tests
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.09s
+$ cargo doc --no-deps
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+   Generated /data/dev/xumiga/lpg/target/doc/lpg/index.html
+$ cargo deny check licenses
+licenses ok
+$ grep -rnE 'std::fs|OpenOptions|File::(open|create)' src --include=*.rs
+src/storage/fs.rs:8:use std::fs::{self, File, OpenOptions};
+src/storage/fs.rs:35:        let file = OpenOptions::new().read(true).write(true).open(path)?;
+src/storage/fs.rs:40:        let file = OpenOptions::new()
+src/storage/fs.rs:65:        File::open(dir)?.sync_all()
+src/storage/fs.rs:69:        let file = File::open(path)?;
+src/storage/fs.rs:75:        let stat = fstatvfs(File::open(dir)?)?;
+src/storage/fs.rs:265:                let raw = File::open(&path).unwrap();
+$ grep -n memory_cap src/storage/engine.rs
+80:    /// it (TS-05). `memory_cap` bounds the memory the database accounts for
+91:    /// [`Error::InvalidArgument`] if `memory_cap` is too small for the
+98:        memory_cap: u64,
+101:        Sizing::new(memory_cap, DEFAULT_FLOOR_PERMILLE)?;
+147:        Engine::assemble(memory_cap, sink, health, control, data, lock)
+151:    /// `memory_cap` bounds the memory the database accounts for
+162:    /// [`Error::InvalidArgument`] if `memory_cap` is too small for the
+172:        memory_cap: u64,
+175:        Sizing::new(memory_cap, DEFAULT_FLOOR_PERMILLE)?;
+231:        Engine::assemble(memory_cap, sink, health, control, data, lock)
+235:        memory_cap: u64,
+243:        let accountant = MemoryAccountant::new(memory_cap);

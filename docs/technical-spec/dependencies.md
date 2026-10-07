@@ -12,6 +12,7 @@ related:
 ## TS-31 Dependency set
 
 - **Decision**: the crate depends on the crates in the table below and on nothing else. Each one serves a decision. Licences are checked by `cargo-deny` ([TS-30](quality-and-testing.md#ts-30-testing-and-conformance)).
+- **Licence allow-list** for `cargo-deny` (user decision 2026-10-02): MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, 0BSD, BSL-1.0, CC0-1.0, Unicode-3.0. Copyleft licences are excluded. A crate whose licence expression offers alternatives passes when one of them is listed (D-DENY).
 - **Satisfies**: NFR-DEP-001, NFR-DEP-002, NFR-SIMP-001.
 
 crates.io data as of 2026-10-02 (downloads: total / last 90 days).

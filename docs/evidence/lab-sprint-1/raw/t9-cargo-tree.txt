@@ -1,0 +1,36 @@
+$ cargo tree -e normal --depth 1
+lpg v0.1.0 (/data/dev/xumiga/lpg)
+├── crc32c v0.6.8
+├── rand v0.10.3
+└── rustix v1.1.5
+
+$ cargo tree -e normal
+lpg v0.1.0 (/data/dev/xumiga/lpg)
+├── crc32c v0.6.8
+├── rand v0.10.3
+│   ├── chacha20 v0.10.2
+│   │   ├── cfg-if v1.0.5
+│   │   ├── cpufeatures v0.3.1
+│   │   └── rand_core v0.10.1
+│   ├── getrandom v0.4.3
+│   │   ├── cfg-if v1.0.5
+│   │   ├── libc v0.2.189
+│   │   └── rand_core v0.10.1
+│   └── rand_core v0.10.1
+└── rustix v1.1.5
+    ├── bitflags v2.13.2
+    └── linux-raw-sys v0.12.1
+
+$ cargo tree -e normal --prefix none | sed 's/ (\*)//' | sort -u
+bitflags v2.13.2
+cfg-if v1.0.5
+chacha20 v0.10.2
+cpufeatures v0.3.1
+crc32c v0.6.8
+getrandom v0.4.3
+libc v0.2.189
+linux-raw-sys v0.12.1
+lpg v0.1.0 (/data/dev/xumiga/lpg)
+rand_core v0.10.1
+rand v0.10.3
+rustix v1.1.5

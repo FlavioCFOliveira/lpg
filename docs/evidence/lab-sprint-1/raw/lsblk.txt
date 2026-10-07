@@ -1,0 +1,8 @@
+NAME        MODEL                          SIZE TYPE FSTYPE MOUNTPOINT ROTA LOG-SEC PHY-SEC
+nvme0n1     Samsung SSD 970 EVO Plus 1TB 931,5G disk                      0     512     512
+└─nvme0n1p1                              931,5G part ext4   /data         0     512     512
+nvme1n1     SAMSUNG MZVLQ512HBLU-00B00   476,9G disk                      0     512     512
+├─nvme1n1p1                                512M part vfat   /boot/efi     0     512     512
+└─nvme1n1p2                              476,4G part ext4   /             0     512     512
+NAME   SIZE TYPE FSTYPE MOUNTPOINT   ROTA LOG-SEC PHY-SEC
+loop80   8G loop xfs    /mnt/lpg-xfs    0     512     512

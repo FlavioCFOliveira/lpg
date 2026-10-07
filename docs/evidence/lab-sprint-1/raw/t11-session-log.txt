@@ -1,0 +1,22 @@
+2026-10-02T17:48:40+01:00 layout ext4
+2026-10-02T17:48:43+01:00 layout xfs
+2026-10-02T17:48:46+01:00 fio randread ext4 before start; load 1.25
+2026-10-02T17:49:16+01:00 fio randread xfs before start; load 1.15
+2026-10-02T17:49:46+01:00 fio fsyncwrite ext4 before start; load 1.15
+2026-10-02T17:50:16+01:00 fio fsyncwrite xfs before start; load 1.48
+2026-10-02T17:50:47+01:00 lab::storage start; load 2.06
+    Finished `lab` profile [optimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (target/lab/deps/lpg-ae66f89beb44ac48)
+
+running 1 test
+test lab::storage::storage has been running for over 60 seconds
+test lab::storage::storage ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 66.58s
+
+2026-10-02T17:51:53+01:00 lab::storage end
+2026-10-02T17:51:53+01:00 fio randread ext4 after start; load 2.39
+2026-10-02T17:52:24+01:00 fio randread xfs after start; load 1.84
+2026-10-02T17:52:54+01:00 fio fsyncwrite ext4 after start; load 1.51
+2026-10-02T17:53:24+01:00 fio fsyncwrite xfs after start; load 1.80
+2026-10-02T17:53:55+01:00 done

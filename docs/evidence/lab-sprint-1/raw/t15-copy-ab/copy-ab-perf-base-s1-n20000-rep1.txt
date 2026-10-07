@@ -1,0 +1,5 @@
+# started on Sat Oct  3 10:03:22 2026
+
+1903.25,msec,task-clock,1903250895,100.00,0.998,CPUs utilized
+8448524798,,cycles,1903250895,100.00,4.439,GHz
+16227262499,,instructions,1903250895,100.00,1.92,insn per cycle

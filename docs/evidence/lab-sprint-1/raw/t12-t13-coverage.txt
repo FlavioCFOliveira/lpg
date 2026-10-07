@@ -1,0 +1,10 @@
+Filename                      Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+storage/control.rs                463                11    97.62%          21                 1    95.24%         230                 1    99.57%           0                 0         -
+storage/datafile.rs               561                32    94.30%          26                 1    96.15%         299                11    96.32%           0                 0         -
+storage/engine.rs                 294                23    92.18%          19                 0   100.00%         183                11    93.99%           0                 0         -
+storage/error.rs                   99                33    66.67%           9                 1    88.89%          53                16    69.81%           0                 0         -
+storage/memory.rs                 142                 1    99.30%          15                 0   100.00%          81                 0   100.00%           0                 0         -
+storage/page.rs                   148                 3    97.97%          17                 0   100.00%          81                 3    96.30%           0                 0         -
+storage/pool.rs                   555                38    93.15%          37                 6    83.78%         354                21    94.07%           0                 0         -
+test_support/child.rs              74                 0   100.00%           5                 0   100.00%          38                 0   100.00%           0                 0         -
+TOTAL                            5953              1556    73.86%         353                81    77.05%        3069               810    73.61%           0                 0         -
