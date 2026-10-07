@@ -55,7 +55,7 @@ related:
   - Start LSN: PostgreSQL and InnoDB start above 0 because 0 is their invalid LSN (R-PG `src/include/access/xlogdefs.h:28`, first redo point at `src/backend/access/transam/xlog.c:5719`; R-INNO `include/log0constants.h:152-153`). lpg has no invalid LSN: 0 marks a page never logged, which every durable LSN allows to be written.
   - Group identity. SQLite accepts a frame only if its salts match the WAL header and its checksum, computed cumulatively over every earlier frame, matches; it changes the salts after each checkpoint "to prevent old and new frames in the WAL from being considered valid at the same time" (R-SQLITE `src/wal.c:59-68, 95-98`; `walRestartHdr`, `src/wal.c:2234-2241`). PostgreSQL checks that each WAL page header holds its own address, which "typically fails when an old WAL segment is recycled" (R-PG `src/backend/access/transam/xlogreader.c:1349-1367`), and that each record links to the previous one (`xlogreader.c:1193-1212`).
   - Segment creation ahead of use: PostgreSQL creates the next segment once the current one is 75 % used (`PreallocXlogFiles`, R-PG `src/backend/access/transam/xlog.c:3802-3824`). InnoDB marks a redo file full only after a newer file exists (R-INNO `log/log0files_governor.cc:1748-1789`).
-  - Segment creation through a temporary file. PostgreSQL fills `xlogtemp.<pid>` with zeros and fsyncs it (`XLogFileInitInternal`, R-PG `src/backend/access/transam/xlog.c:3343, 3375, 3423`), installs it under its segment name with `durable_rename` (`InstallXLogFileSegment`, `xlog.c:3459, 3675-3720`), and removes leftover temporary segments after an unclean shutdown (`RemoveTempXlogFiles`, `xlog.c:3944-3965`, called at `xlog.c:6196-6201`). The frontend `durable_rename` fsyncs the renamed file and its parent directory (`src/common/file_utils.c:483-536`); the backend version, in `fd.c`, is not in the clone (unverified).
+  - Segment creation through a temporary file. PostgreSQL fills `xlogtemp.<pid>` with zeros and fsyncs it (`XLogFileInitInternal`, R-PG `src/backend/access/transam/xlog.c:3343, 3375, 3423`), installs it under its segment name with `durable_rename` (`InstallXLogFileSegment`, `xlog.c:3459, 3675-3720`), and removes leftover temporary segments after an unclean shutdown (`RemoveTempXlogFiles`, `xlog.c:3944-3965`, called at `xlog.c:6196-6201`). `InstallXLogFileSegment` calls the backend `durable_rename` (`xlog.c:3714`), which fsyncs the source file and any existing target, renames, then fsyncs the renamed file and its parent directory (R-PG `src/backend/storage/file/fd.c:783-855`). The frontend version does the same (`src/common/file_utils.c:483-536`).
 - **Crates**: `okaywal` 0.3.1 (17 k downloads, last release 2023-11-26) and the fjall journal: study only.
 - **Known cost**: one 8 KiB image per page per group, and a WAL bounded by checkpoint triggers that count transactions, not bytes ([TS-11](#ts-11-checkpoint)). The NFR-PERF-002 baseline measures the volume (unverified).
 - **Rejected**:
@@ -133,6 +133,7 @@ related:
   1. If `CONTROL` is absent, fail without creating any file (FR-DB-004).
   2. Take `LOCK` ([TS-27](storage.md#ts-27-single-process-lock)).
   3. Read both `CONTROL` slots and use the valid one with the higher sequence number. If only one is valid, use it; if none is, fail ([TS-05](storage.md#ts-05-files-and-pages)). Check the format version ([TS-28](operations.md#ts-28-format-versioning-and-migration)).
+     - In one listing of the location, remove leftovers ([TS-05](storage.md#ts-05-files-and-pages) Leftovers) and, if `BACKUP_END` exists, read it ([TS-26](operations.md#ts-26-backup-restore-import-and-export) Backup end) (`src/storage/engine.rs:482-504`).
   4. Check the WAL segments of generation `<g>` against the redo point R, then read the WAL from R, frame by frame ([TS-09](#ts-09-wal-and-group-commit) defines which LSNs a segment holds):
      - Segments that hold only LSNs below R are ignored; the checkpoint of step 8 recycles them.
      - If no segment holds R, the log is empty and R is its end only when `CONTROL` shows a clean shutdown ([TS-11](#ts-11-checkpoint)) and no segment starts after R. This is the state after create, after migration ([TS-28](operations.md#ts-28-format-versioning-and-migration)), and after a clean close whose segments were then removed, which loses nothing. In every other case a segment is missing.
@@ -145,8 +146,10 @@ related:
      - If one exists, the WAL is corrupt and the open fails (FR-REC-003, FR-REC-008).
      - Otherwise the group at X was not synced. It is a torn tail and is discarded, and the WAL end is X. Leftover frames beyond X are overwritten by later groups; until then the salt and first-LSN rules keep them from forming a valid group.
   6. Restore every counter (commit timestamp, element identifier, catalog object, token) as the maximum of `CONTROL` and the applied commit frames.
+     - If `BACKUP_END` was read, fail if the WAL end is below its `stop` ([TS-26](operations.md#ts-26-backup-restore-import-and-export) Backup end; `src/storage/engine.rs:546-554`).
   7. Start with an empty old-version store.
   8. If the log was empty, create `wal-<g>-<R>` ([TS-09](#ts-09-wal-and-group-commit)). Then run a checkpoint; its `CONTROL` slot clears the clean-shutdown flag ([TS-11](#ts-11-checkpoint)).
+     - Then, if `BACKUP_END` was read, remove it ([TS-26](operations.md#ts-26-backup-restore-import-and-export) Backup end; `src/storage/engine.rs:517-522`).
 
   No undo phase is needed (NO-STEAL).
 
