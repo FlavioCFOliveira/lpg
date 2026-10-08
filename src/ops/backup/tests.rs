@@ -1,6 +1,6 @@
+use crate::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use crate::sync::{Arc, Mutex};
 use std::collections::BTreeMap;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
 
 use super::*;
 use crate::obs::recording::RecordingSink;
@@ -8,7 +8,7 @@ use crate::ops::restore::restore;
 use crate::storage::FsStorage;
 use crate::storage::btree::{Tree, Write};
 use crate::storage::wal::{SEGMENT_SPAN, parse_segment_name};
-use crate::test_support::{no_flush, snapshot, test_dirs};
+use crate::test_support::{no_flush, snapshot, test_dirs, wait_until};
 use crate::tx::commit::Ids;
 
 const CAP: u64 = 32 << 20;
@@ -35,6 +35,7 @@ fn put<'a>(tree: Tree, k: &'a [u8], v: &'a [u8]) -> Write<'a> {
         tree,
         key: k,
         value: Some(v),
+        stamp: 0,
     }
 }
 
@@ -44,6 +45,15 @@ struct Done {
     ts: u64,
     keys: Vec<Vec<u8>>,
     next_element_id: u64,
+}
+
+/// Sets its flag when dropped.
+struct StopOnDrop<'a>(&'a AtomicBool);
+
+impl Drop for StopOnDrop<'_> {
+    fn drop(&mut self) {
+        self.0.store(true, Ordering::Release);
+    }
 }
 
 /// rmp #18: a backup taken while four threads commit restores to the state
@@ -59,7 +69,14 @@ fn a_backup_under_four_committers_restores_to_one_commit_point() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let done = Mutex::new(Vec::<Done>::new());
     let stop = AtomicBool::new(false);
@@ -96,19 +113,19 @@ fn a_backup_under_four_committers_restores_to_one_commit_point() {
                 }
             });
         }
+        // Ends the committers when the body returns or panics, so a failed
+        // wait below fails the test instead of hanging the scope's join.
+        let _stop = StopOnDrop(&stop);
         // Let some commits return, then back up while the rest go on.
-        while done.lock().unwrap().len() < 200 {
-            std::thread::yield_now();
-        }
+        wait_until("200 commits return", || done.lock().unwrap().len() >= 200);
         let max_before = done.lock().unwrap().iter().map(|d| d.ts).max().unwrap();
         before_backup.store(max_before, Ordering::Release);
         let stats = e.backup(target.path()).unwrap();
         // Commits returned after the backup ended, too.
         let n = done.lock().unwrap().len();
-        while done.lock().unwrap().len() < n + 100 {
-            std::thread::yield_now();
-        }
-        stop.store(true, Ordering::Release);
+        wait_until("100 commits return after the backup", || {
+            done.lock().unwrap().len() >= n + 100
+        });
         stats
     });
     assert!(stats.manifest.stop > stats.manifest.start);
@@ -161,7 +178,14 @@ fn the_backup_target_must_be_empty() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     FsStorage.create(&target.path().join("x")).unwrap();
     let before = snapshot(target.path());
     assert!(matches!(
@@ -177,7 +201,14 @@ fn the_backup_target_must_be_empty() {
 #[test]
 fn the_backup_hold_keeps_segments_from_its_start() {
     let dir = test_dirs().remove(0);
-    let e = Engine::create(dir.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        dir.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     // 2 400 keys of 300 bytes: about 96 leaves.
     let keys: Vec<Vec<u8>> = (0..2_400u32).map(|i| i.to_be_bytes().to_vec()).collect();
@@ -269,7 +300,7 @@ impl crate::storage::btree::bulk::SortedEntries for Sorted {
 /// state before the build, and the source holds the built tree.
 #[test]
 fn audit_a_bulk_build_waits_for_a_running_backup() {
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     use std::time::Duration;
     let dir = test_dirs().remove(0);
     let (src, target, restored) = (
@@ -277,7 +308,14 @@ fn audit_a_bulk_build_waits_for_a_running_backup() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
     let before = entries(&e, tree);
@@ -351,7 +389,7 @@ fn audit_a_bulk_build_waits_for_a_running_backup() {
 /// trees.
 #[test]
 fn a_backup_requested_during_a_bulk_build_fails_at_once() {
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     use std::time::Duration;
     let dir = test_dirs().remove(0);
     let (src, target, restored) = (
@@ -359,7 +397,14 @@ fn a_backup_requested_during_a_bulk_build_fails_at_once() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
     let before = entries(&e, tree);

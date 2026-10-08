@@ -10,9 +10,9 @@
 //!   one extent per `ensure`, in `LPG_TEST_DIR`, for
 //!   `strace -T -e trace=fallocate`.
 
+use crate::sync::Arc;
 use std::fmt::Write as _;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::Instant;
 
 use super::{env_dir, median_range, write_text};
@@ -40,7 +40,14 @@ fn run(dir: &Path, fs_name: &str, md: &mut String) {
     for _ in 0..RUNS {
         let work = tempfile::tempdir_in(dir).expect("work directory");
         let t = Instant::now();
-        let e = Engine::create(work.path(), storage(), CAP, sink()).expect("create");
+        let e = Engine::create(
+            work.path(),
+            storage(),
+            CAP,
+            crate::test_support::OWNER,
+            sink(),
+        )
+        .expect("create");
         create_ns.push(t.elapsed().as_nanos() as f64);
         drop(e);
         let t = Instant::now();
@@ -88,9 +95,27 @@ fn files_one() {
     let work = tempfile::tempdir_in(env_dir("LPG_TEST_DIR")).expect("work directory");
     match mode.as_str() {
         "none" => {}
-        "create" => drop(Engine::create(work.path(), storage(), CAP, sink()).unwrap()),
+        "create" => drop(
+            Engine::create(
+                work.path(),
+                storage(),
+                CAP,
+                crate::test_support::OWNER,
+                sink(),
+            )
+            .unwrap(),
+        ),
         "create_open" => {
-            drop(Engine::create(work.path(), storage(), CAP, sink()).unwrap());
+            drop(
+                Engine::create(
+                    work.path(),
+                    storage(),
+                    CAP,
+                    crate::test_support::OWNER,
+                    sink(),
+                )
+                .unwrap(),
+            );
             drop(Engine::open(work.path(), storage(), CAP, sink()).unwrap());
         }
         other => panic!("unknown LPG_FILES_MODE {other}"),
@@ -102,7 +127,14 @@ fn files_one() {
 fn files_growth() {
     let gib: u64 = std::env::var("LPG_GROW_GIB").map_or(4, |v| v.parse().expect("number"));
     let work = tempfile::tempdir_in(env_dir("LPG_TEST_DIR")).expect("work directory");
-    let e = Engine::create(work.path(), storage(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        work.path(),
+        storage(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let data = e.data();
     let target = (gib << 30) / PAGE_BYTES;
     let mut extents = 0;

@@ -1,0 +1,3 @@
+$ cargo llvm-cov nextest -p lpg --no-report
+     Summary [  17.940s] 373 tests run: 373 passed, 24 skipped
+exit=0

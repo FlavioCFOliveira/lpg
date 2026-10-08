@@ -25,6 +25,7 @@ fn built(dir: &Path) -> (Engine, Tree, Vec<u64>) {
                 tree,
                 key: k,
                 value: Some(&values),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -67,8 +68,9 @@ fn a_clean_database_passes_with_its_figures() {
         let (e, tree, leaves) = built(dir.path());
         let r = e.store().check().unwrap();
         assert!(r.is_ok());
-        assert_eq!(r.trees.len(), 2);
-        let t = &r.trees[1];
+        // The directory, the trees create made (TS-17 Creation), the test's.
+        assert_eq!(r.trees.len() as u64, 2 + crate::catalog::CREATED_TREES);
+        let t = r.trees.last().unwrap();
         assert_eq!(t.id, tree.id());
         assert_eq!(t.leaves, leaves.len() as u64);
         assert_eq!(
@@ -104,6 +106,43 @@ fn a_flipped_bit_is_reported() {
         );
         assert!(matches!(e.check(), Err(Error::Unusable)));
     }
+}
+
+/// Audit round 3 L1, TS-05: a free-listed page keeps a valid image, so a
+/// flipped bit in one is reported as a checksum failure.
+#[test]
+fn a_flipped_bit_in_a_free_page_is_reported() {
+    let dir = &test_dirs()[0];
+    let e = engine(dir.path(), 32 << 20);
+    let s = e.store();
+    let tree = s.create_tree().unwrap();
+    // An overflow chain, freed: its pages go to the free list.
+    let big = vec![9u8; 30_000];
+    for value in [Some(&big[..]), None] {
+        s.apply(&[Write {
+            tree,
+            key: b"big",
+            value,
+            stamp: 0,
+        }])
+        .unwrap();
+    }
+    e.pool().write_dirty().unwrap();
+    e.data().sync().unwrap();
+    assert!(s.check().unwrap().is_ok());
+    let victim = s.lock().free_list().pages().next().unwrap();
+    let file = FsStorage.open(&dir.path().join(data_name(1))).unwrap();
+    let at = victim * PAGE_BYTES + 3000;
+    let mut b = [0u8; 1];
+    file.read_at(&mut b, at).unwrap();
+    b[0] ^= 0x10;
+    file.write_at(&b, at).unwrap();
+    let r = s.check().unwrap();
+    assert!(
+        has(&r, &format!("page {victim} fails its checksum")),
+        "{:?}",
+        r.problems
+    );
 }
 
 /// AC: a pair of swapped keys is reported.
@@ -187,12 +226,14 @@ fn a_page_in_a_tree_and_the_free_list_is_reported() {
             tree,
             key: b"big",
             value: Some(&big),
+            stamp: 0,
         }])
         .unwrap();
         s.apply(&[Write {
             tree,
             key: b"big",
             value: None,
+            stamp: 0,
         }])
         .unwrap();
         let trunk = s.lock().free_list().head();

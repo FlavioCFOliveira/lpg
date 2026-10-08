@@ -46,7 +46,7 @@ Profiling tooling:
 - **Correctness first (mandatory).** `/tmp/lpgram` must never reduce the effectiveness of any test or scenario; it may only make it faster. When a test or scenario depends on behaviour that `tmpfs` does not reproduce (for example real `fsync`, disk-full or file-system-specific behaviour), or when `tmpfs` would weaken it in any other way, **do not use `/tmp/lpgram` for it**: run it on persistent storage. When in doubt, do not use it.
 - **Scope.** Subject to the rule above, every exercise of the graph — experiments, tests, reproductions, error validation, examples (when they exist) and similar runs — creates and uses its graph data files (WAL, snapshots, graph store, indexes and any other file the graph persists) in `/tmp/lpgram/`.
 - **Location.** `/tmp/lpgram/`, created with `mkdir -p` when missing; no mount and no root are needed. Create a separate subdirectory per run and delete it when the run ends.
-- **Size.** At most 1 GiB in `/tmp/lpgram/` at any time. A scenario may use more only when it needs it and the user has approved that size for that scenario; the approval does not extend to other scenarios. `/tmp` is shared with the system and enforces user quotas, so measure the peak space a run uses.
+- **Size.** No fixed space limit applies to `/tmp/lpgram/`. Every test and scenario must be no larger than strictly necessary for its own validations: create only the data, files and iterations its assertions need. `/tmp` is shared with the system and enforces user quotas, so measure the peak space a run uses.
 - **Clean environment.** Whenever scenarios must be cleared and rebuilt from a clean state, run `rm -rf /tmp/lpgram && mkdir -p /tmp/lpgram`; only do so when no run is using it. Never delete anything else in `/tmp`.
 - **Exclusive content.** `/tmp/lpgram/` holds only the graph data files of the run in progress. Never place in it build output (`target/`), caches, logs, executables, reports, evidence, reference clones or any other file.
 - **Purpose.** `/tmp/lpgram` only accelerates the file I/O of this crate, so that exercises are faster to create, run and observe. It has no other role.
@@ -76,19 +76,19 @@ Profiling tooling:
 
 ## Open-source references
 
-> **Copying is forbidden, except as stated below.** Never copy code, text or any other content from another project. Consult other projects only to study them and draw inspiration from their reference approaches, so that this project's own implementation is of the highest quality.
+> **Copying open-source code is allowed under the rules below.** Study other projects to learn their best approaches, and copy their code when that serves this crate better than writing it anew.
 
-- **Copying a component.** A component that a reference project implements, and its tests, may be copied when it either:
-  - matches a component this project needs **exactly (100 %)**; or
-  - is a good starting point for a development that is in progress or about to start.
-
-  Copy only when **all** of these hold:
+- **Copying code.** Code from an open-source repository may be copied, in whole or in part, when **both** hold:
   - its licence is compatible with this project's MIT licence (for example MIT, Apache-2.0, BSD, public domain); never copy GPL-only code;
-  - its licence and attribution are preserved;
-  - its source (project, path, commit) is recorded where it is copied and in the task's `rmp` log;
-  - the copy then meets every rule of this file, including [Laboratory development](#laboratory-development-primary-principle-for-code).
+  - it is useful to the evolution of the crate as a whole or of one of its parts.
+- **Ports from other languages.** The same rules apply when the source project is written in another language: its code, concept or solution may be reimplemented, translated or ported to Rust in this crate. Such a port is a copy.
+- **Use and evolution of a copy.** A copy may be used exactly as copied, or it may evolve with the project. Keeping it identical to the original version is not a requirement.
+- **Obligations for every copy:**
+  - keep the copyright and licence notices that its licence requires;
+  - record its source (project, path, commit) where it is copied and in the task's `rmp` log;
+  - subject it to every rule of this file, including [Laboratory development](#laboratory-development-primary-principle-for-code).
 
-- **Sole exceptions:** the following Apache-2.0 projects may be used as test artefacts for GQL conformance verification. Preserve their licence and attribution unchanged.
+- **GQL conformance test artefacts:** the following Apache-2.0 projects may be used as test artefacts for GQL conformance verification. Preserve their licence and attribution unchanged.
   - `opengql/grammar`: the GQL grammar, including a parser generated from it in a test-only crate.
   - `opengql/tck`: the GQL technology compatibility kit.
   - The openCypher TCK: only the scenarios applicable to GQL.
@@ -101,9 +101,9 @@ Profiling tooling:
   2. **Open-source databases**: the approaches of the most recognised databases for the relevant task or functionality, such as Memgraph, Neo4j, PostgreSQL, InnoDB, MariaDB and MySQL.
   3. **Other open-source projects**: any project that reveals a relevant strategy, architecture or approach.
 - Follow this decision order for every code and architecture decision:
-  1. **Learn first.** The first approach must never reinvent the wheel. Make an informed decision by studying the references above and identifying **only the best** approaches of each project, then implement them originally in this project, or copy them where [Copying a component](#open-source-references) allows.
+  1. **Learn first.** The first approach must never reinvent the wheel. Make an informed decision by studying the references above and identifying **only the best** approaches of each project, then implement them originally in this project, or copy them where [Copying code](#open-source-references) allows.
   2. **Improve second.** Only when that process reveals a measurable improvement opportunity (see [Honest empiricism](#honest-empiricism-mandatory)), proceed to improve on the chosen approach.
-- Treat source code as the most reliable source of truth. Whenever a reference project's code needs study, clone its public repository into a local folder under `/tmp/` (for example, `/tmp/<project>`), or reuse an existing clone there, and read the code directly. Use it for study, or to copy as [Copying a component](#open-source-references) allows.
+- Treat source code as the most reliable source of truth. Whenever a reference project's code needs study, clone its public repository into a local folder under `/tmp/` (for example, `/tmp/<project>`), or reuse an existing clone there, and read the code directly. Use it for study, or to copy as [Copying code](#open-source-references) allows.
 
 ### Research and decision-making (modus operandi)
 

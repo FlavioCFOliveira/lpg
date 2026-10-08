@@ -25,12 +25,16 @@
 //! (FR-REC-007, FR-LIM-005, FR-LIM-007); any other failure is undone the
 //! same way and also sets the unusable latch (FR-REC-005, FR-REC-006).
 
+use crate::sync::atomic::Ordering;
 use std::collections::HashSet;
-use std::sync::atomic::Ordering;
 
-use super::node::{self, Applied, Change, MAX_INLINE, MAX_KEY, NONE, OVERFLOW_CAP, Place, Value};
+use super::bulk::{Install, build_key, encode_ranges};
+use super::node::{
+    self, Applied, Change, Edit, MAX_INLINE, MAX_KEY, NONE, OVERFLOW_CAP, Place, Stamps, Value,
+};
 use super::{
-    DIRECTORY, LogState, PageWriter, Saved, Scratch, Step, Store, Tree, Undo, Write, WriteState,
+    DIRECTORY, Keys, LogState, NewTree, PageWriter, Saved, Scratch, Step, Store, Tree, Undo, Write,
+    WriteState,
 };
 use crate::storage::datafile::Header;
 use crate::storage::error::{Error, Result};
@@ -65,7 +69,13 @@ impl Store<'_> {
     /// Errors of [`super::super::pool::Pool::fetch`] while reading tree
     /// heights.
     pub(crate) fn estimate(&self, batch: &[Write<'_>], new_trees: usize) -> Result<u64> {
-        let mut trees: Vec<Tree> = batch.iter().map(|w| w.tree).collect();
+        // A tree the batch creates is counted as a new tree: it has no
+        // height yet ([`Tree::pending`]).
+        let mut trees: Vec<Tree> = batch
+            .iter()
+            .map(|w| w.tree)
+            .filter(|t| !t.is_pending())
+            .collect();
         if new_trees > 0 {
             trees.push(DIRECTORY);
         }
@@ -132,10 +142,13 @@ impl Store<'_> {
     }
 
     /// TS-16 step 6 of the install commit of a bulk build (TS-26 fast-load
-    /// step 6, TS-18 step 4; [`super::bulk`]): records `root`, the root of
-    /// tree `id` already built in pages beyond the page count, in the
-    /// directory, and writes the next tree identifier and the page count,
-    /// which now covers the built pages, to page 0. Any failure is undone.
+    /// step 6, TS-18 step 4; [`super::bulk`]): records `install.root`, the
+    /// root of tree `install.id` built in pages the build owns, in the
+    /// directory, or, with `old`, the existing tree of that identifier,
+    /// copies it into `old`'s root page, which `old` keeps
+    /// ([`super::bulk::Built::install_replacing`]); writes the next tree
+    /// identifier to page 0; and leaves in the build's record only its
+    /// unused pages, `install.tail`. Any failure is undone.
     ///
     /// # Errors
     ///
@@ -144,18 +157,128 @@ impl Store<'_> {
         &self,
         st: &mut WriteState,
         wal: &Wal,
-        id: u64,
-        root: u64,
+        install: &Install,
+        old: Option<Tree>,
     ) -> Result<Tree> {
         self.health.check()?;
         self.run(st, Some(wal), |a| {
-            debug_assert_eq!(*a.next_tree_id, id, "the build holds the commit latch");
-            a.put(DIRECTORY, &id.to_be_bytes(), &root.to_le_bytes())?;
-            *a.next_tree_id = id + 1;
-            a.pw.header_changed();
-            Ok(())
+            match old {
+                Some(old) => a.install_into(old, install.root)?,
+                None => a.install(install.id, install.root)?,
+            }
+            a.set_build_record(install.id, &install.tail)
         })?;
-        Ok(Tree { id, root })
+        Ok(old.unwrap_or(Tree {
+            id: install.id,
+            root: install.root,
+        }))
+    }
+
+    /// The batch of a bulk build's run ([`super::bulk`]): takes the next
+    /// `n` reserved pages, consecutive, after the reuse fence of an undone
+    /// batch, and records them in the build record of tree `owner`, which
+    /// holds `ranges` before the batch. Returns the first page; on success
+    /// `ranges` holds the record's new ranges. Any failure is undone.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::InvalidArgument`] if `ranges` is empty and the directory
+    /// already holds a record for `owner`; as [`Store::apply_batch`].
+    pub(crate) fn take_build_run(
+        &self,
+        st: &mut WriteState,
+        wal: &Wal,
+        owner: u64,
+        n: u64,
+        ranges: &mut Vec<(u64, u64)>,
+    ) -> Result<u64> {
+        self.health.check()?;
+        if ranges.is_empty() && self.get(DIRECTORY, &build_key(owner), &mut Vec::new())? {
+            return Err(Error::InvalidArgument(
+                "a bulk build of this tree is running",
+            ));
+        }
+        let mut next = ranges.clone();
+        let mut first = 0;
+        self.run(st, Some(wal), |a| {
+            first = a.pw.allocate_run(n)?;
+            a.pass_fence(|p| (first..first + n).contains(&p));
+            match next.last_mut() {
+                Some((f, l)) if *f + *l == first => *l += n,
+                _ => next.push((first, n)),
+            }
+            a.set_build_record(owner, &next)
+        })?;
+        *ranges = next;
+        Ok(first)
+    }
+
+    /// One batch of the release of the pages of the build record of tree
+    /// `owner` ([`super::bulk`]), which holds `ranges`, not empty: if its
+    /// last range ends at the page count, the page count is lowered to the
+    /// range's first page, which returns the range to the reserve; else, if
+    /// `freed` pages at the end of that range hold a written, synced image,
+    /// they enter the free list. The record keeps the rest, or is removed.
+    /// Any failure is undone.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::apply_batch`].
+    pub(crate) fn release_build_step(
+        &self,
+        st: &mut WriteState,
+        wal: &Wal,
+        owner: u64,
+        ranges: &[(u64, u64)],
+        freed: Option<u64>,
+    ) -> Result<()> {
+        self.health.check()?;
+        let mut rest = ranges.to_vec();
+        let (f, l) = rest.pop().expect("a record holds a range");
+        self.run(st, Some(wal), |a| {
+            if f + l == a.store.data.page_count() {
+                a.pw.return_to_reserve(f);
+            } else if let Some(k) = freed {
+                for p in f + l - k..f + l {
+                    a.free_page(p)?;
+                }
+                if k < l {
+                    rest.push((f, l - k));
+                }
+            } else {
+                rest.push((f, l));
+            }
+            a.set_build_record(owner, &rest)
+        })
+    }
+
+    /// An internal batch of garbage collection (TS-14, TS-09 Members) under
+    /// the commit latch `st`: removes the entries `deletes` and frees every
+    /// page of the trees `free_trees`, whose directory entries it removes.
+    /// It draws no commit timestamp; with `wal`, its pages take frame
+    /// positions in the open group, which the caller then joins. Any
+    /// failure is undone.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::apply_batch`].
+    pub(crate) fn apply_internal(
+        &self,
+        st: &mut WriteState,
+        wal: Option<&Wal>,
+        deletes: &[(Tree, &[u8])],
+        free_trees: &[Tree],
+    ) -> Result<()> {
+        self.health.check()?;
+        self.run(st, wal, |a| {
+            for &(tree, key) in deletes {
+                a.delete(tree, key)?;
+            }
+            for &tree in free_trees {
+                a.free_tree(tree)?;
+            }
+            Ok(())
+        })
     }
 
     /// TS-16 step 6 under the commit latch `st`: creates `new_trees` empty
@@ -176,19 +299,89 @@ impl Store<'_> {
         batch: &[Write<'_>],
         new_trees: usize,
     ) -> Result<Vec<Tree>> {
+        let new: Vec<NewTree> = (0..new_trees)
+            .map(|_| NewTree {
+                id: self.draw_tree_id(),
+                keys: Keys::Prefix,
+            })
+            .collect();
+        self.apply_batch_new(st, wal, batch, &new)
+    }
+
+    /// [`Store::apply_batch`] creating the trees `create`, with identifiers
+    /// already drawn. A write whose tree is [`Tree::pending`] goes to the
+    /// created tree of that identifier.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::apply_batch`]; [`Error::InvalidArgument`] for a write to
+    /// a pending tree that `create` does not list, with nothing changed.
+    pub(crate) fn apply_batch_new(
+        &self,
+        st: &mut WriteState,
+        wal: Option<&Wal>,
+        batch: &[Write<'_>],
+        create: &[NewTree],
+    ) -> Result<Vec<Tree>> {
+        self.apply_batch_installing(st, wal, batch, create, None)
+    }
+
+    /// [`Store::apply_batch_new`] that, first in the same batch, installs
+    /// the bulk-built tree `install`, as [`Store::install_tree`] does: a constraint's owned index, committed
+    /// with the constraint ([`crate::tx::Transaction::commit_installing`]).
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::apply_batch_new`].
+    pub(crate) fn apply_batch_installing(
+        &self,
+        st: &mut WriteState,
+        wal: Option<&Wal>,
+        batch: &[Write<'_>],
+        create: &[NewTree],
+        install: Option<&Install>,
+    ) -> Result<Vec<Tree>> {
         self.health.check()?;
         if batch.iter().any(|w| w.key.len() > MAX_KEY) {
             return Err(Error::InvalidArgument("key longer than 1 024 bytes"));
         }
-        let mut created = Vec::with_capacity(new_trees);
+        if batch
+            .iter()
+            .any(|w| w.tree.is_pending() && !create.iter().any(|t| t.id == w.tree.id))
+        {
+            return Err(Error::InvalidArgument("a write to a tree not created"));
+        }
+        let mut created: Vec<Tree> = Vec::with_capacity(create.len());
         self.run(st, wal, |a| {
-            for _ in 0..new_trees {
-                created.push(a.create_tree()?);
+            if let Some(i) = install {
+                a.install(i.id, i.root)?;
+                a.set_build_record(i.id, &i.tail)?;
+            }
+            for &t in create {
+                created.push(a.create_tree(t)?);
             }
             for w in batch {
-                match w.value {
-                    Some(v) => a.put(w.tree, w.key, v)?,
-                    None => a.delete(w.tree, w.key)?,
+                let tree = if w.tree.is_pending() {
+                    *created
+                        .iter()
+                        .find(|t| t.id == w.tree.id)
+                        .expect("checked above")
+                } else {
+                    w.tree
+                };
+                let w = Write { tree, ..*w };
+                match (w.value, w.stamp) {
+                    (Some(v), created) => a.put_stamped(
+                        w.tree,
+                        w.key,
+                        v,
+                        Stamps {
+                            created,
+                            deleted: 0,
+                        },
+                    )?,
+                    (None, 0) => a.delete(w.tree, w.key)?,
+                    (None, deleted) => a.restamp(w.tree, w.key, deleted)?,
                 }
             }
             Ok(())
@@ -224,6 +417,7 @@ impl Store<'_> {
             scratch,
             log,
             fence,
+            freeze,
         } = st;
         let r = {
             let mut a = Apply {
@@ -241,9 +435,12 @@ impl Store<'_> {
                 batch,
                 store: *self,
                 fence,
+                freeze: *freeze,
             };
             body(&mut a).and_then(|()| a.finish())
         };
+        #[cfg(test)]
+        let r = r.and_then(|()| wal.map_or(Ok(()), |w| w.points.run_batch(undo.freed.len())));
         // The segments this group will reach exist before the commit joins
         // it, so that ENOSPC there fails only this commit (TS-09). Then the
         // latch is checked again: a failure elsewhere while this batch ran
@@ -423,6 +620,9 @@ pub(super) struct Apply<'a> {
     batch: u64,
     store: Store<'a>,
     fence: &'a mut Option<(u64, HashSet<u64>)>,
+    /// A leaf this batch rewrites drops every `created_ts` at or below it
+    /// ([`super::WriteState::freeze`]).
+    freeze: u64,
 }
 
 impl<'a> Apply<'a> {
@@ -444,19 +644,53 @@ impl<'a> Apply<'a> {
         Ok(())
     }
 
-    /// Creates an empty tree with the next identifier and records its root
-    /// in the directory (TS-05).
-    fn create_tree(&mut self) -> Result<Tree> {
-        let id = *self.next_tree_id;
+    /// Records `root`, the root of tree `id` built in pages its build owns,
+    /// in the directory, and writes the next tree identifier to page 0
+    /// (TS-26 step 6).
+    fn install(&mut self, id: u64, root: u64) -> Result<()> {
+        self.put(DIRECTORY, &id.to_be_bytes(), &root.to_le_bytes())?;
+        *self.next_tree_id = (*self.next_tree_id).max(id + 1);
+        self.pw.header_changed();
+        Ok(())
+    }
+
+    /// Makes `tree` hold the tree built under its identifier in pages its
+    /// build owns, rooted at `built`, keeping its root page (TS-05: a root
+    /// never moves): frees every other page of `tree`, copies page `built`
+    /// into the root and frees page `built`.
+    fn install_into(&mut self, tree: Tree, built: u64) -> Result<()> {
+        self.free_pages(tree, true)?;
+        let image = {
+            let pin = self.pw.fetch(built)?;
+            let g = pin.read()?;
+            if page::tree(&g) != tree.id {
+                return Err(self.corrupt(built, "built root of another tree"));
+            }
+            g.to_vec()
+        };
+        {
+            let pin = self.pw.change(tree.root)?;
+            let mut g = pin.write()?;
+            // The header's checksum and page LSN stay the root's own.
+            g[page::TREE_START..].copy_from_slice(&image[page::TREE_START..]);
+        }
+        self.free_page(built)?;
+        self.pw.header_changed();
+        Ok(())
+    }
+
+    /// Creates the empty tree `t` and records its root in the directory
+    /// (TS-05); the header's next tree identifier is raised above it.
+    fn create_tree(&mut self, t: NewTree) -> Result<Tree> {
         let root = self.allocate()?;
         {
             let pin = self.pw.create(root)?;
-            node::init_empty_leaf(&mut pin.write()?, id);
+            node::init_empty_leaf(&mut pin.write()?, t.id, t.keys);
         }
-        self.put(DIRECTORY, &id.to_be_bytes(), &root.to_le_bytes())?;
-        *self.next_tree_id = id + 1;
+        self.put(DIRECTORY, &t.id.to_be_bytes(), &root.to_le_bytes())?;
+        *self.next_tree_id = (*self.next_tree_id).max(t.id + 1);
         self.pw.header_changed();
-        Ok(Tree { id, root })
+        Ok(Tree { id: t.id, root })
     }
 
     /// Takes a page for this batch (TS-05: free pages first). A page that
@@ -465,8 +699,28 @@ impl<'a> Apply<'a> {
     pub(super) fn allocate(&mut self) -> Result<u64> {
         let horizon = self.readers.horizon();
         let p = self.free.allocate(horizon, &mut self.pw)?;
+        self.pass_fence(|q| q == p);
+        self.pw.undo.taken.push(p);
+        Ok(p)
+    }
+
+    /// Records the build record of tree `owner` with `ranges`, or removes it
+    /// if `ranges` is empty ([`super::bulk`]).
+    fn set_build_record(&mut self, owner: u64, ranges: &[(u64, u64)]) -> Result<()> {
+        if ranges.is_empty() {
+            self.delete(DIRECTORY, &build_key(owner))
+        } else {
+            self.put(DIRECTORY, &build_key(owner), &encode_ranges(ranges))
+        }
+    }
+
+    /// Before this batch uses a page for which `taken` holds: if the page
+    /// is one an undone batch had taken, waits until every tree read
+    /// operation that started before the undo has ended (TS-16 step 6
+    /// undo, item 3).
+    fn pass_fence(&mut self, taken: impl Fn(u64) -> bool) {
         if let Some((batch, pages)) = self.fence.as_ref()
-            && pages.contains(&p)
+            && pages.iter().any(|&p| taken(p))
         {
             let batch = *batch;
             let mut spins = 0u32;
@@ -477,15 +731,82 @@ impl<'a> Apply<'a> {
             while self.readers.horizon() < batch {
                 spins += 1;
                 if spins < 64 {
-                    std::thread::yield_now();
+                    crate::sync::thread::yield_now();
                 } else {
-                    std::thread::sleep(std::time::Duration::from_micros(50));
+                    crate::sync::thread::pause(std::time::Duration::from_micros(50));
                 }
             }
             *self.fence = None;
         }
-        self.pw.undo.taken.push(p);
-        Ok(p)
+    }
+
+    /// Frees every page of `tree`, a dropped tree no snapshot can read any
+    /// more, and removes its directory entry (TS-14 Garbage collection).
+    /// The pages are found from the root: inner pages, leaves and the
+    /// overflow chains of leaf entries. A tree read operation that still
+    /// holds one of them keeps it from reuse ([`super::super::freelist`]).
+    /// A tree whose directory entry is already gone was freed before: its
+    /// pages are not freed again.
+    fn free_tree(&mut self, tree: Tree) -> Result<()> {
+        if !self.remove(DIRECTORY, &tree.id.to_be_bytes())? {
+            return Ok(());
+        }
+        self.free_pages(tree, false)
+    }
+
+    /// Frees every page of `tree`, its root too unless `keep_root`.
+    fn free_pages(&mut self, tree: Tree, keep_root: bool) -> Result<()> {
+        let mut stack = vec![tree.root];
+        let mut pages = Vec::new();
+        while let Some(p) = stack.pop() {
+            if pages.len() as u64 > self.store.data.page_count() {
+                return Err(self.corrupt(tree.root, "tree has more pages than the file"));
+            }
+            let pin = self.pw.fetch(p)?;
+            let g = pin.read()?;
+            if page::tree(&g) != tree.id {
+                return Err(self.corrupt(p, "page of another tree"));
+            }
+            match page::page_type(&g) {
+                Some(PageType::Inner) => {
+                    stack.push(node::leftmost(&g));
+                    node::inner_entries(&g, |_, c| stack.push(c))
+                        .map_err(|e| self.corrupt(p, &e))?;
+                }
+                Some(PageType::Leaf) => {
+                    let mut chains = Vec::new();
+                    node::leaf_entries(&g, |_, e| {
+                        if let Value::Overflow { first, .. } = e.value {
+                            chains.push(first);
+                        }
+                    })
+                    .map_err(|e| self.corrupt(p, &e))?;
+                    drop(g);
+                    for first in chains {
+                        let mut o = first;
+                        while o != NONE {
+                            let pin = self.pw.fetch(o)?;
+                            let g = pin.read()?;
+                            if page::page_type(&g) != Some(PageType::Overflow) {
+                                return Err(self.corrupt(o, "not an overflow page"));
+                            }
+                            pages.push(o);
+                            o = node::overflow(&g)
+                                .ok_or_else(|| self.corrupt(o, "malformed overflow page"))?
+                                .0;
+                        }
+                    }
+                }
+                _ => return Err(self.corrupt(p, "not a tree page")),
+            }
+            if !(keep_root && p == tree.root) {
+                pages.push(p);
+            }
+        }
+        for p in pages {
+            self.free_page(p)?;
+        }
+        Ok(())
     }
 
     /// Frees page `p`, which this batch has unlinked.
@@ -559,8 +880,46 @@ impl<'a> Apply<'a> {
         }
     }
 
-    /// Puts `value` under `key` in `tree`.
+    /// Puts `value` under `key` in `tree`, unstamped.
     pub(super) fn put(&mut self, tree: Tree, key: &[u8], value: &[u8]) -> Result<()> {
+        self.put_stamped(tree, key, value, Stamps::NONE)
+    }
+
+    /// Applies `change` for `key` to the leaf at the end of `self.s.path`,
+    /// in place. When the leaf holds a `created_ts` at or below the batch's
+    /// horizon, the whole leaf is rewritten without it (TS-14: stamps are
+    /// frozen when a page is next rewritten). Returns the outcome and
+    /// whether the leaf is now empty.
+    fn change_leaf(&mut self, key: &[u8], change: Change<'_>) -> Result<(Applied, bool)> {
+        let leaf = self.s.path.last().expect("path holds the leaf").page;
+        let pin = self.pw.change(leaf)?;
+        let mut g = pin.write()?;
+        let rewrite = node::leaf_has_frozen(&g, self.freeze)
+            .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
+        let applied = if rewrite {
+            node::leaf_rewrite(
+                &mut g,
+                key,
+                change,
+                &mut self.s.es,
+                &mut self.s.enc,
+                self.freeze,
+            )
+        } else {
+            node::leaf_apply(&mut g, key, change, &mut self.s.enc)
+        }
+        .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
+        Ok((applied, node::count(&g) == 0))
+    }
+
+    /// Puts `value` under `key` in `tree` with `stamps`.
+    pub(super) fn put_stamped(
+        &mut self,
+        tree: Tree,
+        key: &[u8],
+        value: &[u8],
+        stamps: Stamps,
+    ) -> Result<()> {
         let first = if value.len() > MAX_INLINE {
             Some(self.write_overflow(tree, value)?)
         } else {
@@ -575,15 +934,10 @@ impl<'a> Apply<'a> {
         };
         self.descend(tree, key)?;
         let leaf = self.s.path.last().expect("path holds the leaf").page;
-        let applied = {
-            let pin = self.pw.change(leaf)?;
-            let mut g = pin.write()?;
-            node::leaf_apply(&mut g, key, Change::Put(stored), &mut self.s.enc)
-                .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?
-        };
+        let (applied, _) = self.change_leaf(key, Change::Put(stored, stamps))?;
         let freed = match applied {
             Applied::Done(freed) => freed,
-            Applied::Full => self.split_apply(tree, key, Change::Put(stored))?,
+            Applied::Full => self.split_apply(tree, key, Change::Put(stored, stamps))?,
             Applied::NotFound => return Err(self.corrupt(leaf, "a put found nothing to apply")),
         };
         if let Some(f) = freed {
@@ -595,18 +949,16 @@ impl<'a> Apply<'a> {
     /// Removes `key` from `tree`, if present, and frees its leaf if that
     /// leaves it empty and TS-05 allows it.
     pub(super) fn delete(&mut self, tree: Tree, key: &[u8]) -> Result<()> {
+        self.remove(tree, key).map(drop)
+    }
+
+    /// As [`Apply::delete`]; returns whether `key` was present.
+    fn remove(&mut self, tree: Tree, key: &[u8]) -> Result<bool> {
         self.descend(tree, key)?;
-        let leaf = self.s.path.last().expect("path holds the leaf").page;
-        let (applied, empty) = {
-            let pin = self.pw.change(leaf)?;
-            let mut g = pin.write()?;
-            let r = node::leaf_apply(&mut g, key, Change::Delete, &mut self.s.enc)
-                .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
-            (r, node::count(&g) == 0)
-        };
+        let (applied, empty) = self.change_leaf(key, Change::Delete)?;
         let freed = match applied {
             Applied::Done(freed) => freed,
-            Applied::NotFound => return Ok(()),
+            Applied::NotFound => return Ok(false),
             // Restart points moved and the leaf grew: split it (see
             // `node::leaf_decode_with`).
             Applied::Full => self.split_apply(tree, key, Change::Delete)?,
@@ -617,7 +969,22 @@ impl<'a> Apply<'a> {
         if empty {
             self.free_empty_leaf(tree)?;
         }
-        Ok(())
+        Ok(true)
+    }
+
+    /// Sets the delete stamp of `key` in `tree` to `deleted`, keeping the
+    /// entry (TS-14); nothing if `key` is absent.
+    pub(super) fn restamp(&mut self, tree: Tree, key: &[u8], deleted: u64) -> Result<()> {
+        self.descend(tree, key)?;
+        let (applied, _) = self.change_leaf(key, Change::Restamp(deleted))?;
+        match applied {
+            Applied::Done(_) | Applied::NotFound => Ok(()),
+            // The encoding of an entry grew, or restart points moved under
+            // a frozen rewrite: split it.
+            Applied::Full => self
+                .split_apply(tree, key, Change::Restamp(deleted))
+                .map(drop),
+        }
     }
 
     /// Splits the leaf at the end of `self.s.path`, which cannot take
@@ -647,8 +1014,12 @@ impl<'a> Apply<'a> {
         let leaf = path[k].page;
         self.pw.mark(leaf)?;
         let mut g = pins[k].write()?;
-        let freed = node::leaf_decode_with(&g, key, change, &mut self.s.es)
-            .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
+        let freed = match node::leaf_decode_with(&g, key, change, &mut self.s.es, self.freeze)
+            .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?
+        {
+            Edit::Done(freed) => freed,
+            Edit::NotFound => return Err(self.corrupt(leaf, "a split found nothing to apply")),
+        };
         let hk = node::high_key(&g).map(<[u8]>::to_vec);
         let right = node::right(&g);
         let n = self.s.es.len();
@@ -714,7 +1085,7 @@ impl<'a> Apply<'a> {
         path: &[Step],
         pins: &'p [PinnedPage<'a>],
         mut k: usize,
-        child: std::sync::RwLockWriteGuard<'p, Box<[u8]>>,
+        child: crate::sync::RwLockWriteGuard<'p, Box<[u8]>>,
         mut sep: Vec<u8>,
         mut new_child: u64,
     ) -> Result<()> {

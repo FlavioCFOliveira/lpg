@@ -32,9 +32,9 @@
 //!   time in milliseconds at the start and end of the measured phase, to
 //!   select the matching `iostat` samples.
 
+use crate::sync::Arc;
 use std::fmt::Write as _;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use rand::rngs::StdRng;
@@ -75,6 +75,7 @@ pub(crate) fn no_trigger() -> Tuning {
     Tuning {
         checkpoint_interval: Duration::from_secs(3600),
         checkpoint_commits: u64::MAX,
+        ..Tuning::default()
     }
 }
 
@@ -107,6 +108,7 @@ pub(crate) fn populate(engine: &Engine, keys: u64) -> Tree {
                 tree,
                 key: k,
                 value: Some(&value),
+                stamp: 0,
             })
             .collect();
         engine.commit(&batch, Ids::default()).expect("build commit");
@@ -120,8 +122,15 @@ pub(crate) fn populate(engine: &Engine, keys: u64) -> Tree {
 pub(crate) fn build(base: &Path, keys: u64, cap: u64, tuning: Tuning) -> Db {
     let dir = tempfile::tempdir_in(base).expect("work directory");
     let sink = Arc::new(RecordingSink::default());
-    let engine = Engine::create_tuned(dir.path(), Arc::new(FsStorage), cap, sink.clone(), tuning)
-        .expect("create");
+    let engine = Engine::create_tuned(
+        dir.path(),
+        Arc::new(FsStorage),
+        cap,
+        crate::test_support::OWNER,
+        sink.clone(),
+        tuning,
+    )
+    .expect("create");
     let tree = populate(&engine, keys);
     Db {
         engine,
@@ -151,6 +160,7 @@ pub(crate) fn commit_pages(
             tree,
             key: k,
             value: Some(&value),
+            stamp: 0,
         })
         .collect();
     e.commit(&batch, Ids::default()).expect("commit");

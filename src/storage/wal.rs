@@ -69,12 +69,12 @@
 //! fills the temporary file without a lock and takes `ControlFileLock` only
 //! to install it (`InstallXLogFileSegment`, `xlog.c:3675-3700`).
 
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::collections::{BTreeMap, HashMap};
 use std::ffi::OsStr;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
 use super::error::{Error, Health, Result};
@@ -281,6 +281,8 @@ pub(crate) struct OpenGroup {
     frames: Vec<u8>,
     /// Commits that have joined.
     commits: u64,
+    /// Internal batches that have joined (TS-09 Members).
+    batches: u64,
     /// Lowest commit timestamp that joined.
     first_ts: u64,
     /// Counters after the last commit that joined.
@@ -299,6 +301,7 @@ impl OpenGroup {
             index: HashMap::new(),
             frames,
             commits: 0,
+            batches: 0,
             first_ts: 0,
             counters,
         }
@@ -338,13 +341,14 @@ impl OpenGroup {
         self.frames.truncate(self.pages.len() * FRAME_SIZE);
     }
 
-    /// The lowest durable LSN at which every commit that has joined this
-    /// group or an earlier one is durable: this group's end if a commit has
-    /// joined it, else its start. Positions only grow within a group and
-    /// groups become durable in order, so once the durable LSN reaches this
-    /// value, no joined commit can still be lost (TS-16 step 6 undo).
+    /// The lowest durable LSN at which every member (commit or internal
+    /// batch) that has joined this group or an earlier one is durable: this
+    /// group's end if a member has joined it, else its start. Positions only
+    /// grow within a group and groups become durable in order, so once the
+    /// durable LSN reaches this value, no joined member can still be lost
+    /// (TS-16 step 6 undo).
     pub(crate) fn joined_durable_lsn(&self) -> u64 {
-        if self.has_commits() {
+        if self.has_members() {
             self.end()
         } else {
             self.start
@@ -376,9 +380,21 @@ impl OpenGroup {
         self.counters = counters;
     }
 
+    /// Records that an internal batch joined (TS-09 Members): it draws no
+    /// commit timestamp and leaves the counters as they are.
+    pub(crate) fn join_batch(&mut self) {
+        self.batches += 1;
+    }
+
     /// Whether any commit has joined.
     pub(crate) fn has_commits(&self) -> bool {
         self.commits > 0
+    }
+
+    /// Whether any member, a commit or an internal batch, has joined: the
+    /// writer then closes the group (TS-09 Members).
+    pub(crate) fn has_members(&self) -> bool {
+        self.commits > 0 || self.batches > 0
     }
 
     /// Closes the group: the next group, numbered one higher, starts at this
@@ -386,13 +402,20 @@ impl OpenGroup {
     pub(crate) fn close(&mut self, spare: Vec<u8>) -> ClosedGroup {
         let next = OpenGroup::new(self.seq + 1, self.end(), spare, self.counters);
         let g = std::mem::replace(self, next);
+        // A group without commits records an empty range of commit
+        // timestamps, its first above its last (TS-09 Members).
+        let first_ts = if g.commits == 0 {
+            g.counters.commit_ts + 1
+        } else {
+            g.first_ts
+        };
         ClosedGroup {
             seq: g.seq,
             start: g.start,
             pages: g.pages,
             frames: g.frames,
             commits: g.commits,
-            first_ts: g.first_ts,
+            first_ts,
             counters: g.counters,
         }
     }
@@ -476,6 +499,254 @@ struct Flow {
     undo_epoch: u64,
 }
 
+/// What the writer's wait for work ended with.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Work {
+    /// A joined group is not yet durable: close and write it. `true` if
+    /// the writer waited a gather window.
+    Group(bool),
+    /// Stop: [`Progress::stop`] with every joined group durable, or a
+    /// failure.
+    Stop,
+}
+
+/// The progress of WAL groups shared by the writer, the committers and the
+/// checkpointer: the groups joined, the durable group and LSN, and the
+/// highest published commit timestamp (TS-16 steps 7-9). It does no file
+/// I/O, so `loom` explores it as it runs (TS-30: commit latch and publish
+/// order).
+pub(crate) struct Progress {
+    flow: Mutex<Flow>,
+    /// The writer waits here for a joined group or a stop.
+    writer_cv: Condvar,
+    /// Committers and the checkpointer wait here for durability.
+    durable_cv: Condvar,
+    /// Highest published commit timestamp (TS-16 step 9).
+    published: AtomicU64,
+    /// The durable LSN, read by eviction (TS-08).
+    durable_lsn: Arc<AtomicU64>,
+}
+
+impl Progress {
+    /// Progress with the durable LSN `durable_lsn` and the counters of the
+    /// last durable state, whose commit timestamp is published.
+    pub(crate) fn new(durable_lsn: Arc<AtomicU64>, counters: Counters) -> Progress {
+        Progress {
+            flow: Mutex::new(Flow {
+                durable_counters: counters,
+                ..Flow::default()
+            }),
+            writer_cv: Condvar::new(),
+            durable_cv: Condvar::new(),
+            published: AtomicU64::new(counters.commit_ts),
+            durable_lsn,
+        }
+    }
+
+    fn flow(&self) -> MutexGuard<'_, Flow> {
+        // Flow updates are single assignments; a panic cannot leave them
+        // half done.
+        self.flow.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// The highest published commit timestamp (TS-16 step 9). `SeqCst`, as
+    /// the snapshot registry requires of every load of it (TS-14).
+    pub(crate) fn published(&self) -> u64 {
+        self.published.load(Ordering::SeqCst)
+    }
+
+    /// The published commit timestamp itself, which the snapshot registry
+    /// registers (TS-14 Snapshot registry).
+    pub(crate) fn published_ts(&self) -> &AtomicU64 {
+        &self.published
+    }
+
+    /// The durable LSN.
+    pub(crate) fn durable_lsn(&self) -> u64 {
+        self.durable_lsn.load(Ordering::Acquire)
+    }
+
+    /// The durable LSN and the counters of the last durable group, read
+    /// together.
+    pub(crate) fn durable_point(&self) -> (u64, Counters) {
+        let f = self.flow();
+        (self.durable_lsn(), f.durable_counters)
+    }
+
+    /// The writer's wait for work (TS-09 Writer): until a joined group is
+    /// not yet durable, a stop with every joined group durable, or a
+    /// failure. With a group, it then waits the gather window: until as
+    /// many commits have joined as `gather_target` expects, for at most
+    /// `window` (module documentation).
+    pub(crate) fn wait_for_group(&self, window: Duration) -> Work {
+        let mut f = self.flow();
+        loop {
+            if f.failed.is_some() {
+                return Work::Stop;
+            }
+            if f.joined > f.durable {
+                break;
+            }
+            if f.stop {
+                return Work::Stop;
+            }
+            f = self
+                .writer_cv
+                .wait(f)
+                .unwrap_or_else(PoisonError::into_inner);
+        }
+        // The gather window: committers join under the commit latch and
+        // count themselves in `pending` before they release it. Under
+        // `shuttle` it is not run: shuttle does not model time, and its
+        // `wait_timeout` never times out (`shuttle-std` 0.1.2
+        // `src/sync/condvar.rs:209-218`), while the window ends by timeout.
+        let gather = f.gather_target >= 2 && !window.is_zero() && !cfg!(shuttle);
+        if gather {
+            let deadline = Instant::now() + window;
+            while f.pending < f.gather_target && !f.stop && f.failed.is_none() {
+                let Some(left) = deadline.checked_duration_since(Instant::now()) else {
+                    break;
+                };
+                if left.is_zero() {
+                    break;
+                }
+                f = self
+                    .writer_cv
+                    .wait_timeout(f, left)
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .0;
+            }
+        }
+        Work::Group(gather)
+    }
+
+    /// Records that group `seq`, ending at WAL end `end`, with `commits`
+    /// commits and the counters `counters`, is durable; publishes its
+    /// commit timestamps; wakes its committers. Called by the writer after
+    /// the group's sync, so a timestamp is published only once its group is
+    /// durable, and in group order, so published timestamps only grow
+    /// (TS-16 steps 8 and 9).
+    pub(crate) fn group_durable(&self, seq: u64, end: u64, counters: Counters, commits: u64) {
+        {
+            // Under the flow latch, so that a checkpoint reads the durable
+            // LSN and its counters together.
+            let mut f = self.flow();
+            // Release pairs with the Acquire loads of eviction and of the
+            // checkpoint (TS-08 WAL before data).
+            self.durable_lsn.store(end, Ordering::Release);
+            f.durable = seq;
+            f.durable_counters = counters;
+            // Groups become durable in order, so timestamps are published
+            // in order (TS-16 step 9). After the durable state above, so a
+            // published timestamp is never above the durable counters.
+            self.published
+                .fetch_max(counters.commit_ts, Ordering::SeqCst);
+            f.pending = f.pending.saturating_sub(commits);
+            f.gather_target = commits + f.pending;
+        }
+        self.durable_cv.notify_all();
+    }
+
+    /// Counts a commit that has just joined group `seq` (TS-16 step 7).
+    /// Called under the commit latch, so the writer cannot close the group
+    /// before the commit is counted; wakes the writer.
+    pub(crate) fn note_join(&self, seq: u64) {
+        let mut f = self.flow();
+        f.pending += 1;
+        f.joined = f.joined.max(seq);
+        drop(f);
+        self.writer_cv.notify_one();
+    }
+
+    /// Records that an internal batch joined group `seq` (TS-09 Members),
+    /// so the writer closes and writes the group. Not a commit: nothing
+    /// waits for the group, and the gather window does not count it.
+    pub(crate) fn note_member(&self, seq: u64) {
+        let mut f = self.flow();
+        f.joined = f.joined.max(seq);
+        drop(f);
+        self.writer_cv.notify_one();
+    }
+
+    /// Makes every current and later waiter of [`Progress::wait_durable`]
+    /// fail with `kind` and `msg`.
+    pub(crate) fn fail_waiters(&self, kind: io::ErrorKind, msg: String) {
+        self.flow().failed = Some((kind, msg));
+        self.durable_cv.notify_all();
+    }
+
+    /// Step 8 of TS-16: wakes the writer for group `seq` and waits until it
+    /// is durable.
+    ///
+    /// # Errors
+    ///
+    /// The writer's failure, as [`Error::Io`] (the unusable latch is set).
+    pub(crate) fn wait_durable(&self, seq: u64) -> Result<()> {
+        let mut f = self.flow();
+        if f.joined < seq {
+            f.joined = seq;
+            self.writer_cv.notify_one();
+        }
+        loop {
+            if f.durable >= seq {
+                return Ok(());
+            }
+            if let Some((kind, msg)) = &f.failed {
+                return Err(Error::Io(io::Error::new(*kind, msg.clone())));
+            }
+            f = self
+                .durable_cv
+                .wait(f)
+                .unwrap_or_else(PoisonError::into_inner);
+        }
+    }
+
+    /// The number of commits undone so far.
+    pub(crate) fn undo_epoch(&self) -> u64 {
+        self.flow().undo_epoch
+    }
+
+    /// Records an undone commit and wakes the waiters of
+    /// [`Progress::wait_lsn`].
+    pub(crate) fn note_undo(&self) {
+        self.flow().undo_epoch += 1;
+        self.durable_cv.notify_all();
+    }
+
+    /// See [`Wal::wait_lsn`].
+    fn wait_lsn(&self, lsn: u64, epoch: u64, health: &Health) -> Result<bool> {
+        let mut f = self.flow();
+        loop {
+            // The epoch first: after an undo, a page seen before it may hold
+            // an older image again, whatever the durable LSN now is, and the
+            // caller must visit it again.
+            if f.undo_epoch != epoch {
+                return Ok(false);
+            }
+            if self.durable_lsn() >= lsn {
+                return Ok(true);
+            }
+            if let Some((kind, msg)) = &f.failed {
+                return Err(Error::Io(io::Error::new(*kind, msg.clone())));
+            }
+            health.check()?;
+            // The writer flushes whatever has joined; a commit still in its
+            // apply step joins or is undone, and both wake this wait.
+            f = self
+                .durable_cv
+                .wait_timeout(f, std::time::Duration::from_millis(100))
+                .unwrap_or_else(PoisonError::into_inner)
+                .0;
+        }
+    }
+
+    /// Asks the writer to stop once every joined group is durable.
+    pub(crate) fn stop(&self) {
+        self.flow().stop = true;
+        self.writer_cv.notify_all();
+    }
+}
+
 /// Figures of one checkpoint's step 5.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Recycled {
@@ -493,7 +764,7 @@ struct FailWaitersOnPanic<'a>(&'a Wal);
 
 impl Drop for FailWaitersOnPanic<'_> {
     fn drop(&mut self) {
-        if std::thread::panicking() {
+        if crate::sync::thread::panicking() {
             let _ = self.0.health.fail(Error::Unusable);
             self.0
                 .fail_waiters(io::ErrorKind::Other, WRITER_PANICKED.into());
@@ -518,15 +789,8 @@ pub(crate) struct Wal {
     holds: Mutex<Vec<u64>>,
     health: Arc<Health>,
     sink: Arc<dyn MetricsSink>,
-    /// The durable LSN, read by eviction (TS-08).
-    durable_lsn: Arc<AtomicU64>,
-    /// Highest published commit timestamp (TS-16 step 9).
-    published: AtomicU64,
-    flow: Mutex<Flow>,
-    /// The writer waits here for a joined group or a stop.
-    writer_cv: Condvar,
-    /// Committers and the checkpointer wait here for durability.
-    durable_cv: Condvar,
+    /// Groups joined and durable, and the published timestamp.
+    pub(crate) progress: Progress,
     /// Tests only: pause points (TS-30 R10).
     #[cfg(test)]
     pub(crate) points: TestPoints,
@@ -535,6 +799,12 @@ pub(crate) struct Wal {
 /// A test hook run at a pause point.
 #[cfg(test)]
 pub(crate) type Hook = Box<dyn Fn() + Send + Sync>;
+
+/// A test hook run inside a logged write batch ([`TestPoints::batch_body`]):
+/// it receives the number of pages the batch frees, and an error it returns
+/// fails the batch, which is then undone.
+#[cfg(test)]
+pub(crate) type BatchHook = Box<dyn Fn(usize) -> crate::storage::error::Result<()> + Send + Sync>;
 
 /// Test-only pause points: a test installs a hook that runs at a named
 /// point, so it can order its own steps against the writer and the
@@ -558,6 +828,18 @@ pub(crate) struct TestPoints {
     pub(crate) checkpoint_revisit: Mutex<Option<Hook>>,
     /// In a backup, after step 1, with the backup-or-load latch held.
     pub(crate) backup_started: Mutex<Option<Hook>>,
+    /// In a backup, after the data file is copied and before `stop` is
+    /// read (step 2), with its latches held.
+    pub(crate) backup_copied: Mutex<Option<Hook>>,
+    /// In a bulk build, after each page it writes, with no latch held but,
+    /// for a fast load, the backup-or-load latch (the page-writing phase,
+    /// [`crate::storage::btree::bulk`]).
+    pub(crate) bulk_page: Mutex<Option<Hook>>,
+    /// In every logged write batch, after its body has changed its pages
+    /// and before its images are captured, with the commit latch held: the
+    /// point where a reader without the latch can see the batch half done,
+    /// and where an error makes the batch undo itself (TS-16 step 6).
+    pub(crate) batch_body: Mutex<Option<BatchHook>>,
 }
 
 #[cfg(test)]
@@ -570,6 +852,19 @@ impl TestPoints {
             .as_ref()
         {
             hook();
+        }
+    }
+
+    /// Runs the batch hook, if any, for a batch that frees `freed` pages.
+    pub(crate) fn run_batch(&self, freed: usize) -> crate::storage::error::Result<()> {
+        match self
+            .batch_body
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_ref()
+        {
+            Some(hook) => hook(freed),
+            None => Ok(()),
         }
     }
 }
@@ -606,25 +901,12 @@ impl Wal {
             holds: Mutex::new(Vec::new()),
             health,
             sink,
-            durable_lsn,
-            published: AtomicU64::new(counters.commit_ts),
-            flow: Mutex::new(Flow {
-                durable_counters: counters,
-                ..Flow::default()
-            }),
-            writer_cv: Condvar::new(),
-            durable_cv: Condvar::new(),
+            progress: Progress::new(durable_lsn, counters),
             #[cfg(test)]
             points: TestPoints::default(),
         };
         wal.report_size();
         wal
-    }
-
-    fn flow(&self) -> MutexGuard<'_, Flow> {
-        // Flow updates are single assignments; a panic cannot leave them
-        // half done.
-        self.flow.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     fn segments(&self) -> MutexGuard<'_, SegmentMap> {
@@ -693,19 +975,19 @@ impl Wal {
 
     /// The durable LSN.
     pub(crate) fn durable_lsn(&self) -> u64 {
-        self.durable_lsn.load(Ordering::Acquire)
+        self.progress.durable_lsn()
     }
 
     /// The durable LSN and the counters of the last durable group, read
     /// together (TS-11 step 1: the redo point and what a checkpoint saves).
     pub(crate) fn durable_point(&self) -> (u64, Counters) {
-        let f = self.flow();
-        (self.durable_lsn(), f.durable_counters)
+        self.progress.durable_point()
     }
 
-    /// The highest published commit timestamp (TS-16 step 9).
+    /// The highest published commit timestamp (TS-16 step 9), loaded
+    /// `SeqCst` (TS-14 Snapshot registry).
     pub(crate) fn published(&self) -> u64 {
-        self.published.load(Ordering::Acquire)
+        self.progress.published()
     }
 
     /// The first LSN of each segment, in order.
@@ -897,41 +1179,13 @@ impl Wal {
         // gather window (module documentation).
         let mut window = Duration::ZERO;
         loop {
-            {
-                let mut f = self.flow();
-                loop {
-                    if f.failed.is_some() {
-                        return;
-                    }
-                    if f.joined > f.durable {
-                        break;
-                    }
-                    if f.stop {
-                        return;
-                    }
-                    f = self
-                        .writer_cv
-                        .wait(f)
-                        .unwrap_or_else(PoisonError::into_inner);
-                }
-                // The gather window: committers join under the commit latch
-                // and count themselves in `pending` before they release it.
-                if f.gather_target >= 2 && !window.is_zero() {
+            match self.progress.wait_for_group(window) {
+                Work::Stop => return,
+                Work::Group(_gathered) =>
+                {
                     #[cfg(test)]
-                    self.points.gathers.fetch_add(1, Ordering::Relaxed);
-                    let deadline = Instant::now() + window;
-                    while f.pending < f.gather_target && !f.stop && f.failed.is_none() {
-                        let Some(left) = deadline.checked_duration_since(Instant::now()) else {
-                            break;
-                        };
-                        if left.is_zero() {
-                            break;
-                        }
-                        f = self
-                            .writer_cv
-                            .wait_timeout(f, left)
-                            .unwrap_or_else(PoisonError::into_inner)
-                            .0;
+                    if _gathered {
+                        self.points.gathers.fetch_add(1, Ordering::Relaxed);
                     }
                 }
             }
@@ -966,23 +1220,8 @@ impl Wal {
                     self.sink.counter(APPENDED_BYTES, frames * FRAME_BYTES);
                     self.sink.counter(FLUSHES, syncs);
                     self.sink.histogram(APPEND_BATCH_SIZE, g.commits);
-                    {
-                        // Under the flow latch, so that a checkpoint reads the
-                        // durable LSN and its counters together.
-                        let mut f = self.flow();
-                        // Release pairs with the Acquire loads of eviction and
-                        // of the checkpoint (TS-08 WAL before data).
-                        self.durable_lsn.store(end, Ordering::Release);
-                        // Groups become durable in order, so timestamps are
-                        // published in order (TS-16 step 9).
-                        self.published
-                            .fetch_max(g.counters.commit_ts, Ordering::AcqRel);
-                        f.durable = g.seq;
-                        f.durable_counters = g.counters;
-                        f.pending = f.pending.saturating_sub(g.commits);
-                        f.gather_target = g.commits + f.pending;
-                    }
-                    self.durable_cv.notify_all();
+                    self.progress
+                        .group_durable(g.seq, end, g.counters, g.commits);
                     spare = g.frames;
                     if self.needs_precreate(end) {
                         precreate();
@@ -1035,22 +1274,22 @@ impl Wal {
         }
     }
 
-    /// Counts a commit that has just joined group `seq` (TS-16 step 7).
-    /// Called under the commit latch, so the writer cannot close the group
-    /// before the commit is counted; wakes the writer.
+    /// Counts a commit that has just joined group `seq` (TS-16 step 7);
+    /// see [`Progress::note_join`].
     pub(crate) fn note_join(&self, seq: u64) {
-        let mut f = self.flow();
-        f.pending += 1;
-        f.joined = f.joined.max(seq);
-        drop(f);
-        self.writer_cv.notify_one();
+        self.progress.note_join(seq);
+    }
+
+    /// Records that an internal batch joined group `seq` (TS-09 Members);
+    /// see [`Progress::note_member`].
+    pub(crate) fn note_member(&self, seq: u64) {
+        self.progress.note_member(seq);
     }
 
     /// Makes every current and later waiter of [`Wal::wait_durable`] fail
     /// with `kind` and `msg`.
     fn fail_waiters(&self, kind: io::ErrorKind, msg: String) {
-        self.flow().failed = Some((kind, msg));
-        self.durable_cv.notify_all();
+        self.progress.fail_waiters(kind, msg);
     }
 
     /// Step 8 of TS-16: wakes the writer for group `seq` and waits until it
@@ -1060,35 +1299,18 @@ impl Wal {
     ///
     /// The writer's failure, as [`Error::Io`] (the unusable latch is set).
     pub(crate) fn wait_durable(&self, seq: u64) -> Result<()> {
-        let mut f = self.flow();
-        if f.joined < seq {
-            f.joined = seq;
-            self.writer_cv.notify_one();
-        }
-        loop {
-            if f.durable >= seq {
-                return Ok(());
-            }
-            if let Some((kind, msg)) = &f.failed {
-                return Err(Error::Io(io::Error::new(*kind, msg.clone())));
-            }
-            f = self
-                .durable_cv
-                .wait(f)
-                .unwrap_or_else(PoisonError::into_inner);
-        }
+        self.progress.wait_durable(seq)
     }
 
     /// The number of commits undone so far.
     pub(crate) fn undo_epoch(&self) -> u64 {
-        self.flow().undo_epoch
+        self.progress.undo_epoch()
     }
 
     /// Records an undone commit and wakes the waiters of
     /// [`Wal::wait_lsn`].
     pub(crate) fn note_undo(&self) {
-        self.flow().undo_epoch += 1;
-        self.durable_cv.notify_all();
+        self.progress.note_undo();
     }
 
     /// Returns `false` as soon as a commit has been undone since `epoch`
@@ -1101,35 +1323,12 @@ impl Wal {
     ///
     /// The writer's failure, or [`Error::Unusable`].
     pub(crate) fn wait_lsn(&self, lsn: u64, epoch: u64) -> Result<bool> {
-        let mut f = self.flow();
-        loop {
-            // The epoch first: after an undo, a page seen before it may hold
-            // an older image again, whatever the durable LSN now is, and the
-            // caller must visit it again.
-            if f.undo_epoch != epoch {
-                return Ok(false);
-            }
-            if self.durable_lsn() >= lsn {
-                return Ok(true);
-            }
-            if let Some((kind, msg)) = &f.failed {
-                return Err(Error::Io(io::Error::new(*kind, msg.clone())));
-            }
-            self.health.check()?;
-            // The writer flushes whatever has joined; a commit still in its
-            // apply step joins or is undone, and both wake this wait.
-            f = self
-                .durable_cv
-                .wait_timeout(f, std::time::Duration::from_millis(100))
-                .unwrap_or_else(PoisonError::into_inner)
-                .0;
-        }
+        self.progress.wait_lsn(lsn, epoch, &self.health)
     }
 
     /// Asks the writer to stop once every joined group is durable.
     pub(crate) fn stop(&self) {
-        self.flow().stop = true;
-        self.writer_cv.notify_all();
+        self.progress.stop();
     }
 
     /// Step 5 of TS-11: each segment that holds only LSNs below `redo` and

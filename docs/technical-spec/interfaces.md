@@ -1,7 +1,7 @@
 ---
 title: Interfaces
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-07
 related:
   - architecture.md
   - bolt.md
@@ -14,7 +14,7 @@ related:
 
 | Handle or item | Operations | Requirements |
 |---|---|---|
-| `Database` | `create(location, storage, memory_cap, options)`, `open(location, storage, memory_cap, options)`, `close(timeout)` (default 10 s), `session(principal, home)`, `register_procedure`, `register_function`, `backup`, `restore`, `migrate` (on a closed location), `check_integrity` | FR-DB-001..009, FR-LIM-003, FR-API-005, FR-OPS-001..013, FR-REC-010 |
+| `Database` | `create(location, storage, memory_cap, owner, options)`, `open(location, storage, memory_cap, options)`, `close(timeout)` (default 10 s), `session(principal, home)`, `register_procedure`, `register_function`, `backup`, `restore`, `migrate` (on a closed location), `check_integrity` | FR-DB-001..009, FR-AUTH-002, FR-LIM-003, FR-API-005, FR-OPS-001..013, FR-REC-010 |
 | `Session` | `execute(gql, parameters)`, `begin(options)` (isolation, limits), `explain`, `profile`, `cancel`, session limits; index and constraint management; `list_transactions`, `terminate_transaction`; `import`, `export` | FR-API-001, FR-API-004, FR-API-007..009, FR-GQL-005, FR-OBS-003..006, FR-SES-001..004, FR-TX-004, FR-IMP-001..006 |
 | `Transaction` | `execute`, `commit`, `rollback`, `cancel`, `create_directory`, algorithm runs | FR-TX-001, FR-API-009, FR-CAT-004, FR-CAT-005, FR-ALG-002 |
 | `ResultStream` | `async fn next()` returning one row; `summary()` | FR-API-010 |
@@ -25,6 +25,7 @@ related:
 - `memory_cap` bounds the memory the crate accounts for. Page images and the free-page set are outside it, so one database can use up to about 3× `memory_cap` ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
 - Every operation that performs I/O or waits is `async` ([TS-02](architecture.md#ts-02-async-api-and-threading)).
 - Operations that need a principal live on `Session` or `Transaction`, never on `Database`. Each of them is authorised and records an owner ([TS-23](#ts-23-authentication-and-authorisation)), and the catalog changes join a transaction (FR-CAT-004).
+- The exception is `create`: its required `owner` argument is the principal recorded as the owner of the default schema and default graph ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics); user decision 2026-10-07). `create` makes no authorisation request ([TS-23](#ts-23-authentication-and-authorisation)).
 - GQLSTATUS codes come from the ISO conditions insert ([S45]) where it defines one. Otherwise they are Neo4j's codes [S48], such as 25N11 and 50N05 ([TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)). Codes that depend on rules outside the inserts are provisional (OQ-005).
 
 ## TS-03 Storage abstraction
@@ -64,7 +65,7 @@ The transport abstraction is the bound `tokio::io::AsyncRead + AsyncWrite + Unpi
     - `CREATE INDEX`, `DROP INDEX`, `SHOW INDEX`, `CREATE CONSTRAINT`, `DROP CONSTRAINT`, `SHOW CONSTRAINT`;
     - `SHOW TRANSACTION`, `TERMINATE TRANSACTION`.
   - The object of a data action is its graph. The owner is the one recorded on the catalog object ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)).
-  - After planning and before execution, the crate asks once per statement for every `(action, object)` pair the plan can perform. API operations ask once per call. A refusal fails the request before any effect. Consequence: a statement fails if its plan could perform a refused action, even when the data would not have led it to.
+  - After planning and before execution, the crate asks once per statement for every `(action, object)` pair the plan can perform. API operations ask once per call, except `create`, which runs before any session or principal exists and makes no request ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics) Creation). A refusal fails the request before any effect. Consequence: a statement fails if its plan could perform a refused action, even when the data would not have led it to.
   - Rust API sessions receive their principal from the application and are not authenticated.
 - **Satisfies**: ABS-002, FR-AUTH-001, FR-AUTH-002, BR-AUTH-001, FR-API-004, FR-SES-001, FR-SES-002, FR-BOLT-011, FR-BOLT-012, FR-BOLT-013, FR-OBS-003, FR-OBS-004.
 - **Evidence**: Neo4j read, write and database privilege names (D-PRIV, [S46]); `async fn` in traits is not object-safe (D-AFIT).

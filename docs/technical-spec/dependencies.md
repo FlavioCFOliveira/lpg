@@ -1,7 +1,7 @@
 ---
 title: Dependencies
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-07
 related:
   - quality-and-testing.md
   - README.md
@@ -15,7 +15,7 @@ related:
 - **Licence allow-list** for `cargo-deny` (user decision 2026-10-02): MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, 0BSD, BSL-1.0, CC0-1.0, Unicode-3.0. Copyleft licences are excluded. A crate whose licence expression offers alternatives passes when one of them is listed (D-DENY).
 - **Satisfies**: NFR-DEP-001, NFR-DEP-002, NFR-SIMP-001.
 
-crates.io data as of 2026-10-02 (downloads: total / last 90 days).
+crates.io data as of 2026-10-02, and as of 2026-10-07 for `jiff` and `shuttle` (downloads: total / last 90 days).
 
 | Crate | Version | Licence | Downloads | Last release | Kind | Used by |
 |---|---|---|---|---|---|---|
@@ -23,7 +23,7 @@ crates.io data as of 2026-10-02 (downloads: total / last 90 days).
 | rustix | 1.1.5 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | 1 197.0 M / 275.0 M | 2026-09-16 | runtime, feature `fs` | [TS-03](interfaces.md#ts-03-storage-abstraction) (`fstatvfs`, `fallocate`) |
 | tracing | 0.1.44 | MIT | 893.2 M / 206.0 M | 2025-12-18 | runtime | [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events) |
 | crc32c | 0.6.8 | Apache-2.0/MIT | 85.9 M / 16.5 M | 2024-06-09 | runtime | [TS-12](storage.md#ts-12-checksums-corruption-and-integrity-check) |
-| jiff | 0.2.37 | Unlicense OR MIT | 209.3 M / 75.3 M | 2026-09-12 | runtime | [TS-21](values-and-types.md#ts-21-values-and-types) |
+| jiff | 0.2.38 | Unlicense OR MIT | 216.0 M / 79.1 M | 2026-10-06 | runtime | [TS-21](values-and-types.md#ts-21-values-and-types) |
 | petgraph | 0.8.3 | MIT OR Apache-2.0 | 533.5 M / 114.7 M | 2025-09-30 | runtime | [TS-25](algorithms.md#ts-25-graph-algorithms) |
 | nalgebra | 0.35.0 | Apache-2.0 | 92.7 M / 16.1 M | 2026-05-24 | runtime | [TS-25](algorithms.md#ts-25-graph-algorithms) |
 | rand | 0.10.3 | MIT OR Apache-2.0 | 1 815.9 M / 475.0 M | 2026-09-20 | runtime | [TS-25](algorithms.md#ts-25-graph-algorithms), database UUID ([TS-05](storage.md#ts-05-files-and-pages)) |
@@ -33,6 +33,7 @@ crates.io data as of 2026-10-02 (downloads: total / last 90 days).
 | quick-xml | 0.42.0 | MIT | 444.2 M / 123.2 M | 2026-08-22 | runtime | [TS-26](operations.md#ts-26-backup-restore-import-and-export) |
 | tempfile | 3.27.0 | MIT OR Apache-2.0 | 853.1 M / 195.4 M | 2026-03-11 | dev | [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
 | loom | 0.7.2 | MIT | 68.6 M / 15.5 M | 2024-04-23 | dev | [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
+| shuttle | 0.9.5 | Apache-2.0 | 6.1 M / 1.8 M | 2026-10-01 | dev | [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
 | antlr4rust | 0.6.0 | BSD-3-Clause | 3.3 M / 2.6 M | 2026-09-27 | dev, test-only oracle crate, not a dependency of `lpg` | [TS-19](query-engine.md#ts-19-parser), [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
 
 ## Considered and not used

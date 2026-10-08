@@ -1,5 +1,5 @@
-use std::sync::Arc;
-use std::sync::atomic::AtomicU64;
+use crate::sync::Arc;
+use crate::sync::atomic::AtomicU64;
 
 use super::*;
 use crate::obs::recording::RecordingSink;
@@ -16,6 +16,7 @@ fn put_all(s: &Store<'_>, tree: Tree, keys: &[Vec<u8>], v: &[u8]) {
                 tree,
                 key: k,
                 value: Some(v),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -30,6 +31,7 @@ fn delete_all(s: &Store<'_>, tree: Tree, keys: &[Vec<u8>]) {
                 tree,
                 key: k,
                 value: None,
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -146,6 +148,7 @@ fn trunk_chain_grows_persists_and_is_consumed() {
                 tree,
                 key: k,
                 value: Some(&value),
+                stamp: 0,
             }])
             .unwrap();
         }
@@ -180,6 +183,7 @@ fn trunk_chain_grows_persists_and_is_consumed() {
                 tree,
                 key: k,
                 value: Some(&value),
+                stamp: 0,
             }])
             .unwrap();
         }
@@ -215,12 +219,14 @@ fn a_cyclic_chain_fails_the_open() {
         tree,
         key: b"k",
         value: Some(&value),
+        stamp: 0,
     }])
     .unwrap();
     s.apply(&[Write {
         tree,
         key: b"k",
         value: None,
+        stamp: 0,
     }])
     .unwrap();
     let (_, trunks) = listed(&s);

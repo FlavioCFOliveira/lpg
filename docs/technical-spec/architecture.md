@@ -1,7 +1,7 @@
 ---
 title: Architecture
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-07
 related:
   - README.md
   - interfaces.md
@@ -47,7 +47,7 @@ A request flows: API or Bolt → parser → binder → planner → authorisation
 - **Decision**:
   - The engine core is synchronous. The public API is `async` and runs on the application's tokio runtime.
   - Statement work runs on tokio's blocking pool: each pull of a result batch moves the statement's cursor into `tokio::task::spawn_blocking`, fills one batch and returns ([TS-20](query-engine.md#ts-20-binder-planner-and-execution)). No thread is held while the caller does not pull.
-  - Each database handle owns three `std::thread`s: the WAL writer ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)), the checkpointer ([TS-11](transactions-and-recovery.md#ts-11-checkpoint)) and the garbage collector ([TS-14](transactions-and-recovery.md#ts-14-mvcc)). Closing the handle stops them after a final checkpoint; dropping it stops them without one, which recovery treats as a crash (FR-DB-009).
+  - Each database handle owns three `std::thread`s: the WAL writer ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)), the checkpointer ([TS-11](transactions-and-recovery.md#ts-11-checkpoint)) and the garbage collector ([TS-14](transactions-and-recovery.md#ts-14-mvcc)). It also owns one `lpg-index-build` thread per running index build, started by the index creation call and, at open, for every POPULATING index ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints)). Closing the handle stops them after a final checkpoint; dropping it stops them without one, which recovery treats as a crash (FR-DB-009). A build stopped by close or drop resumes at the next open.
   - Algorithm runs use their own scoped worker threads ([TS-25](algorithms.md#ts-25-graph-algorithms)).
   - Handles: `Database`, `Session`, `Transaction`, `ResultStream` with `async fn next()`. The API shape is in [interfaces.md](interfaces.md#public-api-shape).
   - `Database` is a cheap clone of one shared engine. `close` acts on the engine, and afterwards every clone fails. "Dropped without close" (FR-DB-009) means that the last clone was dropped while the engine was open.

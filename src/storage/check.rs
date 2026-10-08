@@ -2,12 +2,15 @@
 //! and restore tests.
 //!
 //! It runs under the write latch, so no batch changes pages meanwhile, and
-//! reads every page below the page count once:
+//! reads every page below the page count once, except the pages of a bulk
+//! build's record that no tree uses:
 //!
 //! - **Checksum.** A page the pool holds dirty has no on-disk image yet
 //!   (its checksum is set when it is written), so it is checked from its
 //!   frame; every other page is read from the data file, bypassing the
-//!   pool, and its checksum verified.
+//!   pool, and its checksum verified. Free-listed pages are read too: they
+//!   keep a valid image. A build's record pages are not: a running build
+//!   owns pages it has not written yet.
 //! - **Trees.** From the directory (tree 0) to every tree it lists: page
 //!   type, tree identifier, level, leaf encoding, key order within a page,
 //!   keys within the bounds the parent's separators give, each high key
@@ -17,15 +20,22 @@
 //!   `contrib/amcheck/verify_nbtree.c`: item order, high key, parent key
 //!   against child high key, sibling links).
 //! - **Membership.** Every page below the page count is in exactly one of:
-//!   page 0, a tree, the free list (trunk or listed page). A page reached
+//!   page 0, a tree, the free list (trunk or listed page), the record of a
+//!   bulk build (pages it owns that no tree uses,
+//!   [`super::btree::bulk`]). A page reached
 //!   twice, or never, is reported, as SQLite's "2nd reference to page" and
 //!   "never used" (R-SQLITE `src/btree.c`, `checkRef`,
 //!   `sqlite3BtreeIntegrityCheck`). Pages at or above the page count are
 //!   the unused reserve and must not be referenced.
 //!
-//! Cross-tree checks (adjacency against edges, indexes against data) arrive
-//! with the trees of Sprint 2.
+//! The cross-tree checks run after this one, under the commit latch
+//! ([`crate::storage::engine::Engine::check_graphs`]): adjacency against
+//! edges, ONLINE indexes against data in both directions
+//! ([`crate::index::check`]), and the statistics against a recount.
+//! Leaves of either key form ([`super::btree::Keys`]) are decoded by their
+//! own flag.
 
+use super::btree::bulk::{decode_build_key, decode_ranges};
 use super::btree::node::{self, NONE, Value};
 use super::btree::{DIRECTORY, Store, Tree};
 use super::datafile::Header;
@@ -34,7 +44,7 @@ use super::freelist::decode_trunk;
 use super::page::{self, PAGE_SIZE, PageType};
 
 /// Problems reported before the check stops listing them.
-const MAX_PROBLEMS: usize = 1000;
+pub(crate) const MAX_PROBLEMS: usize = 1000;
 
 /// Shape figures of one tree.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -86,6 +96,8 @@ enum Owner {
     Tree(u64),
     Trunk,
     Free,
+    /// A page of a bulk build's record, not in its tree.
+    Build(u64),
 }
 
 struct Checker<'s, 'e> {
@@ -198,7 +210,13 @@ impl Checker<'_, '_> {
                         ));
                     }
                     for &p in &t.pages {
-                        self.claim(p, Owner::Free, &format!("free-list trunk {trunk}"));
+                        // A free page keeps a valid image (TS-05), which
+                        // migration reads (TS-28): its checksum is verified,
+                        // one page at a time through `self.buf` (`t` holds
+                        // the trunk's entries).
+                        if self.claim(p, Owner::Free, &format!("free-list trunk {trunk}")) {
+                            self.load(p)?;
+                        }
                     }
                     pages.extend(t.pages);
                     trunk = t.next;
@@ -479,14 +497,29 @@ impl Store<'_> {
         }
         let entries = c.check_tree(DIRECTORY, true)?;
         for (k, v) in entries {
-            let (Ok(id), Ok(root)) = (
+            if let Some(owner) = decode_build_key(&k) {
+                let Some(ranges) = decode_ranges(&v) else {
+                    c.problem(format!("malformed build record of tree {owner}"));
+                    continue;
+                };
+                let from = format!("the build record of tree {owner}");
+                // Claimed, not read: a running build has pages it owns but
+                // has not written yet, with no valid image.
+                for (first, len) in ranges {
+                    for p in first..first + len {
+                        c.claim(p, Owner::Build(owner), &from);
+                    }
+                }
+                continue;
+            }
+            let (Ok(id), Some((root, _))) = (
                 <[u8; 8]>::try_from(k.as_slice()),
-                <[u8; 8]>::try_from(v.as_slice()),
+                super::btree::decode_directory_entry(&v),
             ) else {
                 c.problem("malformed directory entry".into());
                 continue;
             };
-            let (id, root) = (u64::from_be_bytes(id), u64::from_le_bytes(root));
+            let id = u64::from_be_bytes(id);
             if id == 0 || id >= st.next_tree_id() {
                 c.problem(format!(
                     "directory lists tree {id}, not below the next tree id"

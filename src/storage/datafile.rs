@@ -23,9 +23,9 @@
 //! handed out by [`Datafile::allocate`]. Writes go only to reserved pages, so
 //! a full device fails `ensure`, never a write or a read (FR-REC-007).
 
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::{Arc, Mutex, PoisonError};
 use std::path::Path;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, PoisonError};
 
 use super::error::{Error, Health, Result};
 use super::page::{self, PAGE_BYTES, PAGE_SIZE, PageType};
@@ -48,6 +48,16 @@ pub(crate) const MAX_PAGES: u64 = i64::MAX as u64 / PAGE_BYTES;
 #[must_use]
 pub(crate) fn extent_pages(pages: u64) -> u64 {
     MIN_EXTENT_PAGES.max(pages.div_ceil(100))
+}
+
+/// A tree that [`Datafile::create`] writes: how its leaves store keys,
+/// and its entries, sorted by key.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Bootstrap<'a> {
+    /// The key storage of its leaves.
+    pub(crate) keys: btree::Keys,
+    /// Its entries, unstamped, in key order.
+    pub(crate) entries: &'a [(Vec<u8>, Vec<u8>)],
 }
 
 /// The fields of the header page.
@@ -119,20 +129,26 @@ pub(crate) struct Datafile {
 }
 
 impl Datafile {
-    /// Creates `path` with its first extent reserved, page 0 and page 1
-    /// written, and syncs it. Page 1 is the empty root leaf of the tree
-    /// directory (TS-05); without it, the first read of page 1 would fail
-    /// its checksum.
+    /// Creates `path` with its first extent reserved, page 0, page 1 and
+    /// the trees `trees` written, and syncs it. Page 1 is the root leaf of
+    /// the tree directory (TS-05); without it, the first read of page 1
+    /// would fail its checksum. Tree `i + 1` of `trees` is rooted at page
+    /// `i + 2`, a single leaf holding its entries, sorted, unstamped
+    /// (frozen, TS-06), written directly and not through the WAL: the
+    /// catalog tree with the default schema and default graph (TS-05
+    /// Create, TS-17 Creation).
     ///
     /// # Errors
     ///
-    /// [`Error::Io`]; ENOSPC if the first extent does not fit.
+    /// [`Error::Io`]; ENOSPC if the first extent does not fit;
+    /// [`Error::InvalidArgument`] if a tree's entries do not fit one leaf.
     pub(crate) fn create(
         storage: &dyn Storage,
         path: &Path,
         format_version: u32,
         health: Arc<Health>,
         sink: Arc<dyn MetricsSink>,
+        trees: &[Bootstrap<'_>],
     ) -> Result<Datafile> {
         let data = Datafile {
             file: storage.create(path)?,
@@ -142,22 +158,65 @@ impl Datafile {
             health,
             sink,
         };
-        data.ensure(2)?;
-        let header_page = data.allocate()?;
-        let directory_root = data.allocate()?;
-        debug_assert_eq!((header_page, directory_root), (0, 1));
+        let n = trees.len() as u64;
+        data.ensure(2 + n)?;
+        for p in 0..2 + n {
+            let got = data.allocate()?;
+            debug_assert_eq!(got, p);
+        }
         let mut buf = vec![0u8; PAGE_SIZE];
         Header {
             format_version,
             free_list_head: 0,
-            next_tree_id: 1,
-            page_count: 2,
+            next_tree_id: 1 + n,
+            page_count: 2 + n,
         }
         .encode(&mut buf);
         data.write_page(0, &buf)?;
-        btree::node::init_empty_leaf(&mut buf, 0);
+        let directory: Vec<(Vec<u8>, Vec<u8>)> = (1..=n)
+            .map(|id| (id.to_be_bytes().to_vec(), (id + 1).to_le_bytes().to_vec()))
+            .collect();
+        let leaf = |buf: &mut Vec<u8>, id: u64, keys, entries: &[(Vec<u8>, Vec<u8>)]| {
+            let mut es = btree::node::Entries::default();
+            es.set_keys(keys);
+            for (k, v) in entries {
+                es.push(k, btree::node::Value::Inline(v));
+            }
+            buf.fill(0);
+            let at = btree::node::Place {
+                tree: id,
+                level: 0,
+                high_key: None,
+                right: btree::node::NONE,
+            };
+            let fits = entries.windows(2).all(|w| w[0].0 < w[1].0)
+                && entries.iter().all(|(k, v)| {
+                    k.len() <= btree::node::MAX_KEY && v.len() <= btree::node::MAX_INLINE
+                })
+                && btree::node::write_leaf(
+                    buf,
+                    at,
+                    &es,
+                    0..es.len(),
+                    &mut btree::node::Encoder::default(),
+                );
+            if fits {
+                Ok(())
+            } else {
+                Err(Error::InvalidArgument(
+                    "the entries of a created tree do not fit one leaf",
+                ))
+            }
+        };
+        leaf(&mut buf, 0, btree::Keys::Prefix, &directory)?;
         page::seal(&mut buf, 1);
         data.write_page(1, &buf)?;
+        for (i, t) in trees.iter().enumerate() {
+            let (id, p) = (i as u64 + 1, i as u64 + 2);
+            leaf(&mut buf, id, t.keys, t.entries)?;
+            page::seal(&mut buf, p);
+            data.write_page(p, &buf)?;
+        }
         data.sync()?;
         Ok(data)
     }
@@ -249,9 +308,20 @@ impl Datafile {
 
     /// Sets the page count back to `pages`, the value before a batch that
     /// is being undone: the pages it took from the reserve return to it
-    /// (TS-16 step 6). Called under the commit latch, the only place pages
-    /// are taken.
+    /// (TS-16 step 6), and pages it returned to the reserve
+    /// ([`Datafile::return_to_reserve`]) are in use again. Called under the
+    /// commit latch, the only place the page count changes.
     pub(crate) fn rollback_page_count(&self, pages: u64) {
+        debug_assert!(pages <= self.reserved_pages());
+        self.used.store(pages, Ordering::Release);
+        self.report();
+    }
+
+    /// Lowers the page count to `pages`: pages `pages..page_count` return
+    /// to the reserve. Called under the commit latch, for pages that no
+    /// tree and no free-list entry refers to (a bulk build's unused pages,
+    /// [`super::btree::bulk`]).
+    pub(crate) fn return_to_reserve(&self, pages: u64) {
         debug_assert!(pages <= self.page_count());
         self.used.store(pages, Ordering::Release);
         self.report();
@@ -324,6 +394,35 @@ impl Datafile {
         };
         self.report();
         Ok(page)
+    }
+
+    /// Takes the next `n` reserved, unused pages, which are consecutive,
+    /// and returns the first: a run of a bulk build ([`super::btree::bulk`]).
+    ///
+    /// # Errors
+    ///
+    /// ENOSPC if fewer than `n` reserved pages are left; call
+    /// [`Datafile::ensure`] first.
+    pub(crate) fn allocate_run(&self, n: u64) -> Result<u64> {
+        self.health.check()?;
+        let reserved = self.reserved_pages();
+        let mut used = self.used.load(Ordering::Acquire);
+        let first = loop {
+            if used.checked_add(n).is_none_or(|end| end > reserved) {
+                return Err(Error::Io(std::io::ErrorKind::StorageFull.into()));
+            }
+            match self.used.compare_exchange_weak(
+                used,
+                used + n,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                Ok(first) => break first,
+                Err(now) => used = now,
+            }
+        };
+        self.report();
+        Ok(first)
     }
 
     /// Reads page `page_no` into `buf` and verifies its checksum (TS-12).
@@ -417,7 +516,7 @@ mod tests {
 
     fn create(storage: &dyn Storage, path: &Path) -> (Datafile, Arc<RecordingSink>) {
         let sink = Arc::new(RecordingSink::default());
-        let data = Datafile::create(storage, path, 1, Arc::default(), sink.clone()).unwrap();
+        let data = Datafile::create(storage, path, 1, Arc::default(), sink.clone(), &[]).unwrap();
         (data, sink)
     }
 

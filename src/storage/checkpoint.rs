@@ -1,5 +1,20 @@
 //! Checkpoints (TS-11): steps 1–5, the triggers and the thread
-//! `lpg-checkpoint`. Saving statistics arrives with Sprint 2.
+//! `lpg-checkpoint`.
+//!
+//! 0. **Statistics first.** The statistics are written to the statistics
+//!    tree as an internal batch built under the commit latch, and the
+//!    checkpoint waits until its group is durable, so its images lie below
+//!    the redo point ([`crate::catalog::stats::save`]). Crash safety alone
+//!    would not need the wait (step 2 writes the batch's pages once durable,
+//!    recovery replays every group from R, and open recounts statistics
+//!    older than the recovered commit); the wait keeps the redo point of a
+//!    clean close at the WAL end, so the next open replays nothing and a
+//!    migration may remove the WAL (TS-28). A batch that fails with the
+//!    database usable (ENOSPC, a refused memory reservation) is undone and
+//!    the checkpoint goes on: the statistics tree keeps an older timestamp,
+//!    which makes the open after a crash recount. The checkpoint at open
+//!    skips this step: the WAL writer does not run yet, and the statistics
+//!    were just loaded or recounted.
 //!
 //! 1. The redo point R is the durable LSN, read with the counters of the
 //!    same durable group: every group below R is durable.
@@ -35,8 +50,8 @@
 //!
 //! [`Wal::recycle`]: super::wal::Wal::recycle
 
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Condvar, Mutex, MutexGuard, PoisonError};
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::{Condvar, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
 use super::control::Control;
@@ -129,7 +144,17 @@ impl Checkpoints {
 /// [`super::error::Error::Unusable`]; an I/O error, which sets the unusable
 /// latch; the WAL writer's failure while step 2 waits for it.
 pub(crate) fn run(core: &Core, clean: bool) -> Result<Stats> {
-    run_with(core, clean, false)
+    run_with(core, clean, false, true)
+}
+
+/// The checkpoint of TS-13 step 8, before the WAL writer runs: without the
+/// statistics batch (step 0).
+///
+/// # Errors
+///
+/// As [`run`].
+pub(crate) fn run_open(core: &Core) -> Result<Stats> {
+    run_with(core, false, false, false)
 }
 
 /// Runs one checkpoint at the start of a backup (TS-11 trigger, TS-26
@@ -142,10 +167,10 @@ pub(crate) fn run(core: &Core, clean: bool) -> Result<Stats> {
 ///
 /// As [`run`]; no hold is left after an error.
 pub(crate) fn run_held(core: &Core) -> Result<Stats> {
-    run_with(core, false, true)
+    run_with(core, false, true, true)
 }
 
-fn run_with(core: &Core, clean: bool, hold: bool) -> Result<Stats> {
+fn run_with(core: &Core, clean: bool, hold: bool, statistics: bool) -> Result<Stats> {
     let mut prev_redo = core
         .checkpoints
         .run
@@ -154,6 +179,15 @@ fn run_with(core: &Core, clean: bool, hold: bool) -> Result<Stats> {
     core.health.check()?;
     let started = Instant::now();
     core.checkpoints.commits.store(0, Ordering::Relaxed);
+    // Step 0.
+    if statistics {
+        match crate::catalog::stats::save(core) {
+            Ok(Some(seq)) => core.wal.wait_durable(seq)?,
+            Ok(None) => {}
+            Err(_) if !core.health.is_unusable() => {}
+            Err(e) => return Err(e),
+        }
+    }
     // Step 1.
     let (redo, counters) = core.wal.durable_point();
     // Step 2. Every slot dirty at the start is written, as PostgreSQL's

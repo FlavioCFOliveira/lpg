@@ -1,5 +1,5 @@
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
+use crate::sync::Arc;
+use crate::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::time::{Duration, Instant};
 
 use super::*;
@@ -45,7 +45,7 @@ fn wait_for(what: &str, timeout: Duration, mut f: impl FnMut() -> bool) {
 fn close_records_a_clean_shutdown_and_the_next_open_clears_it() {
     for dir in test_dirs() {
         let d = dir.path();
-        let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let (c, _) = read_control(d);
         assert!(
             !c.clean_shutdown,
@@ -57,7 +57,9 @@ fn close_records_a_clean_shutdown_and_the_next_open_clears_it() {
         e.close().unwrap();
         let (c, seq) = read_control(d);
         assert!(c.clean_shutdown);
-        assert_eq!(c.redo_point, end);
+        // At or after the commit: close's statistics batch (TS-11) joins a
+        // group of its own; the reopen below replays nothing.
+        assert!(c.redo_point >= end, "{} {end}", c.redo_point);
         assert_eq!(c.commit_ts, 2);
         let e = Engine::open(d, fs(), CAP, sink()).unwrap();
         let (c2, seq2) = read_control(d);
@@ -93,8 +95,17 @@ fn a_hundred_thousand_commits_trigger_exactly_one_checkpoint() {
     let tuning = Tuning {
         checkpoint_interval: Duration::from_secs(3600),
         checkpoint_commits: 100_000,
+        ..Tuning::default()
     };
-    let e = Engine::create_tuned(d, fault(), CAP, s.clone(), tuning).unwrap();
+    let e = Engine::create_tuned(
+        d,
+        fault(),
+        CAP,
+        crate::test_support::OWNER,
+        s.clone(),
+        tuning,
+    )
+    .unwrap();
     let before = s.snapshot();
     assert_eq!(
         before.counter(checkpointing::EVENTS),
@@ -145,8 +156,17 @@ fn the_interval_triggers_checkpoints() {
     let tuning = Tuning {
         checkpoint_interval: Duration::from_millis(100),
         checkpoint_commits: 100_000,
+        ..Tuning::default()
     };
-    let e = Engine::create_tuned(dir.path(), fs(), CAP, s.clone(), tuning).unwrap();
+    let e = Engine::create_tuned(
+        dir.path(),
+        fs(),
+        CAP,
+        crate::test_support::OWNER,
+        s.clone(),
+        tuning,
+    )
+    .unwrap();
     wait_for("three checkpoints", Duration::from_secs(10), || {
         s.snapshot().counter(checkpointing::EVENTS) >= 4
     });
@@ -165,7 +185,14 @@ fn checkpoints_recycle_segments_and_their_old_frames_are_never_replayed() {
         // The device sync adds nothing here ([`fault`]); it made this test
         // wait 5.5 s of its 6.6 s alone (2026-10-03).
         let storage = fault();
-        let e = Engine::create(d, storage.clone(), CAP, s.clone()).unwrap();
+        let e = Engine::create(
+            d,
+            storage.clone(),
+            CAP,
+            crate::test_support::OWNER,
+            s.clone(),
+        )
+        .unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         let v = vec![0x42u8; 1 << 20];
@@ -219,7 +246,7 @@ fn fuzzy_checkpoints_under_concurrent_commits_lose_nothing() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let done = AtomicBool::new(false);
     let mut checkpoints = 0;
@@ -268,7 +295,7 @@ fn fuzzy_checkpoints_under_concurrent_commits_lose_nothing() {
 fn every_kernel_metric_category_reports() {
     let dir = test_dirs().remove(0);
     let s = Arc::new(RecordingSink::default());
-    let e = Engine::create(dir.path(), fs(), CAP, s.clone()).unwrap();
+    let e = Engine::create(dir.path(), fs(), CAP, crate::test_support::OWNER, s.clone()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
     let mut out = Vec::new();
@@ -300,7 +327,7 @@ fn every_kernel_metric_category_reports() {
 #[test]
 fn a_checkpoint_publishes_the_page_cache_hits_and_faults() {
     let dir = test_dirs().remove(0);
-    let e = Engine::create(dir.path(), fs(), CAP, sink()).unwrap();
+    let e = Engine::create(dir.path(), fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
     e.close().unwrap();
@@ -323,7 +350,7 @@ fn a_checkpoint_publishes_the_page_cache_hits_and_faults() {
 #[test]
 fn the_wal_writer_and_checkpointer_threads_are_named() {
     let dir = test_dirs().remove(0);
-    let e = Engine::create(dir.path(), fs(), CAP, sink()).unwrap();
+    let e = Engine::create(dir.path(), fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
     wait_for("the thread names", Duration::from_secs(10), || {
         let names = thread_names();
         names.iter().any(|n| n == "lpg-wal") && names.iter().any(|n| n == "lpg-checkpoint")
@@ -344,7 +371,7 @@ fn recycling_makes_each_rename_and_removal_durable_before_the_next() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     let v = vec![0x42u8; 1 << 20];

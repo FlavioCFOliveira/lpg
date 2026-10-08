@@ -61,6 +61,14 @@ pub(crate) mod error;
 pub(crate) mod freelist;
 #[cfg_attr(
     not(test),
+    allow(
+        dead_code,
+        reason = "the graph API's first non-test callers come with Sprint 3"
+    )
+)]
+pub(crate) mod graph;
+#[cfg_attr(
+    not(test),
     allow(dead_code, reason = "first non-test callers come with #14-#16")
 )]
 pub(crate) mod memory;

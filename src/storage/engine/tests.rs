@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use crate::sync::Arc;
 
 use super::*;
 use crate::obs::names::checkpointing::CONTROL_SLOT_INVALID;
@@ -23,7 +23,7 @@ fn sink() -> Arc<RecordingSink> {
 }
 
 fn create(dir: &Path) -> Engine {
-    Engine::create(dir, fs(), CAP, sink()).unwrap()
+    Engine::create(dir, fs(), CAP, crate::test_support::OWNER, sink()).unwrap()
 }
 
 fn open(dir: &Path) -> Result<Engine> {
@@ -63,7 +63,7 @@ fn create_then_open_round_trip() {
     for dir in test_dirs() {
         let d = dir.path();
         let s = sink();
-        let e = Engine::create(d, fs(), CAP, s.clone()).unwrap();
+        let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, s.clone()).unwrap();
         assert_eq!(
             names(d),
             ["CONTROL", "LOCK", "data-1", "wal-1-0000000000000000"]
@@ -74,11 +74,19 @@ fn create_then_open_round_trip() {
         assert_eq!(e.data().reserved_pages(), MIN_EXTENT_PAGES);
         let m = s.snapshot();
         assert_eq!(m.gauge(DATABASE), Some(64 << 20));
-        assert_eq!(m.gauge(RESERVED_UNUSED), Some((64 << 20) - 2 * PAGE_BYTES));
+        // Page 0, the directory and the trees create writes (TS-17).
+        let used = 2 + crate::catalog::CREATED_TREES;
+        assert_eq!(
+            m.gauge(RESERVED_UNUSED),
+            Some((64 << 20) - used * PAGE_BYTES)
+        );
         drop(e);
         let e = open(d).unwrap();
         assert_eq!(*e.control().lock().unwrap().current(), c);
-        assert_eq!(e.data().unused_pages(), MIN_EXTENT_PAGES - 2);
+        assert_eq!(
+            e.data().unused_pages(),
+            MIN_EXTENT_PAGES - 2 - crate::catalog::CREATED_TREES
+        );
         assert_header_page(&e);
     }
 }
@@ -91,12 +99,12 @@ fn create_over_an_existing_database_fails_and_changes_nothing() {
         let before = snapshot(d);
         // While the first handle is open, and after it is closed.
         assert!(matches!(
-            Engine::create(d, fs(), CAP, sink()),
+            Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()),
             Err(Error::DatabaseExists)
         ));
         drop(e);
         assert!(matches!(
-            Engine::create(d, fs(), CAP, sink()),
+            Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()),
             Err(Error::DatabaseExists)
         ));
         assert_eq!(snapshot(d), before, "every file keeps every byte");
@@ -142,7 +150,7 @@ fn memory_cap_too_small_is_refused_before_any_file() {
         let d = dir.path();
         for cap in [0, PAGE_BYTES] {
             assert!(matches!(
-                Engine::create(d, fs(), cap, sink()),
+                Engine::create(d, fs(), cap, crate::test_support::OWNER, sink()),
                 Err(Error::InvalidArgument(_))
             ));
         }
@@ -365,7 +373,7 @@ fn enospc_on_ensure_keeps_reads_working() {
     for dir in test_dirs() {
         let d = dir.path();
         let fault = Arc::new(FaultStorage::new(Box::new(FsStorage)));
-        let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
         fault.set_space(0);
         let err = e.data().ensure(MIN_EXTENT_PAGES).err().unwrap();
         assert!(err.is_no_space(), "{err}");
@@ -471,7 +479,16 @@ fn audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location() 
     // Dry run: the calls of the `CONTROL` step.
     let dry = tempfile::tempdir_in(dir.path()).unwrap();
     let f = fault();
-    drop(Engine::create(dry.path(), f.clone(), CAP, sink()).unwrap());
+    drop(
+        Engine::create(
+            dry.path(),
+            f.clone(),
+            CAP,
+            crate::test_support::OWNER,
+            sink(),
+        )
+        .unwrap(),
+    );
     let calls = f.calls();
     let kind = |c: &Call| match c {
         Call::WriteAt { .. } => Some(Kind::WriteAt),
@@ -523,7 +540,7 @@ fn audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location() 
             } else {
                 f.crash_after(point);
             }
-            let r = Engine::create(d, f.clone(), CAP, sink());
+            let r = Engine::create(d, f.clone(), CAP, crate::test_support::OWNER, sink());
             if fails {
                 assert!(r.is_err(), "{what}: precondition: create failed");
             }
@@ -532,8 +549,10 @@ fn audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location() 
             // The location is now a whole database or none.
             let e = match Engine::open(d, fs(), CAP, sink()) {
                 Ok(e) => e,
-                Err(Error::NoDatabase) => Engine::create(d, fs(), CAP, sink())
-                    .unwrap_or_else(|e| panic!("{what}: create again: {e}")),
+                Err(Error::NoDatabase) => {
+                    Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink())
+                        .unwrap_or_else(|e| panic!("{what}: create again: {e}"))
+                }
                 Err(e) => panic!("{what}: the location is stuck: {e}"),
             };
             e.create_trees(1).unwrap();

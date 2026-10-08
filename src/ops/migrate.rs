@@ -158,7 +158,7 @@ pub(crate) fn migrate_with(
             io::ErrorKind::NotFound => Error::LockMissing,
             _ => Error::Io(e),
         })?;
-    let health = std::sync::Arc::new(Health::default());
+    let health = crate::sync::Arc::new(Health::default());
     let mut control = ControlSlots::open(control_file, health, &NullSink)?;
     let c = *control.current();
     let found = c.format_version;

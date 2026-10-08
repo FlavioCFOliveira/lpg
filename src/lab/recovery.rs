@@ -38,9 +38,9 @@
 //!   `LPG_LAB_COLD=0`, opens the database, prints what recovery did and
 //!   drops it. The open step can run once per prepare.
 
+use crate::sync::Arc;
 use std::fmt::Write as _;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use rand::SeedableRng;
@@ -100,6 +100,7 @@ fn dirty_every_leaf(e: &Engine, tree: Tree, keys: u64, fill: u8) {
                 tree,
                 key: k,
                 value: Some(&value),
+                stamp: 0,
             })
             .collect();
         e.commit(&batch, Ids::default()).expect("commit");
@@ -196,6 +197,7 @@ fn checkpoint_trigger() {
     let tuning = Tuning {
         checkpoint_interval: Duration::from_secs(24 * 3600),
         checkpoint_commits: commits,
+        ..Tuning::default()
     };
     let mut md = header(
         "lab::recovery WAL between checkpoints at the commit trigger",
@@ -452,8 +454,15 @@ fn recovery_fixed() {
     match step.as_str() {
         "prepare" => {
             let sink = Arc::new(RecordingSink::default());
-            let e = Engine::create_tuned(&dir, Arc::new(FsStorage), CAP, sink, no_trigger())
-                .expect("create (LPG_TEST_DIR must hold no database)");
+            let e = Engine::create_tuned(
+                &dir,
+                Arc::new(FsStorage),
+                CAP,
+                crate::test_support::OWNER,
+                sink,
+                no_trigger(),
+            )
+            .expect("create (LPG_TEST_DIR must hold no database)");
             let tree = populate(&e, KEYS);
             fill_wal(&e, tree, mib, 0);
             println!(

@@ -1,7 +1,7 @@
+use crate::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use crate::sync::{Arc, Mutex};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use super::*;
@@ -43,6 +43,7 @@ pub(crate) fn put<'a>(tree: Tree, k: &'a [u8], v: &'a [u8]) -> Write<'a> {
         tree,
         key: k,
         value: Some(v),
+        stamp: 0,
     }
 }
 
@@ -51,6 +52,7 @@ pub(crate) fn del(tree: Tree, k: &[u8]) -> Write<'_> {
         tree,
         key: k,
         value: None,
+        stamp: 0,
     }
 }
 
@@ -155,7 +157,7 @@ fn every_commit_returns_after_a_sync_covering_its_commit_frame() {
     for dir in test_dirs() {
         let d = dir.path();
         let fault = fault();
-        let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let scan = Mutex::new(DurableScan::new(d, 1, 0));
         let mut stamps = vec![1];
@@ -212,7 +214,7 @@ fn failed_wal_sync_fails_the_commit_and_every_later_operation_until_reopen() {
     for dir in test_dirs() {
         let d = dir.path();
         let fault = fault();
-        let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         for i in 0..5 {
@@ -253,7 +255,7 @@ fn enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds(
     for dir in test_dirs() {
         let d = dir.path();
         let fault = fault();
-        let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         e.commit(&[put(tree, b"stable", b"v")], Ids::default())
             .unwrap();
@@ -312,7 +314,7 @@ fn enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds(
 fn sixteen_threads_committing_disjoint_batches_apply_each_exactly_once() {
     for dir in test_dirs() {
         let d = dir.path();
-        let e = Engine::create(d, fault(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fault(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         std::thread::scope(|s| {
             for t in 0..16 {
@@ -388,7 +390,7 @@ fn enospc_in_the_apply_step_is_undone_and_the_database_stays_usable() {
     for dir in test_dirs() {
         let d = dir.path();
         let fault = fault();
-        let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         let medium = vec![5u8; 100_000];
@@ -448,7 +450,7 @@ fn enospc_in_the_apply_step_is_undone_and_the_database_stays_usable() {
 fn an_overrun_extends_the_file_under_the_latch() {
     for dir in test_dirs() {
         let d = dir.path();
-        let e = Engine::create(d, fault(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fault(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         use_up_reserve(&e, tree, &mut model, 600);
@@ -471,7 +473,7 @@ fn a_refused_memory_reservation_in_the_apply_step_is_undone() {
     for dir in test_dirs() {
         let d = dir.path();
         let cap = 4 << 20;
-        let e = Engine::create(d, fault(), cap, sink()).unwrap();
+        let e = Engine::create(d, fault(), cap, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         // About 60 leaves.
@@ -517,7 +519,7 @@ fn a_page_taken_by_an_undone_batch_waits_for_earlier_readers() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
     let mut model = Model::from([(b"a".to_vec(), b"1".to_vec())]);
@@ -563,7 +565,7 @@ fn a_page_taken_by_an_undone_batch_waits_for_earlier_readers() {
 fn commits_raise_counters_and_failed_commits_do_not() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
-    let e = Engine::create(d, fault(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let ids = Ids {
         next_element_id: 10,
@@ -625,7 +627,7 @@ fn audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     let medium = vec![5u8; 100_000];
@@ -706,11 +708,19 @@ fn audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data() {
 #[test]
 fn audit_a_failed_capture_never_reaches_the_wal() {
     use crate::storage::wal::segment_name;
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     let dir = test_dirs().remove(0);
     let d = dir.path().to_path_buf();
-    let e =
-        Arc::new(Engine::create(&d, crate::test_support::no_flush(), 256 << 20, sink()).unwrap());
+    let e = Arc::new(
+        Engine::create(
+            &d,
+            crate::test_support::no_flush(),
+            256 << 20,
+            crate::test_support::OWNER,
+            sink(),
+        )
+        .unwrap(),
+    );
     let tree = e.create_trees(1).unwrap()[0];
     let next = d.join(segment_name(1, SEGMENT_SPAN));
     assert!(!next.exists());
@@ -797,7 +807,7 @@ fn audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
@@ -833,7 +843,7 @@ fn audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable() {
 fn create_sets_the_page_lsn_in_the_write_that_zeroes_the_frame() {
     use crate::storage::page;
     let dir = test_dirs().remove(0);
-    let e = Engine::create(dir.path(), fault(), CAP, sink()).unwrap();
+    let e = Engine::create(dir.path(), fault(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let durable = e.wal().durable_lsn();
     let q = e.data().page_count();
     {
@@ -862,7 +872,7 @@ fn an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     use_up_reserve(&e, tree, &mut model, 600);
@@ -914,7 +924,7 @@ fn audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     use_up_reserve(&e, tree, &mut model, 600);
@@ -973,7 +983,7 @@ fn audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction() {
 #[test]
 fn a_panic_under_the_commit_latch_makes_the_database_unusable() {
     let dir = test_dirs().remove(0);
-    let e = Engine::create(dir.path(), fault(), CAP, sink()).unwrap();
+    let e = Engine::create(dir.path(), fault(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let durable = e.wal().durable_lsn();
     let seq = AtomicU64::new(0);
@@ -1022,7 +1032,7 @@ fn a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     let medium = vec![5u8; 100_000];
@@ -1099,7 +1109,7 @@ fn an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     use_up_reserve(&e, tree, &mut model, 600);
@@ -1182,7 +1192,14 @@ fn an_undone_batch_that_took_a_page_it_freed_restores_that_page() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), 4 << 20, sink()).unwrap();
+    let e = Engine::create(
+        d,
+        fault.clone(),
+        4 << 20,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let old = vec![5u8; 100_000];
     e.commit(&[put(tree, b"k1", &old)], Ids::default()).unwrap();
@@ -1216,7 +1233,7 @@ fn pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     let medium = vec![5u8; 100_000];
@@ -1375,7 +1392,7 @@ fn closed_loop(dir: &Path, threads: usize, n: usize) -> (Engine, Arc<RecordingSi
     use crate::obs::names::transaction_log::GROUPS;
     let sink = sink();
     let storage: Arc<dyn crate::storage::Storage> = Arc::new(SlowSync(Duration::from_millis(2)));
-    let e = Engine::create(dir, storage, CAP, sink.clone()).unwrap();
+    let e = Engine::create(dir, storage, CAP, crate::test_support::OWNER, sink.clone()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let before = sink.snapshot();
     std::thread::scope(|s| {
@@ -1429,9 +1446,11 @@ fn a_lone_committer_never_waits_in_a_gather_window() {
 /// held at its pause point they never return, and the test fails.
 #[test]
 fn commits_become_durable_while_a_segment_is_created_ahead_of_use() {
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     let dir = test_dirs().remove(0);
-    let e = Arc::new(Engine::create(dir.path(), fault(), CAP, sink()).unwrap());
+    let e = Arc::new(
+        Engine::create(dir.path(), fault(), CAP, crate::test_support::OWNER, sink()).unwrap(),
+    );
     let tree = e.create_trees(1).unwrap()[0];
     let value = [1u8; 400];
     let keys: Vec<Vec<u8>> = (0..2_000u32).map(|i| i.to_be_bytes().to_vec()).collect();
@@ -1443,15 +1462,16 @@ fn commits_become_durable_while_a_segment_is_created_ahead_of_use() {
     // Only the checkpointer thread's creation stops: a committer that had to
     // create the segment itself would block under the commit latch.
     let (entered_tx, entered) = mpsc::channel();
-    let release = Arc::new((Mutex::new(false), std::sync::Condvar::new()));
+    let release = Arc::new((Mutex::new(false), crate::sync::Condvar::new()));
     /// Releases the paused creation when dropped, also when an assertion
     /// below fails: otherwise the engine's drop would wait for the paused
     /// checkpointer forever and the test would hang instead of failing.
-    struct Release(Arc<(Mutex<bool>, std::sync::Condvar)>);
+    struct Release(Arc<(Mutex<bool>, crate::sync::Condvar)>);
     impl Drop for Release {
         fn drop(&mut self) {
             let (m, cv) = &*self.0;
-            *m.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = true;
+            *m.lock()
+                .unwrap_or_else(crate::sync::PoisonError::into_inner) = true;
             cv.notify_all();
         }
     }
@@ -1515,9 +1535,11 @@ fn commits_become_durable_while_a_segment_is_created_ahead_of_use() {
 /// 2). The interleaving is set by the points, without sleeps.
 #[test]
 fn a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit() {
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     let dir = test_dirs().remove(0);
-    let e = Arc::new(Engine::create(dir.path(), fault(), CAP, sink()).unwrap());
+    let e = Arc::new(
+        Engine::create(dir.path(), fault(), CAP, crate::test_support::OWNER, sink()).unwrap(),
+    );
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"k", b"0")], Ids::default()).unwrap();
     e.checkpoint().unwrap();
@@ -1532,8 +1554,10 @@ fn a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_th
         let revisit = Mutex::new(revisit);
         *e.wal().points.after_apply.lock().unwrap() = Some(Box::new(move || {
             // Under the commit latch, the page is changed and not durable.
+            // Steps 1-5 only: the statistics batch of step 0 is built under
+            // the commit latch, which this commit holds (TS-11).
             let e3 = Arc::clone(&e2);
-            let h = std::thread::spawn(move || e3.checkpoint());
+            let h = std::thread::spawn(move || crate::storage::checkpoint::run_open(e3.core()));
             revisit.lock().unwrap().recv().unwrap();
             *checkpoint.lock().unwrap() = Some(h);
         }));
@@ -1566,7 +1590,14 @@ fn audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc() {
     use crate::storage::fault::{Fault, Kind};
     let dir = test_dirs().remove(0);
     let f = fault();
-    let e = Engine::create(dir.path(), f.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        dir.path(),
+        f.clone(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"k", b"0")], Ids::default()).unwrap();
     {

@@ -10,9 +10,28 @@ exclude = ["docs/evidence/"]
 rustix = { version = "1.1.5", features = ["fs"] }
 crc32c = "0.6.8"
 rand = "0.10.3"
+# Temporal values (TS-21): IANA zones read from the operating system
+# (`tzdb-zoneinfo`, /usr/share/zoneinfo or TZDIR); jiff bundles no zone
+# rules. Zone links are fixed in `src/types/zone_links.rs`.
+jiff = { version = "0.2.38", default-features = false, features = ["std", "tzdb-zoneinfo"] }
 
 [dev-dependencies]
 tempfile = "3.27.0"
+# Replaces the global allocator of the test binary with one that counts
+# the current thread's heap use (peak bytes of a closure). The crate
+# forbids `unsafe`, so it cannot define its own `GlobalAlloc`.
+allocation-counter = "0.8.1"
+
+# Concurrency model checkers (TS-30 Concurrency, R11), compiled only under
+# their `cfg`: `RUSTFLAGS="--cfg loom"` or `RUSTFLAGS="--cfg shuttle"`.
+[target.'cfg(loom)'.dev-dependencies]
+loom = "0.7.2"
+
+[target.'cfg(shuttle)'.dev-dependencies]
+shuttle = "0.9.5"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)', 'cfg(shuttle)'] }
 
 [profile.lab]
 inherits = "release"

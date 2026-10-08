@@ -44,11 +44,11 @@
 //!   shrinking or removing files returns nothing.
 //! - Every call is logged in order.
 
+use crate::sync::{Arc, Mutex, MutexGuard};
 use std::collections::{BTreeMap, HashMap};
 use std::ffi::{OsStr, OsString};
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, MutexGuard};
 
 use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};

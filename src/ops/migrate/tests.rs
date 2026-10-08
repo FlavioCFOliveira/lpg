@@ -1,5 +1,5 @@
+use crate::sync::Arc;
 use std::collections::BTreeMap;
-use std::sync::Arc;
 
 use super::*;
 use crate::obs::recording::RecordingSink;
@@ -91,7 +91,7 @@ pub(crate) fn closed_database(
     dir: &Path,
     storage: Arc<dyn Storage>,
 ) -> (Tree, BTreeMap<Vec<u8>, Vec<u8>>, Control) {
-    let e = Engine::create(dir, storage, CAP, sink()).unwrap();
+    let e = Engine::create(dir, storage, CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let keys: Vec<[u8; 4]> = (0..2_000u32).map(u32::to_be_bytes).collect();
     for (n, chunk) in keys.chunks(400).enumerate() {
@@ -101,6 +101,7 @@ pub(crate) fn closed_database(
                 tree,
                 key: k,
                 value: Some(&[3; 200]),
+                stamp: 0,
             })
             .collect();
         e.commit(
@@ -214,7 +215,14 @@ fn too_little_space_fails_before_any_write() {
 #[test]
 fn an_open_database_is_not_migrated() {
     let dir = test_dirs().remove(0);
-    let e = Engine::create(dir.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        dir.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let r = migrate_with(dir.path(), &FsStorage, &TEST_FORMATS);
     assert!(matches!(r, Err(Error::Locked)), "{:?}", r.err());
     drop(e);

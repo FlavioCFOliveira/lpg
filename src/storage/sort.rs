@@ -202,7 +202,7 @@ impl Engine {
         let core = self.core();
         let n = core
             .sorts
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            .fetch_add(1, crate::sync::atomic::Ordering::Relaxed);
         Sorter::new(
             &*core.storage,
             &core.location,

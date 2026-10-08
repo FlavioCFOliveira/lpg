@@ -1,6 +1,7 @@
-//! Recovery at open: TS-13 steps 4, 5 and 6. Step 8 (the open checkpoint)
-//! runs in [`super::engine`]; step 7 (the old-version store) arrives with
-//! MVCC in Sprint 2.
+//! Recovery at open: TS-13 steps 4, 5 and 6. Step 7 is the engine's: it
+//! starts with an empty old-version store ([`crate::tx::mvcc::Mvcc`]);
+//! loading the statistics comes with them (rmp #32). Step 8 (the open
+//! checkpoint) runs in [`super::engine`].
 //!
 //! - **Step 4.** The segments of the generation are checked against the
 //!   redo point R: the segment holding R exists unless the log is empty

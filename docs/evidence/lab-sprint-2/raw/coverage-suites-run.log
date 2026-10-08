@@ -1,0 +1,3 @@
+$ LPG_LAB_EXT4=/data/tmp/lpg-lab cargo llvm-cov nextest -p lpg --no-report -E "test(/^suites::/)"
+     Summary [ 146.382s] 14 tests run: 14 passed (2 slow), 383 skipped
+exit=0

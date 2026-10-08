@@ -1,0 +1,12 @@
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.02s
+     Running unittests src/lib.rs (target/shuttle/debug/deps/lpg-ef736d29a66b210d)
+
+running 4 tests
+test storage::memory::tests::shuttle_concurrent_charges_never_exceed_the_cap ... ok
+test storage::graph::tests::shuttle_graph_writers_and_checkpoints_keep_the_statistics_exact ... ok
+test tx::tests::shuttle::shuttle_batches_and_checkpoints_under_random_schedules ... ok
+test tx::tests::shuttle::shuttle_commits_and_checkpoints_under_random_schedules ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 275 filtered out; finished in 18.96s
+
+exit 0

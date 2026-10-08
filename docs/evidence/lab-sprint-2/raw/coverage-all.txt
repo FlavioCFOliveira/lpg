@@ -1,0 +1,312 @@
+TOTAL src/catalog/mod.rs lines 693/752 (92.2%) regions 1231/1371 (89.8%)
+TOTAL src/catalog/stats.rs lines 164/179 (91.6%) regions 290/322 (90.1%)
+TOTAL src/index/build.rs lines 405/434 (93.3%) regions 737/818 (90.1%)
+TOTAL src/index/mod.rs lines 830/909 (91.3%) regions 1467/1615 (90.8%)
+TOTAL src/index/side.rs lines 42/43 (97.7%) regions 57/59 (96.6%)
+TOTAL src/tx/commit.rs lines 345/360 (95.8%) regions 619/648 (95.5%)
+TOTAL src/tx/conflict.rs lines 187/189 (98.9%) regions 372/380 (97.9%)
+TOTAL src/tx/gc.rs lines 177/177 (100.0%) regions 314/319 (98.4%)
+TOTAL src/tx/lock.rs lines 188/191 (98.4%) regions 347/354 (98.0%)
+TOTAL src/tx/mod.rs lines 391/433 (90.3%) regions 713/816 (87.4%)
+TOTAL src/tx/mvcc.rs lines 42/50 (84.0%) regions 65/76 (85.5%)
+TOTAL src/tx/versions.rs lines 122/125 (97.6%) regions 246/250 (98.4%)
+DIR src/tx/ lines 1452/1525 (95.2%) regions 2676/2843 (94.1%)
+DIR src/catalog/ lines 857/931 (92.1%) regions 1521/1693 (89.8%)
+DIR src/index/ lines 1277/1386 (92.1%) regions 2261/2492 (90.7%)
+UNREACHED_ERROR_BRANCHES 295 (lines; zero-count error regions in inline test modules excluded: 2)
+PER_FILE src/catalog/mod.rs 81, src/catalog/stats.rs 21, src/index/build.rs 51, src/index/mod.rs 85, src/index/side.rs 2, src/tx/commit.rs 12, src/tx/conflict.rs 1, src/tx/gc.rs 4, src/tx/mod.rs 38
+src/catalog/mod.rs:246: Some(u64::from_le_bytes(b.try_into().ok()?))
+src/catalog/mod.rs:254: let parent = u64::from_be_bytes(key[1..9].try_into().ok()?);
+src/catalog/mod.rs:255: let name = String::from_utf8(key[9..].to_vec()).ok()?;
+src/catalog/mod.rs:256: let kind = Kind::from_byte(*value.first()?)?;
+src/catalog/mod.rs:257: let id = le(value.get(1..9)?)?;
+src/catalog/mod.rs:262: let b = *value.get(at)?;
+src/catalog/mod.rs:273: let n = usize::try_from(n).ok()?;
+src/catalog/mod.rs:274: let owner = String::from_utf8(value.get(at..at.checked_add(n)?)?.to_vec()).ok()?;
+src/catalog/mod.rs:280: nodes: le(&rest[0..8])?,
+src/catalog/mod.rs:281: edges: le(&rest[8..16])?,
+src/catalog/mod.rs:282: adj: le(&rest[16..24])?,
+src/catalog/mod.rs:283: graph_type: le(&rest[24..32])?,
+src/catalog/mod.rs:305: Some((le(v.get(..8)?)?, String::from_utf8(v[8..].to_vec()).ok()?))
+src/catalog/mod.rs:501: let id = create()?;
+src/catalog/mod.rs:562: .tree(CATALOG_TREE)?
+src/catalog/mod.rs:563: .ok_or_else(|| Error::Corruption("the catalog tree is missing".into()))
+src/catalog/mod.rs:586: })?;
+src/catalog/mod.rs:597: })?;
+src/catalog/mod.rs:636: let Some(tree) = store.tree(CATALOG_TREE)? else {
+src/catalog/mod.rs:640: let Some((objects, schema)) = definitions(store, tree)? else {
+src/catalog/mod.rs:695: })?;
+src/catalog/mod.rs:720: let tree = catalog_tree(&store)?;
+src/catalog/mod.rs:721: let defs = definitions(&store, tree)?;
+src/catalog/mod.rs:737: })?;
+src/catalog/mod.rs:741: return Err(core
+src/catalog/mod.rs:743: .fail(Error::Corruption("malformed catalog entry".into())));
+src/catalog/mod.rs:748: let st = stats::load(core)?;
+src/catalog/mod.rs:752: let counts = crate::storage::graph::recount(core)?;
+src/catalog/mod.rs:802: ))?;
+src/catalog/mod.rs:813: ))?;
+src/catalog/mod.rs:824: e.stats = crate::storage::graph::stats_delta(core, store, tx)?;
+src/catalog/mod.rs:876: return Err(Error::InvalidArgument(
+src/catalog/mod.rs:882: let id = core.ids.token()?;
+src/catalog/mod.rs:883: let tree = catalog_tree(&self.store())?;
+src/catalog/mod.rs:894: self.commit(&batch, core.ids.current())?;
+src/catalog/mod.rs:933: let t = self.catalog_tree()?;
+src/catalog/mod.rs:935: match self.get(t, &key)? {
+src/catalog/mod.rs:939: .ok_or_else(|| Error::Corruption("malformed catalog name entry".into())),
+src/catalog/mod.rs:950: let t = self.catalog_tree()?;
+src/catalog/mod.rs:955: .ok_or_else(|| Error::Corruption("malformed catalog reverse entry".into()))?;
+src/catalog/mod.rs:965: let t = self.catalog_tree()?;
+src/catalog/mod.rs:974: })?;
+src/catalog/mod.rs:976: return Err(Error::Corruption("malformed catalog name entry".into()));
+src/catalog/mod.rs:988: let t = self.catalog_tree()?;
+src/catalog/mod.rs:992: let Some(v) = self.get(t, &reverse_key(at))? else {
+src/catalog/mod.rs:996: .ok_or_else(|| Error::Corruption("malformed catalog reverse entry".into()))?;
+src/catalog/mod.rs:999: return Err(Error::Corruption("a cycle of catalog parents".into()));
+src/catalog/mod.rs:1013: let t = self.catalog_tree()?;
+src/catalog/mod.rs:1020: })?;
+src/catalog/mod.rs:1023: if self.object(id)?.is_some_and(|o| o.kind == Kind::Graph) {
+src/catalog/mod.rs:1039: let Some(o) = self.lookup(parent, name)? else {
+src/catalog/mod.rs:1057: self.check_active()?;
+src/catalog/mod.rs:1064: return Err(Error::InvalidArgument(
+src/catalog/mod.rs:1068: let t = self.catalog_tree()?;
+src/catalog/mod.rs:1074: let Some(p) = self.object(parent)? else {
+src/catalog/mod.rs:1087: if self.get(t, &key)?.is_some() {
+src/catalog/mod.rs:1093: Err(e) => return Err(self.abort_with(e)),
+src/catalog/mod.rs:1103: self.put(t, &key, &encode_object(&o))?;
+src/catalog/mod.rs:1104: self.put(t, &reverse_key(id), &reverse_value(parent, name))?;
+src/catalog/mod.rs:1173: match tx.object(gt)? {
+src/catalog/mod.rs:1177: let t = tx.catalog_tree()?;
+src/catalog/mod.rs:1180: _ => return Err(Error::NotFound("the graph type")),
+src/catalog/mod.rs:1183: let nodes = tx.create_tree(Keys::Prefix)?.id();
+src/catalog/mod.rs:1184: let edges = tx.create_tree(Keys::Prefix)?.id();
+src/catalog/mod.rs:1185: let adj = tx.create_tree(Keys::Fields)?.id();
+src/catalog/mod.rs:1212: self.check_active()?;
+src/catalog/mod.rs:1213: let t = self.catalog_tree()?;
+src/catalog/mod.rs:1215: self.lock_key(t, &key, Mode::X)?;
+src/catalog/mod.rs:1216: let Some(o) = self.lookup(parent, name)? else {
+src/catalog/mod.rs:1221: if !self.children(o.id)?.is_empty() {
+src/catalog/mod.rs:1232: self.drop_graph_schema(o.id)?;
+src/catalog/mod.rs:1235: let tree = self.tree(id)?;
+src/catalog/mod.rs:1236: self.drop_tree(tree)?;
+src/catalog/mod.rs:1244: self.delete(t, &key)?;
+src/catalog/mod.rs:1245: self.delete(t, &reverse_key(o.id))?;
+src/catalog/mod.rs:1265: })?;
+src/catalog/mod.rs:1300: if let Err(e) = r {
+src/catalog/mod.rs:1301: return Err(self.abort_with(e));
+src/catalog/mod.rs:1310: )?;
+src/catalog/mod.rs:1314: Err(e) => return Err(self.abort_with(e)),
+src/catalog/mod.rs:1333: self.check_active()?;
+src/catalog/stats.rs:125: let be = |at: usize| Some(u64::from_be_bytes(k.get(at..at + 8)?.try_into().ok()?));
+src/catalog/stats.rs:128: graph: be(1)?,
+src/catalog/stats.rs:129: label: be(9)?,
+src/catalog/stats.rs:132: graph: be(1)?,
+src/catalog/stats.rs:133: label: be(9)?,
+src/catalog/stats.rs:134: ty: be(17)?,
+src/catalog/stats.rs:138: graph: be(1)?,
+src/catalog/stats.rs:139: index: be(9)?,
+src/catalog/stats.rs:266: let tree = store.tree(STATS_TREE)?.ok_or_else(|| {
+src/catalog/stats.rs:268: .fail(Error::Corruption("the statistics tree is missing".into()))
+src/catalog/stats.rs:269: })?;
+src/catalog/stats.rs:282: })?;
+src/catalog/stats.rs:284: return Err(core
+src/catalog/stats.rs:286: .fail(Error::Corruption("malformed statistics entry".into())));
+src/catalog/stats.rs:303: core.health.check()?;
+src/catalog/stats.rs:305: let tree = store.tree(STATS_TREE)?.ok_or_else(|| {
+src/catalog/stats.rs:307: .fail(Error::Corruption("the statistics tree is missing".into()))
+src/catalog/stats.rs:308: })?;
+src/catalog/stats.rs:312: core.data.ensure(4 + n / 128)?;
+src/catalog/stats.rs:314: core.health.check()?;
+src/catalog/stats.rs:330: store.apply_batch(&mut st, Some(&core.wal), &batch, 0)?;
+src/index/build.rs:208: })?;
+src/index/build.rs:237: spawn(engine, id)?;
+src/index/build.rs:282: let Some(elements) = element_tree(core, def.graph, def.entity)? else {
+src/index/build.rs:294: let t = tree_of(&store, def.tree)?;
+src/index/build.rs:295: let t = if store.is_empty_leaf(t)? {
+src/index/build.rs:315: let records = read_side(&store, side_tree, &from, CHUNK)?;
+src/index/build.rs:325: )?;
+src/index/build.rs:339: let (entries, distinct) = super::count(&store, t)?;
+src/index/build.rs:345: let mut tx = e.begin(Isolation::Serializable)?;
+src/index/build.rs:346: let Some(mut cur) = tx.schema_def(def.graph, index)? else {
+src/index/build.rs:354: let cat = tx.tree(CATALOG_TREE)?;
+src/index/build.rs:355: tx.put(cat, &schema_key(def.graph, index), &cur.encode())?;
+src/index/build.rs:356: let s = tx.tree(def.side)?;
+src/index/build.rs:357: tx.drop_tree(s)?;
+src/index/build.rs:395: let mut sorter = e.sorter(sort_memory(core))?;
+src/index/build.rs:407: err = Some(Error::Corruption("malformed record".into()));
+src/index/build.rs:411: if let Err(x) = sorter.push(&key, &[]) {
+src/index/build.rs:417: })?;
+src/index/build.rs:419: return Err(x);
+src/index/build.rs:425: let mut sorted = sorter.finish()?;
+src/index/build.rs:481: core.data.ensure(store.estimate(&batch, 0)?)?;
+src/index/build.rs:560: let Some((k, v)) = self.sorted.next_record()? else {
+src/index/build.rs:598: return Err(Error::InvalidArgument("not an index kind"));
+src/index/build.rs:600: validate(self, kind, entity, token, props)?;
+src/index/build.rs:601: let mut tx = self.begin(Isolation::Serializable)?;
+src/index/build.rs:602: tx.lock_graph(graph)?;
+src/index/build.rs:603: let tree = tx.create_tree(Keys::Prefix)?.id();
+src/index/build.rs:604: let side_tree = tx.create_tree(Keys::Prefix)?.id();
+src/index/build.rs:607: Err(e) => return Err(tx.abort_with(e)),
+src/index/build.rs:621: let cat = tx.tree(CATALOG_TREE)?;
+src/index/build.rs:622: tx.put(cat, &schema_key(graph, id), &def.encode())?;
+src/index/build.rs:624: spawn(self, id)?;
+src/index/build.rs:642: h.join().map_err(|_| Error::Unusable)??;
+src/index/build.rs:669: return Err(Error::InvalidArgument("not a constraint kind"));
+src/index/build.rs:671: validate(self, kind, entity, token, props)?;
+src/index/build.rs:674: let mut tx = self.begin(Isolation::Serializable)?;
+src/index/build.rs:675: let g = tx.lock_graph(graph)?;
+src/index/build.rs:676: tx.lock_resource(Resource::Schema { graph, token }, Mode::X)?;
+src/index/build.rs:680: Err(e) => Err(tx.abort_with(e)),
+src/index/build.rs:682: let id = draw(&mut tx)?;
+src/index/build.rs:685: id: draw(&mut tx)?,
+src/index/build.rs:718: Some(_) => Some(self.sorter(sort_memory(core))?),
+src/index/build.rs:727: err = Some(Error::Corruption("malformed record".into()));
+src/index/build.rs:739: if let Err(x) = s.push(&key, &[]) {
+src/index/build.rs:746: })?;
+src/index/build.rs:750: let cat = tx.tree(CATALOG_TREE)?;
+src/index/build.rs:751: tx.put(cat, &schema_key(graph, id), &def.encode())?;
+src/index/build.rs:753: tx.commit()?;
+src/index/build.rs:756: tx.put(cat, &schema_key(graph, ix.id), &ix.encode())?;
+src/index/build.rs:757: let mut source = UniqueSorted::new(sorter.expect("made with owned").finish()?);
+src/index/build.rs:766: tx.commit_installing(built)?;
+src/index/mod.rs:176: let b = u32::try_from(bits).ok()?;
+src/index/mod.rs:257: (6, 0) => SchemaKind::Type(TypeSet::from_bits(types)?),
+src/index/mod.rs:320: Some(u64::from_le_bytes(b.get(at..at + 8)?.try_into().ok()?))
+src/index/mod.rs:359: kind: SchemaKind::from_bytes(v[0], v[1], le(v, 36)?)?,
+src/index/mod.rs:370: token: le(v, 4)?,
+src/index/mod.rs:371: tree: le(v, 12)?,
+src/index/mod.rs:372: side: le(v, 20)?,
+src/index/mod.rs:373: link: le(v, 28)?,
+src/index/mod.rs:377: .collect::<Option<_>>()?,
+src/index/mod.rs:408: let (tokens, props) = record::decode(v)?;
+src/index/mod.rs:412: let EdgeRecord { ty, props, .. } = decode_edge(v)?;
+src/index/mod.rs:486: element_of(key.get(key.len().checked_sub(8)?..)?)
+src/index/mod.rs:501: })?;
+src/index/mod.rs:508: .ok_or_else(|| Error::Corruption(format!("index tree {id} is missing")))
+src/index/mod.rs:607: let before = live_with_prefix(store, tree, p, &none)?;
+src/index/mod.rs:609: added.iter().any(|k| prefix_of(k) == p) || live_with_prefix(store, tree, p, removed)?;
+src/index/mod.rs:626: match store.get_stamped(tree, key, buf)? {
+src/index/mod.rs:629: .ok_or_else(|| Error::Corruption("malformed record".into())),
+src/index/mod.rs:676: if !seen.insert(p) || live_with_prefix(store, tree, p, &change.removed)? {
+src/index/mod.rs:702: switch(core, store, on, &mut d)?;
+src/index/mod.rs:732: element_of(key).ok_or(Error::InvalidArgument("a malformed element key"))?;
+src/index/mod.rs:733: let old = committed_element(store, tree, entity, key, &mut buf)?;
+src/index/mod.rs:737: .ok_or(Error::InvalidArgument("a malformed record"))?,
+src/index/mod.rs:758: return Err(Error::InvalidArgument(
+src/index/mod.rs:779: && unique_violation(store, tree_of(store, ix.tree)?, change)?
+src/index/mod.rs:791: let side_tree = tree_of(store, def.side)?;
+src/index/mod.rs:806: ))?;
+src/index/mod.rs:810: let t = tree_of(store, def.tree)?;
+src/index/mod.rs:811: index_stats(store, def, t, &c.added, &c.removed, &mut d.stats)?;
+src/index/mod.rs:898: .get_stamped(self.tree, key, &mut v)?
+src/index/mod.rs:938: Ok(_) => bad = Some(Error::Corruption("malformed side-tree key".into())),
+src/index/mod.rs:939: Err(e) => bad = Some(e),
+src/index/mod.rs:942: })?;
+src/index/mod.rs:944: Some(e) => Err(e),
+src/index/mod.rs:955: return Err(Error::NotFound("a POPULATING index"));
+src/index/mod.rs:957: let t = tree_of(store, def.tree)?;
+src/index/mod.rs:958: let records = read_side(store, tree_of(store, def.side)?, &on.from, usize::MAX)?;
+src/index/mod.rs:963: )?;
+src/index/mod.rs:970: index_stats(store, &def, t, &c.added, &c.removed, &mut d.stats)?;
+src/index/mod.rs:994: })?;
+src/index/mod.rs:1011: let (entries, distinct) = count(&store, tree_of(&store, def.tree)?)?;
+src/index/mod.rs:1044: let Some(elements) = element_tree(core, def.graph, def.entity)? else {
+src/index/mod.rs:1051: let Some(t) = store.tree(def.tree)? else {
+src/index/mod.rs:1075: Err(e) => {
+src/index/mod.rs:1082: })?;
+src/index/mod.rs:1084: return Err(e);
+src/index/mod.rs:1100: Err(e) => {
+src/index/mod.rs:1106: })?;
+src/index/mod.rs:1108: return Err(e);
+src/index/mod.rs:1125: let t = self.tree(CATALOG_TREE)?;
+src/index/mod.rs:1127: match self.get(t, &k)? {
+src/index/mod.rs:1131: .ok_or_else(|| Error::Corruption("malformed index definition".into())),
+src/index/mod.rs:1141: let t = self.tree(CATALOG_TREE)?;
+src/index/mod.rs:1150: })?;
+src/index/mod.rs:1152: return Err(Error::Corruption("malformed index definition".into()));
+src/index/mod.rs:1159: match self.schema_def(g.id, id)? {
+src/index/mod.rs:1161: let t = self.tree(def.tree)?;
+src/index/mod.rs:1197: })?;
+src/index/mod.rs:1212: let old = self.read_committed(elements, &k)?;
+src/index/mod.rs:1248: let (def, _) = self.online_index(g, id)?;
+src/index/mod.rs:1250: return Err(Error::InvalidArgument("not a point index"));
+src/index/mod.rs:1261: candidates.extend(self.index_scan(g, id, &from, to.as_deref())?);
+src/index/mod.rs:1270: let Some(v) = self.get(tree, &element_key(e))? else {
+src/index/mod.rs:1274: .ok_or_else(|| Error::Corruption("malformed record".into()))?;
+src/index/mod.rs:1333: )?;
+src/index/mod.rs:1337: Err(e) => return Err(self.abort_with(e)),
+src/index/mod.rs:1353: if let Err(e) = r {
+src/index/mod.rs:1354: return Err(self.abort_with(e));
+src/index/mod.rs:1379: self.check_active()?;
+src/index/mod.rs:1380: let Some(def) = self.schema_def(graph, id)? else {
+src/index/mod.rs:1384: return Err(Error::InvalidArgument(
+src/index/mod.rs:1390: && let Some(ix) = self.schema_def(graph, def.link)?
+src/index/mod.rs:1394: let t = self.tree(CATALOG_TREE)?;
+src/index/mod.rs:1396: self.lock_key(t, &schema_key(graph, d.id), Mode::X)?;
+src/index/mod.rs:1397: self.delete(t, &schema_key(graph, d.id))?;
+src/index/mod.rs:1400: let tr = self.tree(tree)?;
+src/index/mod.rs:1401: self.drop_tree(tr)?;
+src/index/mod.rs:1415: for d in self.schema_defs(graph)? {
+src/index/mod.rs:1417: self.drop_schema(graph, d.id)?;
+src/index/mod.rs:1427: let Some(o) = self.object(graph)? else {
+src/index/mod.rs:1428: return Err(Error::NotFound("the graph"));
+src/index/mod.rs:1431: return Err(Error::NotFound("the graph"));
+src/index/mod.rs:1433: let t = self.tree(CATALOG_TREE)?;
+src/index/mod.rs:1434: self.lock_key(t, &name_key(o.parent, &o.name), Mode::S)?;
+src/index/mod.rs:1469: Err(Error::InvalidArgument(
+src/index/side.rs:73: _ => Err(Error::Corruption("malformed side-tree record".into())),
+src/index/side.rs:102: let present = target.present(key)?;
+src/tx/commit.rs:98: return Err(Error::InvalidArgument("identifier counter exhausted"));
+src/tx/commit.rs:174: Ok(self.commit_with(&[], n, Ids::default())?.trees)
+src/tx/commit.rs:200: self.reserve_space(&store, batch, new_trees)?;
+src/tx/commit.rs:224: core.data.ensure(store.estimate(batch, new_trees)?)?;
+src/tx/commit.rs:335: core.health.check()?;
+src/tx/commit.rs:351: )?;
+src/tx/commit.rs:465: Err(e) => {
+src/tx/commit.rs:466: r = Err(e);
+src/tx/commit.rs:479: Err(e) => {
+src/tx/commit.rs:480: r = Err(e);
+src/tx/commit.rs:500: Err(e) => {
+src/tx/commit.rs:501: r = Err(e);
+src/tx/conflict.rs:114: Err(e) => return Err(e),
+src/tx/gc.rs:68: core.health.check()?;
+src/tx/gc.rs:80: core.data.ensure(4 + queued as u64 / 512)?;
+src/tx/gc.rs:181: if let Some(stamps) = store.get_stamped(*t, k, &mut v)?
+src/tx/gc.rs:190: if let Some((tree, d)) = store.tree_status(t.id())?
+src/tx/mod.rs:160: core.health.check()?;
+src/tx/mod.rs:281: Err(e) => Err(self.fail(e)),
+src/tx/mod.rs:297: Err(Error::TreeDropped(tree.id()))
+src/tx/mod.rs:305: self.record(DIRECTORY, Interval::point(&tree.id().to_be_bytes()))?;
+src/tx/mod.rs:308: self.lock(Resource::Tree(tree.id()), Mode::S)?;
+src/tx/mod.rs:312: Err(e) => return Err(self.fail(e)),
+src/tx/mod.rs:321: return Err(self.fail(Error::Serialization));
+src/tx/mod.rs:342: self.active()?;
+src/tx/mod.rs:361: Ok(None) => Err(Error::TreeDropped(id)),
+src/tx/mod.rs:362: Err(e) => Err(self.fail(e)),
+src/tx/mod.rs:374: self.active()?;
+src/tx/mod.rs:388: self.active()?;
+src/tx/mod.rs:389: self.use_tree(tree, mode == Mode::X)?;
+src/tx/mod.rs:399: )?;
+src/tx/mod.rs:411: Err(e) => return Err(self.fail(e)),
+src/tx/mod.rs:442: Err(e) => return Err(self.fail(e)),
+src/tx/mod.rs:473: self.record(tree, Interval::point(key))?;
+src/tx/mod.rs:490: self.active()?;
+src/tx/mod.rs:491: self.use_tree(tree, false)?;
+src/tx/mod.rs:529: self.active()?;
+src/tx/mod.rs:537: )?;
+src/tx/mod.rs:564: if let Err(e) = r {
+src/tx/mod.rs:565: return Err(self.fail(e));
+src/tx/mod.rs:614: return Err(Error::InvalidArgument("key longer than 1 024 bytes"));
+src/tx/mod.rs:616: self.use_tree(tree, true)?;
+src/tx/mod.rs:621: self.reserve(WriteKeys::charge_of(key))?;
+src/tx/mod.rs:637: self.reserve(before + WriteKeys::charge_of(key))?;
+src/tx/mod.rs:642: Ok(self.read_committed(tree, key)?.is_some())
+src/tx/mod.rs:684: self.active()?;
+src/tx/mod.rs:685: self.use_tree(tree, false)?;
+src/tx/mod.rs:686: self.record(tree, Interval::point(key))?;
+src/tx/mod.rs:691: if own.is_none() && self.read_committed(tree, key)?.is_none() {
+src/tx/mod.rs:716: self.active()?;
+src/tx/mod.rs:720: return Err(Error::TreeDropped(tree.id()));
+src/tx/mod.rs:735: self.lock(Resource::Tree(tree.id()), Mode::X)?;
+src/tx/mod.rs:736: self.use_tree(tree, true)?;
+src/tx/mod.rs:738: self.reserve(WriteKeys::charge_of(&key) + WRITE_OVERHEAD + 16)?;
+src/tx/mod.rs:778: self.active()?;

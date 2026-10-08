@@ -1,0 +1,17 @@
+9:#![forbid(unsafe_code)]
+src/ops/restore/tests.rs:633:    let ino = std::fs::metadata(&lock).unwrap().ino();
+src/ops/restore/tests.rs:634:    assert_eq!(std::fs::metadata(&lock).unwrap().len(), 0);
+src/ops/restore/tests.rs:659:    assert_eq!(std::fs::metadata(&lock).unwrap().ino(), ino);
+src/suites/kill.rs:358:                std::fs::create_dir(&target).unwrap();
+src/suites/kill.rs:362:                std::fs::remove_dir_all(&target).unwrap();
+src/storage/fs.rs:8:use std::fs::{self, File, OpenOptions};
+src/storage/fs.rs:35:        let file = OpenOptions::new().read(true).write(true).open(path)?;
+src/storage/fs.rs:40:        let file = OpenOptions::new()
+src/storage/fs.rs:65:        File::open(dir)?.sync_all()
+src/storage/fs.rs:69:        let file = File::open(path)?;
+src/storage/fs.rs:75:        let stat = fstatvfs(File::open(dir)?)?;
+src/storage/fs.rs:266:                let raw = File::open(&path).unwrap();
+src/test_support/history.rs:171:            let _ = std::fs::remove_file(&self.path);
+src/test_support/history.rs:207:    std::fs::create_dir_all(&dir).expect("create target/lpg-histories");
+src/test_support/history.rs:209:    std::fs::write(&path, edn).expect("write the history");
+src/test_support/mod.rs:102:    std::fs::create_dir_all(GRAPH_DIR).expect("create /tmp/lpgram");

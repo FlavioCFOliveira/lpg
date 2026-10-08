@@ -14,9 +14,9 @@
 //!
 //! `iostat -x` and `strace -c` run alongside (see the report).
 
+use crate::sync::Arc;
+use crate::sync::atomic::{AtomicBool, Ordering};
 use std::fmt::Write as _;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
 use rand::rngs::StdRng;
@@ -79,7 +79,14 @@ fn backup() {
         let n = (gib << 30) / 440;
         let dir = tempfile::tempdir_in(&base).unwrap();
         let sink = Arc::new(RecordingSink::default());
-        let e = Engine::create(dir.path(), Arc::new(FsStorage), CAP, sink.clone()).unwrap();
+        let e = Engine::create(
+            dir.path(),
+            Arc::new(FsStorage),
+            CAP,
+            crate::test_support::OWNER,
+            sink.clone(),
+        )
+        .unwrap();
         let tree = e
             .bulk_build(&mut Counting {
                 n,
@@ -95,6 +102,7 @@ fn backup() {
                     tree,
                     key: &k,
                     value: Some(&[2; 400]),
+                    stamp: 0,
                 }],
                 Ids::default(),
             )

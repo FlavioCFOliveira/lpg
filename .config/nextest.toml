@@ -7,9 +7,34 @@
 #
 #     cargo nextest run -p lpg --profile stress
 #
-# The default profile is unchanged.
+# The default profile caps the tests that use the most space in
+# `/tmp/lpgram` (test group `disk-heavy`, below).
 
 experimental = ["wrapper-scripts"]
+
+# The modules whose tests use the most space in `/tmp/lpgram`: each test
+# was measured alone (`du -sk` every 20 ms, 2026-10-08); these modules
+# hold all 35 tests that peak at 60 MiB or more (largest 274 MiB). At most
+# three of their 89 tests run at once, which bounds the peak space of a
+# default run in `/tmp/lpgram`, on a `/tmp` that enforces user quotas: the
+# three largest with the thirteen largest other tests sum to 990 MiB.
+[test-groups]
+disk-heavy = { max-threads = 3 }
+
+# A hung test fails the run: it is killed after 10 periods of 60 s. The
+# slowest legitimate test, `suites::fault::restore_` in full on both lab
+# file systems, took 189.9 s (2026-10-08, docs/evidence/lab-sprint-2).
+[profile.default]
+slow-timeout = { period = "60s", terminate-after = 10 }
+
+[[profile.default.overrides]]
+filter = '''
+test(/^ops::(backup|migrate|restore)::/)
+| test(/^storage::(btree::bulk|checkpoint|recovery)::/)
+| test(/^suites::/)
+| test(/^tx::commit::/)
+'''
+test-group = "disk-heavy"
 
 [scripts.wrapper.copies]
 command = { command-line = ".config/stress-copies.sh", relative-to = "workspace-root" }
@@ -36,6 +61,45 @@ test(=obs::recording::tests::concurrent_calls_are_all_recorded)
 | test(=tx::commit::tests::four_closed_loop_committers_share_one_flush)
 | test(=tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable)
 | test(=tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once)
+| test(/^tx::lock::tests::threads::/)
+| test(=tx::tests::mvcc::a_paused_commit_is_invisible_until_published_then_wholly_visible)
+| test(=tx::tests::isolation::a_writer_waits_for_a_held_lock_and_continues_when_its_holder_ends)
+| test(=tx::tests::isolation::a_closed_wait_cycle_aborts_the_requester_with_deadlock)
+| test(=tx::tests::isolation::reads_never_wait_for_writers_or_the_commit_latch)
+| test(=tx::tests::isolation::sixteen_threads_with_disjoint_writes_all_commit_and_survive_reopen)
+| test(=tx::tests::hermitage::g0_write_cycles_are_prevented)
+| test(=tx::tests::hermitage::otv_observed_transaction_vanishes_is_prevented)
+| test(=tx::tests::hermitage::pmp_predicate_many_preceders_is_prevented)
+| test(=tx::tests::hermitage::p4_lost_update_is_prevented)
+| test(=tx::tests::gc::the_collector_frees_old_versions_after_commits)
+| test(=tx::tests::gc::after_a_crash_the_collector_finds_the_garbage_again)
+| test(=tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_list_append_histories)
+| test(=tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_rw_register_histories)
+| test(=tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_graph_histories)
+| test(=catalog::tests::catalog::two_concurrent_creators_of_one_graph_name_exactly_one_commits_at_both_levels)
+| test(=catalog::tests::catalog::two_concurrent_creators_of_one_label_get_one_token_that_survives_reopen)
+| test(=catalog::tests::catalog::a_schema_dropped_while_a_graph_is_created_in_it_leaves_no_orphan)
+| test(=catalog::tests::catalog::a_graph_type_dropped_while_a_graph_of_it_is_created_leaves_no_dangling_type)
+| test(=storage::graph::tests::graph::the_integrity_check_reports_nothing_while_edges_change_and_are_collected)
+| test(=storage::graph::tests::graph::sixteen_threads_creating_disjoint_nodes_and_edges_all_commit_and_survive_reopen)
+| test(=storage::graph::tests::graph::an_edge_to_a_node_deleted_concurrently_fails_or_waits_and_leaves_no_dangling_entry)
+| test(=storage::graph::tests::graph::an_expansion_at_a_snapshot_returns_exactly_the_live_edges_of_its_direction_and_type)
+| test(=index::tests::index::eight_writers_commit_while_a_build_is_paused_and_the_online_index_matches_the_data)
+| test(=index::tests::index::sixteen_threads_inserting_one_unique_value_exactly_one_commits_at_both_levels)
+| test(=index::tests::index::a_constraint_creation_blocks_only_the_writers_of_its_label)
+| test(=index::tests::index::an_index_range_read_conflicts_with_a_later_insert_into_it)
+| test(=index::tests::index::writers_commit_while_an_index_build_is_paused_in_its_page_writes)
+| test(=index::tests::index::a_constraint_paused_in_its_page_writes_blocks_only_the_writers_of_its_label)
+| test(=index::tests::index::a_build_whose_scan_saw_an_undone_commit_scans_again)
+| test(=index::tests::index::a_replay_chunk_read_during_an_undone_commit_is_read_again)
+| test(=index::tests::index::a_build_restarted_after_its_install_resumes_at_its_replay)
+| test(=index::tests::index::a_build_whose_index_or_graph_is_dropped_while_paused_reads_and_writes_no_freed_tree)
+| test(=index::tests::index::a_second_writer_of_a_unique_value_waits_for_the_first_to_end)
+| test(=catalog::tests::catalog::a_drop_that_saw_an_undone_drop_of_a_newer_graph_fails)
+| test(=index::tests::index::a_backup_taken_while_a_build_is_paused_restores_and_the_rebuilt_index_matches_the_data)
+| test(=index::tests::index::a_constraint_commit_during_a_backup_waits_and_the_backup_restores_intact)
+| test(=index::tests::index::a_build_release_during_a_backup_waits_and_the_backup_restores_intact)
+| test(=index::tests::index::a_backup_under_four_committers_and_an_index_build_restores_to_one_commit_point)
 '''
 # Sixteen copies share the machine: one test at a time.
 test-threads = 1

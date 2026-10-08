@@ -18,9 +18,9 @@
 //! while the accountant held 49 956 864 bytes (laboratory report, #15
 //! "Open point 6").
 
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::{Arc, Mutex, PoisonError};
 use std::fmt;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, PoisonError};
 
 use crate::obs::MetricsSink;
 use crate::obs::names::cache::ACCOUNTED_BYTES;
@@ -164,6 +164,23 @@ impl Reservation {
         self.bytes
     }
 
+    /// Moves `bytes` of this reservation, or all of it if it holds less,
+    /// into a new reservation, which releases them when dropped.
+    pub(crate) fn split(&mut self, bytes: u64) -> Reservation {
+        let bytes = bytes.min(self.bytes);
+        self.bytes -= bytes;
+        Reservation {
+            accountant: Arc::clone(&self.accountant),
+            bytes,
+        }
+    }
+
+    /// Releases `bytes` of this reservation now, or all of it if it holds
+    /// less.
+    pub(crate) fn shrink(&mut self, bytes: u64) {
+        drop(self.split(bytes));
+    }
+
     /// Takes over the bytes of `other`, a reservation from the same
     /// accountant, so that one guard releases both.
     pub(crate) fn absorb(&mut self, mut other: Reservation) {
@@ -182,6 +199,66 @@ impl Drop for Reservation {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Two threads charge 6 bytes each against a 10-byte cap, under every
+    /// interleaving `loom` explores (TS-30 smoke model): at most one charge
+    /// succeeds at a time, the total never exceeds the cap, and every byte
+    /// is returned.
+    #[cfg(loom)]
+    #[test]
+    fn loom_concurrent_charges_never_exceed_the_cap() {
+        loom::model(|| {
+            let a = MemoryAccountant::new(10);
+            let threads: Vec<_> = (0..2)
+                .map(|_| {
+                    let a = Arc::clone(&a);
+                    loom::thread::spawn(move || {
+                        if a.try_charge(6) {
+                            assert!(a.used() <= a.cap(), "used {}", a.used());
+                            a.release(6);
+                        }
+                    })
+                })
+                .collect();
+            for t in threads {
+                t.join().unwrap();
+            }
+            assert!(a.peak() <= a.cap(), "peak {}", a.peak());
+            assert_eq!(a.used(), 0);
+        });
+    }
+
+    /// The same property under 1 000 random `shuttle` schedules of three
+    /// threads that charge and release repeatedly.
+    #[cfg(all(shuttle, not(loom)))]
+    #[test]
+    fn shuttle_concurrent_charges_never_exceed_the_cap() {
+        shuttle::check_random(
+            || {
+                let a = MemoryAccountant::new(10);
+                let threads: Vec<_> = (0..3u64)
+                    .map(|t| {
+                        let a = Arc::clone(&a);
+                        shuttle::thread::spawn(move || {
+                            for i in 0..4u64 {
+                                let bytes = 3 + (t + i) % 5;
+                                if a.try_charge(bytes) {
+                                    assert!(a.used() <= a.cap(), "used {}", a.used());
+                                    a.release(bytes);
+                                }
+                            }
+                        })
+                    })
+                    .collect();
+                for t in threads {
+                    t.join().unwrap();
+                }
+                assert!(a.peak() <= a.cap(), "peak {}", a.peak());
+                assert_eq!(a.used(), 0);
+            },
+            1000,
+        );
+    }
 
     #[test]
     fn reservations_stop_at_the_cap_and_release_on_drop() {
@@ -234,7 +311,7 @@ mod tests {
         const CAP: u64 = 1 << 20;
         const CHUNK: u64 = 64 << 10;
         let a = MemoryAccountant::new(CAP);
-        let all = std::sync::Barrier::new(16);
+        let all = crate::sync::Barrier::new(16);
         std::thread::scope(|s| {
             for t in 0..16u64 {
                 let (a, all) = (&a, &all);

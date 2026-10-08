@@ -6,7 +6,7 @@
 //!
 //! | Offset | Size | Field |
 //! |---|---|---|
-//! | 24 | 1 | flags: bit 0 = deleted (TS-05 Underflow) |
+//! | 24 | 1 | flags: bit 0 = deleted (TS-05 Underflow); bit 1 = field-delta keys ([`Keys::Fields`]) |
 //! | 25 | 1 | level: 0 for a leaf, child level + 1 for an inner page |
 //! | 26 | 2 | count: entries of a leaf, keys of an inner page |
 //! | 28 | 2 | restart points of a leaf; 0 in an inner page |
@@ -21,13 +21,34 @@
 //! entries in key order. Entry `i` is a restart point when `i % 16 == 0`:
 //! it stores its whole key. Every other entry stores the length of the
 //! prefix it shares with the previous key and only the rest. Each entry is
-//! `shared` varint, `unshared` varint, `tag` varint, the `unshared` key
-//! bytes, then the value: `tag = value_len << 1` for an inline value, whose
-//! bytes follow; `tag = value_len << 1 | 1` for a value in an overflow
-//! chain, followed by the first overflow page as 8 bytes. The offsets of the
+//! `shared` varint, `unshared` varint, `tag` varint, the entry's stamps, the
+//! `unshared` key bytes, then the value. The tag is `value_len << 3 | bits`
+//! (TS-06 Stamp encoding): bit 0 marks a value in an overflow chain, bit 1 a
+//! present `created_ts`, bit 2 a present `deleted_ts`. Present stamps follow
+//! the tag as varints, `created_ts` first; a present stamp is never 0. An
+//! inline value's bytes follow the key; a value in an overflow chain is
+//! followed by the first overflow page as 8 bytes. Unstamped trees never set
+//! bits 1 and 2. The offsets of the
 //! restart points are `u16`s at the end of the page, restart `i` at
 //! `PAGE_SIZE - 2 * (i + 1)`, so adding a restart point never moves the
 //! others.
+//!
+//! **Field-delta keys** (TS-06: "in the adjacency tree, the other entries
+//! store their key fields as deltas from the previous key, with integers as
+//! varints", M-LAYOUT layout B). A leaf with flag bit 1 holds adjacency
+//! keys ([`ADJ_KEY_LEN`] bytes: node, direction, edge type, neighbour, edge
+//! id, big-endian). Its restart points store their whole key as above
+//! (`shared` 0). Every other entry stores, in the `shared` slot, a code and,
+//! in the `unshared` bytes, the fields that differ from the previous key:
+//! code 0 stores the whole key (a key of another shape); otherwise bit 1 of
+//! the code marks the same node and bit 2 the same direction and edge type,
+//! and the bytes are, as varints, the node delta unless the node is the
+//! same, `edge_type << 1 | direction` unless both are the same, the
+//! neighbour as a delta when node, direction and edge type are the same and
+//! whole otherwise, then the edge id. Layout B packs the same fields behind
+//! one flag byte (`docs/evidence/layout-bench/src/adj.rs:136-177`); here the
+//! `unshared` length and the tag keep the generic entry header, about two
+//! bytes more per entry.
 //!
 //! **Inner page** (slotted). After the high key comes one `u16` slot per
 //! key, in key order, each the offset of a cell; cells are packed from the
@@ -59,6 +80,25 @@ pub(crate) const NONE: u64 = 0;
 /// High-key length meaning "no high key" (+∞).
 const NO_HIGH_KEY: u16 = u16::MAX;
 const DELETED: u8 = 1;
+/// Flag of a leaf whose keys are field-delta adjacency keys.
+const FIELD_KEYS: u8 = 2;
+
+/// Bytes of an adjacency key (TS-06): node (8), direction (1), edge type
+/// (8), neighbour (8), edge identifier (8), each big-endian.
+pub(crate) const ADJ_KEY_LEN: usize = 33;
+
+/// How a leaf stores the keys of its entries that are not restart points
+/// (TS-06 Compressed leaves). Set per tree when the tree is created and
+/// carried by every leaf of it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub(crate) enum Keys {
+    /// Byte-string keys: the prefix shared with the previous key, then the
+    /// rest (every tree but adjacency trees).
+    #[default]
+    Prefix,
+    /// Adjacency keys: fields as varint deltas from the previous key.
+    Fields,
+}
 
 const FLAGS: usize = HEADER_LEN;
 const LEVEL: usize = 25;
@@ -134,11 +174,175 @@ fn get_varint(p: &[u8], at: &mut usize, end: usize) -> Option<u64> {
 }
 
 // ---------------------------------------------------------------------------
+// Field-delta adjacency keys (TS-06; module documentation).
+
+/// The fields of an adjacency key: node, direction, edge type, neighbour,
+/// edge identifier. `None` for a key of another length.
+fn adj_fields(k: &[u8]) -> Option<[u64; 5]> {
+    if k.len() != ADJ_KEY_LEN {
+        return None;
+    }
+    let be = |at: usize| u64::from_be_bytes(k[at..at + 8].try_into().expect("8 bytes"));
+    Some([be(0), u64::from(k[8]), be(9), be(17), be(25)])
+}
+
+/// Writes the adjacency key of fields `f` into `k`, [`ADJ_KEY_LEN`] bytes.
+fn put_adj(k: &mut [u8], f: [u64; 5]) {
+    k[0..8].copy_from_slice(&f[0].to_be_bytes());
+    k[8] = f[1] as u8;
+    k[9..17].copy_from_slice(&f[2].to_be_bytes());
+    k[17..25].copy_from_slice(&f[3].to_be_bytes());
+    k[25..33].copy_from_slice(&f[4].to_be_bytes());
+}
+
+/// The field deltas of one entry: at most four varints of 10 bytes.
+struct Delta {
+    buf: [u8; 40],
+    len: usize,
+}
+
+impl Delta {
+    fn new() -> Delta {
+        Delta {
+            buf: [0; 40],
+            len: 0,
+        }
+    }
+
+    fn push(&mut self, mut v: u64) {
+        while v >= 0x80 {
+            self.buf[self.len] = (v as u8) | 0x80;
+            self.len += 1;
+            v >>= 7;
+        }
+        self.buf[self.len] = v as u8;
+        self.len += 1;
+    }
+
+    fn bytes(&self) -> &[u8] {
+        &self.buf[..self.len]
+    }
+}
+
+/// Encodes adjacency key `key` as field deltas from `prev` into `d` and
+/// returns its code (module documentation); `None` when either key has
+/// another shape, `key` is not above `prev`, the direction is not 0 or 1
+/// or the edge type is not below 2⁶³, which the code-0 form then stores.
+fn field_delta(prev: &[u8], key: &[u8], d: &mut Delta) -> Option<u64> {
+    let (a, b) = (adj_fields(prev)?, adj_fields(key)?);
+    if key <= prev || b[1] > 1 || b[2] >= 1 << 63 {
+        return None;
+    }
+    let same_node = a[0] == b[0];
+    let same_dt = a[1] == b[1] && a[2] == b[2];
+    d.len = 0;
+    if !same_node {
+        d.push(b[0] - a[0]);
+    }
+    if !same_dt {
+        d.push(b[2] << 1 | b[1]);
+    }
+    if same_node && same_dt {
+        d.push(b[3] - a[3]);
+    } else {
+        d.push(b[3]);
+    }
+    d.push(b[4]);
+    Some(1 | u64::from(same_node) << 1 | u64::from(same_dt) << 2)
+}
+
+/// Decodes the fields of an entry with code `code` and field deltas
+/// `bytes` after the key `prev`. `None` if malformed.
+fn field_decode(prev: &[u8], code: usize, bytes: &[u8]) -> Option<[u64; 5]> {
+    if code & 1 == 0 || code > 7 {
+        return None;
+    }
+    let a = adj_fields(prev)?;
+    let (mut at, end) = (0, bytes.len());
+    let node = if code & 2 != 0 {
+        a[0]
+    } else {
+        a[0].checked_add(get_varint(bytes, &mut at, end)?)?
+    };
+    let (dir, ty) = if code & 4 != 0 {
+        (a[1], a[2])
+    } else {
+        let v = get_varint(bytes, &mut at, end)?;
+        (v & 1, v >> 1)
+    };
+    let nbr = if code & 6 == 6 {
+        a[3].checked_add(get_varint(bytes, &mut at, end)?)?
+    } else {
+        get_varint(bytes, &mut at, end)?
+    };
+    let eid = get_varint(bytes, &mut at, end)?;
+    (at == end).then_some([node, dir, ty, nbr, eid])
+}
+
+/// Rebuilds in `key`, which holds the previous key (empty before a restart
+/// point), the key of entry `e` of leaf `p`, which stores `keys`. `None` if
+/// malformed.
+fn rebuild(keys: Keys, key: &mut Vec<u8>, p: &[u8], e: &RawEntry) -> Option<()> {
+    let stored = &p[e.key.clone()];
+    match keys {
+        Keys::Prefix => {
+            if e.shared > key.len() {
+                return None;
+            }
+            key.truncate(e.shared);
+            key.extend_from_slice(stored);
+        }
+        Keys::Fields if e.shared == 0 => {
+            key.clear();
+            key.extend_from_slice(stored);
+        }
+        Keys::Fields => {
+            let f = field_decode(key, e.shared, stored)?;
+            key.resize(ADJ_KEY_LEN, 0);
+            put_adj(key, f);
+        }
+    }
+    Some(())
+}
+
+/// [`rebuild`] into `out` from the previous key `prev`.
+fn rebuild_into(keys: Keys, prev: &[u8], p: &[u8], e: &RawEntry, out: &mut Vec<u8>) -> Option<()> {
+    out.clear();
+    match keys {
+        Keys::Prefix => {
+            out.extend_from_slice(prev.get(..e.shared)?);
+            out.extend_from_slice(&p[e.key.clone()]);
+            Some(())
+        }
+        Keys::Fields => {
+            out.extend_from_slice(prev);
+            rebuild(keys, out, p, e)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Fields common to leaves and inner pages.
 
 /// Whether the page is marked deleted (TS-05 Underflow).
 pub(crate) fn is_deleted(p: &[u8]) -> bool {
     p[FLAGS] & DELETED != 0
+}
+
+/// How the leaf `p` stores its keys.
+pub(crate) fn keys(p: &[u8]) -> Keys {
+    if p[FLAGS] & FIELD_KEYS != 0 {
+        Keys::Fields
+    } else {
+        Keys::Prefix
+    }
+}
+
+fn set_keys(p: &mut [u8], keys: Keys) {
+    match keys {
+        Keys::Prefix => p[FLAGS] &= !FIELD_KEYS,
+        Keys::Fields => p[FLAGS] |= FIELD_KEYS,
+    }
 }
 
 /// Level: 0 for a leaf.
@@ -226,9 +430,11 @@ fn init_tree_page(
     }
 }
 
-/// Writes an empty root leaf of `tree`: no high key, no sibling.
-pub(crate) fn init_empty_leaf(p: &mut [u8], tree: u64) {
+/// Writes an empty root leaf of `tree`, whose keys are stored as `keys`:
+/// no high key, no sibling.
+pub(crate) fn init_empty_leaf(p: &mut [u8], tree: u64, keys: Keys) {
     let start = init_tree_page(p, PageType::Leaf, tree, 0, None, NONE);
+    set_keys(p, keys);
     put_u16(p, DATA_END, start as u16);
 }
 
@@ -251,11 +457,67 @@ pub(crate) enum Value<'a> {
 
 impl Value<'_> {
     /// Bytes the value takes in an entry: the tag and the inline bytes or
-    /// the page number.
+    /// the page number. The stamp bits never change the tag's length.
     fn encoded_len(&self) -> usize {
         match *self {
-            Value::Inline(v) => varint_len((v.len() as u64) << 1) + v.len(),
-            Value::Overflow { len, .. } => varint_len((len << 1) | 1) + 8,
+            Value::Inline(v) => varint_len((v.len() as u64) << 3) + v.len(),
+            Value::Overflow { len, .. } => varint_len((len << 3) | 1) + 8,
+        }
+    }
+}
+
+/// Tag bit of a value in an overflow chain.
+const TAG_OVERFLOW: u64 = 1;
+/// Tag bit of a present `created_ts`.
+const TAG_CREATED: u64 = 2;
+/// Tag bit of a present `deleted_ts`.
+const TAG_DELETED: u64 = 4;
+
+/// The MVCC stamps of a leaf entry (TS-06 Stamps, TS-14): commit
+/// timestamps, 0 when absent. Commit timestamps start at 1, so 0 is never
+/// one. An absent `created` means the entry is visible to every snapshot
+/// ("frozen", or an unstamped tree); an absent `deleted` means it is live.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) struct Stamps {
+    /// `created_ts`; in the node and edge trees, the record's `version_ts`.
+    pub(crate) created: u64,
+    /// `deleted_ts`.
+    pub(crate) deleted: u64,
+}
+
+impl Stamps {
+    /// No stamp: an unstamped entry, or a frozen live one.
+    pub(crate) const NONE: Stamps = Stamps {
+        created: 0,
+        deleted: 0,
+    };
+
+    /// The tag bits of the present stamps.
+    fn bits(self) -> u64 {
+        (if self.created != 0 { TAG_CREATED } else { 0 })
+            | (if self.deleted != 0 { TAG_DELETED } else { 0 })
+    }
+
+    /// Bytes of the present stamps.
+    fn encoded_len(self) -> usize {
+        (if self.created != 0 {
+            varint_len(self.created)
+        } else {
+            0
+        }) + (if self.deleted != 0 {
+            varint_len(self.deleted)
+        } else {
+            0
+        })
+    }
+
+    /// These stamps with `created` dropped if it is at or below `horizon`:
+    /// the entry is then visible to every snapshot (TS-06 frozen, TS-14).
+    pub(crate) fn frozen(self, horizon: u64) -> Stamps {
+        if self.created != 0 && self.created <= horizon {
+            Stamps { created: 0, ..self }
+        } else {
+            self
         }
     }
 }
@@ -312,6 +574,7 @@ struct RawEntry {
     shared: usize,
     key: Range<usize>,
     value: RawValue,
+    stamps: Stamps,
     next: usize,
 }
 
@@ -338,13 +601,22 @@ fn raw_entry(p: &[u8], at: usize, end: usize) -> Option<RawEntry> {
         let t = get_varint(p, &mut o, end)?;
         (usize::try_from(s).ok()?, usize::try_from(u).ok()?, t)
     };
-    if shared + unshared > MAX_KEY || unshared > end - o {
+    let mut stamps = Stamps::NONE;
+    if tag & TAG_CREATED != 0 {
+        stamps.created = get_varint(p, &mut o, end).filter(|&t| t != 0)?;
+    }
+    if tag & TAG_DELETED != 0 {
+        stamps.deleted = get_varint(p, &mut o, end).filter(|&t| t != 0)?;
+    }
+    // `checked_add`: a checksum-valid but malformed leaf can hold any
+    // varint here, and an overflow must decode as malformed, not panic.
+    if shared.checked_add(unshared)? > MAX_KEY || unshared > end - o {
         return None;
     }
     let key = o..o + unshared;
     o += unshared;
-    let value = if tag & 1 == 0 {
-        let len = usize::try_from(tag >> 1).ok()?;
+    let value = if tag & TAG_OVERFLOW == 0 {
+        let len = usize::try_from(tag >> 3).ok()?;
         if len > MAX_INLINE || len > end - o {
             return None;
         }
@@ -357,7 +629,7 @@ fn raw_entry(p: &[u8], at: usize, end: usize) -> Option<RawEntry> {
         let first = u64_at(p, o);
         o += 8;
         RawValue::Overflow {
-            len: tag >> 1,
+            len: tag >> 3,
             first,
         }
     };
@@ -365,6 +637,7 @@ fn raw_entry(p: &[u8], at: usize, end: usize) -> Option<RawEntry> {
         shared,
         key,
         value,
+        stamps,
         next: o,
     })
 }
@@ -401,8 +674,8 @@ fn find_group(p: &[u8], v: &LeafView, key: &[u8]) -> Option<usize> {
 
 /// Result of a leaf search.
 pub(crate) enum Found<'a> {
-    /// The key is present with this value.
-    Hit(Value<'a>),
+    /// The key is present with this value and these stamps.
+    Hit(Value<'a>, Stamps),
     /// The key is absent.
     Miss,
 }
@@ -415,18 +688,15 @@ pub(crate) fn leaf_get<'a>(p: &'a [u8], key: &[u8], buf: &mut Vec<u8>) -> Option
     }
     let g = find_group(p, &v, key)?;
     let mut at = v.restart(p, g)?;
+    let mode = keys(p);
     buf.clear();
     let last = (g + 1) * RESTART_INTERVAL;
     for _ in g * RESTART_INTERVAL..last.min(v.count) {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > buf.len() {
-            return None;
-        }
-        buf.truncate(e.shared);
-        buf.extend_from_slice(&p[e.key]);
+        rebuild(mode, buf, p, &e)?;
         match buf.as_slice().cmp(key) {
             Ordering::Less => at = e.next,
-            Ordering::Equal => return Some(Found::Hit(value_of(p, e.value))),
+            Ordering::Equal => return Some(Found::Hit(value_of(p, e.value), e.stamps)),
             Ordering::Greater => return Some(Found::Miss),
         }
     }
@@ -434,12 +704,13 @@ pub(crate) fn leaf_get<'a>(p: &'a [u8], key: &[u8], buf: &mut Vec<u8>) -> Option
 }
 
 /// Calls `f` with each entry of the leaf whose key is at least `from`, in
-/// order, until `f` returns `false`. Returns `None` on a malformed leaf.
+/// order, with its value and stamps, until `f` returns `false`. Returns
+/// `None` on a malformed leaf.
 pub(crate) fn leaf_for_each_from<'a>(
     p: &'a [u8],
     from: &[u8],
     buf: &mut Vec<u8>,
-    mut f: impl FnMut(&[u8], Value<'a>) -> bool,
+    mut f: impl FnMut(&[u8], Value<'a>, Stamps) -> bool,
 ) -> Option<()> {
     let v = leaf_view(p)?;
     if v.count == 0 {
@@ -447,16 +718,13 @@ pub(crate) fn leaf_for_each_from<'a>(
     }
     let g = find_group(p, &v, from)?;
     let mut at = v.restart(p, g)?;
+    let mode = keys(p);
     buf.clear();
     for _ in g * RESTART_INTERVAL..v.count {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > buf.len() {
-            return None;
-        }
-        buf.truncate(e.shared);
-        buf.extend_from_slice(&p[e.key]);
+        rebuild(mode, buf, p, &e)?;
         at = e.next;
-        if buf.as_slice() >= from && !f(buf, value_of(p, e.value)) {
+        if buf.as_slice() >= from && !f(buf, value_of(p, e.value), e.stamps) {
             return Some(());
         }
     }
@@ -474,12 +742,16 @@ pub(crate) struct Entries {
     items: Vec<Item>,
     /// Scratch for key reconstruction while decoding.
     key: Vec<u8>,
+    /// How the leaf these entries are written to stores its keys: the
+    /// decoded leaf's, else [`Keys::Prefix`].
+    keys: Keys,
 }
 
 #[derive(Debug, Clone)]
 struct Item {
     key: Range<u32>,
     value: ItemValue,
+    stamps: Stamps,
     /// Length of the prefix shared with the previous entry, when known
     /// from decoding ([`UNKNOWN`] otherwise), so re-encoding an unchanged
     /// neighbour needs no comparison.
@@ -511,7 +783,7 @@ impl Entries {
         at..self.bytes.len() as u32
     }
 
-    fn item(&mut self, key: &[u8], value: Value<'_>) -> Item {
+    fn item(&mut self, key: &[u8], value: Value<'_>, stamps: Stamps) -> Item {
         let key = self.store(key);
         let value = match value {
             Value::Inline(v) => ItemValue::Inline(self.store(v)),
@@ -520,26 +792,32 @@ impl Entries {
         Item {
             key,
             value,
+            stamps,
             shared: UNKNOWN,
         }
     }
 
-    /// Appends an entry.
+    /// Appends an unstamped entry.
     pub(crate) fn push(&mut self, key: &[u8], value: Value<'_>) {
-        let it = self.item(key, value);
+        self.push_stamped(key, value, Stamps::NONE);
+    }
+
+    /// Appends an entry with `stamps`.
+    pub(crate) fn push_stamped(&mut self, key: &[u8], value: Value<'_>, stamps: Stamps) {
+        let it = self.item(key, value, stamps);
         self.items.push(it);
     }
 
     /// Appends an entry that shares `shared` bytes with the previous one.
-    fn push_shared(&mut self, key: &[u8], value: Value<'_>, shared: usize) {
-        let mut it = self.item(key, value);
+    fn push_shared(&mut self, key: &[u8], value: Value<'_>, stamps: Stamps, shared: usize) {
+        let mut it = self.item(key, value, stamps);
         it.shared = shared as u16;
         self.items.push(it);
     }
 
     /// Inserts an entry at position `i`.
-    pub(crate) fn insert(&mut self, i: usize, key: &[u8], value: Value<'_>) {
-        let it = self.item(key, value);
+    pub(crate) fn insert(&mut self, i: usize, key: &[u8], value: Value<'_>, stamps: Stamps) {
+        let it = self.item(key, value, stamps);
         self.items.insert(i, it);
         self.forget_shared(i + 1);
     }
@@ -559,10 +837,21 @@ impl Entries {
         }
     }
 
-    /// Replaces the value of entry `i`.
-    pub(crate) fn set_value(&mut self, i: usize, value: Value<'_>) {
-        let it = self.item(&[], value);
+    /// Replaces the value and stamps of entry `i`.
+    pub(crate) fn set_value(&mut self, i: usize, value: Value<'_>, stamps: Stamps) {
+        let it = self.item(&[], value, stamps);
         self.items[i].value = it.value;
+        self.items[i].stamps = stamps;
+    }
+
+    /// Stamps of entry `i`.
+    pub(crate) fn stamps(&self, i: usize) -> Stamps {
+        self.items[i].stamps
+    }
+
+    /// Replaces the stamps of entry `i`.
+    pub(crate) fn set_stamps(&mut self, i: usize, stamps: Stamps) {
+        self.items[i].stamps = stamps;
     }
 
     /// Removes entry `i`.
@@ -597,15 +886,32 @@ impl Entries {
         (i, i < self.items.len() && self.key(i) == key)
     }
 
+    /// Sets how the leaf these entries are written to stores its keys.
+    pub(crate) fn set_keys(&mut self, keys: Keys) {
+        self.keys = keys;
+    }
+
     /// Bytes entry `i` takes when encoded after entry `i - 1`, as a
     /// restart point if `restart`.
     pub(crate) fn encoded_len(&self, i: usize, restart: bool) -> usize {
         let key = self.key(i);
-        let shared = if restart { 0 } else { self.shared(i) };
-        varint_len(shared as u64)
-            + varint_len((key.len() - shared) as u64)
-            + (key.len() - shared)
+        let mut d = Delta::new();
+        let (slot, stored) = match (self.keys, restart) {
+            (_, true) => (0, key.len()),
+            (Keys::Prefix, false) => {
+                let shared = self.shared(i);
+                (shared as u64, key.len() - shared)
+            }
+            (Keys::Fields, false) => match field_delta(self.key(i - 1), key, &mut d) {
+                Some(code) => (code, d.len),
+                None => (0, key.len()),
+            },
+        };
+        varint_len(slot)
+            + varint_len(stored as u64)
+            + stored
             + self.value(i).encoded_len()
+            + self.stamps(i).encoded_len()
     }
 
     /// Encoded body bytes (entries and restart array) of entries
@@ -646,7 +952,15 @@ pub(crate) fn common_prefix(a: &[u8], b: &[u8]) -> usize {
 /// Decodes entries `first_group * 16 ..` of a leaf into `out`, which is
 /// cleared first.
 pub(crate) fn leaf_decode(p: &[u8], first_group: usize, out: &mut Entries) -> Option<()> {
+    leaf_decode_frozen(p, first_group, out, 0)
+}
+
+/// [`leaf_decode`], dropping every `created_ts` at or below `horizon`
+/// ([`Stamps::frozen`]); 0 drops none.
+fn leaf_decode_frozen(p: &[u8], first_group: usize, out: &mut Entries, horizon: u64) -> Option<()> {
     out.clear();
+    let mode = keys(p);
+    out.keys = mode;
     let v = leaf_view(p)?;
     if v.count == 0 {
         return Some(());
@@ -656,17 +970,21 @@ pub(crate) fn leaf_decode(p: &[u8], first_group: usize, out: &mut Entries) -> Op
     key.clear();
     let mut ok = true;
     for _ in first_group * RESTART_INTERVAL..v.count {
-        let Some(e) = raw_entry(p, at, v.end).filter(|e| e.shared <= key.len()) else {
+        let Some(e) = raw_entry(p, at, v.end) else {
             ok = false;
             break;
         };
-        key.truncate(e.shared);
-        key.extend_from_slice(&p[e.key]);
-        // A restart point stores no shared length: it stays unknown.
-        if out.len().is_multiple_of(RESTART_INTERVAL) {
-            out.push(&key, value_of(p, e.value));
+        if rebuild(mode, &mut key, p, &e).is_none() {
+            ok = false;
+            break;
+        }
+        // A restart point stores no shared length, and a field-delta entry
+        // none at all: it stays unknown.
+        let stamps = e.stamps.frozen(horizon);
+        if out.len().is_multiple_of(RESTART_INTERVAL) || mode == Keys::Fields {
+            out.push_stamped(&key, value_of(p, e.value), stamps);
         } else {
-            out.push_shared(&key, value_of(p, e.value), e.shared);
+            out.push_shared(&key, value_of(p, e.value), stamps, e.shared);
         }
         at = e.next;
     }
@@ -686,29 +1004,70 @@ pub(crate) struct Encoder {
     prev: Vec<u8>,
 }
 
-/// Appends an entry with key `key` and value `value`, sharing `shared` bytes
-/// with the previous key.
-fn encode_parts(out: &mut Vec<u8>, key: &[u8], shared: usize, value: Value<'_>) {
-    put_varint(out, shared as u64);
-    put_varint(out, (key.len() - shared) as u64);
-    match value {
-        Value::Inline(v) => {
-            put_varint(out, (v.len() as u64) << 1);
-            out.extend_from_slice(&key[shared..]);
-            out.extend_from_slice(v);
-        }
-        Value::Overflow { len, first } => {
-            put_varint(out, (len << 1) | 1);
-            out.extend_from_slice(&key[shared..]);
-            out.extend_from_slice(&first.to_le_bytes());
-        }
+/// Appends an entry whose `shared` slot is `slot` and whose stored key
+/// bytes are `stored`, with value `value` and `stamps`.
+fn encode_parts(out: &mut Vec<u8>, slot: u64, stored: &[u8], value: Value<'_>, stamps: Stamps) {
+    put_varint(out, slot);
+    put_varint(out, stored.len() as u64);
+    let tag = match value {
+        Value::Inline(v) => (v.len() as u64) << 3,
+        Value::Overflow { len, .. } => (len << 3) | TAG_OVERFLOW,
+    };
+    put_varint(out, tag | stamps.bits());
+    if stamps.created != 0 {
+        put_varint(out, stamps.created);
     }
+    if stamps.deleted != 0 {
+        put_varint(out, stamps.deleted);
+    }
+    out.extend_from_slice(stored);
+    match value {
+        Value::Inline(v) => out.extend_from_slice(v),
+        Value::Overflow { first, .. } => out.extend_from_slice(&first.to_le_bytes()),
+    }
+}
+
+/// Appends an entry with key `key` after the key `prev` (`None` for a
+/// restart point) of a leaf that stores `keys`. `known` is the length of
+/// the prefix `key` shares with `prev`, when the caller knows it
+/// ([`Keys::Prefix`] only).
+fn encode_key_entry(
+    out: &mut Vec<u8>,
+    keys: Keys,
+    prev: Option<&[u8]>,
+    key: &[u8],
+    known: Option<usize>,
+    value: Value<'_>,
+    stamps: Stamps,
+) {
+    let mut d = Delta::new();
+    let (slot, stored): (u64, &[u8]) = match (keys, prev) {
+        (_, None) => (0, key),
+        (Keys::Prefix, Some(prev)) => {
+            let shared = known.unwrap_or_else(|| common_prefix(prev, key));
+            (shared as u64, &key[shared..])
+        }
+        (Keys::Fields, Some(prev)) => match field_delta(prev, key, &mut d) {
+            Some(code) => (code, d.bytes()),
+            None => (0, key),
+        },
+    };
+    encode_parts(out, slot, stored, value, stamps);
 }
 
 /// Appends entry `i` of `es` to `out`.
 fn encode_entry(out: &mut Vec<u8>, es: &Entries, i: usize, restart: bool) {
-    let shared = if restart { 0 } else { es.shared(i) };
-    encode_parts(out, es.key(i), shared, es.value(i));
+    let prev = (!restart).then(|| es.key(i - 1));
+    let known = (!restart && es.keys == Keys::Prefix).then(|| es.shared(i));
+    encode_key_entry(
+        out,
+        es.keys,
+        prev,
+        es.key(i),
+        known,
+        es.value(i),
+        es.stamps(i),
+    );
 }
 
 /// Writes `bytes` as the leaf's entry stream from offset `base` to its end,
@@ -793,16 +1152,21 @@ pub(crate) fn write_leaf(
 ) -> bool {
     debug_assert_eq!(at.level, 0);
     init_tree_page(p, PageType::Leaf, at.tree, 0, at.high_key, at.right);
+    set_keys(p, es.keys);
     write_entries(p, 0, es, range, enc)
 }
 
 /// A change to one key of a leaf.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Change<'a> {
-    /// Insert or replace the value.
-    Put(Value<'a>),
+    /// Insert or replace the value, with these stamps.
+    Put(Value<'a>, Stamps),
     /// Remove the key.
     Delete,
+    /// Set the delete stamp of the key to this commit timestamp, keeping
+    /// its value and `created_ts` (TS-14 immutable entries, mutable records:
+    /// a delete is a stamp).
+    Restamp(u64),
 }
 
 /// Outcome of [`leaf_apply`].
@@ -847,6 +1211,7 @@ pub(crate) fn leaf_apply(
     enc: &mut Encoder,
 ) -> Option<Applied> {
     let v = leaf_view(p)?;
+    let mode = keys(p);
     let (g, base) = if v.count == 0 {
         (0, v.start)
     } else {
@@ -870,12 +1235,7 @@ pub(crate) fn leaf_apply(
     let mut found = None;
     while k < v.count {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > cur.len() {
-            return None;
-        }
-        next.clear();
-        next.extend_from_slice(&cur[..e.shared]);
-        next.extend_from_slice(&p[e.key.clone()]);
+        rebuild_into(mode, cur, p, &e, next)?;
         if next.as_slice() >= key {
             found = Some(e);
             break;
@@ -895,27 +1255,46 @@ pub(crate) fn leaf_apply(
     let mut run;
     let mut pred_changed;
     let freed = match (change, found) {
-        (Change::Put(value), Some(e)) if exists => {
+        (Change::Put(value, stamps), Some(e)) if exists => {
             if restart(i) {
                 offsets.push(at_i as u16);
             }
-            let shared = if restart(i) { 0 } else { e.shared };
-            encode_parts(bytes, next, shared, value);
+            let pred = (!restart(i)).then_some(cur.as_slice());
+            encode_key_entry(bytes, mode, pred, next, Some(e.shared), value, stamps);
             std::mem::swap(cur, next);
             (up, down, pred_changed) = (false, false, false);
             (k, at, run) = (i + 1, e.next, e.next);
             chain_of(value_of(p, e.value))
         }
-        (Change::Put(value), _) => {
+        (Change::Restamp(deleted), Some(e)) if exists => {
             if restart(i) {
                 offsets.push(at_i as u16);
             }
-            let shared = if restart(i) {
-                0
-            } else {
-                common_prefix(cur, key)
+            let stamps = Stamps {
+                deleted,
+                ..e.stamps
             };
-            encode_parts(bytes, key, shared, value);
+            let pred = (!restart(i)).then_some(cur.as_slice());
+            encode_key_entry(
+                bytes,
+                mode,
+                pred,
+                next,
+                Some(e.shared),
+                value_of(p, e.value),
+                stamps,
+            );
+            std::mem::swap(cur, next);
+            (up, down, pred_changed) = (false, false, false);
+            (k, at, run) = (i + 1, e.next, e.next);
+            None
+        }
+        (Change::Put(value, stamps), _) => {
+            if restart(i) {
+                offsets.push(at_i as u16);
+            }
+            let pred = (!restart(i)).then_some(cur.as_slice());
+            encode_key_entry(bytes, mode, pred, key, None, value, stamps);
             prev.clear();
             prev.extend_from_slice(key);
             (up, down, pred_changed) = (true, false, true);
@@ -930,14 +1309,11 @@ pub(crate) fn leaf_apply(
             (k, at, run) = (i + 1, e.next, e.next);
             chain_of(value_of(p, e.value))
         }
-        (Change::Delete, _) => return Some(Applied::NotFound),
+        (Change::Delete | Change::Restamp(_), _) => return Some(Applied::NotFound),
     };
     // `cur` holds the key of old entry `k - 1`.
     while k < v.count {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > cur.len() {
-            return None;
-        }
         let nk = if up {
             k + 1
         } else if down {
@@ -950,22 +1326,16 @@ pub(crate) fn leaf_apply(
         }
         if restart(nk) == restart(k) && (restart(nk) || !pred_changed) {
             // Same predecessor (or none) and restart status: same bytes.
-            cur.truncate(e.shared);
-            cur.extend_from_slice(&p[e.key]);
+            rebuild(mode, cur, p, &e)?;
         } else {
             bytes.extend_from_slice(&p[run..at]);
             if !restart(nk) && !pred_changed {
                 prev.clear();
                 prev.extend_from_slice(cur);
             }
-            cur.truncate(e.shared);
-            cur.extend_from_slice(&p[e.key.clone()]);
-            let shared = if restart(nk) {
-                0
-            } else {
-                common_prefix(prev, cur)
-            };
-            encode_parts(bytes, cur, shared, value_of(p, e.value));
+            rebuild(mode, cur, p, &e)?;
+            let pred = (!restart(nk)).then_some(prev.as_slice());
+            encode_key_entry(bytes, mode, pred, cur, None, value_of(p, e.value), e.stamps);
             run = e.next;
         }
         pred_changed = false;
@@ -1010,30 +1380,8 @@ fn leaf_apply_reencode(
         find_group(p, &v, key)?
     };
     leaf_decode(p, g, es)?;
-    let (i, exists) = es.search(key);
-    let old = |es: &Entries| match es.value(i) {
-        Value::Overflow { first, .. } => Some(first),
-        Value::Inline(_) => None,
-    };
-    let freed = match change {
-        Change::Put(value) => {
-            if exists {
-                let o = old(es);
-                es.set_value(i, value);
-                o
-            } else {
-                es.insert(i, key, value);
-                None
-            }
-        }
-        Change::Delete => {
-            if !exists {
-                return Some(Applied::NotFound);
-            }
-            let o = old(es);
-            es.remove(i);
-            o
-        }
+    let Edit::Done(freed) = edit_entries(es, key, change) else {
+        return Some(Applied::NotFound);
     };
     let n = es.len();
     Some(if write_entries(p, g, es, 0..n, enc) {
@@ -1043,8 +1391,52 @@ fn leaf_apply_reencode(
     })
 }
 
-/// Decodes the whole leaf into `es` and applies `change` there, for a
-/// split. Returns the replaced or removed value's overflow chain, if any.
+/// Outcome of a change applied to decoded entries.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Edit {
+    /// Applied; holds the replaced or removed value's overflow chain.
+    Done(Option<u64>),
+    /// A delete or a delete stamp found no such key.
+    NotFound,
+}
+
+/// Applies `change` for `key` to decoded entries `es`.
+fn edit_entries(es: &mut Entries, key: &[u8], change: Change<'_>) -> Edit {
+    let (i, exists) = es.search(key);
+    let old = |es: &Entries| match es.value(i) {
+        Value::Overflow { first, .. } => Some(first),
+        Value::Inline(_) => None,
+    };
+    match change {
+        Change::Put(value, stamps) if exists => {
+            let o = old(es);
+            es.set_value(i, value, stamps);
+            Edit::Done(o)
+        }
+        Change::Put(value, stamps) => {
+            es.insert(i, key, value, stamps);
+            Edit::Done(None)
+        }
+        Change::Restamp(deleted) if exists => {
+            let stamps = Stamps {
+                deleted,
+                ..es.stamps(i)
+            };
+            es.set_stamps(i, stamps);
+            Edit::Done(None)
+        }
+        Change::Delete if exists => {
+            let o = old(es);
+            es.remove(i);
+            Edit::Done(o)
+        }
+        Change::Delete | Change::Restamp(_) => Edit::NotFound,
+    }
+}
+
+/// Decodes the whole leaf into `es`, dropping every `created_ts` at or
+/// below `horizon` (0: none), and applies `change` there, for a split or a
+/// rewrite. Returns `None` for a malformed leaf.
 ///
 /// A delete can need a split too: removing an entry moves every later
 /// restart point by one entry, and the entry that becomes a restart point
@@ -1054,32 +1446,63 @@ pub(crate) fn leaf_decode_with(
     key: &[u8],
     change: Change<'_>,
     es: &mut Entries,
-) -> Option<Option<u64>> {
-    leaf_decode(p, 0, es)?;
-    let (i, exists) = es.search(key);
-    let old = |es: &Entries| match es.value(i) {
-        Value::Overflow { first, .. } => Some(first),
-        Value::Inline(_) => None,
+    horizon: u64,
+) -> Option<Edit> {
+    leaf_decode_frozen(p, 0, es, horizon)?;
+    Some(edit_entries(es, key, change))
+}
+
+/// Whether the leaf holds a `created_ts` at or below `horizon`, which a
+/// rewrite of the leaf drops (TS-14: stamps are frozen when a page is next
+/// rewritten). `None` for a malformed leaf.
+pub(crate) fn leaf_has_frozen(p: &[u8], horizon: u64) -> Option<bool> {
+    if horizon == 0 {
+        return Some(false);
+    }
+    let v = leaf_view(p)?;
+    let mut at = v.start;
+    for _ in 0..v.count {
+        let e = raw_entry(p, at, v.end)?;
+        if e.stamps.created != 0 && e.stamps.created <= horizon {
+            return Some(true);
+        }
+        at = e.next;
+    }
+    Some(false)
+}
+
+/// Rewrites the whole leaf with `change` applied for `key` and every
+/// `created_ts` at or below `horizon` dropped, keeping its place (tree,
+/// high key, right link). Leaves the page unchanged and returns
+/// [`Applied::Full`] if the entries do not fit, [`Applied::NotFound`] if a
+/// delete or delete stamp finds no such key.
+pub(crate) fn leaf_rewrite(
+    p: &mut [u8],
+    key: &[u8],
+    change: Change<'_>,
+    es: &mut Entries,
+    enc: &mut Encoder,
+    horizon: u64,
+) -> Option<Applied> {
+    let freed = match leaf_decode_with(p, key, change, es, horizon)? {
+        Edit::Done(freed) => freed,
+        Edit::NotFound => return Some(Applied::NotFound),
     };
-    Some(match change {
-        Change::Put(value) if exists => {
-            let o = old(es);
-            es.set_value(i, value);
-            o
-        }
-        Change::Put(value) => {
-            es.insert(i, key, value);
-            None
-        }
-        Change::Delete => {
-            if !exists {
-                return None;
-            }
-            let o = old(es);
-            es.remove(i);
-            o
-        }
-    })
+    let n = es.len();
+    let hk = high_key(p).map(<[u8]>::to_vec);
+    let place = Place {
+        tree: page::tree(p),
+        level: 0,
+        high_key: hk.as_deref(),
+        right: right(p),
+    };
+    // Check the fit before touching the page, so a full leaf is unchanged.
+    if es.body_len(0..n) + hk.as_ref().map_or(0, Vec::len) > USABLE {
+        return Some(Applied::Full);
+    }
+    let ok = write_leaf(p, place, es, 0..n, enc);
+    debug_assert!(ok, "fit checked above");
+    Some(Applied::Done(freed))
 }
 
 /// The shortest separator `s` with `left < s <= right`: the prefix of
@@ -1367,6 +1790,8 @@ pub(crate) struct LeafEntry<'a> {
     pub(crate) key: &'a [u8],
     /// The value.
     pub(crate) value: Value<'a>,
+    /// The stamps.
+    pub(crate) stamps: Stamps,
 }
 
 /// Calls `f` with every entry of a leaf in stored order, checking the
@@ -1378,6 +1803,7 @@ pub(crate) fn leaf_entries(
     mut f: impl FnMut(usize, LeafEntry<'_>),
 ) -> Result<LeafView, String> {
     let v = leaf_view(p).ok_or("malformed leaf header")?;
+    let mode = keys(p);
     let mut at = v.start;
     let mut key = Vec::new();
     for i in 0..v.count {
@@ -1386,17 +1812,16 @@ pub(crate) fn leaf_entries(
             return Err(format!("restart point {} is not at entry {i}", i / 16));
         }
         let e = raw_entry(p, at, v.end).ok_or_else(|| format!("entry {i} is malformed"))?;
-        if (restart && e.shared != 0) || e.shared > key.len() {
+        if (restart && e.shared != 0) || rebuild(mode, &mut key, p, &e).is_none() {
             return Err(format!("entry {i} has a bad shared length {}", e.shared));
         }
-        key.truncate(e.shared);
-        key.extend_from_slice(&p[e.key.clone()]);
         f(
             i,
             LeafEntry {
                 restart,
                 key: &key,
                 value: value_of(p, e.value),
+                stamps: e.stamps,
             },
         );
         at = e.next;
@@ -1488,7 +1913,7 @@ mod tests {
         for k in &keys {
             assert!(matches!(
                 leaf_get(&p, k, &mut buf),
-                Some(Found::Hit(Value::Inline(b"v")))
+                Some(Found::Hit(Value::Inline(b"v"), Stamps::NONE))
             ));
         }
         assert!(matches!(leaf_get(&p, b"key-", &mut buf), Some(Found::Miss)));
@@ -1509,7 +1934,7 @@ mod tests {
             let r = leaf_apply(
                 &mut p,
                 k.as_bytes(),
-                Change::Put(Value::Inline(&[])),
+                Change::Put(Value::Inline(&[]), Stamps::NONE),
                 &mut enc,
             );
             assert_eq!(r, Some(Applied::Done(None)));
@@ -1543,7 +1968,14 @@ mod tests {
         loop {
             let k = i.to_be_bytes();
             let before = p.clone();
-            match leaf_apply(&mut p, &k, Change::Put(Value::Inline(&big)), &mut enc).unwrap() {
+            match leaf_apply(
+                &mut p,
+                &k,
+                Change::Put(Value::Inline(&big), Stamps::NONE),
+                &mut enc,
+            )
+            .unwrap()
+            {
                 Applied::Done(_) => i += 1,
                 Applied::Full => {
                     assert_eq!(p, before);
@@ -1640,15 +2072,18 @@ mod tests {
     /// re-encoding the tail, on random leaves: short keys over a small
     /// alphabet and keys with a 150-byte common prefix (two-byte shared
     /// varints), inline values of up to 300 bytes (two-byte tags) and
-    /// overflow values, high key or none; random inserts, replacements,
-    /// deletes and deletes of absent keys, 1 000 per leaf, until leaves are
-    /// full.
+    /// overflow values, high key or none, random stamps (TS-06: none, a
+    /// `created_ts`, a `deleted_ts`, both, of one to six varint bytes);
+    /// random inserts, replacements, deletes, delete stamps, and deletes
+    /// and delete stamps of absent keys, 1 000 per leaf, until leaves are
+    /// full. Every key keeps the stamps last written.
     #[test]
     fn apply_matches_the_full_reencode() {
         use rand::rngs::StdRng;
         use rand::{RngExt, SeedableRng};
         let mut rng = StdRng::seed_from_u64(14);
         let (mut grow_deletes, mut full_puts, mut shifted, mut ops) = (0, 0, 0, 0);
+        let mut restamps = 0;
         for trial in 0..120 {
             let long = trial % 2 == 1;
             let hk: Option<&[u8]> = if trial % 3 == 0 { Some(b"zz") } else { None };
@@ -1666,7 +2101,7 @@ mod tests {
                 0..0,
                 &mut Encoder::default()
             ));
-            let mut model = std::collections::BTreeSet::<Vec<u8>>::new();
+            let mut model = std::collections::BTreeMap::<Vec<u8>, Stamps>::new();
             let vbuf = vec![9u8; 300];
             for _ in 0..1000 {
                 let mut key = if long && rng.random_range(0..4) > 0 {
@@ -1685,35 +2120,66 @@ mod tests {
                     1 | 2 => Value::Inline(&vbuf[..rng.random_range(64..300)]),
                     _ => Value::Inline(&vbuf[..rng.random_range(0..20)]),
                 };
-                let delete = !model.is_empty() && rng.random_range(0..4) == 0;
-                if delete && rng.random_range(0..4) > 0 {
+                let stamp = |rng: &mut StdRng| match rng.random_range(0..3) {
+                    0 => rng.random_range(1..128),
+                    1 => rng.random_range(128..1 << 20),
+                    _ => rng.random_range(1 << 20..1 << 42),
+                };
+                let stamps = match rng.random_range(0..4) {
+                    0 => Stamps::NONE,
+                    1 => Stamps {
+                        created: stamp(&mut rng),
+                        deleted: 0,
+                    },
+                    2 => Stamps {
+                        created: stamp(&mut rng),
+                        deleted: stamp(&mut rng),
+                    },
+                    _ => Stamps {
+                        created: 0,
+                        deleted: stamp(&mut rng),
+                    },
+                };
+                // 0: put, 1: delete, 2: delete stamp.
+                let kind = if model.is_empty() {
+                    0
+                } else {
+                    [0, 0, 0, 1, 2][rng.random_range(0..5)]
+                };
+                if kind > 0 && rng.random_range(0..4) > 0 {
                     // An existing key, picked by position.
                     let n = rng.random_range(0..model.len());
-                    key = model.iter().nth(n).unwrap().clone();
+                    key = model.keys().nth(n).unwrap().clone();
                 }
-                let change = if delete {
-                    Change::Delete
-                } else {
-                    Change::Put(value)
+                let restamp = stamp(&mut rng);
+                let change = match kind {
+                    0 => Change::Put(value, stamps),
+                    1 => Change::Delete,
+                    _ => Change::Restamp(restamp),
                 };
                 let before = used(&p);
                 let pos = model.range::<Vec<u8>, _>(..&key).count();
                 let (r, after) = apply_both(&p, &key, change);
                 ops += 1;
-                match (r, delete) {
-                    (Some(Applied::Done(_)), true) => {
+                match (r, kind) {
+                    (Some(Applied::Done(_)), 1) => {
                         model.remove(&key);
                         if used(&after) > before {
                             grow_deletes += 1;
                         }
                         shifted += usize::from(model.len() - pos >= RESTART_INTERVAL);
                     }
-                    (Some(Applied::Done(_)), false) => {
-                        if model.insert(key) {
+                    (Some(Applied::Done(_)), 0) => {
+                        if model.insert(key, stamps).is_none() {
                             shifted += usize::from(model.len() - pos > RESTART_INTERVAL);
                         }
                     }
-                    (Some(Applied::Full), false) => full_puts += 1,
+                    (Some(Applied::Done(_)), _) => {
+                        model.get_mut(&key).expect("restamped key exists").deleted = restamp;
+                        restamps += 1;
+                    }
+                    (Some(Applied::NotFound), k) => assert!(k > 0 && !model.contains_key(&key)),
+                    (Some(Applied::Full), 0) => full_puts += 1,
                     _ => {}
                 }
                 p = after;
@@ -1721,11 +2187,12 @@ mod tests {
             let mut keys = Vec::new();
             leaf_entries(&p, |i, e| {
                 assert_eq!(e.restart, i % RESTART_INTERVAL == 0);
-                keys.push(e.key.to_vec());
+                keys.push((e.key.to_vec(), e.stamps));
             })
             .unwrap();
             assert_eq!(keys, model.into_iter().collect::<Vec<_>>());
         }
+        assert!(restamps > 1000, "{restamps} delete stamps applied");
         // Non-vacuity: the cases the copying path must get right occurred.
         assert!(grow_deletes > 50, "{grow_deletes} deletes grew a leaf");
         assert!(full_puts > 50, "{full_puts} puts did not fit");
@@ -1768,5 +2235,314 @@ mod tests {
         // Nine later boundaries: it does not fit.
         let (r, _) = apply_both(&p, &keys[1], Change::Delete);
         assert_eq!(r, Some(Applied::Full));
+    }
+
+    /// The adjacency key of fields `(node, direction, type, neighbour,
+    /// edge)` (TS-06).
+    fn adj(f: [u64; 5]) -> Vec<u8> {
+        let mut k = vec![0u8; ADJ_KEY_LEN];
+        put_adj(&mut k, f);
+        k
+    }
+
+    /// A seeded set of adjacency keys, sorted: few nodes with many edges,
+    /// both directions, small and very large edge types, neighbours and
+    /// edge identifiers over the whole `u64` range; with `odd`, also keys
+    /// that the field-delta form cannot hold (another length, direction 2,
+    /// an edge type from 2⁶³), which are stored whole (code 0); with
+    /// `narrow`, every key has direction 0 and type 1, so the first key of
+    /// a node repeats the direction and type of the key before it (code 5).
+    fn adj_set(rng: &mut rand::rngs::StdRng, n: usize, odd: bool, narrow: bool) -> Vec<Vec<u8>> {
+        use rand::RngExt;
+        let mut set = std::collections::BTreeSet::new();
+        let nodes: Vec<u64> = (0..rng.random_range(2..6))
+            .map(|_| match rng.random_range(0..3) {
+                0 => rng.random_range(0..100),
+                1 => rng.random(),
+                _ => u64::MAX - rng.random_range(0..3),
+            })
+            .collect();
+        while set.len() < n {
+            let node = nodes[rng.random_range(0..nodes.len())];
+            let ty = match rng.random_range(0..4) {
+                0 => rng.random_range(0..4),
+                1 => rng.random_range(0..1 << 20),
+                2 => (1 << 63) - 1,
+                _ => rng.random_range(0..1 << 63),
+            };
+            let big = |rng: &mut rand::rngs::StdRng| match rng.random_range(0..3) {
+                0 => rng.random_range(0..1000),
+                1 => rng.random(),
+                _ => u64::MAX,
+            };
+            let k = match rng.random_range(0..40) {
+                0 if odd => {
+                    let mut k = adj([node, 0, ty, big(rng), big(rng)]);
+                    k[8] = 2;
+                    k
+                }
+                1 if odd => adj([node, 1, (1 << 63) + rng.random_range(0..9), 5, 6]),
+                2 if odd => {
+                    let mut k = node.to_be_bytes().to_vec();
+                    k.extend_from_slice(&[7; 5]);
+                    k
+                }
+                _ if narrow => adj([node, 0, 1, big(rng), big(rng)]),
+                _ => adj([node, rng.random_range(0..2), ty, big(rng), big(rng)]),
+            };
+            set.insert(k);
+        }
+        set.into_iter().collect()
+    }
+
+    /// TS-06 field-delta leaves (rmp #32): for seeded key sets, a leaf of
+    /// adjacency keys written with [`Keys::Fields`] decodes to exactly the
+    /// keys encoded, through every reader (whole-leaf iteration, point
+    /// lookups, a scan from each key, the decoder of rewrites).
+    /// Non-vacuity: entries were stored as field deltas with each code, and
+    /// the odd keys whole. Space is not asserted: it is Sprint 6's
+    /// measurement (a full-range `u64` takes a 10-byte varint).
+    #[test]
+    fn field_delta_leaves_decode_to_the_keys_encoded() {
+        use rand::SeedableRng;
+        let seed = crate::test_support::seed();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut codes = [0usize; 8];
+        for trial in 0..300 {
+            let odd = trial % 3 == 0;
+            let keys = adj_set(&mut rng, 1 + trial % 150, odd, trial % 4 == 1);
+            let leaf = |mode: Keys| {
+                let mut es = Entries::default();
+                es.set_keys(mode);
+                for k in &keys {
+                    es.push(k, Value::Inline(&[]));
+                }
+                let mut p = vec![0u8; PAGE_SIZE];
+                let at = Place {
+                    tree: 9,
+                    level: 0,
+                    high_key: None,
+                    right: NONE,
+                };
+                assert!(write_leaf(
+                    &mut p,
+                    at,
+                    &es,
+                    0..es.len(),
+                    &mut Encoder::default()
+                ));
+                p
+            };
+            let p = leaf(Keys::Fields);
+            assert_eq!(super::keys(&p), Keys::Fields);
+            let mut got = Vec::new();
+            let v = leaf_entries(&p, |i, e| {
+                assert_eq!(e.restart, i % RESTART_INTERVAL == 0);
+                got.push(e.key.to_vec());
+            })
+            .unwrap();
+            assert_eq!(got, keys, "seed {seed} trial {trial}");
+            // The stored code of each entry.
+            let mut at = v.start;
+            for i in 0..v.count {
+                let e = raw_entry(&p, at, v.end).unwrap();
+                if i % RESTART_INTERVAL != 0 {
+                    codes[e.shared] += 1;
+                }
+                at = e.next;
+            }
+            let mut buf = Vec::new();
+            for k in &keys {
+                assert!(matches!(
+                    leaf_get(&p, k, &mut buf),
+                    Some(Found::Hit(Value::Inline(&[]), Stamps::NONE))
+                ));
+                let mut from = Vec::new();
+                leaf_for_each_from(&p, k, &mut buf, |key, _, _| {
+                    from.push(key.to_vec());
+                    true
+                })
+                .unwrap();
+                let i = keys.iter().position(|x| x == k).unwrap();
+                assert_eq!(from, keys[i..], "seed {seed} trial {trial}");
+            }
+            let mut es = Entries::default();
+            leaf_decode(&p, 0, &mut es).unwrap();
+            assert_eq!(es.keys, Keys::Fields);
+            let decoded: Vec<Vec<u8>> = (0..es.len()).map(|i| es.key(i).to_vec()).collect();
+            assert_eq!(decoded, keys);
+            // The prefix form holds the same keys.
+            let mut got = Vec::new();
+            leaf_entries(&leaf(Keys::Prefix), |_, e| got.push(e.key.to_vec())).unwrap();
+            assert_eq!(got, keys);
+        }
+        for (code, n) in codes.iter().enumerate() {
+            if code % 2 == 1 || code == 0 {
+                assert!(*n > 0, "code {code} never stored: {codes:?}");
+            }
+        }
+    }
+
+    /// A leaf whose page checksum is valid can still hold any bytes: an
+    /// entry header whose shared and unshared lengths overflow when added
+    /// decodes as malformed, never panics, in both key forms. Seeded
+    /// leaves get such a header at a random entry; each decoder then
+    /// reports a malformed leaf or returns, and the header itself decodes
+    /// to `None` (rmp #32 audit: `raw_entry` added them unchecked).
+    #[test]
+    fn an_entry_header_whose_lengths_overflow_decodes_as_malformed() {
+        use rand::{RngExt, SeedableRng};
+        let seed = crate::test_support::seed();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut malformed = 0;
+        for trial in 0..200 {
+            let mode = if trial % 2 == 0 {
+                Keys::Fields
+            } else {
+                Keys::Prefix
+            };
+            let keys = adj_set(&mut rng, 2 + trial % 60, trial % 3 == 0, false);
+            let mut es = Entries::default();
+            es.set_keys(mode);
+            for k in &keys {
+                es.push(k, Value::Inline(b"v"));
+            }
+            let mut p = vec![0u8; PAGE_SIZE];
+            let at = Place {
+                tree: 9,
+                level: 0,
+                high_key: None,
+                right: NONE,
+            };
+            assert!(write_leaf(
+                &mut p,
+                at,
+                &es,
+                0..es.len(),
+                &mut Encoder::default()
+            ));
+            let v = leaf_view(&p).unwrap();
+            let mut starts = Vec::new();
+            let mut o = v.start;
+            for _ in 0..v.count {
+                starts.push(o);
+                o = raw_entry(&p, o, v.end).unwrap().next;
+            }
+            let o = starts[rng.random_range(0..starts.len())];
+            // Lengths whose sum exceeds `usize::MAX`.
+            let shared = u64::MAX - rng.random_range(0..1 << 20);
+            let unshared = rng.random_range(1 << 21..=u64::MAX);
+            let mut header = Vec::new();
+            put_varint(&mut header, shared);
+            put_varint(&mut header, unshared);
+            header.push(0);
+            if o + header.len() > v.end {
+                continue;
+            }
+            p[o..o + header.len()].copy_from_slice(&header);
+            assert!(
+                raw_entry(&p, o, v.end).is_none(),
+                "seed {seed} trial {trial}"
+            );
+            let mut buf = Vec::new();
+            let mut none = leaf_entries(&p, |_, _| {}).is_err();
+            none |= leaf_decode(&p, 0, &mut Entries::default()).is_none();
+            for k in [&keys[0], &keys[keys.len() - 1]] {
+                none |= leaf_get(&p, k, &mut buf).is_none();
+                none |= leaf_for_each_from(&p, k, &mut buf, |_, _, _| true).is_none();
+            }
+            malformed += usize::from(none);
+        }
+        assert!(
+            malformed > 150,
+            "seed {seed}: {malformed} leaves reported malformed"
+        );
+    }
+
+    /// [`leaf_apply`] writes the same bytes as decoding and re-encoding the
+    /// tail in field-delta leaves too, and the keys stay the model's:
+    /// random puts, deletes and delete stamps of seeded adjacency keys,
+    /// some of a shape stored whole, until leaves are full.
+    #[test]
+    fn apply_matches_the_full_reencode_in_field_delta_leaves() {
+        use rand::rngs::StdRng;
+        use rand::{RngExt, SeedableRng};
+        let seed = crate::test_support::seed();
+        let mut rng = StdRng::seed_from_u64(seed);
+        let (mut full, mut shifted) = (0, 0);
+        // 3 trials: over seeds 1-5 they give 232-415 puts that do not fit
+        // and 2 623-2 792 moved boundaries (60 trials gave about 20 times
+        // as many), above the thresholds asserted below.
+        for trial in 0..3 {
+            let mut p = vec![0u8; PAGE_SIZE];
+            let mut es = Entries::default();
+            es.set_keys(Keys::Fields);
+            let at = Place {
+                tree: 9,
+                level: 0,
+                high_key: None,
+                right: NONE,
+            };
+            assert!(write_leaf(&mut p, at, &es, 0..0, &mut Encoder::default()));
+            let mut model = std::collections::BTreeMap::<Vec<u8>, Stamps>::new();
+            for _ in 0..1500 {
+                let mut key = adj([
+                    rng.random_range(0..4),
+                    rng.random_range(0..2),
+                    [1, 2, 1 << 40][rng.random_range(0..3)],
+                    rng.random_range(0..60),
+                    rng.random_range(0..2000),
+                ]);
+                if rng.random_range(0..50) == 0 {
+                    key[8] = 2;
+                }
+                let kind = if model.is_empty() {
+                    0
+                } else {
+                    [0, 0, 0, 1, 2][rng.random_range(0..5)]
+                };
+                if kind > 0 && rng.random_range(0..4) > 0 {
+                    let n = rng.random_range(0..model.len());
+                    key = model.keys().nth(n).unwrap().clone();
+                }
+                let stamps = Stamps {
+                    created: rng.random_range(0..1 << 30),
+                    deleted: 0,
+                };
+                let restamp = rng.random_range(1..1 << 30);
+                let change = match kind {
+                    0 => Change::Put(Value::Inline(&[]), stamps),
+                    1 => Change::Delete,
+                    _ => Change::Restamp(restamp),
+                };
+                let pos = model.range::<Vec<u8>, _>(..&key).count();
+                let (r, after) = apply_both(&p, &key, change);
+                match (r, kind) {
+                    (Some(Applied::Done(_)), 0) => {
+                        if model.insert(key, stamps).is_none() {
+                            shifted += usize::from(model.len() - pos > RESTART_INTERVAL);
+                        }
+                    }
+                    (Some(Applied::Done(_)), 1) => {
+                        model.remove(&key);
+                        shifted += usize::from(model.len() - pos >= RESTART_INTERVAL);
+                    }
+                    (Some(Applied::Done(_)), _) => {
+                        model.get_mut(&key).unwrap().deleted = restamp;
+                    }
+                    (Some(Applied::NotFound), k) => assert!(k > 0 && !model.contains_key(&key)),
+                    // A put that does not fit, or a delete or delete stamp
+                    // that grows the leaf (moved restart points).
+                    (Some(Applied::Full), _) => full += 1,
+                    other => panic!("seed {seed} trial {trial}: {other:?}"),
+                }
+                p = after;
+            }
+            let mut got = Vec::new();
+            leaf_entries(&p, |_, e| got.push((e.key.to_vec(), e.stamps))).unwrap();
+            assert_eq!(got, model.into_iter().collect::<Vec<_>>(), "seed {seed}");
+        }
+        assert!(full > 20, "{full} puts did not fit");
+        assert!(shifted > 1000, "{shifted} changes moved a boundary");
     }
 }

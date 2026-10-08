@@ -4,7 +4,8 @@
 //! - **Pages.** Slotted inner pages and compressed leaves ([`node`]);
 //!   values above 2 048 bytes in overflow chains.
 //! - **Directory.** Tree 0, rooted at page 1, maps each tree identifier to
-//!   its root page. A root never moves: a root split moves the root's
+//!   its root page, and holds the record of the pages each bulk build owns
+//!   ([`bulk`]). A root never moves: a root split moves the root's
 //!   entries into two new pages and leaves the root in place (SQLite
 //!   `balance_deeper`, R-SQLITE `src/btree.c`), so a [`Tree`] handle stays
 //!   valid for the tree's life.
@@ -35,13 +36,15 @@ mod write;
 #[cfg(test)]
 pub(crate) mod tests;
 
+use crate::sync::atomic::AtomicU64;
+use crate::sync::{Mutex, MutexGuard};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
-use std::sync::atomic::AtomicU64;
-use std::sync::{Mutex, MutexGuard};
 
 use node::{Encoder, Entries, Found, NONE, Pivots, Value};
+
+pub(crate) use node::{Keys, Stamps};
 
 use super::datafile::{Datafile, Header};
 use super::error::{Error, Health, Result};
@@ -80,7 +83,65 @@ impl Tree {
 /// The tree directory: tree 0 at page 1 (TS-05).
 pub(crate) const DIRECTORY: Tree = Tree { id: 0, root: 1 };
 
+/// A tree that a batch creates: its identifier, drawn with
+/// [`Store::draw_tree_id`], and how its leaves store keys.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct NewTree {
+    /// The tree identifier.
+    pub(crate) id: u64,
+    /// The key storage of its leaves.
+    pub(crate) keys: Keys,
+}
+
+impl Tree {
+    /// The handle of a tree that a transaction creates and whose root page
+    /// is chosen when the commit applies it: root 0, which is the header
+    /// page and never a tree's root ([`Store::apply_batch_new`]).
+    pub(crate) fn pending(id: u64) -> Tree {
+        Tree { id, root: 0 }
+    }
+
+    /// Whether this is the handle of a tree not yet created
+    /// ([`Tree::pending`]).
+    pub(crate) fn is_pending(&self) -> bool {
+        self.root == 0
+    }
+}
+
+/// The root page and drop timestamp of a directory entry: the root as 8
+/// little-endian bytes, followed, once a commit has dropped the tree, by
+/// that commit's timestamp as 8 more. Garbage collection frees the tree's
+/// pages and removes the entry once no snapshot below the drop remains
+/// (TS-14). `None` for a malformed entry.
+pub(crate) fn decode_directory_entry(v: &[u8]) -> Option<(u64, u64)> {
+    match v.len() {
+        8 => Some((u64::from_le_bytes(v.try_into().ok()?), 0)),
+        16 => {
+            let root = u64::from_le_bytes(v[..8].try_into().ok()?);
+            let dropped = u64::from_le_bytes(v[8..].try_into().ok()?);
+            (dropped != 0).then_some((root, dropped))
+        }
+        _ => None,
+    }
+}
+
+/// The directory entry of a tree rooted at `root` dropped by the commit at
+/// `dropped`.
+pub(crate) fn dropped_directory_entry(root: u64, dropped: u64) -> [u8; 16] {
+    let mut v = [0u8; 16];
+    v[..8].copy_from_slice(&root.to_le_bytes());
+    v[8..].copy_from_slice(&dropped.to_le_bytes());
+    v
+}
+
 /// One write of a batch (TS-16: `(tree, key, put value | delete)`).
+///
+/// With a `stamp` (TS-06 Stamps, TS-14), the write is the transaction
+/// layer's: a put stores the entry with `created_ts` = `stamp` and no
+/// delete stamp, and a delete sets the entry's `deleted_ts` to `stamp`,
+/// keeping the entry until garbage collection removes it. Without one
+/// (`stamp` 0), a put stores an unstamped entry and a delete removes the
+/// entry: the Sprint 1 batches, the unstamped trees and garbage collection.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Write<'a> {
     /// The tree written.
@@ -89,6 +150,8 @@ pub(crate) struct Write<'a> {
     pub(crate) key: &'a [u8],
     /// The value to put, or `None` to delete.
     pub(crate) value: Option<&'a [u8]>,
+    /// The commit timestamp the write stamps, or 0.
+    pub(crate) stamp: u64,
 }
 
 /// How the undo of a batch restores one page it changed.
@@ -274,6 +337,35 @@ impl<'p> PageWriter<'p> {
         self.header = true;
         Ok(p)
     }
+
+    /// Takes the next `n` reserved, unused pages of the data file, which
+    /// are consecutive, raising the page count in page 0, and returns the
+    /// first: a run of a bulk build ([`bulk`]). The pages are not read or
+    /// initialised. If the reserve is used up, the file is extended here, as
+    /// in [`PageWriter::allocate_reserved`].
+    ///
+    /// # Errors
+    ///
+    /// ENOSPC if the extension does not fit; the batch is then undone.
+    pub(crate) fn allocate_run(&mut self, n: u64) -> Result<u64> {
+        let p = match self.data.allocate_run(n) {
+            Err(e) if e.is_no_space() => {
+                self.data.ensure(n)?;
+                self.data.allocate_run(n)?
+            }
+            r => r?,
+        };
+        self.header = true;
+        Ok(p)
+    }
+
+    /// Lowers the page count in page 0 to `pages`: pages `pages..` return
+    /// to the reserve ([`Datafile::return_to_reserve`]). An undo of the
+    /// batch restores the page count.
+    pub(crate) fn return_to_reserve(&mut self, pages: u64) {
+        self.data.return_to_reserve(pages);
+        self.header = true;
+    }
 }
 
 /// Scratch buffers of the writer, kept between batches so that a write
@@ -316,11 +408,22 @@ pub(crate) struct WriteState {
     /// every tree read operation that started before the undo has ended
     /// (TS-16 step 6 undo, item 3).
     fence: Option<(u64, HashSet<u64>)>,
+    /// The snapshot horizon of the next batch (TS-14): a leaf the batch
+    /// rewrites drops every `created_ts` at or below it. 0 drops none.
+    /// Set under the latch by the transaction layer before each batch.
+    freeze: u64,
 }
 
 /// The tree state of one database.
 pub(crate) struct Trees {
     write: Mutex<WriteState>,
+    /// The next tree identifier to hand out ([`Store::draw_tree_id`]). It
+    /// starts at the header's next tree identifier and never decreases
+    /// while the database is open: an identifier drawn for a tree whose
+    /// batch fails or is never committed is skipped, as TS-07 skips element
+    /// identifiers. The header's field is the high-water mark of the trees
+    /// created, raised under the latch.
+    drawn: AtomicU64,
     readers: Readers,
     /// Number of the last write batch whose apply step has finished.
     applied: AtomicU64,
@@ -342,7 +445,9 @@ impl Trees {
                 scratch: Scratch::default(),
                 log,
                 fence: None,
+                freeze: 0,
             }),
+            drawn: AtomicU64::new(header.next_tree_id),
             readers: Readers::default(),
             applied: AtomicU64::new(0),
             #[cfg(test)]
@@ -361,7 +466,7 @@ impl Trees {
         CommitLatch {
             guard,
             health,
-            panicking: std::thread::panicking(),
+            panicking: crate::sync::thread::panicking(),
         }
     }
 }
@@ -403,7 +508,7 @@ impl Drop for CommitLatch<'_> {
     fn drop(&mut self) {
         // Runs before the field `guard` is dropped, so the latch is set
         // before the mutex is released.
-        if !self.panicking && std::thread::panicking() {
+        if !self.panicking && crate::sync::thread::panicking() {
             let _ = self.health.fail(Error::Unusable);
         }
     }
@@ -418,7 +523,7 @@ pub(crate) struct Store<'e> {
     pub(crate) health: &'e Health,
 }
 
-thread_local! {
+crate::sync::thread_local! {
     /// Key reconstruction buffer of point reads.
     static KEY_BUF: RefCell<Vec<u8>> = RefCell::new(Vec::with_capacity(node::MAX_KEY));
 }
@@ -481,8 +586,23 @@ impl<'e> Store<'e> {
     /// [`Error::Corruption`] for a malformed page, which sets the unusable
     /// latch; errors of [`Pool::fetch`].
     pub(crate) fn get(&self, tree: Tree, key: &[u8], out: &mut Vec<u8>) -> Result<bool> {
+        Ok(self.get_stamped(tree, key, out)?.is_some())
+    }
+
+    /// [`Store::get`] that also returns the entry's stamps: `None` if `key`
+    /// is absent.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::get`].
+    pub(crate) fn get_stamped(
+        &self,
+        tree: Tree,
+        key: &[u8],
+        out: &mut Vec<u8>,
+    ) -> Result<Option<Stamps>> {
         if key.len() > MAX_KEY {
-            return Ok(false);
+            return Ok(None);
         }
         let _reg = self.reader();
         let hit = KEY_BUF.with(|buf| {
@@ -492,22 +612,24 @@ impl<'e> Store<'e> {
                     .ok_or_else(|| self.corrupt(page_no, "malformed leaf"))?
                 {
                     Found::Miss => Ok(None),
-                    Found::Hit(Value::Inline(v)) => {
+                    Found::Hit(Value::Inline(v), st) => {
                         out.clear();
                         out.extend_from_slice(v);
-                        Ok(Some(None))
+                        Ok(Some((st, None)))
                     }
-                    Found::Hit(Value::Overflow { len, first }) => Ok(Some(Some((len, first)))),
+                    Found::Hit(Value::Overflow { len, first }, st) => {
+                        Ok(Some((st, Some((len, first)))))
+                    }
                 }
             })
         })?;
         match hit {
-            None => Ok(false),
-            Some(None) => Ok(true),
-            Some(Some((len, first))) => {
+            None => Ok(None),
+            Some((st, None)) => Ok(Some(st)),
+            Some((st, Some((len, first)))) => {
                 out.clear();
                 self.read_overflow(tree, len, first, out)?;
-                Ok(true)
+                Ok(Some(st))
             }
         }
     }
@@ -552,8 +674,9 @@ impl<'e> Store<'e> {
     /// page the scan reaches later, which may then hold keys inserted behind
     /// the scan. Without the position the scan would return them out of
     /// order. PostgreSQL needs no such check because its MVCC snapshot hides
-    /// those keys (R-PG `src/backend/access/nbtree/README:95-98`); here no
-    /// snapshot exists until MVCC is built (TS-14).
+    /// those keys (R-PG `src/backend/access/nbtree/README:95-98`); this
+    /// scan reads the physical entries, with no snapshot: transactions
+    /// apply their snapshot to the stamps it passes (TS-14, [`crate::tx`]).
     ///
     /// # Errors
     ///
@@ -564,21 +687,71 @@ impl<'e> Store<'e> {
         prefix: &[u8],
         mut f: impl FnMut(&[u8], &[u8]) -> bool,
     ) -> Result<()> {
+        self.scan_prefix_stamped(tree, prefix, |k, v, _| f(k, v))
+    }
+
+    /// [`Store::scan_prefix`] that also passes each entry's stamps.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::get`].
+    pub(crate) fn scan_prefix_stamped(
+        &self,
+        tree: Tree,
+        prefix: &[u8],
+        f: impl FnMut(&[u8], &[u8], Stamps) -> bool,
+    ) -> Result<()> {
+        self.scan_from(tree, prefix, prefix, f)
+    }
+
+    /// [`Store::scan_prefix_stamped`] over the keys `k` with `lo <= k`
+    /// and, if `hi` is given, `k < hi`, in key order: the scan of an index
+    /// range (TS-18).
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::get`].
+    pub(crate) fn scan_range_stamped(
+        &self,
+        tree: Tree,
+        lo: &[u8],
+        hi: Option<&[u8]>,
+        mut f: impl FnMut(&[u8], &[u8], Stamps) -> bool,
+    ) -> Result<()> {
+        let common = hi.map_or(0, |h| node::common_prefix(lo, h));
+        self.scan_from(tree, &lo[..common], lo, |k, v, st| {
+            if hi.is_some_and(|h| k >= h) {
+                return false;
+            }
+            f(k, v, st)
+        })
+    }
+
+    /// The scan of the keys with `prefix` at or above `start`, which starts
+    /// with `prefix`.
+    fn scan_from(
+        &self,
+        tree: Tree,
+        prefix: &[u8],
+        start: &[u8],
+        mut f: impl FnMut(&[u8], &[u8], Stamps) -> bool,
+    ) -> Result<()> {
+        debug_assert!(start.starts_with(prefix));
         let _reg = self.reader();
         let mut copied = Copied::default();
         let mut key_buf = Vec::new();
         let mut value = Vec::new();
         // The scan's position: every key below it has been passed.
-        let mut from = prefix.to_vec();
+        let mut from = start.to_vec();
         // The first leaf is found by descent; later ones by right links.
-        let mut next = self.at_leaf(tree, prefix, |p, page_no| {
+        let mut next = self.at_leaf(tree, start, |p, page_no| {
             copied
                 .take(p, &mut from, prefix, &mut key_buf)
                 .ok_or_else(|| self.corrupt(page_no, "malformed leaf"))
         })?;
         loop {
             for i in 0..copied.len() {
-                let (k, v) = copied.get(i);
+                let (k, v, st) = copied.get(i);
                 let v = match v {
                     Value::Inline(v) => v,
                     Value::Overflow { len, first } => {
@@ -587,7 +760,7 @@ impl<'e> Store<'e> {
                         &value[..]
                     }
                 };
-                if !f(k, v) {
+                if !f(k, v, st) {
                     return Ok(());
                 }
             }
@@ -614,19 +787,42 @@ impl<'e> Store<'e> {
     ///
     /// As [`Store::get`]; [`Error::Corruption`] for a malformed entry.
     pub(crate) fn tree(&self, id: u64) -> Result<Option<Tree>> {
-        let mut v = Vec::with_capacity(8);
+        Ok(self.tree_status(id)?.map(|(t, _)| t))
+    }
+
+    /// Finds `tree id` in the directory, with the timestamp of the commit
+    /// that dropped it, 0 if none ([`decode_directory_entry`]).
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::tree`].
+    pub(crate) fn tree_status(&self, id: u64) -> Result<Option<(Tree, u64)>> {
+        let mut v = Vec::with_capacity(16);
         if id == 0 {
-            return Ok(Some(DIRECTORY));
+            return Ok(Some((DIRECTORY, 0)));
         }
         if !self.get(DIRECTORY, &id.to_be_bytes(), &mut v)? {
             return Ok(None);
         }
-        let root = u64::from_le_bytes(
-            v.as_slice()
-                .try_into()
-                .map_err(|_| self.corrupt(DIRECTORY.root, "malformed directory entry"))?,
-        );
-        Ok(Some(Tree { id, root }))
+        let (root, dropped) = decode_directory_entry(&v)
+            .ok_or_else(|| self.corrupt(DIRECTORY.root, "malformed directory entry"))?;
+        Ok(Some((Tree { id, root }, dropped)))
+    }
+
+    /// Whether `tree` is one empty leaf: its root is a leaf without
+    /// entries, so the tree has no other page.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::get`].
+    pub(crate) fn is_empty_leaf(&self, tree: Tree) -> Result<bool> {
+        let _reg = self.reader();
+        let pin = self.pool.fetch(tree.root)?;
+        let g = pin.read()?;
+        if page::tree(&g) != tree.id {
+            return Err(self.corrupt(tree.root, "root of another tree"));
+        }
+        Ok(page::page_type(&g) == Some(PageType::Leaf) && node::count(&g) == 0)
     }
 
     /// Registers a tree read operation that starts now (TS-05 Reuse); it
@@ -635,9 +831,22 @@ impl<'e> Store<'e> {
         self.trees.readers.enter(&self.trees.applied)
     }
 
+    /// Draws a new tree identifier (see [`Trees::drawn`]).
+    pub(crate) fn draw_tree_id(&self) -> u64 {
+        self.trees
+            .drawn
+            .fetch_add(1, crate::sync::atomic::Ordering::Relaxed)
+    }
+
     /// Takes the write latch: the single writer (TS-16 commit latch).
     pub(crate) fn lock(&self) -> CommitLatch<'e> {
         self.trees.lock(self.health)
+    }
+
+    /// Tests only: whether no thread holds the commit latch now.
+    #[cfg(test)]
+    pub(crate) fn latch_is_free(&self) -> bool {
+        self.trees.write.try_lock().is_ok()
     }
 
     /// The lowest value registered by a running reader, `u64::MAX` if none.
@@ -666,13 +875,19 @@ impl WriteState {
     pub(crate) fn next_tree_id(&self) -> u64 {
         self.next_tree_id
     }
+
+    /// Sets the snapshot horizon of the next batches (see
+    /// [`WriteState::freeze`]); 0 freezes nothing.
+    pub(crate) fn set_freeze_horizon(&mut self, horizon: u64) {
+        self.freeze = horizon;
+    }
 }
 
 /// Entries of one leaf copied under its latch by a scan.
 #[derive(Default)]
 struct Copied {
     bytes: Vec<u8>,
-    items: Vec<(std::ops::Range<usize>, CopiedValue)>,
+    items: Vec<(std::ops::Range<usize>, CopiedValue, Stamps)>,
 }
 
 enum CopiedValue {
@@ -685,8 +900,8 @@ impl Copied {
         self.items.len()
     }
 
-    fn get(&self, i: usize) -> (&[u8], Value<'_>) {
-        let (k, v) = &self.items[i];
+    fn get(&self, i: usize) -> (&[u8], Value<'_>, Stamps) {
+        let (k, v, st) = &self.items[i];
         let v = match v {
             CopiedValue::Inline(r) => Value::Inline(&self.bytes[r.clone()]),
             CopiedValue::Overflow { len, first } => Value::Overflow {
@@ -694,7 +909,7 @@ impl Copied {
                 first: *first,
             },
         };
-        (&self.bytes[k.clone()], v)
+        (&self.bytes[k.clone()], v, *st)
     }
 
     /// Replaces the contents with the entries of leaf `p` that start with
@@ -713,7 +928,7 @@ impl Copied {
         self.items.clear();
         let mut past = false;
         if !node::is_deleted(p) {
-            node::leaf_for_each_from(p, from, key_buf, |k, v| {
+            node::leaf_for_each_from(p, from, key_buf, |k, v, st| {
                 if !k.starts_with(prefix) {
                     past = true;
                     return false;
@@ -729,7 +944,7 @@ impl Copied {
                     }
                     Value::Overflow { len, first } => CopiedValue::Overflow { len, first },
                 };
-                self.items.push((key, value));
+                self.items.push((key, value, st));
                 true
             })?;
         }

@@ -19,12 +19,12 @@
 //! - [`pool_double_cache`]: OS-cache residency of `data-1` while the pool
 //!   is full, and miss cost with the OS cache warm and evicted.
 
+use crate::sync::Arc;
+use crate::sync::atomic::AtomicU64;
 use std::fmt::Write as _;
 use std::hint::black_box;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::Arc;
-use std::sync::atomic::AtomicU64;
 use std::time::Instant;
 
 use rand::rngs::StdRng;
@@ -62,7 +62,14 @@ fn database() -> PathBuf {
         Err(e) => panic!("mkdir {}: {e}", dir.display()),
     }
     let sink: Arc<dyn MetricsSink> = Arc::new(RecordingSink::default());
-    let e = Engine::create(&dir, Arc::new(FsStorage), 16 << 20, sink).expect("create");
+    let e = Engine::create(
+        &dir,
+        Arc::new(FsStorage),
+        16 << 20,
+        crate::test_support::OWNER,
+        sink,
+    )
+    .expect("create");
     let data = e.data();
     data.ensure(DATA_PAGES).expect("ensure");
     let mut buf = vec![0u8; PAGE_SIZE];

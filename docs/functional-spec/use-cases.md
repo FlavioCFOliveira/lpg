@@ -1,7 +1,7 @@
 ---
 title: Use cases
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-07
 related:
   - functional-requirements.md
   - non-functional-requirements.md
@@ -19,10 +19,10 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 ### UC-DB-001 Create a database
 
 - **Actor**: Application.
-- **Trigger**: The application requests create at a location, passing the memory cap ([FR-LIM-003](functional-requirements.md#resource-limits)).
+- **Trigger**: The application requests create at a location, passing the memory cap ([FR-LIM-003](functional-requirements.md#resource-limits)) and the owner principal ([FR-DB-005](functional-requirements.md#database-lifecycle)).
 - **Preconditions**: The location holds no database.
 - **Main flow**:
-  1. The crate creates the database with a default schema and a default graph ([FR-DB-005](functional-requirements.md#database-lifecycle)).
+  1. The crate creates the database with a default schema and a default graph, both owned by the owner principal, and makes no authorisation request ([FR-DB-005](functional-requirements.md#database-lifecycle), [FR-AUTH-001](functional-requirements.md#authorisation)).
   2. The crate returns a handle to the new, open database.
 - **Alternate flows**:
   - A1. The location holds a database: the crate fails with an error and leaves it unchanged ([FR-DB-003](functional-requirements.md#database-lifecycle)).

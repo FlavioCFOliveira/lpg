@@ -14,20 +14,26 @@
 //!   runs a checkpoint, whose `CONTROL` slot clears the clean-shutdown flag
 //!   and whose sequence number becomes this open's salt (TS-09). Only then
 //!   do the threads start.
-//! - **Create** writes the files of TS-05, then opens the location as open
-//!   does: its log is empty and its flag set.
+//! - **Create** writes the files of TS-05, `data-1` with the catalog tree
+//!   holding the default schema and default graph owned by the principal it
+//!   receives, the statistics tree and the default graph's trees (TS-17
+//!   Creation), then opens the location as open does: its log is empty and
+//!   its flag set.
+//! - **Open** also loads the catalog (tokens, cache, statistics) before its
+//!   checkpoint, recounting the statistics after a crash (TS-13 step 7;
+//!   [`crate::catalog::open`]).
 //! - **Close** stops the checkpointer, runs the final checkpoint with the
 //!   flag set, stops the writer, then releases `LOCK` (TS-11). An unusable
 //!   database runs no checkpoint (TS-12).
 //! - **Drop** without close stops the threads without a checkpoint; the
 //!   flag stays clear, so the next open recovers (FR-DB-009).
 
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::thread::JoinHandle;
+use crate::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::ffi::OsStr;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::AtomicU64;
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
-use std::thread::JoinHandle;
 use std::time::Duration;
 
 use super::btree::{LogState, Store, Trees};
@@ -43,7 +49,11 @@ use super::recovery;
 use super::sort::is_sort_temp;
 use super::wal::{ClosedGroup, OpenGroup, TEMP_SEGMENT, Wal};
 use super::{Storage, StorageLock};
+use crate::catalog::{self, Catalog};
 use crate::obs::MetricsSink;
+use crate::tx::commit::{IdCounters, Ids};
+use crate::tx::gc;
+use crate::tx::mvcc::Mvcc;
 
 /// The on-disk format version this crate reads and writes (TS-28).
 pub(crate) const FORMAT_VERSION: u32 = 1;
@@ -128,22 +138,28 @@ fn is_leftover(name: &OsStr, live: Option<u64>) -> bool {
 }
 
 /// Checkpoint triggers (TS-11): every `interval` or every `commits`
-/// commits, whichever comes first.
+/// commits, whichever comes first; and the period of garbage collection
+/// (TS-14).
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Tuning {
     /// Time between periodic checkpoints.
     pub(crate) checkpoint_interval: Duration,
     /// Commits between checkpoints.
     pub(crate) checkpoint_commits: u64,
+    /// Time between periodic garbage-collection passes; commits also wake
+    /// the collector.
+    pub(crate) gc_interval: Duration,
 }
 
 impl Default for Tuning {
     /// Neo4j's `db.checkpoint.interval.time` and `db.checkpoint.interval.tx`
-    /// defaults, 15 minutes and 100 000 transactions (TS-11).
+    /// defaults, 15 minutes and 100 000 transactions (TS-11), and
+    /// Memgraph's garbage-collection period, 30 seconds (TS-14).
     fn default() -> Tuning {
         Tuning {
             checkpoint_interval: Duration::from_secs(15 * 60),
             checkpoint_commits: 100_000,
+            gc_interval: Duration::from_secs(30),
         }
     }
 }
@@ -159,6 +175,8 @@ pub(crate) struct RecoveryStats {
     pub(crate) bytes: u64,
     /// Whether the log was empty.
     pub(crate) empty_log: bool,
+    /// Whether `CONTROL` recorded a clean shutdown.
+    pub(crate) clean: bool,
 }
 
 /// The state of one open database, shared with its threads.
@@ -176,22 +194,44 @@ pub(crate) struct Core {
     pub(crate) trees: Trees,
     pub(crate) wal: Wal,
     pub(crate) checkpoints: Checkpoints,
+    /// The MVCC state (TS-14); empty at open (TS-13 step 7).
+    pub(crate) mvcc: Mvcc,
+    /// The identifier counters (TS-07), from the recovered high-water
+    /// marks.
+    pub(crate) ids: IdCounters,
+    /// The catalog state: tokens, cache, statistics (TS-17).
+    pub(crate) catalog: Catalog,
     pub(crate) sink: Arc<dyn MetricsSink>,
     pub(crate) recovered: RecoveryStats,
     /// Sorts started in this open: the number of the next one's files.
     pub(crate) sorts: AtomicU64,
-    /// Held by a backup and by a bulk build for their whole run: they
-    /// exclude each other (TS-26, FR-OPS-001). A bulk build that finds it
-    /// held waits ([`Core::backup_or_load`]); a backup that finds it held
-    /// fails ([`Core::try_backup_or_load`]). Taken before the commit latch.
+    /// Held by a backup and by the bulk build of a fast initial load for
+    /// their whole run: they exclude each other (TS-26, FR-OPS-001). A
+    /// fast load that finds it held waits ([`Core::backup_or_load`]); a
+    /// backup that finds it held fails ([`Core::try_backup_or_load`]).
+    /// Taken before [`Core::backup_or_install`] and the commit latch.
     pub(crate) backup_or_load: Mutex<()>,
     /// Tests only: how often a bulk build found [`Core::backup_or_load`]
     /// held and waited for it.
     #[cfg(test)]
     pub(crate) load_waits: AtomicU64,
+    /// Held exclusively by a backup for its whole run, and shared by each
+    /// step of a bulk build that writes pages the WAL does not cover and
+    /// commits their use: its install and each step of its release
+    /// ([`crate::storage::btree::bulk`]). A backup therefore waits only
+    /// for the steps in progress, and such a step waits for a running
+    /// backup. Taken after [`Core::backup_or_load`] and before the commit
+    /// latch.
+    pub(crate) backup_or_install: RwLock<()>,
+    /// Tests only: how often a step of a bulk build found
+    /// [`Core::backup_or_install`] held by a backup and waited for it.
+    #[cfg(test)]
+    pub(crate) install_waits: AtomicU64,
     /// Tests only: skip TS-16 step 2, so that the apply meets an overrun.
     #[cfg(test)]
-    pub(crate) skip_reserve: std::sync::atomic::AtomicBool,
+    pub(crate) skip_reserve: crate::sync::atomic::AtomicBool,
+    /// The online index builds of this open (TS-18).
+    pub(crate) builds: crate::index::Builds,
     /// Declared last, so it is released after every file is closed.
     _lock: Box<dyn StorageLock>,
 }
@@ -207,18 +247,18 @@ impl Core {
         }
     }
 
-    /// The backup-or-load latch ([`Core::backup_or_load`]), for a bulk
-    /// build: waits while a backup holds it (TS-26 "a load requested while a
-    /// backup runs waits"). Counts a wait in tests. A panic under it leaves
-    /// nothing half done that the latch protects.
+    /// The backup-or-load latch ([`Core::backup_or_load`]), for a fast
+    /// initial load: waits while a backup holds it (TS-26 "a load requested
+    /// while a backup runs waits"). Counts a wait in tests. A panic under it
+    /// leaves nothing half done that the latch protects.
     pub(crate) fn backup_or_load(&self) -> MutexGuard<'_, ()> {
         match self.backup_or_load.try_lock() {
             Ok(g) => g,
-            Err(std::sync::TryLockError::Poisoned(p)) => p.into_inner(),
-            Err(std::sync::TryLockError::WouldBlock) => {
+            Err(crate::sync::TryLockError::Poisoned(p)) => p.into_inner(),
+            Err(crate::sync::TryLockError::WouldBlock) => {
                 #[cfg(test)]
                 self.load_waits
-                    .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    .fetch_add(1, crate::sync::atomic::Ordering::SeqCst);
                 self.backup_or_load
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
@@ -232,9 +272,39 @@ impl Core {
     pub(crate) fn try_backup_or_load(&self) -> Option<MutexGuard<'_, ()>> {
         match self.backup_or_load.try_lock() {
             Ok(g) => Some(g),
-            Err(std::sync::TryLockError::Poisoned(p)) => Some(p.into_inner()),
-            Err(std::sync::TryLockError::WouldBlock) => None,
+            Err(crate::sync::TryLockError::Poisoned(p)) => Some(p.into_inner()),
+            Err(crate::sync::TryLockError::WouldBlock) => None,
         }
+    }
+
+    /// The backup-or-install latch ([`Core::backup_or_install`]), shared,
+    /// for one install or release step of a bulk build: waits while a
+    /// backup holds it. Counts a wait in tests.
+    pub(crate) fn install_step(&self) -> RwLockReadGuard<'_, ()> {
+        match self.backup_or_install.try_read() {
+            Ok(g) => g,
+            Err(crate::sync::TryLockError::Poisoned(p)) => p.into_inner(),
+            Err(crate::sync::TryLockError::WouldBlock) => {
+                #[cfg(test)]
+                self.install_waits
+                    .fetch_add(1, crate::sync::atomic::Ordering::SeqCst);
+                self.backup_or_install
+                    .read()
+                    .unwrap_or_else(PoisonError::into_inner)
+            }
+        }
+    }
+
+    /// The backup-or-install latch ([`Core::backup_or_install`]),
+    /// exclusive, for a backup: waits for the install and release steps in
+    /// progress. Linux's `std` read-write lock lets no new reader in while
+    /// a writer waits (`is_read_lockable`,
+    /// `library/std/src/sys/sync/rwlock/futex.rs:47-54`, Rust 1.99.0), so
+    /// the wait is bounded by one step of each running build.
+    pub(crate) fn backup_installs(&self) -> RwLockWriteGuard<'_, ()> {
+        self.backup_or_install
+            .write()
+            .unwrap_or_else(PoisonError::into_inner)
     }
 
     /// The `CONTROL` file, locked.
@@ -244,7 +314,8 @@ impl Core {
     }
 
     /// Closes the open group for the writer, under the commit latch, if a
-    /// commit has joined it.
+    /// member, a commit or an internal batch, has joined it (TS-09
+    /// Members).
     ///
     /// Once the database is unusable it closes nothing (TS-12): the writer
     /// then fails the waiting commits. Checked under the latch, after any
@@ -255,7 +326,7 @@ impl Core {
             return None;
         }
         let log = st.log();
-        log.group.has_commits().then(|| log.group.close(spare))
+        log.group.has_members().then(|| log.group.close(spare))
     }
 }
 
@@ -263,6 +334,10 @@ impl Core {
 pub(crate) struct Engine {
     core: Arc<Core>,
     threads: Vec<JoinHandle<()>>,
+    /// Whether this handle owns the database: its drop stops the threads.
+    /// An index build thread works through a handle that does not
+    /// ([`Engine::handle`]).
+    owner: bool,
 }
 
 /// Takes `LOCK` (TS-27). A missing `LOCK` is [`Error::LockMissing`] and is
@@ -285,7 +360,9 @@ fn has_control(storage: &dyn Storage, location: &Path) -> Result<bool> {
 impl Engine {
     /// Creates a database at `location`, an existing directory, and opens
     /// it (TS-05). `memory_cap` bounds the memory the database accounts for
-    /// (FR-LIM-003).
+    /// (FR-LIM-003). `owner` is the principal recorded as the owner of the
+    /// default schema and default graph; it is required and has no default
+    /// (FR-DB-005, FR-AUTH-002). No authorisation request is made.
     ///
     /// Order: fail if `CONTROL` exists; create and lock `LOCK`; fail if
     /// `CONTROL` exists now; remove every file of the file set, `wal-temp`,
@@ -300,7 +377,8 @@ impl Engine {
     /// # Errors
     ///
     /// [`Error::InvalidArgument`] if `memory_cap` is too small for the
-    /// buffer pool; [`Error::DatabaseExists`] if `CONTROL` exists, with
+    /// buffer pool, or `owner` is empty or longer than 1 024 bytes, both with
+    /// nothing changed; [`Error::DatabaseExists`] if `CONTROL` exists, with
     /// nothing changed (FR-DB-003); [`Error::Locked`] if another handle holds
     /// `LOCK`; [`Error::LockMissing`] if `LOCK` is deleted between its
     /// creation and the lock; [`Error::Io`].
@@ -308,9 +386,17 @@ impl Engine {
         location: &Path,
         storage: Arc<dyn Storage>,
         memory_cap: u64,
+        owner: &str,
         sink: Arc<dyn MetricsSink>,
     ) -> Result<Engine> {
-        Engine::create_tuned(location, storage, memory_cap, sink, Tuning::default())
+        Engine::create_tuned(
+            location,
+            storage,
+            memory_cap,
+            owner,
+            sink,
+            Tuning::default(),
+        )
     }
 
     /// [`Engine::create`] with the checkpoint triggers `tuning`.
@@ -322,10 +408,12 @@ impl Engine {
         location: &Path,
         storage: Arc<dyn Storage>,
         memory_cap: u64,
+        owner: &str,
         sink: Arc<dyn MetricsSink>,
         tuning: Tuning,
     ) -> Result<Engine> {
         Sizing::new(memory_cap, DEFAULT_FLOOR_PERMILLE)?;
+        let trees = catalog::bootstrap(owner)?;
         let s = &*storage;
         if has_control(s, location)? {
             return Err(Error::DatabaseExists);
@@ -363,6 +451,7 @@ impl Engine {
             FORMAT_VERSION,
             health.clone(),
             sink.clone(),
+            &catalog::bootstrap_trees(&trees),
         )?;
         // The names of LOCK and data-1 are durable before CONTROL exists.
         s.sync_dir(location)?;
@@ -374,9 +463,9 @@ impl Engine {
             clean_shutdown: true,
             redo_point: 0,
             commit_ts: 0,
-            next_element_id: 0,
-            next_catalog_id: 0,
-            next_token_id: 0,
+            next_element_id: catalog::created_ids().next_element_id,
+            next_catalog_id: catalog::created_ids().next_catalog_id,
+            next_token_id: catalog::created_ids().next_token_id,
         };
         let control = ControlSlots::create(s, location, control, health.clone())?;
         Engine::start(
@@ -582,6 +671,7 @@ impl Engine {
             pages: rec.pages,
             bytes: rec.bytes,
             empty_log: rec.empty_log,
+            clean: c.clean_shutdown,
         };
         let wal = Wal::new(
             location,
@@ -605,25 +695,43 @@ impl Engine {
             trees,
             wal,
             checkpoints: Checkpoints::new(c.redo_point, tuning),
+            // TS-13 step 7: the old-version store starts empty.
+            mvcc: Mvcc::default(),
+            ids: IdCounters::new(Ids {
+                next_element_id: rec.counters.next_element_id,
+                next_catalog_id: rec.counters.next_catalog_id,
+                next_token_id: rec.counters.next_token_id,
+            }),
+            catalog: Catalog::default(),
             sink,
             recovered,
             sorts: AtomicU64::new(0),
             backup_or_load: Mutex::new(()),
             #[cfg(test)]
             load_waits: AtomicU64::new(0),
+            backup_or_install: RwLock::new(()),
             #[cfg(test)]
-            skip_reserve: std::sync::atomic::AtomicBool::new(false),
+            install_waits: AtomicU64::new(0),
+            #[cfg(test)]
+            skip_reserve: crate::sync::atomic::AtomicBool::new(false),
+            builds: crate::index::Builds::default(),
             _lock: lock,
         });
+        // Step 7: the catalog and the statistics.
+        catalog::open(&core, rec.counters.commit_ts)?;
         // Step 8.
         if rec.empty_log {
             core.wal.create_first(rec.wal_end)?;
         }
-        checkpoint::run(&core, false)?;
+        // Build records a crash left (`storage::btree::bulk`), read before
+        // the open checkpoint publishes what open read.
+        let leftover = core.store().build_records()?;
+        checkpoint::run_open(&core)?;
         core.wal.set_salt(core.control().sequence());
         let mut engine = Engine {
             core,
-            threads: Vec::with_capacity(2),
+            threads: Vec::with_capacity(3),
+            owner: true,
         };
         let core = engine.core.clone();
         engine.spawn("lpg-wal", move || {
@@ -634,18 +742,58 @@ impl Engine {
         })?;
         let core = engine.core.clone();
         engine.spawn("lpg-checkpoint", move || checkpoint::run_thread(&core))?;
+        let core = engine.core.clone();
+        let seed = !c.clean_shutdown;
+        core.mvcc.unseeded.store(seed, Ordering::SeqCst);
+        engine.spawn("lpg-gc", move || {
+            gc::run_thread(&core, tuning.gc_interval, seed);
+        })?;
+        // The pages of builds a crash interrupted, still owned by their
+        // records, are released (`storage::btree::bulk`). ENOSPC or the
+        // memory cap leaves a record in place, for a later release; the
+        // database is consistent and stays usable (FR-REC-007).
+        for (owner, _) in leftover {
+            match engine.release_build(owner) {
+                Err(e) if !(e.is_no_space() || matches!(e, Error::MemoryLimit { .. })) => {
+                    return Err(e);
+                }
+                _ => {}
+            }
+        }
+        // TS-18 step 7: every POPULATING index is built again.
+        crate::index::restart_builds(&engine)?;
         Ok(engine)
     }
 
+    /// A handle of the open database for a thread of its own (an index
+    /// build, TS-18): it reads and commits like the owner's handle, and
+    /// its drop stops nothing.
+    pub(crate) fn handle(core: Arc<Core>) -> Engine {
+        Engine {
+            core,
+            threads: Vec::new(),
+            owner: false,
+        }
+    }
+
+    /// The shared state, for a thread of its own ([`Engine::handle`]).
+    pub(crate) fn core_arc(&self) -> Arc<Core> {
+        self.core.clone()
+    }
+
     fn spawn(&mut self, name: &str, f: impl FnOnce() + Send + 'static) -> Result<()> {
-        let handle = std::thread::Builder::new().name(name.to_owned()).spawn(f)?;
+        let handle = crate::sync::thread::Builder::new()
+            .name(name.to_owned())
+            .spawn(f)?;
         self.threads.push(handle);
         Ok(())
     }
 
-    /// Stops the checkpointer and the WAL writer and waits for them. The
-    /// writer first makes every joined group durable.
+    /// Stops the garbage collector, the checkpointer and the WAL writer and
+    /// waits for them. The writer first makes every joined group durable.
     fn stop_threads(&mut self) {
+        self.core.builds.stop();
+        self.core.mvcc.stop_gc();
         self.core.checkpoints.stop();
         self.core.wal.stop();
         for t in self.threads.drain(..) {
@@ -654,29 +802,69 @@ impl Engine {
         }
     }
 
-    /// Stops the checkpointer only (clean close, before the final
-    /// checkpoint).
+    /// Stops the garbage collector and the checkpointer only (clean close,
+    /// before the last garbage-collection pass and the final checkpoint).
     fn stop_checkpointer(&mut self) {
+        // A stopped build leaves its index POPULATING: the next open builds
+        // it again (TS-18 step 7).
+        self.core.builds.stop();
+        self.core.mvcc.stop_gc();
         self.core.checkpoints.stop();
-        if self.threads.len() == 2 {
-            let _ = self.threads.pop().expect("checkpointer handle").join();
+        while self.threads.len() > 1 {
+            let _ = self.threads.pop().expect("thread handle").join();
         }
     }
 
     /// Closes the database cleanly (TS-11): stops the checkpointer, runs
-    /// the final checkpoint, whose `CONTROL` slot records a clean shutdown,
-    /// stops the WAL writer and releases `LOCK`. No commit can be running:
-    /// `close` takes the engine by value.
+    /// the last garbage-collection pass and the final checkpoint, whose
+    /// `CONTROL` slot records a clean shutdown, stops the WAL writer and
+    /// releases `LOCK`. No commit can be running: `close` takes the engine
+    /// by value.
+    ///
+    /// The clean-shutdown flag also tells the next open that no garbage is
+    /// left to find (`tx::gc` work queues). When the last pass fails with
+    /// the database usable (ENOSPC or [`Error::MemoryLimit`], undone), or
+    /// the seed scan of a crash-open never succeeded, the close still
+    /// completes, with the flag clear: the next open recovers and scans for
+    /// the garbage again. Shutdown does not depend on garbage collection in
+    /// Memgraph (its storage destructor stops the collector without a last
+    /// pass, R-MG @ `847e224` `src/storage/v2/inmemory/storage.cpp:545-563`)
+    /// or PostgreSQL (the shutdown checkpoint runs no vacuum, R-PG @
+    /// `1f22453` `src/backend/access/transam/xlog.c:7381-7420`).
     ///
     /// # Errors
     ///
     /// [`Error::Unusable`] if the database is unusable: then no checkpoint
     /// runs and the flag stays clear, so the next open recovers (TS-11);
-    /// errors of the checkpoint. `LOCK` is released in every case.
+    /// errors of the checkpoint, and of the wait for the last pass's WAL
+    /// group. `LOCK` is released in every case.
     pub(crate) fn close(mut self) -> Result<()> {
         self.stop_checkpointer();
         self.core.health.check()?;
-        checkpoint::run(&self.core, true)?;
+        let mut clean = !self.core.mvcc.unseeded.load(Ordering::SeqCst);
+        // The builds have stopped: pages a failed release left in a build
+        // record are released now. If that fails too, the shutdown is not
+        // clean, so the next open releases them, and migration, which needs
+        // a clean shutdown, never reads their unwritten pages
+        // (`storage::btree::bulk`).
+        match self.release_builds() {
+            Ok(()) => {}
+            Err(_) if !self.core.health.is_unusable() => clean = false,
+            Err(e) => return Err(e),
+        }
+        // No transaction is left, so the last pass removes every queued
+        // delete stamp and dropped tree; its group is made durable before
+        // the final checkpoint (TS-14; `tx::gc`).
+        match gc::pass(&self.core) {
+            Ok(p) => {
+                if let Some(seq) = p.group {
+                    self.core.wal.wait_durable(seq)?;
+                }
+            }
+            Err(_) if !self.core.health.is_unusable() => clean = false,
+            Err(e) => return Err(e),
+        }
+        checkpoint::run(&self.core, clean)?;
         self.stop_threads();
         Ok(())
     }
@@ -750,7 +938,9 @@ impl Drop for Engine {
     /// checkpoint, the clean-shutdown flag stays clear, and the next open
     /// recovers.
     fn drop(&mut self) {
-        self.stop_threads();
+        if self.owner {
+            self.stop_threads();
+        }
     }
 }
 

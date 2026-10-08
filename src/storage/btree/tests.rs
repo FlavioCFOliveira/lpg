@@ -1,6 +1,6 @@
+use crate::sync::Arc;
+use crate::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::collections::BTreeMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -18,6 +18,7 @@ pub(crate) fn engine(dir: &std::path::Path, cap: u64) -> Engine {
         dir,
         crate::test_support::no_flush(),
         cap,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap()
@@ -42,6 +43,7 @@ fn put(s: &Store<'_>, tree: Tree, k: &[u8], v: &[u8]) {
         tree,
         key: k,
         value: Some(v),
+        stamp: 0,
     }])
     .unwrap();
 }
@@ -154,6 +156,7 @@ fn a_million_random_puts_and_deletes_match_a_btreemap_model() {
                 tree,
                 key: k,
                 value: v.as_deref(),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -243,6 +246,7 @@ fn a_tree_ten_times_larger_than_the_cap_reads_back_intact() {
                 tree,
                 key: k,
                 value: Some(v),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -313,6 +317,7 @@ fn overflow_values_round_trip() {
                 tree,
                 key: &[i as u8],
                 value: None,
+                stamp: 0,
             }])
             .unwrap();
         }
@@ -355,11 +360,13 @@ fn keys_at_the_limit_work_and_longer_keys_are_refused() {
                 tree,
                 key: b"ok",
                 value: Some(b"v"),
+                stamp: 0,
             },
             Write {
                 tree,
                 key: &long,
                 value: Some(b"v"),
+                stamp: 0,
             },
         ];
         assert!(matches!(s.apply(&batch), Err(Error::InvalidArgument(_))));
@@ -547,6 +554,7 @@ fn concurrent_readers_during_splits_see_every_committed_key_exactly_once() {
                     tree,
                     key: k,
                     value: v.as_deref(),
+                    stamp: 0,
                 })
                 .collect();
             s.apply(&batch).unwrap();
@@ -591,12 +599,14 @@ fn a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away() {
             tree,
             key: k,
             value: Some(&v),
+            stamp: 0,
         })
         .collect();
     batch.push(Write {
         tree,
         key: b"z",
         value: Some(&v),
+        stamp: 0,
     });
     s.apply(&batch).unwrap();
     let behind = b"a00000b".to_vec();
@@ -609,6 +619,7 @@ fn a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away() {
                     tree,
                     key: k,
                     value: None,
+                    stamp: 0,
                 })
                 .collect();
             s.apply(&deletes).unwrap();
@@ -635,13 +646,15 @@ fn directory_maps_tree_ids_to_roots_and_survives_reopen() {
     for dir in test_dirs() {
         let e = engine(dir.path(), 16 << 20);
         let s = e.store();
+        // Create made the catalog's trees (TS-17 Creation).
+        let first = crate::catalog::CREATED_TREES + 1;
         let trees: Vec<Tree> = (0..300).map(|_| s.create_tree().unwrap()).collect();
         for (i, t) in trees.iter().enumerate() {
-            assert_eq!(t.id(), i as u64 + 1);
+            assert_eq!(t.id(), i as u64 + first);
             put(&s, *t, b"k", &t.id().to_le_bytes());
             assert_eq!(s.tree(t.id()).unwrap(), Some(*t));
         }
-        assert_eq!(s.tree(301).unwrap(), None);
+        assert_eq!(s.tree(first + 300).unwrap(), None);
         assert_check_ok(&s);
         e.pool().write_dirty().unwrap();
         e.data().sync().unwrap();
@@ -660,9 +673,9 @@ fn directory_maps_tree_ids_to_roots_and_survives_reopen() {
             assert!(s.get(*t, b"k", &mut out).unwrap());
             assert_eq!(out, t.id().to_le_bytes());
         }
-        assert_eq!(s.create_tree().unwrap().id(), 301);
+        assert_eq!(s.create_tree().unwrap().id(), first + 300);
         let r = assert_check_ok(&s);
-        assert_eq!(r.trees.len(), 302);
+        assert_eq!(r.trees.len() as u64, 302 + crate::catalog::CREATED_TREES);
     }
 }
 
@@ -683,6 +696,7 @@ fn a_failure_after_the_first_change_makes_the_database_unusable() {
             tree,
             key: b"b",
             value: Some(b"2"),
+            stamp: 0,
         }]);
         assert!(matches!(r, Err(Error::Corruption(_))), "{r:?}");
         assert!(matches!(e.check(), Err(Error::Unusable)));
@@ -748,6 +762,7 @@ fn stale_descents_recover_by_moving_right() {
             tree,
             key: k,
             value: None,
+            stamp: 0,
         }])
         .unwrap();
     }
@@ -795,6 +810,7 @@ fn emptying_a_subtree_frees_its_inner_pages() {
                 tree,
                 key: k,
                 value: Some(&v),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -818,6 +834,7 @@ fn emptying_a_subtree_frees_its_inner_pages() {
                 tree,
                 key: k,
                 value: None,
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -880,12 +897,18 @@ fn audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable() {
         dir.path(),
         fault.clone(),
         32 << 20,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap();
     let trees = e.create_trees(2).unwrap();
     let (t1, t2) = (trees[0], trees[1]);
-    let w = |tree, key: &'static [u8], value: Option<&'static [u8]>| Write { tree, key, value };
+    let w = |tree, key: &'static [u8], value: Option<&'static [u8]>| Write {
+        tree,
+        key,
+        value,
+        stamp: 0,
+    };
     let other: &'static [u8] = Box::leak(vec![5u8; 100_000].into_boxed_slice());
     e.commit(&[w(t2, b"big", Some(other))], Ids::default())
         .unwrap();
@@ -980,6 +1003,7 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
         dir.path(),
         fault.clone(),
         32 << 20,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap();
@@ -993,6 +1017,7 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
                 tree,
                 key: k,
                 value: Some(&v),
+                stamp: 0,
             })
             .collect();
         e.commit(&batch, Ids::default()).unwrap();
@@ -1005,6 +1030,7 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
             tree,
             key: k,
             value: None,
+            stamp: 0,
         })
         .collect();
     e.commit(&batch, Ids::default()).unwrap();
@@ -1028,11 +1054,13 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
                 tree,
                 key: split,
                 value: Some(&wide),
+                stamp: 0,
             },
             Write {
                 tree,
                 key: b"y",
                 value: Some(&huge),
+                stamp: 0,
             },
         ],
         Ids::default(),
@@ -1053,6 +1081,7 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
             tree,
             key: split,
             value: Some(&wide),
+            stamp: 0,
         }],
         Ids::default(),
     )
@@ -1077,4 +1106,124 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
         want.first().map(|k| String::from_utf8_lossy(k)),
     );
     assert_check_ok(&s);
+}
+
+/// TS-06 field-delta leaves in a whole tree (rmp #32): a tree created with
+/// [`Keys::Fields`] answers exactly as a tree of prefix leaves for the same
+/// seeded batches of adjacency-key puts and deletes, through leaf splits,
+/// freed leaves and a reopen, and both pass the integrity check.
+#[test]
+fn a_field_delta_tree_answers_like_a_prefix_tree() {
+    use crate::storage::graph::{Adj, adj_key};
+    let seed = crate::test_support::seed();
+    let mut rng = StdRng::seed_from_u64(seed);
+    let dir = test_dirs().remove(0);
+    let e = engine(dir.path(), 16 << 20);
+    let (fields, prefix) = {
+        let s = e.store();
+        let new = [
+            NewTree {
+                id: s.draw_tree_id(),
+                keys: Keys::Fields,
+            },
+            NewTree {
+                id: s.draw_tree_id(),
+                keys: Keys::Prefix,
+            },
+        ];
+        let mut st = s.lock();
+        let t = s.apply_batch_new(&mut st, None, &[], &new).unwrap();
+        (t[0], t[1])
+    };
+    let mut m = Model::new();
+    let key = |rng: &mut StdRng| {
+        adj_key(Adj {
+            node: rng.random_range(0..40),
+            dir: rng.random_range(0..2),
+            ty: rng.random_range(0..3),
+            nbr: rng.random_range(0..400),
+            edge: rng.random_range(0..100_000),
+        })
+        .to_vec()
+    };
+    let compare = |e: &Engine, m: &Model, rng: &mut StdRng| {
+        let s = e.store();
+        let want = model_scan(m, b"");
+        assert!(scan(&s, fields, b"") == want, "seed {seed}");
+        assert!(scan(&s, prefix, b"") == want, "seed {seed}");
+        for _ in 0..8 {
+            let p = rng.random_range(0..40u64).to_be_bytes();
+            assert!(scan(&s, fields, &p) == model_scan(m, &p), "seed {seed}");
+        }
+    };
+    for round in 0..60 {
+        let mut batch: Vec<(Vec<u8>, Option<Vec<u8>>)> = Vec::new();
+        for _ in 0..200 {
+            let k = if !m.is_empty() && rng.random_range(0..3) == 0 {
+                let n = rng.random_range(0..m.len());
+                m.keys().nth(n).unwrap().clone()
+            } else {
+                key(&mut rng)
+            };
+            // Deletes thin the tree out in later rounds, freeing leaves.
+            let delete = rng.random_range(0..10) < if round < 40 { 2 } else { 8 };
+            batch.retain(|(x, _)| *x != k);
+            batch.push((k, (!delete).then(Vec::new)));
+        }
+        for (k, v) in &batch {
+            match v {
+                Some(v) => m.insert(k.clone(), v.clone()),
+                None => m.remove(k),
+            };
+        }
+        for tree in [fields, prefix] {
+            let writes: Vec<Write<'_>> = batch
+                .iter()
+                .map(|(k, v)| Write {
+                    tree,
+                    key: k,
+                    value: v.as_deref(),
+                    stamp: 0,
+                })
+                .collect();
+            e.store().apply(&writes).unwrap();
+        }
+        if round % 10 == 9 {
+            compare(&e, &m, &mut rng);
+        }
+    }
+    let r = assert_check_ok(&e.store());
+    let (tf, tp) = (tree_stats(&r, fields.id()), tree_stats(&r, prefix.id()));
+    assert!(tf.leaves > 1 && tp.leaves > 1, "precondition: leaves split");
+    // Every leaf of each tree, split ones included, keeps its tree's form.
+    for (tree, want) in [(fields, Keys::Fields), (prefix, Keys::Prefix)] {
+        let mut p = tree.root();
+        loop {
+            let pin = e.pool().fetch(p).unwrap();
+            let g = pin.read().unwrap();
+            if node::level(&g) == 0 {
+                break;
+            }
+            p = node::leftmost(&g);
+        }
+        let mut leaves = 0;
+        while p != node::NONE {
+            let pin = e.pool().fetch(p).unwrap();
+            let g = pin.read().unwrap();
+            assert_eq!(node::keys(&g), want, "leaf {p} of tree {}", tree.id());
+            leaves += 1;
+            p = node::right(&g);
+        }
+        assert!(leaves > 1);
+    }
+    e.close().unwrap();
+    let e = Engine::open(
+        dir.path(),
+        crate::test_support::no_flush(),
+        16 << 20,
+        Arc::new(RecordingSink::default()),
+    )
+    .unwrap();
+    compare(&e, &m, &mut rng);
+    assert_check_ok(&e.store());
 }
