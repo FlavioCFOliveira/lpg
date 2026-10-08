@@ -1435,6 +1435,40 @@ mod index {
         let e = reopen(d.path());
         enforced(&e);
     }
+    /// Audit F1 (rmp #35): the integrity check reads the catalog tree, not
+    /// only the cache. After a clean reopen an ONLINE index's definition is
+    /// in the cache and its tree in the directory; a tree no definition
+    /// names is reported unless the caller created it outside the catalog;
+    /// a definition whose tree is dropped is reported.
+    #[test]
+    fn the_integrity_check_reconciles_the_directory_with_the_catalog() {
+        let (d, e) = db();
+        let l = tok(&e, TokenKind::Label, "L");
+        let p = tok(&e, TokenKind::PropertyKey, "P");
+        let ix = e
+            .create_index(DEFAULT_GRAPH_ID, SchemaKind::Range, Entity::Node, l, &[p])
+            .unwrap();
+        e.wait_index(ix).unwrap();
+        e.close().unwrap();
+        let e = reopen(d.path());
+        assert_intact(&e);
+        pause_gc(&e);
+        let orphan = e.create_trees(1).unwrap()[0].id();
+        assert_eq!(
+            e.check_integrity().unwrap(),
+            [format!("tree {orphan}: no catalog definition names it")]
+        );
+        assert!(e.check_integrity_except(&[orphan]).unwrap().is_empty());
+        let id = e.core().catalog.schema()[&ix].tree;
+        let t = e.store().tree(id).unwrap().unwrap();
+        let mut tx = e.begin(Isolation::Serializable).unwrap();
+        tx.drop_tree(t).unwrap();
+        tx.commit().unwrap();
+        let p = e.check_integrity_except(&[orphan]).unwrap();
+        let want = format!("definition {ix}: its tree {id} is missing or dropped");
+        assert!(p.contains(&want), "{p:?}");
+    }
+
     // -----------------------------------------------------------------------
     // Round C audit, round 1 (rmp #33, #34).
 

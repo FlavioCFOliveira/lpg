@@ -89,10 +89,18 @@ pub(crate) struct Mvcc {
     /// close must not set the clean-shutdown flag, so the next open scans
     /// again.
     pub(crate) unseeded: crate::sync::atomic::AtomicBool,
-    /// Tests only: the thread `lpg-gc` skips its passes, so a test runs
-    /// them itself ([`super::gc::pass`]) at chosen points.
+    /// Tests only: while `true`, the thread `lpg-gc` skips its passes, so
+    /// a test runs them itself ([`super::gc::pass`]) at chosen points. The
+    /// thread holds the lock across its check and its pass, so a test that
+    /// sets the flag under it waits for a pass in flight to end.
     #[cfg(test)]
-    pub(crate) gc_paused: crate::sync::atomic::AtomicBool,
+    pub(crate) gc_paused: Mutex<bool>,
+    /// Tests only: the next pass that takes work from the queues fails
+    /// with [`crate::storage::error::Error::MemoryLimit`] before its first
+    /// read, as [`crate::storage::pool::Pool::fetch`] does when every frame
+    /// is pinned or dirty (TS-30 R10).
+    #[cfg(test)]
+    pub(crate) gc_fail_read: crate::sync::atomic::AtomicBool,
 }
 
 impl std::fmt::Debug for Mvcc {

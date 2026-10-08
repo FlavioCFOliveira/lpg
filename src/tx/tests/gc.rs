@@ -622,3 +622,36 @@ fn a_failed_last_pass_still_closes_with_the_clean_flag_clear() {
     check(&e);
     e.close().unwrap();
 }
+
+/// Audit F3 (rmp #35): a pass that fails after taking its work from the
+/// queues, here with `MemoryLimit` before its first read (the error
+/// `Pool::fetch` gives when every frame is pinned or dirty, TS-30 R10),
+/// puts that work back: the next pass removes the delete-stamped entry and
+/// frees the dropped tree, and the integrity check passes.
+#[test]
+fn a_pass_that_fails_after_taking_its_work_puts_it_back() {
+    let (_d, e) = db();
+    pause_gc(&e);
+    let t = tree(&e);
+    let gone = tree(&e);
+    commit_puts(&e, t, &[(b"a", b"1"), (b"b", b"2")]);
+    commit_puts(&e, gone, &[(b"x", b"1")]);
+    let mut tx = e.begin(Isolation::Serializable).unwrap();
+    tx.delete(t, b"a").unwrap();
+    tx.drop_tree(gone).unwrap();
+    tx.commit().unwrap();
+    e.core()
+        .mvcc
+        .gc_fail_read
+        .store(true, crate::sync::atomic::Ordering::SeqCst);
+    let r = pass(e.core());
+    assert!(matches!(r, Err(Error::MemoryLimit { .. })), "{r:?}");
+    assert_eq!(raw(&e, t).len(), 2);
+    assert!(e.store().tree_status(gone.id()).unwrap().is_some());
+    let p = gc(&e);
+    assert_eq!((p.removed, p.trees), (1, 1), "{p:?}");
+    assert_eq!(raw(&e, t).len(), 1);
+    assert!(e.store().tree_status(gone.id()).unwrap().is_none());
+    let problems = e.check_integrity_except(&[t.id()]).unwrap();
+    assert!(problems.is_empty(), "{problems:?}");
+}

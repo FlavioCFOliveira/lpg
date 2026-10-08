@@ -148,7 +148,10 @@ fn entries(e: &Engine, tree: Tree) -> Model {
 }
 
 fn assert_intact(e: &Engine, what: &str) {
-    let p = e.check_integrity().unwrap();
+    // The trees the suite creates outside the catalog: the workload's,
+    // then the side tree or the bulk-built tree ([`BULK_TREE`]).
+    let raw = [crate::catalog::CREATED_TREES + 1, BULK_TREE];
+    let p = e.check_integrity_except(&raw).unwrap();
     assert!(p.is_empty(), "{what}: {p:?}");
     // TS-17: after any open, the statistics are exact.
     let stats = e.core().catalog.stats().counts().clone();
@@ -170,11 +173,12 @@ enum Workload {
     /// An external sort of unsorted records in the database location, whose
     /// runs spill to files, then a bulk build from it and its install.
     BulkLoad,
-    /// Sprint 2 paths (audit Round A): stamped transaction commits with
-    /// delete stamps, a tree drop, and garbage-collection groups
-    /// ([`tx_batch`]); a graph created with its nodes and edges, then
-    /// dropped, and a checkpoint's statistics batch (rmp #31, #32;
-    /// [`tx_graph`]).
+    /// Sprint 2 paths (audit Round A, rmp #35): serializable and
+    /// snapshot-isolation commits with delete stamps, a tree drop, and
+    /// garbage-collection groups ([`tx_batch`]); a graph created with its
+    /// nodes and edges, then dropped, node and edge property updates, a
+    /// node deletion, and a checkpoint's statistics batch (rmp #31, #32;
+    /// [`tx_graph`]); two online index builds (rmp #33; [`tx_indexes`]).
     Transactions,
 }
 
@@ -228,6 +232,10 @@ struct State {
     loaded: bool,
     /// [`Workload::Transactions`]: the tree it drops, and its entries.
     side: Option<(Tree, Model)>,
+    /// [`Workload::Transactions`]: the rows of the default graph.
+    rows: Option<Rows>,
+    /// [`Workload::Transactions`]: whether both index creations returned.
+    indexed: bool,
 }
 
 impl Run {
@@ -284,6 +292,8 @@ fn setup(w: Workload, r: &Run) -> State {
         acked: 0,
         loaded: false,
         side: None,
+        rows: None,
+        indexed: false,
     };
     let pre = match w {
         Workload::Commits => 0,
@@ -306,10 +316,13 @@ fn setup(w: Workload, r: &Run) -> State {
         Workload::Transactions => {
             // The workload runs the collector's passes itself, so that its
             // calls are the same in every run.
-            e.core().mvcc.gc_paused.store(true, Ordering::SeqCst);
+            crate::tx::tests::pause_gc(&e);
             let side = e.create_trees(1).unwrap()[0];
             e.token(crate::catalog::TokenKind::Label, "L").unwrap();
             e.token(crate::catalog::TokenKind::EdgeType, "T").unwrap();
+            e.token(crate::catalog::TokenKind::PropertyKey, "P")
+                .unwrap();
+            s.rows = Some(create_rows(&e));
             let mut tx = e.begin(Isolation::Serializable).unwrap();
             let mut m = Model::new();
             for i in 0..200u32 {
@@ -494,10 +507,17 @@ fn verify(w: Workload, r: &Run, s: &State, arm: Arm, what: &str) {
     let has = |dir: &Path, name: &str| FsStorage.list(dir).unwrap().iter().any(|n| n == name);
     match w {
         Workload::Transactions => {
-            let e = r
-                .open(r.db.path())
+            let e = super::open_held(r.db.path(), || r.open(r.db.path()))
                 .unwrap_or_else(|e| panic!("{what}: reopen: {e}"));
+            super::assert_no_stamp_above(&e, what);
             assert_tx_prefix(&e, s, what);
+            // Each index is ONLINE, so the integrity check compares it with
+            // the data; an index creation that returned is kept.
+            let indexes = super::finish_builds(&e, what);
+            assert!(
+                !s.indexed || indexes.len() == 2,
+                "{what}: a returned index creation is lost"
+            );
             assert_intact(&e, what);
             // The open recovered: the collector's seed scan finds the
             // delete stamps and the dropped tree again, and its pass
@@ -755,11 +775,82 @@ const TX_GRAPH: u32 = 8;
 const TX_GRAPH_DROP: u32 = 11;
 /// The nodes of graph `g`.
 const GRAPH_NODES: usize = 40;
+/// The batch after which the workload creates a range index on the rows'
+/// nodes and one on their edges, and waits for both builds (rmp #33).
+const TX_INDEX: u32 = 2;
+/// The batch that deletes the last row's node with its edge (detach).
+const TX_DELETE: u32 = 10;
+/// The row nodes of the default graph.
+const ROWS: usize = 8;
 
-/// The graph changes of [`tx_batch`] `c` in `tx`, with the label and edge
-/// type `tokens`.
-fn tx_graph(tx: &mut crate::tx::Transaction<'_>, c: u32, tokens: (u64, u64)) -> Result<(), Error> {
+/// The rows of [`Workload::Transactions`] in the default graph, created by
+/// the setup: [`ROWS`] nodes of label `L` with property `P` = 0, each
+/// joined to the next by an edge of type `T` with `P` = 0.
+struct Rows {
+    nodes: Vec<u64>,
+    edges: Vec<u64>,
+}
+
+/// The tokens of [`Workload::Transactions`]: label `L`, edge type `T`,
+/// property key `P`, all created by the setup.
+fn tx_tokens(e: &Engine) -> (u64, u64, u64) {
+    use crate::catalog::TokenKind;
+    let id = |kind, name| e.token_id(kind, name).expect("the setup's token");
+    (
+        id(TokenKind::Label, "L"),
+        id(TokenKind::EdgeType, "T"),
+        id(TokenKind::PropertyKey, "P"),
+    )
+}
+
+fn create_rows(e: &Engine) -> Rows {
+    use crate::types::Value;
+    let (l, t, p) = tx_tokens(e);
+    let mut tx = e.begin(Isolation::Serializable).unwrap();
+    let g = tx.graph(crate::catalog::DEFAULT_GRAPH_ID).unwrap();
+    let nodes: Vec<u64> = (0..ROWS)
+        .map(|_| tx.create_node(&g, &[l], &[(p, Value::Int(0))]).unwrap())
+        .collect();
+    let edges = nodes
+        .windows(2)
+        .map(|w| {
+            tx.create_edge(&g, w[0], w[1], t, &[(p, Value::Int(0))])
+                .unwrap()
+        })
+        .collect();
+    tx.commit().unwrap();
+    Rows { nodes, edges }
+}
+
+/// The isolation level of batch `c`: every third batch runs under
+/// snapshot isolation, the others serializable.
+fn tx_isolation(c: u32) -> Isolation {
+    if c.is_multiple_of(3) {
+        Isolation::Snapshot
+    } else {
+        Isolation::Serializable
+    }
+}
+
+/// The row node and row edge whose property `P` batch `c` sets to `c`;
+/// never the ones [`TX_DELETE`] deletes.
+fn row_targets(rows: &Rows, c: u32) -> (u64, u64) {
+    (
+        rows.nodes[c as usize % (ROWS - 1)],
+        rows.edges[c as usize % (ROWS - 2)],
+    )
+}
+
+/// The graph changes of [`tx_batch`] `c` in `tx`, with the label, edge
+/// type and property key `tokens`.
+fn tx_graph(
+    tx: &mut crate::tx::Transaction<'_>,
+    c: u32,
+    tokens: (u64, u64, u64),
+    rows: &Rows,
+) -> Result<(), Error> {
     use crate::catalog::{DEFAULT_GRAPH_ID, DEFAULT_SCHEMA_ID};
+    use crate::types::Value;
     if c == TX_GRAPH {
         let id = tx.create_graph(DEFAULT_SCHEMA_ID, "g", crate::test_support::OWNER, None)?;
         let g = tx.graph(id)?;
@@ -777,23 +868,57 @@ fn tx_graph(tx: &mut crate::tx::Transaction<'_>, c: u32, tokens: (u64, u64)) -> 
     if c == TX_GRAPH_DROP {
         tx.drop_object(DEFAULT_SCHEMA_ID, "g")?;
     }
+    let d = tx.graph(DEFAULT_GRAPH_ID)?;
+    let (node, edge) = row_targets(rows, c);
+    tx.set_property(&d, node, tokens.2, Value::Int(c.into()))?;
+    tx.set_edge(&d, edge, &[(tokens.2, Value::Int(c.into()))])?;
+    if c == TX_DELETE {
+        assert!(tx.delete_node(&d, rows.nodes[ROWS - 1], true)?);
+    }
     Ok(())
 }
 
-/// What the graph changes of the batches `done` leave: graph `g`'s nodes
-/// and edges, if it exists, and the default graph's nodes.
-fn graph_model(done: &[u32]) -> (Option<(usize, usize)>, usize) {
+/// What snapshots see of the graphs: graph `g`'s nodes and edges, if it
+/// exists; the default graph's node count; and property `P` of its row
+/// nodes and row edges, by identifier.
+#[derive(Debug, PartialEq, Eq)]
+struct Graphs {
+    g: Option<(usize, usize)>,
+    default_nodes: usize,
+    nodes: BTreeMap<u64, i64>,
+    edges: BTreeMap<u64, i64>,
+}
+
+/// What the graph changes of the batches `done` leave ([`Graphs`]).
+fn graph_model(rows: &Rows, done: &[u32]) -> Graphs {
     let created = done.contains(&TX_GRAPH);
     let dropped = done.contains(&TX_GRAPH_DROP);
-    (
-        (created && !dropped).then_some((GRAPH_NODES, GRAPH_NODES - 1)),
-        usize::from(created),
-    )
+    let deleted = done.contains(&TX_DELETE);
+    let mut nodes: BTreeMap<u64, i64> = rows.nodes.iter().map(|&n| (n, 0)).collect();
+    let mut edges: BTreeMap<u64, i64> = rows.edges.iter().map(|&n| (n, 0)).collect();
+    for &c in done {
+        let (n, e) = row_targets(rows, c);
+        nodes.insert(n, c.into());
+        edges.insert(e, c.into());
+    }
+    if deleted {
+        nodes.remove(&rows.nodes[ROWS - 1]);
+        edges.remove(&rows.edges[ROWS - 2]);
+    }
+    Graphs {
+        g: (created && !dropped).then_some((GRAPH_NODES, GRAPH_NODES - 1)),
+        default_nodes: ROWS + usize::from(created) - usize::from(deleted),
+        nodes,
+        edges,
+    }
 }
 
 /// What a snapshot sees of the graph changes ([`graph_model`]).
-fn graph_visible(e: &Engine) -> (Option<(usize, usize)>, usize) {
+fn graph_visible(e: &Engine) -> Graphs {
     use crate::catalog::{DEFAULT_GRAPH_ID, DEFAULT_SCHEMA_ID};
+    use crate::storage::graph::{decode_edge, element_of};
+    use crate::types::Value;
+    let (_, _, p) = tx_tokens(e);
     let mut tx = e.begin(Isolation::Snapshot).unwrap();
     let count = |tx: &mut crate::tx::Transaction<'_>, t: Tree| {
         let mut n = 0;
@@ -812,9 +937,36 @@ fn graph_visible(e: &Engine) -> (Option<(usize, usize)>, usize) {
         None => None,
     };
     let d = tx.graph(DEFAULT_GRAPH_ID).unwrap();
-    let n = count(&mut tx, d.nodes);
+    let prop = |props: &[(u64, Value)]| {
+        props.iter().find(|x| x.0 == p).map(|x| match x.1 {
+            Value::Int(v) => v,
+            ref v => panic!("property P is {v:?}"),
+        })
+    };
+    let (mut default_nodes, mut nodes, mut edges) = (0, BTreeMap::new(), BTreeMap::new());
+    tx.scan_prefix(d.nodes, b"", |k, v| {
+        default_nodes += 1;
+        let (_, props) = crate::types::record::decode(v).expect("a node record");
+        if let Some(x) = prop(&props) {
+            nodes.insert(element_of(k).unwrap(), x);
+        }
+        true
+    })
+    .unwrap();
+    tx.scan_prefix(d.edges, b"", |k, v| {
+        if let Some(x) = prop(&decode_edge(v).expect("an edge record").props) {
+            edges.insert(element_of(k).unwrap(), x);
+        }
+        true
+    })
+    .unwrap();
     tx.abort();
-    (g, n)
+    Graphs {
+        g,
+        default_nodes,
+        nodes,
+        edges,
+    }
 }
 
 /// Transaction batch `c` (1-based) on the workload's tree: its marker key
@@ -830,19 +982,11 @@ fn tx_batch(c: u32) -> Vec<(Vec<u8>, Option<Vec<u8>>)> {
     b
 }
 
-/// Commits [`tx_batch`] `c` as one serializable transaction.
-fn tx_commit(e: &Engine, tree: Tree, side: Tree, c: u32) -> Result<(), Error> {
-    use crate::catalog::TokenKind;
-    // Created by the setup, so the workload's calls are the same in every
-    // run.
-    let tokens = (
-        e.token_id(TokenKind::Label, "L")
-            .expect("the setup's label"),
-        e.token_id(TokenKind::EdgeType, "T")
-            .expect("the setup's type"),
-    );
-    let mut tx = e.begin(Isolation::Serializable)?;
-    tx_graph(&mut tx, c, tokens)?;
+/// Commits [`tx_batch`] `c` and its graph changes ([`tx_graph`]) as one
+/// transaction at [`tx_isolation`]`(c)`.
+fn tx_commit(e: &Engine, tree: Tree, side: Tree, rows: &Rows, c: u32) -> Result<(), Error> {
+    let mut tx = e.begin(tx_isolation(c))?;
+    tx_graph(&mut tx, c, tx_tokens(e), rows)?;
     for (k, v) in tx_batch(c) {
         match v {
             Some(v) => tx.put(tree, &k, &v)?,
@@ -855,6 +999,25 @@ fn tx_commit(e: &Engine, tree: Tree, side: Tree, c: u32) -> Result<(), Error> {
         tx.drop_tree(side)?;
     }
     tx.commit().map(drop)
+}
+
+/// Creates a range index on property `P` of the nodes of label `L` and
+/// one on the edges of type `T` in the default graph, and waits for each
+/// build (TS-18 Online build).
+fn tx_indexes(e: &Engine) -> Result<(), Error> {
+    use crate::index::{Entity, SchemaKind};
+    let (l, t, p) = tx_tokens(e);
+    for (entity, token) in [(Entity::Node, l), (Entity::Edge, t)] {
+        let id = e.create_index(
+            crate::catalog::DEFAULT_GRAPH_ID,
+            SchemaKind::Range,
+            entity,
+            token,
+            &[p],
+        )?;
+        e.wait_index(id)?;
+    }
+    Ok(())
 }
 
 /// What a snapshot sees of `tree`; `None` if it is dropped.
@@ -891,20 +1054,22 @@ fn assert_tx_prefix(e: &Engine, s: &State, what: &str) {
         visible(e, s.side.as_ref().unwrap().0),
     );
     let graphs = graph_visible(e);
-    let ok = (s.acked..=s.attempted.len())
-        .any(|i| got == tx_model(s, &s.attempted[..i]) && graphs == graph_model(&s.attempted[..i]));
+    let rows = s.rows.as_ref().unwrap();
+    let ok = (s.acked..=s.attempted.len()).any(|i| {
+        got == tx_model(s, &s.attempted[..i]) && graphs == graph_model(rows, &s.attempted[..i])
+    });
     assert!(
         ok,
         "{what}: the visible state is not a prefix with every returned commit"
     );
 }
 
-/// [`Workload::Transactions`]: [`TX_BATCHES`] transactions, with a
-/// garbage-collection pass made durable after every sixth. The oracle of
-/// [`run`]: a usable failure (ENOSPC of a reservation, a refused memory
-/// reservation) fails only that transaction or pass, and leaves what
-/// snapshots see equal to the returned commits; any other failure makes
-/// the database unusable.
+/// [`Workload::Transactions`]: [`TX_BATCHES`] transactions, the index
+/// builds after [`TX_INDEX`], and a garbage-collection pass made durable
+/// after every sixth batch. The oracle of [`run`]: a usable failure (ENOSPC
+/// of a reservation, a refused memory reservation) fails only that
+/// transaction, build or pass, and leaves what snapshots see equal to the
+/// returned commits; any other failure makes the database unusable.
 fn run_transactions(s: &mut State, arm: Arm) {
     let armed = !matches!(arm, Arm::Nothing);
     let reservation = matches!(
@@ -913,13 +1078,14 @@ fn run_transactions(s: &mut State, arm: Arm) {
     );
     let e = s.engine.as_ref().unwrap();
     let side = s.side.as_ref().unwrap().0;
+    let rows = s.rows.as_ref().unwrap();
     let usable = |err: &Error| {
         (err.is_no_space() && (reservation || e.check().is_ok()))
             || matches!(err, Error::MemoryLimit { .. })
     };
     for c in 1..=TX_BATCHES {
         s.attempted.push(c);
-        match tx_commit(e, s.tree, side, c) {
+        match tx_commit(e, s.tree, side, rows, c) {
             Ok(()) => s.acked = s.attempted.len(),
             Err(err) if usable(&err) => {
                 s.attempted.pop();
@@ -927,7 +1093,7 @@ fn run_transactions(s: &mut State, arm: Arm) {
                 let want = tx_model(s, &s.attempted);
                 let got = (visible(e, s.tree).unwrap(), visible(e, side));
                 assert!(
-                    got == want && graph_visible(e) == graph_model(&s.attempted),
+                    got == want && graph_visible(e) == graph_model(rows, &s.attempted),
                     "the failed transaction {c} ({err}) left a trace"
                 );
             }
@@ -935,6 +1101,18 @@ fn run_transactions(s: &mut State, arm: Arm) {
                 assert!(armed, "unexpected failure: {err}");
                 assert!(e.check().is_err(), "{err} left the database usable");
                 return;
+            }
+        }
+        if c == TX_INDEX {
+            match tx_indexes(e) {
+                Ok(()) => s.indexed = true,
+                // The index stays POPULATING, or was not created.
+                Err(err) if usable(&err) => e.check().unwrap(),
+                Err(err) => {
+                    assert!(armed, "unexpected failure: {err}");
+                    assert!(e.check().is_err(), "{err} left the database usable");
+                    return;
+                }
             }
         }
         if c == TX_GRAPH + 1 {
@@ -1057,6 +1235,8 @@ fn the_oracle_sees_an_undone_batch_that_came_back() {
         attempted,
         loaded: false,
         side: None,
+        rows: None,
+        indexed: false,
     };
     let undone = history(vec![1, 3]);
     let seen = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {

@@ -19,6 +19,8 @@
 //! WAL record outside any commit (R-PG `src/backend/access/heap/pruneheap.c:1354-1359`).
 //!
 //! **Work queues.** Commits queue their delete stamps and dropped trees.
+//! A pass that fails after taking its work from the queues, in a read or
+//! in its batch, puts that work back, so a later pass does it.
 //! The queues are in memory: a clean close runs a last pass with no
 //! transaction left, so it empties them (H is then the highest published
 //! timestamp). After a crash, or a GC batch lost with its group, the
@@ -32,7 +34,7 @@
 use std::time::Duration;
 
 use super::mvcc;
-use crate::storage::btree::{DIRECTORY, Tree, decode_directory_entry};
+use crate::storage::btree::{CommitLatch, DIRECTORY, Store, Tree, decode_directory_entry};
 use crate::storage::engine::Core;
 use crate::storage::error::Result;
 
@@ -57,8 +59,11 @@ pub(crate) struct Pass {
 ///
 /// # Errors
 ///
-/// [`crate::storage::error::Error::Unusable`]; errors of the internal
-/// batch, which is undone; its work stays queued for the next pass.
+/// [`crate::storage::error::Error::Unusable`]; storage errors of the reads
+/// that find what is left to do, among them
+/// [`crate::storage::error::Error::MemoryLimit`], and errors of the
+/// internal batch, which is undone. After any of them the pass's work
+/// stays queued for the next pass.
 pub(crate) fn pass(core: &Core) -> Result<Pass> {
     core.health.check()?;
     let store = core.store();
@@ -121,11 +126,58 @@ pub(crate) fn pass(core: &Core) -> Result<Pass> {
     if deleted.is_empty() && dropped.is_empty() {
         return Ok(out);
     }
-    // Each queued entry is removed only if it still carries a delete stamp
-    // at or below the horizon: a later commit may have put the key again.
+    // Every error from here on, a read of the pool ([`Error::MemoryLimit`]
+    // when every frame is pinned or dirty) or the batch, which is undone,
+    // puts the work back in the queues for the next pass.
+    match remove(core, &store, &mut st, horizon, &deleted, &dropped) {
+        Ok(None) => Ok(out),
+        Ok(Some((removed, trees, seq))) => {
+            out.removed = removed;
+            out.trees = trees;
+            out.group = Some(seq);
+            Ok(out)
+        }
+        Err(e) => {
+            let mut q = mvcc.gc();
+            for (t, k) in deleted {
+                q.deleted.push_front((horizon, t, k));
+            }
+            for t in dropped {
+                q.dropped.push_front((horizon, t));
+            }
+            Err(e)
+        }
+    }
+}
+
+/// The internal batch of a pass: removes each entry of `deleted` that
+/// still carries a delete stamp at or below `horizon` (a later commit may
+/// have put the key again) and frees each tree of `dropped` still dropped
+/// at or below it. Returns the entries removed, the trees freed and the
+/// WAL group the batch joined, or `None` if nothing was left to do.
+///
+/// # Errors
+///
+/// Storage errors; errors of the batch, which is undone.
+fn remove(
+    core: &Core,
+    store: &Store<'_>,
+    st: &mut CommitLatch<'_>,
+    horizon: u64,
+    deleted: &[(Tree, Box<[u8]>)],
+    dropped: &[Tree],
+) -> Result<Option<(usize, usize, u64)>> {
+    #[cfg(test)]
+    if core
+        .mvcc
+        .gc_fail_read
+        .swap(false, crate::sync::atomic::Ordering::SeqCst)
+    {
+        return Err(crate::storage::error::Error::MemoryLimit { requested: 0 });
+    }
     let mut v = Vec::new();
     let mut removable: Vec<(Tree, &[u8])> = Vec::new();
-    for (t, k) in &deleted {
+    for (t, k) in deleted {
         if let Some(stamps) = store.get_stamped(*t, k, &mut v)?
             && stamps.deleted != 0
             && stamps.deleted <= horizon
@@ -134,7 +186,7 @@ pub(crate) fn pass(core: &Core) -> Result<Pass> {
         }
     }
     let mut frees = Vec::new();
-    for t in &dropped {
+    for t in dropped {
         if let Some((tree, d)) = store.tree_status(t.id())?
             && tree.root() == t.root()
             && d != 0
@@ -144,30 +196,17 @@ pub(crate) fn pass(core: &Core) -> Result<Pass> {
         }
     }
     if removable.is_empty() && frees.is_empty() {
-        return Ok(out);
+        return Ok(None);
     }
     st.set_freeze_horizon(horizon);
-    let r = store.apply_internal(&mut st, Some(&core.wal), &removable, &frees);
+    let r = store.apply_internal(st, Some(&core.wal), &removable, &frees);
     st.set_freeze_horizon(0);
-    if let Err(e) = r {
-        // Undone: the work stays queued.
-        let mut q = mvcc.gc();
-        for (t, k) in deleted {
-            q.deleted.push_front((horizon, t, k));
-        }
-        for t in dropped {
-            q.dropped.push_front((horizon, t));
-        }
-        return Err(e);
-    }
+    r?;
     let log = st.log();
     log.group.join_batch();
     let seq = log.group.seq();
     core.wal.note_member(seq);
-    out.removed = removable.len();
-    out.trees = frees.len();
-    out.group = Some(seq);
-    Ok(out)
+    Ok(Some((removable.len(), frees.len(), seq)))
 }
 
 /// Queues the work a crash may have left: every delete-stamped entry and
@@ -242,12 +281,16 @@ pub(crate) fn run_thread(core: &Core, interval: Duration, seed_first: bool) {
         if core.health.is_unusable() {
             continue;
         }
+        // Held until the pass ends: a test that pauses the collector waits
+        // for a pass in flight (`Mvcc::gc_paused`).
         #[cfg(test)]
-        if core
+        let paused = core
             .mvcc
             .gc_paused
-            .load(crate::sync::atomic::Ordering::SeqCst)
-        {
+            .lock()
+            .unwrap_or_else(crate::sync::PoisonError::into_inner);
+        #[cfg(test)]
+        if *paused {
             continue;
         }
         let _ = pass(core);

@@ -954,6 +954,9 @@ impl Engine {
     /// - each adjacency entry belongs to an edge record that it matches;
     /// - a live edge's endpoints are live nodes of the graph; a deleted
     ///   edge's endpoint, if present, was not deleted before it;
+    /// - the catalog cache equals the catalog tree's latest committed
+    ///   entries, each tree they name is live, and each live tree is named
+    ///   by them ([`crate::catalog::check`]);
     /// - each ONLINE index matches the data in both directions
     ///   ([`crate::index::check`]);
     /// - the statistics equal an exact recount ([`recount`]): a count that
@@ -984,11 +987,24 @@ impl Engine {
     /// [`Error::Unusable`]; storage errors, among them
     /// [`Error::MemoryLimit`] when the pool cannot hold a page.
     pub(crate) fn check_graphs(&self) -> Result<Vec<String>> {
+        self.check_graphs_except(&[])
+    }
+
+    /// [`Engine::check_graphs`], with `raw` the trees a test created
+    /// outside the catalog ([`Engine::create_trees`]), which no catalog
+    /// definition names.
+    ///
+    /// # Errors
+    ///
+    /// As [`Engine::check_graphs`].
+    pub(crate) fn check_graphs_except(&self, raw: &[u64]) -> Result<Vec<String>> {
         let core = self.core();
         core.health.check()?;
         let store = self.store();
         let _latch = store.lock();
         core.health.check()?;
+        let mut p = Problems::default();
+        crate::catalog::check(core, &store, raw, &mut |m| p.push(m))?;
         let graphs: Vec<(u64, crate::catalog::GraphDef)> = core
             .catalog
             .objects()
@@ -998,7 +1014,6 @@ impl Engine {
                 _ => None,
             })
             .collect();
-        let mut p = Problems::default();
         for (gid, d) in graphs {
             let tree = |id| store.tree(id);
             let (Some(nodes), Some(edges), Some(adj)) =
@@ -1045,8 +1060,18 @@ impl Engine {
     ///
     /// As [`Store::check`] and [`Engine::check_graphs`].
     pub(crate) fn check_integrity(&self) -> Result<Vec<String>> {
+        self.check_integrity_except(&[])
+    }
+
+    /// [`Engine::check_integrity`], with `raw` as in
+    /// [`Engine::check_graphs_except`].
+    ///
+    /// # Errors
+    ///
+    /// As [`Engine::check_integrity`].
+    pub(crate) fn check_integrity_except(&self, raw: &[u64]) -> Result<Vec<String>> {
         let mut problems = self.store().check()?.problems;
-        problems.extend(self.check_graphs()?);
+        problems.extend(self.check_graphs_except(raw)?);
         Ok(problems)
     }
 }

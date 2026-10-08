@@ -1,9 +1,10 @@
 //! Hermitage isolation scenarios (TS-30 Isolation, R12), at both levels.
 //!
-//! Each scenario starts from a tree `test` holding keys 1 → 10 and 2 → 20
-//! and interleaves two or three transactions step by step; a step that
-//! must wait for a lock runs on its own thread, and the test goes on once
-//! the lock table shows it waiting. Expected outcome: serializable
+//! Each scenario starts from two rows, 1 → 10 and 2 → 20, and runs twice:
+//! on entries of a tree, and on nodes of the default graph whose property
+//! `V` holds the value ([`Kind`], rmp #35). It interleaves two or three
+//! transactions step by step; a step that must wait for a lock runs on its
+//! own thread, and the test goes on once the lock table shows it waiting. Expected outcome: serializable
 //! isolation prevents every anomaly; snapshot isolation prevents all but
 //! G2-item and G2 (TS-30: "lpg is serializable by default, so G2 and write
 //! skew must abort").
@@ -28,39 +29,145 @@
 //! substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS",
 //! WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED."
 
+use std::collections::BTreeMap;
+
 use super::*;
-use crate::storage::error::Error;
+use crate::catalog::{DEFAULT_GRAPH_ID, TokenKind};
+use crate::storage::error::{Error, Result};
+use crate::sync::Mutex;
+use crate::types::Value;
 
 const LEVELS: [Isolation; 2] = [Isolation::Serializable, Isolation::Snapshot];
 
-fn setup() -> (tempfile::TempDir, Engine, Tree) {
+/// What the rows of a scenario are (rmp #35: Hermitage on graph
+/// operations).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    /// Entries `k → v` of a tree.
+    Entries,
+    /// Nodes of the default graph with label `R` and properties `K` = k
+    /// and `V` = v: a read is a node read, a write a property update or a
+    /// node creation, a delete a node deletion, and a predicate read a
+    /// scan of the node tree.
+    Nodes,
+}
+
+/// Every level with every kind of row.
+fn cases() -> impl Iterator<Item = (Isolation, Kind)> {
+    LEVELS
+        .into_iter()
+        .flat_map(|iso| [Kind::Entries, Kind::Nodes].map(|k| (iso, k)))
+}
+
+/// The rows of one scenario.
+enum Data {
+    Entries(Tree),
+    Nodes {
+        /// Label `R`, property keys `K` and `V`.
+        tokens: (u64, u64, u64),
+        /// The node of each row created so far.
+        ids: Mutex<BTreeMap<u8, u64>>,
+    },
+}
+
+fn setup(kind: Kind) -> (tempfile::TempDir, Engine, Data) {
     let (d, e) = db();
-    let t = tree(&e);
-    commit_puts(&e, t, &[(b"1", b"10"), (b"2", b"20")]);
-    (d, e, t)
+    let data = match kind {
+        Kind::Entries => Data::Entries(tree(&e)),
+        Kind::Nodes => Data::Nodes {
+            tokens: (
+                e.token(TokenKind::Label, "R").unwrap(),
+                e.token(TokenKind::PropertyKey, "K").unwrap(),
+                e.token(TokenKind::PropertyKey, "V").unwrap(),
+            ),
+            ids: Mutex::new(BTreeMap::new()),
+        },
+    };
+    let mut tx = e.begin(Isolation::Serializable).unwrap();
+    set(&mut tx, &data, 1, 10).unwrap();
+    set(&mut tx, &data, 2, 20).unwrap();
+    tx.commit().unwrap();
+    (d, e, data)
 }
 
-fn val(tx: &mut Transaction<'_>, t: Tree, k: u8) -> Option<i64> {
-    tx.get(t, &[b'0' + k])
-        .unwrap()
-        .map(|v| String::from_utf8(v).unwrap().parse().unwrap())
+/// Property `key` of `props`, an integer.
+fn int(props: &[(u64, Value)], key: u64) -> i64 {
+    match props.iter().find(|p| p.0 == key) {
+        Some((_, Value::Int(v))) => *v,
+        p => panic!("property {key}: {p:?}"),
+    }
 }
 
-fn set(tx: &mut Transaction<'_>, t: Tree, k: u8, v: i64) -> crate::storage::error::Result<()> {
-    tx.put(t, &[b'0' + k], v.to_string().as_bytes())
+fn val(tx: &mut Transaction<'_>, t: &Data, k: u8) -> Option<i64> {
+    match t {
+        Data::Entries(t) => tx
+            .get(*t, &[b'0' + k])
+            .unwrap()
+            .map(|v| String::from_utf8(v).unwrap().parse().unwrap()),
+        Data::Nodes { tokens, ids } => {
+            let id = *ids.lock().unwrap().get(&k)?;
+            let g = tx.graph(DEFAULT_GRAPH_ID).unwrap();
+            tx.node(&g, id).unwrap().map(|(_, p)| int(&p, tokens.2))
+        }
+    }
+}
+
+fn set(tx: &mut Transaction<'_>, t: &Data, k: u8, v: i64) -> Result<()> {
+    match t {
+        Data::Entries(t) => tx.put(*t, &[b'0' + k], v.to_string().as_bytes()),
+        Data::Nodes { tokens, ids } => {
+            let g = tx.graph(DEFAULT_GRAPH_ID)?;
+            let id = ids.lock().unwrap().get(&k).copied();
+            match id {
+                Some(id) => tx.set_property(&g, id, tokens.2, Value::Int(v)),
+                None => {
+                    let props = [(tokens.1, Value::Int(k.into())), (tokens.2, Value::Int(v))];
+                    let id = tx.create_node(&g, &[tokens.0], &props)?;
+                    ids.lock().unwrap().insert(k, id);
+                    Ok(())
+                }
+            }
+        }
+    }
+}
+
+/// Deletes row `k`: the entry, or the node.
+fn del(tx: &mut Transaction<'_>, t: &Data, k: u8) -> Result<bool> {
+    match t {
+        Data::Entries(t) => tx.delete(*t, &[b'0' + k]),
+        Data::Nodes { ids, .. } => {
+            let g = tx.graph(DEFAULT_GRAPH_ID)?;
+            let id = ids.lock().unwrap()[&k];
+            tx.delete_node(&g, id, false)
+        }
+    }
 }
 
 /// `(key, value)` of every row whose value satisfies `pred`, read by a
-/// scan of the whole tree (a predicate read).
-fn select(tx: &mut Transaction<'_>, t: Tree, pred: impl Fn(i64) -> bool) -> Vec<(u8, i64)> {
-    all(tx, t)
-        .into_iter()
-        .map(|(k, v)| (k[0] - b'0', String::from_utf8(v).unwrap().parse().unwrap()))
-        .filter(|&(_, v)| pred(v))
-        .collect()
+/// scan of the whole tree or node tree (a predicate read).
+fn select(tx: &mut Transaction<'_>, t: &Data, pred: impl Fn(i64) -> bool) -> Vec<(u8, i64)> {
+    let mut rows: Vec<(u8, i64)> = match t {
+        Data::Entries(t) => all(tx, *t)
+            .into_iter()
+            .map(|(k, v)| (k[0] - b'0', String::from_utf8(v).unwrap().parse().unwrap()))
+            .collect(),
+        Data::Nodes { tokens, .. } => {
+            let g = tx.graph(DEFAULT_GRAPH_ID).unwrap();
+            all(tx, g.nodes)
+                .into_iter()
+                .map(|(_, v)| {
+                    let (_, p) = crate::types::record::decode(&v).unwrap();
+                    (u8::try_from(int(&p, tokens.1)).unwrap(), int(&p, tokens.2))
+                })
+                .collect()
+        }
+    };
+    rows.sort_unstable();
+    rows.retain(|&(_, v)| pred(v));
+    rows
 }
 
-fn state(e: &Engine, t: Tree) -> Vec<(u8, i64)> {
+fn state(e: &Engine, t: &Data) -> Vec<(u8, i64)> {
     let mut tx = e.begin(Isolation::Serializable).unwrap();
     let rows = select(&mut tx, t, |_| true);
     tx.commit().unwrap();
@@ -72,8 +179,9 @@ fn state(e: &Engine, t: Tree) -> Vec<(u8, i64)> {
 /// uncommitted writes can form.
 #[test]
 fn g0_write_cycles_are_prevented() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         set(&mut t1, t, 1, 11).unwrap();
         std::thread::scope(|s| {
@@ -87,7 +195,10 @@ fn g0_write_cycles_are_prevented() {
             set(&mut t1, t, 2, 21).unwrap();
             t1.commit().unwrap();
             let (a, b, c) = t2.join().unwrap();
-            assert!(matches!(a, Err(Error::Serialization)), "{iso:?} {a:?}");
+            assert!(
+                matches!(a, Err(Error::Serialization)),
+                "{iso:?} {kind:?} {a:?}"
+            );
             assert!(matches!(b, Err(Error::Aborted)) && matches!(c, Err(Error::Aborted)));
         });
         assert_eq!(state(&e, t), vec![(1, 11), (2, 21)], "{iso:?}");
@@ -98,8 +209,9 @@ fn g0_write_cycles_are_prevented() {
 /// aborts.
 #[test]
 fn g1a_aborted_reads_are_prevented() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         let mut t2 = e.begin(iso).unwrap();
         set(&mut t1, t, 1, 101).unwrap();
@@ -115,8 +227,9 @@ fn g1a_aborted_reads_are_prevented() {
 /// final one while its snapshot is older.
 #[test]
 fn g1b_intermediate_reads_are_prevented() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         let mut t2 = e.begin(iso).unwrap();
         set(&mut t1, t, 1, 101).unwrap();
@@ -135,8 +248,9 @@ fn g1b_intermediate_reads_are_prevented() {
 /// isolation both commit.
 #[test]
 fn g1c_circular_information_flow_is_prevented() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         let mut t2 = e.begin(iso).unwrap();
         set(&mut t1, t, 1, 11).unwrap();
@@ -160,8 +274,9 @@ fn g1c_circular_information_flow_is_prevented() {
 /// and keeps reading them.
 #[test]
 fn otv_observed_transaction_vanishes_is_prevented() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         set(&mut t1, t, 1, 11).unwrap();
         set(&mut t1, t, 2, 19).unwrap();
@@ -177,7 +292,10 @@ fn otv_observed_transaction_vanishes_is_prevented() {
             let mut t3 = e.begin(iso).unwrap();
             assert_eq!(val(&mut t3, t, 1), Some(11));
             let (a, b) = t2.join().unwrap();
-            assert!(matches!(a, Err(Error::Serialization)), "{iso:?} {a:?}");
+            assert!(
+                matches!(a, Err(Error::Serialization)),
+                "{iso:?} {kind:?} {a:?}"
+            );
             assert!(matches!(b, Err(Error::Aborted)));
             assert_eq!(val(&mut t3, t, 2), Some(19));
             assert_eq!(val(&mut t3, t, 1), Some(11));
@@ -193,9 +311,10 @@ fn otv_observed_transaction_vanishes_is_prevented() {
 /// then fails under the write-write rule.
 #[test]
 fn pmp_predicate_many_preceders_is_prevented() {
-    for iso in LEVELS {
+    for (iso, kind) in cases() {
         // Read predicates.
-        let (_d, e, t) = setup();
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         assert!(select(&mut t1, t, |v| v == 30).is_empty());
         let mut t2 = e.begin(iso).unwrap();
@@ -204,7 +323,8 @@ fn pmp_predicate_many_preceders_is_prevented() {
         assert!(select(&mut t1, t, |v| v % 3 == 0).is_empty());
         assert_eq!(t1.commit().unwrap(), None);
         // Write predicates.
-        let (_d, e, t) = setup();
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         for (k, v) in select(&mut t1, t, |_| true) {
             set(&mut t1, t, k, v + 10).unwrap();
@@ -215,13 +335,16 @@ fn pmp_predicate_many_preceders_is_prevented() {
                 let mut t2 = e.begin(iso).unwrap();
                 let rows = select(&mut t2, t, |v| v == 20);
                 assert_eq!(rows, vec![(2, 20)]);
-                let r = t2.delete(t, b"2");
+                let r = del(&mut t2, t, 2);
                 (r, t2.commit())
             });
             until_waiting(e, 1);
             t1.commit().unwrap();
             let (a, b) = t2.join().unwrap();
-            assert!(matches!(a, Err(Error::Serialization)), "{iso:?} {a:?}");
+            assert!(
+                matches!(a, Err(Error::Serialization)),
+                "{iso:?} {kind:?} {a:?}"
+            );
             assert!(matches!(b, Err(Error::Aborted)));
         });
         assert_eq!(state(&e, t), vec![(1, 20), (2, 30)]);
@@ -232,8 +355,9 @@ fn pmp_predicate_many_preceders_is_prevented() {
 /// fails once T1 commits, so T1's update is not lost.
 #[test]
 fn p4_lost_update_is_prevented() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         assert_eq!(val(&mut t1, t, 1), Some(10));
         std::thread::scope(|s| {
@@ -248,7 +372,10 @@ fn p4_lost_update_is_prevented() {
             until_waiting(e, 1);
             t1.commit().unwrap();
             let (a, b) = t2.join().unwrap();
-            assert!(matches!(a, Err(Error::Serialization)), "{iso:?} {a:?}");
+            assert!(
+                matches!(a, Err(Error::Serialization)),
+                "{iso:?} {kind:?} {a:?}"
+            );
             assert!(matches!(b, Err(Error::Aborted)));
         });
         assert_eq!(state(&e, t), vec![(1, 11), (2, 20)]);
@@ -260,8 +387,9 @@ fn p4_lost_update_is_prevented() {
 /// row T2 changed fails under the write-write rule.
 #[test]
 fn g_single_read_skew_is_prevented() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         let mut t2 = e.begin(iso).unwrap();
         assert_eq!(val(&mut t1, t, 1), Some(10));
@@ -274,7 +402,7 @@ fn g_single_read_skew_is_prevented() {
         // A write predicate on the changed row.
         let rows = select(&mut t1, t, |v| v == 20);
         assert_eq!(rows, vec![(2, 20)]);
-        assert!(matches!(t1.delete(t, b"2"), Err(Error::Serialization)));
+        assert!(matches!(del(&mut t1, t, 2), Err(Error::Serialization)));
         assert!(matches!(t1.commit(), Err(Error::Aborted)));
         assert_eq!(state(&e, t), vec![(1, 12), (2, 18)]);
     }
@@ -285,8 +413,9 @@ fn g_single_read_skew_is_prevented() {
 /// isolation both commit, the anomaly snapshot isolation allows.
 #[test]
 fn g2_item_write_skew_fails_only_under_serializable() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         let mut t2 = e.begin(iso).unwrap();
         for tx in [&mut t1, &mut t2] {
@@ -312,8 +441,9 @@ fn g2_item_write_skew_fails_only_under_serializable() {
 /// first's insert; under snapshot isolation both commit.
 #[test]
 fn g2_anti_dependency_cycles_fail_only_under_serializable() {
-    for iso in LEVELS {
-        let (_d, e, t) = setup();
+    for (iso, kind) in cases() {
+        let (_d, e, data) = setup(kind);
+        let t = &data;
         let mut t1 = e.begin(iso).unwrap();
         let mut t2 = e.begin(iso).unwrap();
         assert!(select(&mut t1, t, |v| v % 3 == 0).is_empty());

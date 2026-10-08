@@ -122,12 +122,15 @@ pub(crate) fn until_waiting(e: &Engine, n: usize) {
     crate::test_support::wait_until("lock requests wait", || e.core().mvcc.locks.waiting() >= n);
 }
 
-/// Stops the garbage collector's own passes: the test runs them.
+/// Stops the garbage collector's own passes: the test runs them. Returns
+/// once no pass of the collector's thread runs, and none starts until the
+/// database is dropped.
 pub(crate) fn pause_gc(e: &Engine) {
-    e.core()
+    *e.core()
         .mvcc
         .gc_paused
-        .store(true, crate::sync::atomic::Ordering::SeqCst);
+        .lock()
+        .unwrap_or_else(crate::sync::PoisonError::into_inner) = true;
 }
 
 pub(crate) fn kv(pairs: &[(&str, &str)]) -> Vec<(Vec<u8>, Vec<u8>)> {

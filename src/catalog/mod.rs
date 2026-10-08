@@ -563,19 +563,15 @@ pub(crate) fn catalog_tree(store: &Store<'_>) -> Result<Tree> {
         .ok_or_else(|| Error::Corruption("the catalog tree is missing".into()))
 }
 
-/// TS-13 step 7 for the catalog, at open, before any transaction: loads
-/// the tokens and the catalog cache from the latest committed entries, and
-/// the statistics from the statistics tree, recounted when the recovered
-/// commit timestamp `recovered_ts` is above the one they include.
+/// The latest committed objects and the latest committed index and
+/// constraint definitions in catalog tree `tree`, by identifier; `None` if
+/// an entry is malformed.
 ///
 /// # Errors
 ///
-/// [`Error::Corruption`] for a malformed entry or a missing tree; storage
-/// errors.
-pub(crate) fn open(core: &Core, recovered_ts: u64) -> Result<()> {
-    let store = core.store();
-    let tree = catalog_tree(&store)?;
-    let mut objects = BTreeMap::new();
+/// Storage errors.
+fn definitions(store: &Store<'_>, tree: Tree) -> Result<Option<(Objects, SchemaDefs)>> {
+    let (mut objects, mut schema) = (BTreeMap::new(), BTreeMap::new());
     let mut bad = false;
     store.scan_prefix_stamped(tree, &[NAME], |k, v, st| {
         if st.deleted == 0 {
@@ -588,6 +584,142 @@ pub(crate) fn open(core: &Core, recovered_ts: u64) -> Result<()> {
         }
         true
     })?;
+    store.scan_prefix_stamped(tree, &[SCHEMA], |k, v, st| {
+        if st.deleted == 0 {
+            match SchemaDef::decode(k, v) {
+                Some(d) => {
+                    schema.insert(d.id, d);
+                }
+                None => bad = true,
+            }
+        }
+        true
+    })?;
+    Ok((!bad).then_some((objects, schema)))
+}
+
+/// Objects by identifier.
+type Objects = BTreeMap<u64, Object>;
+/// Index and constraint definitions by identifier.
+type SchemaDefs = BTreeMap<u64, SchemaDef>;
+
+/// The catalog part of the integrity check (TS-12), under the commit
+/// latch the caller holds, from the latest committed entries of the
+/// catalog tree, not from the cache:
+/// - the cache ([`Catalog::objects`], [`Catalog::schema`]) equals those
+///   entries;
+/// - each tree they name (a graph's node, edge and adjacency trees, an
+///   index's tree and side tree), the catalog tree and the statistics tree
+///   is a live tree of the directory;
+/// - each live tree of the directory is one of those, or one of `raw`,
+///   the trees a test created outside the catalog
+///   ([`Engine::create_trees`]).
+///
+/// A definition whose tree is lost and a tree whose definition is lost are
+/// both reported: the first as Neo4j's consistency checker reports a
+/// constraint rule whose index rule is missing (R-NEO @ `54a7dcf`
+/// `community/record-storage-engine/.../consistency/checker/SchemaChecker.java:248, 269`),
+/// the second as [`crate::storage::check`] reports a page no tree uses.
+/// Memory: one copy of the definitions, which the cache holds anyway, and
+/// one identifier per live tree.
+///
+/// # Errors
+///
+/// Storage errors.
+pub(crate) fn check(
+    core: &Core,
+    store: &Store<'_>,
+    raw: &[u64],
+    push: &mut dyn FnMut(String),
+) -> Result<()> {
+    use crate::storage::btree::{DIRECTORY, decode_directory_entry};
+    let Some(tree) = store.tree(CATALOG_TREE)? else {
+        push("the catalog tree is missing".into());
+        return Ok(());
+    };
+    let Some((objects, schema)) = definitions(store, tree)? else {
+        push("the catalog tree holds a malformed entry".into());
+        return Ok(());
+    };
+    {
+        let cache = core.catalog.objects();
+        for id in cache
+            .keys()
+            .chain(objects.keys())
+            .collect::<std::collections::BTreeSet<_>>()
+        {
+            if cache.get(id) != objects.get(id) {
+                push(format!(
+                    "catalog object {id}: the cache holds {:?}, the catalog tree {:?}",
+                    cache.get(id),
+                    objects.get(id)
+                ));
+            }
+        }
+        let cache = core.catalog.schema();
+        for id in cache
+            .keys()
+            .chain(schema.keys())
+            .collect::<std::collections::BTreeSet<_>>()
+        {
+            if cache.get(id) != schema.get(id) {
+                push(format!(
+                    "definition {id}: the cache holds {:?}, the catalog tree {:?}",
+                    cache.get(id),
+                    schema.get(id)
+                ));
+            }
+        }
+    }
+    let mut named: BTreeMap<u64, String> = BTreeMap::new();
+    named.insert(CATALOG_TREE, "the catalog".into());
+    named.insert(STATS_TREE, "the statistics".into());
+    for o in objects.values() {
+        if let Definition::Graph(g) = &o.definition {
+            for t in [g.nodes, g.edges, g.adj] {
+                named.insert(t, format!("graph {}", o.id));
+            }
+        }
+    }
+    for d in schema.values() {
+        for t in [d.tree, d.side].into_iter().filter(|&t| t != 0) {
+            named.insert(t, format!("definition {}", d.id));
+        }
+    }
+    let mut live = std::collections::BTreeSet::new();
+    store.scan_prefix(DIRECTORY, b"", |k, v| {
+        if let (Ok(id), Some((_, 0))) = (<[u8; 8]>::try_from(k), decode_directory_entry(v)) {
+            live.insert(u64::from_be_bytes(id));
+        }
+        true
+    })?;
+    for (t, owner) in &named {
+        if !live.contains(t) {
+            push(format!("{owner}: its tree {t} is missing or dropped"));
+        }
+    }
+    for t in live {
+        if !named.contains_key(&t) && !raw.contains(&t) {
+            push(format!("tree {t}: no catalog definition names it"));
+        }
+    }
+    Ok(())
+}
+
+/// TS-13 step 7 for the catalog, at open, before any transaction: loads
+/// the tokens and the catalog cache from the latest committed entries, and
+/// the statistics from the statistics tree, recounted when the recovered
+/// commit timestamp `recovered_ts` is above the one they include.
+///
+/// # Errors
+///
+/// [`Error::Corruption`] for a malformed entry or a missing tree; storage
+/// errors.
+pub(crate) fn open(core: &Core, recovered_ts: u64) -> Result<()> {
+    let store = core.store();
+    let tree = catalog_tree(&store)?;
+    let defs = definitions(&store, tree)?;
+    let mut bad = defs.is_none();
     store.scan_prefix(tree, &[TOKEN_ID], |k, v| {
         let id = k
             .get(1..9)
@@ -603,23 +735,14 @@ pub(crate) fn open(core: &Core, recovered_ts: u64) -> Result<()> {
         }
         true
     })?;
-    let mut schema = BTreeMap::new();
-    store.scan_prefix_stamped(tree, &[SCHEMA], |k, v, st| {
-        if st.deleted == 0 {
-            match SchemaDef::decode(k, v) {
-                Some(d) => {
-                    schema.insert(d.id, d);
-                }
-                None => bad = true,
-            }
+    let (objects, schema) = match defs {
+        Some(d) if !bad => d,
+        _ => {
+            return Err(core
+                .health
+                .fail(Error::Corruption("malformed catalog entry".into())));
         }
-        true
-    })?;
-    if bad {
-        return Err(core
-            .health
-            .fail(Error::Corruption("malformed catalog entry".into())));
-    }
+    };
     *core.catalog.objects() = objects;
     *core.catalog.schema() = schema;
     let st = stats::load(core)?;
