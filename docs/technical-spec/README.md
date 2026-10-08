@@ -20,7 +20,7 @@ This folder states how the `lpg` crate is built. The [functional specification](
 | [storage.md](storage.md) | Files, pages, graph layout, identifiers, buffer pool, checksums, the process lock. | TS-04 to TS-08, TS-12, TS-27 |
 | [transactions-and-recovery.md](transactions-and-recovery.md) | WAL, torn pages, checkpoints, recovery, MVCC, serializable isolation, locks, commit. | TS-09 to TS-11, TS-13 to TS-16 |
 | [catalog-and-indexes.md](catalog-and-indexes.md) | Catalog, statistics, indexes, constraints. | TS-17, TS-18 |
-| [query-engine.md](query-engine.md) | Parser, binder, planner, execution, limits, EXPLAIN and PROFILE. | TS-19, TS-20 |
+| [query-engine.md](query-engine.md) | Parser, feature classification of `GQL.g4`, binder, planner, execution, limits, EXPLAIN and PROFILE. | TS-19, TS-20 |
 | [values-and-types.md](values-and-types.md) | Runtime values, temporal and spatial types, encodings. | TS-21 |
 | [bolt.md](bolt.md) | Bolt and PackStream endpoints. | TS-22 |
 | [algorithms.md](algorithms.md) | Graph-algorithm runs, projection, parallelism, determinism. | TS-25 |
@@ -84,6 +84,13 @@ Checked between 2026-09-24 and 2026-10-08. Citations added on or after 2026-10-0
 | R-GALGS | graphalgs, <https://github.com/starovoid/graphalgs> | `1f8a412` | MIT |
 | R-ANTLR | antlr4rust/antlr4, <https://github.com/antlr4rust/antlr4> | `9b5bd1e` (2026-09-27) | BSD-3-Clause |
 | R-GQL | opengql/grammar, <https://github.com/opengql/grammar>; the trusted GQL syntax reference ([TS-19](query-engine.md#ts-19-parser)) | `16ea71b` (2025-06-17), v1.9.0 | Apache-2.0 |
+| R-ZU | zu, <https://github.com/tamnd/zu>; `docs/gql-implementation-defined.md` states its choice for every implementation-defined item | `a821319` (2026-10-02) | Apache-2.0 |
+| R-GRAFEO | Grafeo, <https://github.com/GrafeoDB/grafeo> | `3c23dbe` (2026-10-06) | Apache-2.0 |
+| R-GQLC | gql-compat, <https://github.com/tamnd/gql-compat> | `9de1991` (2026-08-24) | Apache-2.0 |
+| R-TCK | opengql/tck, <https://github.com/opengql/tck> | `e0700a7` (2024-09-10) | Apache-2.0 |
+| R-OCTCK | openCypher, <https://github.com/opencypher/openCypher> (its `tck/`) | `677cbaf` (2026-03-20) | Apache-2.0 |
+| R-DF | Apache DataFusion, <https://github.com/apache/datafusion> | `54a4bbf` (2026-10-08) | Apache-2.0 |
+| R-GRAMMARINATOR | grammarinator, <https://github.com/renatahodovan/grammarinator> | `3a6a745` (2026-10-02) | BSD-3-Clause |
 | R-ISO | ISO/IEC 39075:2024 electronic inserts, [docs/standards/iso-iec-39075/ed-1/](../standards/iso-iec-39075/ed-1/README.md) ([S45]); supplementary source for GQLSTATUS codes, feature identifiers and implementation-defined items | edition 1 (2024-03-23) | ISO terms of use |
 
 ### Official documentation
@@ -113,6 +120,15 @@ Checked between 2026-09-24 and 2026-10-08. Citations added on or after 2026-10-0
 | D-HYPER | T. Neumann, T. Mühlbauer, A. Kemper, "Fast Serializable Multi-Version Concurrency Control for Main-Memory Database Systems", SIGMOD 2015 ([S42] of the functional specification) |
 | D-POSIX | POSIX.1-2024 (IEEE Std 1003.1-2024), `<sys/types.h>`: "`blkcnt_t` and `off_t` shall be signed integer types": <https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/sys_types.h.html> |
 | D-CARGO | The Cargo Book, "Profiles": <https://doc.rust-lang.org/cargo/reference/profiles.html> (`test` inherits `dev`; `dev` defaults `opt-level = 0`, `debug-assertions = true`, `overflow-checks = true`; checked 2026-10-03) |
+| D-N4GQL | Neo4j Cypher Manual (Cypher 25), GQL conformance: "Supported mandatory GQL features" and "Supported optional GQL features": <https://neo4j.com/docs/cypher-manual/current/appendix/gql-conformance/> (checked 2026-10-08) |
+| D-N4TYPES | Neo4j Cypher Manual, "Property, structural, and constructed values" (types and their synonyms, type normalization), "Graph references", "Match modes", "Aggregating functions", "Naming rules and recommendations", "Operators", "Spatial functions", "Create indexes" (point indexes), graph types ("Set graph types", "Show graph types"): <https://neo4j.com/docs/cypher-manual/current/> (checked 2026-10-08) |
+| D-MGFUNC | Memgraph documentation, "Functions": <https://memgraph.com/docs/querying/functions> (checked 2026-10-08) |
+| D-N4STATUS | Neo4j Status Codes, "List of GQLSTATUS error codes" and "Notifications": <https://neo4j.com/docs/status-codes/current/> (checked 2026-10-08) |
+| D-BOLTMSG | Neo4j Bolt, "Message" (`RUN`, `PULL` and `FAILURE` metadata): <https://neo4j.com/docs/bolt/current/bolt/message/> (checked 2026-10-08) |
+| D-N4DRIVER | Neo4j Java Driver API, `SummaryCounters`: <https://neo4j.com/docs/api/java-driver/current/org.neo4j.driver/org/neo4j/driver/summary/SummaryCounters.html> (checked 2026-10-08) |
+| D-N4OPS | Neo4j Operations Manual, "Metrics reference" and "Logging" (query log): <https://neo4j.com/docs/operations-manual/current/monitoring/> (checked 2026-10-08) |
+| D-JAVA | Java SE API, `Double.valueOf(String)` (round to nearest under IEEE 754); The Java Language Specification, §5.1.2 "Widening Primitive Conversion" |
+| D-UCD | Unicode Character Database, `DerivedCoreProperties.txt` of versions 13.0.0 to 16.0.0: <https://www.unicode.org/Public/> (downloaded 2026-10-08) |
 | D-SHUTTLE | shuttle 0.9.5: <https://docs.rs/shuttle/0.9.5/shuttle/> ("randomized testing, rather than the exhaustive testing that Loom offers"; `shuttle::sync` provides `Mutex`, `RwLock`, `Condvar`, `Arc`, `atomic`) |
 
 ### Measurements and research notes
@@ -126,4 +142,5 @@ Kept in the repository under [`docs/evidence/`](../evidence/README.md), which al
 | M-LOCK | [evidence/research/research-01-storage.md](../evidence/research/research-01-storage.md) §Q8 and [evidence/locktest/](../evidence/locktest/main.rs) (2026-09-24) | `File::try_lock` behaviour within and across processes. |
 | P-STO | [evidence/research/research-01-storage.md](../evidence/research/research-01-storage.md) (2026-09-24) | Storage evidence with file and line references. |
 | P-TX | [evidence/research/research-02-layout-mvcc.md](../evidence/research/research-02-layout-mvcc.md) (2026-09-24), with the page model [evidence/layout-sim/](../evidence/layout-sim/pagesim.py) | Layout, MVCC, validation, locks and indexes evidence with file and line references. |
+| M-FEAT | [evidence/planning/round-s/](../evidence/planning/round-s/README.md) (2026-10-08) | Rule-to-feature classification of `GQL.g4`; TCK and gql-compat selection counts; ambiguous `GQL.g4` decisions; keyword differences with the ISO BNF; Unicode version of the oracle's ANTLR jar. |
 | P-TEST | [evidence/research/research-04-turso-libsql.md](../evidence/research/research-04-turso-libsql.md) (2026-10-03) | Turso and libSQL kernel components and test dimensions compared with lpg Sprint 1, with file and line references; recommendations R1–R13; test-speed and flaky-test measurements (§5). |

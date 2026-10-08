@@ -1,0 +1,575 @@
+rule	line	clause	needs	status	partial
+gqlProgram	7	6 <GQL-program>	mandatory	supported	
+programActivity	12	6 <GQL-program>	mandatory	supported	
+sessionActivity	17	6 <GQL-program>	mandatory	supported	
+transactionActivity	22	6 <GQL-program>	mandatory	supported	
+endTransactionCommand	28	6 <GQL-program>	GT01	supported	
+sessionSetCommand	35	7.1 <session set command>	mandatory	supported	
+sessionSetSchemaClause	39	7.1 <session set command>	mandatory	supported	
+sessionSetGraphClause	43	7.1 <session set command>	mandatory	supported	
+sessionSetTimeZoneClause	47	7.1 <session set command>	GS15	not supported	
+setTimeZoneValue	51	7.1 <session set command>	GS15	not supported	
+sessionSetParameterClause	55	7.1 <session set command>	GS01 or GS02 or GS03	not supported	
+sessionSetGraphParameterClause	61	7.1 <session set command>	GS01	not supported	
+sessionSetBindingTableParameterClause	65	7.1 <session set command>	GS02	not supported	
+sessionSetValueParameterClause	69	7.1 <session set command>	GS03	not supported	
+sessionSetParameterName	73	7.1 <session set command>	GS01 or GS02 or GS03	not supported	
+sessionResetCommand	79	7.2 <session reset command>	GS04 or GS05 or GS06 or GS07 or GS08 or GS16	not supported	
+sessionResetArguments	83	7.2 <session reset command>	GS04 or GS05 or GS06 or GS07 or GS08 or GS16	not supported	
+sessionCloseCommand	93	7.3 <session close command>	mandatory	supported	
+sessionParameterSpecification	99	7.4 <session parameter specification>	GS01 or GS02 or GS03 or GS04 or GS05 or GS06 or GS07 or GS08 or GS16	not supported	
+startTransactionCommand	105	8.1 <start transaction command>	GT01	supported	
+transactionCharacteristics	111	8.2 <transaction characteristics>	GT01+GT02	not supported	
+transactionMode	115	8.2 <transaction characteristics>	GT01+GT02	not supported	
+transactionAccessMode	119	8.2 <transaction characteristics>	GT01+GT02	not supported	
+rollbackCommand	126	8.3 <rollback command>	GT01	supported	
+commitCommand	132	8.4 <commit command>	GT01	supported	
+nestedProcedureSpecification	138	9.1 <nested procedure specification>	GP01	not supported	
+procedureSpecification	145	9.1 <nested procedure specification>	mandatory	supported	
+nestedDataModifyingProcedureSpecification	156	9.1 <nested procedure specification>	mandatory	supported	
+nestedQuerySpecification	164	9.1 <nested procedure specification>	mandatory	supported	
+procedureBody	174	9.2 <procedure body>	mandatory	supported	
+bindingVariableDefinitionBlock	178	9.2 <procedure body>	GP05+GP17 or GP08+GP17 or GP11+GP17	not supported	
+bindingVariableDefinition	182	9.2 <procedure body>	GP05+GP17 or GP08+GP17 or GP11+GP17	not supported	GP05 (alternative 3); GP08 (alternative 2); GP11 (alternative 1)
+statementBlock	188	9.2 <procedure body>	mandatory	supported	
+statement	192	9.2 <procedure body>	mandatory	supported	
+nextStatement	198	9.2 <procedure body>	GQ20	not supported	
+graphVariableDefinition	204	10.1 <graph variable definition>	GP11+GP17	not supported	
+optTypedGraphInitializer	208	10.1 <graph variable definition>	GP11+GP17 or GS01	not supported	
+graphInitializer	212	10.1 <graph variable definition>	GP11+GP17 or GS01	not supported	
+bindingTableVariableDefinition	218	10.2 <binding table variable definition>	GP08+GP17	not supported	
+optTypedBindingTableInitializer	222	10.2 <binding table variable definition>	GP08+GP17 or GS02	not supported	
+bindingTableInitializer	226	10.2 <binding table variable definition>	GP08+GP17 or GS02	not supported	
+valueVariableDefinition	232	10.3 <value variable definition>	GE03 or GP05+GP17 or GQ09	not supported	
+optTypedValueInitializer	236	10.3 <value variable definition>	GE03 or GP05+GP17 or GQ09 or GS03	not supported	
+valueInitializer	240	10.3 <value variable definition>	GE03 or GP05+GP17 or GQ09 or GS03	not supported	
+graphExpression	246	11.1 <graph expression>	mandatory	supported	
+currentGraph	253	11.1 <graph expression>	mandatory	supported	
+bindingTableExpression	260	11.2 <binding table expression>	GE02 or GP08+GP17 or GS02	not supported	
+nestedBindingTableQuerySpecification	267	11.2 <binding table expression>	GE02 or GP08+GP17 or GS02	not supported	
+objectExpressionPrimary	273	11.3 <object expression primary>	mandatory	supported	
+linearCatalogModifyingStatement	281	12.1 <linear catalog-modifying statement>	GC01 or GC04 or GP01 or GP04	supported	
+simpleCatalogModifyingStatement	285	12.1 <linear catalog-modifying statement>	GC01 or GC04 or GP01 or GP04	supported	
+primitiveCatalogModifyingStatement	290	12.1 <linear catalog-modifying statement>	GC01 or GC04	supported	
+createSchemaStatement	301	12.2 <insert schema statement>	GC01	supported	GC02 (IF)
+dropSchemaStatement	307	12.3 <drop schema statement>	GC01	supported	GC02 (IF)
+createGraphStatement	313	12.4 <insert graph statement>	GC04+GG01 or GC04+GG02 or GC04+GG04	supported	GC05 (IF)
+openGraphType	317	12.4 <insert graph statement>	GC04+GG01	supported	
+ofGraphType	321	12.4 <insert graph statement>	GC04+GG02 or GC04+GG04	supported	GG02 (alternative 2); GG02 (alternative 3)
+graphTypeLikeGraph	327	12.4 <insert graph statement>	GC01+GG04 or GC04+GG04	not supported	
+graphSource	331	12.4 <insert graph statement>	GC04+GG05	not supported	
+dropGraphStatement	337	12.5 <drop graph statement>	GC04	supported	GC05 (IF)
+createGraphTypeStatement	343	12.6 <graph type statement>	GC01	supported	GC03 (IF)
+graphTypeSource	347	12.6 <graph type statement>	GC01	supported	
+copyOfGraphType	353	12.6 <graph type statement>	GC01	supported	
+dropGraphTypeStatement	359	12.7 <drop graph statement>	GC01	supported	GC03 (IF)
+callCatalogModifyingProcedureStatement	365	12.8 <call catalog-modifying statement>	GP01 or GP04	supported	
+linearDataModifyingStatement	371	13.1 <linear data-modifying statement>	mandatory	supported	
+focusedLinearDataModifyingStatement	376	13.1 <linear data-modifying statement>	GQ01	supported	
+focusedLinearDataModifyingStatementBody	381	13.1 <linear data-modifying statement>	GQ01	supported	
+focusedNestedDataModifyingProcedureSpecification	385	13.1 <linear data-modifying statement>	GQ01	supported	
+ambientLinearDataModifyingStatement	389	13.1 <linear data-modifying statement>	mandatory	supported	
+ambientLinearDataModifyingStatementBody	394	13.1 <linear data-modifying statement>	mandatory	supported	
+simpleLinearDataAccessingStatement	398	13.1 <linear data-modifying statement>	mandatory	supported	
+simpleDataAccessingStatement	402	13.1 <linear data-modifying statement>	mandatory	supported	
+simpleDataModifyingStatement	407	13.1 <linear data-modifying statement>	GD01 or GP01 or GP04	supported	
+primitiveDataModifyingStatement	412	13.1 <linear data-modifying statement>	GD01	supported	
+insertStatement	421	13.2 <insertStatement>	GD01	supported	
+setStatement	427	13.3 <set statement>	GD01	supported	
+setItemList	431	13.3 <set statement>	GD01	supported	
+setItem	435	13.3 <set statement>	GD01	supported	
+setPropertyItem	441	13.3 <set statement>	GD01	supported	
+setAllPropertiesItem	445	13.3 <set statement>	GD01	supported	
+setLabelItem	449	13.3 <set statement>	GD01+GD02	not supported	
+removeStatement	455	13.4 <remove statement>	GD01	supported	
+removeItemList	459	13.4 <remove statement>	GD01	supported	
+removeItem	463	13.4 <remove statement>	GD01	supported	
+removePropertyItem	468	13.4 <remove statement>	GD01	supported	
+removeLabelItem	472	13.4 <remove statement>	GD01+GD02	not supported	
+deleteStatement	478	13.5 <delete statement>	GD01+GD03 or GD01+GD04	not supported	
+deleteItemList	482	13.5 <delete statement>	GD01+GD03 or GD01+GD04	not supported	
+deleteItem	486	13.5 <delete statement>	GD01+GD03 or GD01+GD04	not supported	
+callDataModifyingProcedureStatement	492	13.6 <call data-modifying procedure statement>	GP01 or GP04	supported	
+compositeQueryStatement	498	14.1 <composite query statement>	mandatory	supported	
+compositeQueryExpression	504	14.2 <composite query expression>	mandatory	supported	
+queryConjunction	509	14.2 <composite query expression>	GQ02 or GQ03 or GQ04 or GQ05 or GQ06 or GQ07	not supported	GQ02 (alternative 2)
+setOperator	514	14.2 <composite query expression>	GQ03 or GQ04 or GQ05 or GQ06 or GQ07	not supported	GQ03 (alternative 1); GQ04 or GQ05 (alternative 2); GQ06 or GQ07 (alternative 3)
+compositeQueryPrimary	520	14.2 <composite query expression>	mandatory	supported	
+linearQueryStatement	526	14.3 <linear query statement> and <simple query statement>	mandatory	supported	
+focusedLinearQueryStatement	531	14.3 <linear query statement> and <simple query statement>	mandatory	supported	
+focusedLinearQueryStatementPart	538	14.3 <linear query statement> and <simple query statement>	GQ01	supported	
+focusedLinearQueryAndPrimitiveResultStatementPart	542	14.3 <linear query statement> and <simple query statement>	GQ01	supported	
+focusedPrimitiveResultStatement	546	14.3 <linear query statement> and <simple query statement>	GQ01	supported	
+focusedNestedQuerySpecification	550	14.3 <linear query statement> and <simple query statement>	GQ01	supported	
+ambientLinearQueryStatement	554	14.3 <linear query statement> and <simple query statement>	mandatory	supported	
+simpleLinearQueryStatement	559	14.3 <linear query statement> and <simple query statement>	mandatory	supported	
+simpleQueryStatement	563	14.3 <linear query statement> and <simple query statement>	mandatory	supported	
+primitiveQueryStatement	568	14.3 <linear query statement> and <simple query statement>	mandatory	supported	
+matchStatement	578	14.4 <match statement>	mandatory	supported	
+simpleMatchStatement	583	14.4 <match statement>	mandatory	supported	
+optionalMatchStatement	587	14.4 <match statement>	mandatory	supported	
+optionalOperand	591	14.4 <match statement>	mandatory	supported	
+matchStatementBlock	597	14.4 <match statement>	mandatory	supported	
+callQueryStatement	603	14.5 <call query statement>	GP01 or GP04	supported	
+filterStatement	609	14.6 <filter statement>	GQ08	not supported	
+letStatement	615	14.7 <let statement>	GQ09	not supported	
+letVariableDefinitionList	619	14.7 <let statement>	GE03 or GQ09	not supported	
+letVariableDefinition	623	14.7 <let statement>	GE03 or GQ09	not supported	
+forStatement	630	14.8 <for statement>	GQ10 or GQ23	not supported	
+forItem	634	14.8 <for statement>	GQ10 or GQ23	not supported	
+forItemAlias	638	14.8 <for statement>	GQ10 or GQ23	not supported	
+forItemSource	642	14.8 <for statement>	GQ10 or GQ23	not supported	
+forOrdinalityOrOffset	646	14.8 <for statement>	GQ10+GQ11 or GQ10+GQ24 or GQ11+GQ23 or GQ23+GQ24	not supported	
+orderByAndPageStatement	652	14.9 <order by and page statement>	mandatory	supported	
+primitiveResultStatement	660	14.10 <primitive result statement>	mandatory	supported	
+returnStatement	667	14.11 <return statement>	mandatory	supported	
+returnStatementBody	671	14.11 <return statement>	mandatory	supported	
+returnItemList	675	14.11 <return statement>	mandatory	supported	
+returnItem	679	14.11 <return statement>	mandatory	supported	
+returnItemAlias	683	14.11 <return statement>	mandatory	supported	
+selectStatement	689	14.12 <select statement>	mandatory	supported	
+selectItemList	693	14.12 <select statement>	mandatory	supported	
+selectItem	697	14.12 <select statement>	mandatory	supported	
+selectItemAlias	701	14.12 <select statement>	mandatory	supported	
+havingClause	705	14.12 <select statement>	mandatory	supported	
+selectStatementBody	709	14.12 <select statement>	mandatory	supported	
+selectGraphMatchList	713	14.12 <select statement>	mandatory	supported	
+selectGraphMatch	717	14.12 <select statement>	mandatory	supported	
+selectQuerySpecification	721	14.12 <select statement>	mandatory	supported	
+callProcedureStatement	728	15.1 <call procedure statement> and <procedure call>	GP01 or GP04	supported	
+procedureCall	732	15.1 <call procedure statement> and <procedure call>	GP01 or GP04	supported	
+inlineProcedureCall	739	15.2 <inline procedure call>	GP01	not supported	
+variableScopeClause	743	15.2 <inline procedure call>	GP01+GP03	not supported	
+bindingVariableReferenceList	747	15.2 <inline procedure call>	GP01+GP03	not supported	
+namedProcedureCall	753	15.3 <named procedure call>	GP04	supported	
+procedureArgumentList	757	15.3 <named procedure call>	GP04	supported	
+procedureArgument	761	15.3 <named procedure call>	GP04	supported	
+atSchemaClause	767	16.1 <at schema clasue>	GP16	not supported	
+useGraphClause	773	16.2 <use graph clause>	GQ01	supported	
+graphPatternBindingTable	779	16.3 <graph pattern binding table>	mandatory	supported	
+graphPatternYieldClause	783	16.3 <graph pattern binding table>	GQ19	not supported	
+graphPatternYieldItemList	787	16.3 <graph pattern binding table>	GQ19	not supported	
+graphPatternYieldItem	795	16.3 <graph pattern binding table>	GQ19	not supported	
+graphPattern	803	16.4 <graph pattern>	mandatory	supported	
+matchMode	807	16.4 <graph pattern>	G002 or G003	not supported	
+repeatableElementsMatchMode	812	16.4 <graph pattern>	G003	not supported	
+differentEdgesMatchMode	816	16.4 <graph pattern>	G002	not supported	
+elementBindingsOrElements	820	16.4 <graph pattern>	G003	not supported	
+edgeBindingsOrEdges	825	16.4 <graph pattern>	G002	not supported	
+pathPatternList	830	16.4 <graph pattern>	mandatory	supported	
+pathPattern	834	16.4 <graph pattern>	mandatory	supported	
+pathVariableDeclaration	838	16.4 <graph pattern>	G004	not supported	
+keepClause	842	16.4 <graph pattern>	G005+G006+G015 or G005+G006+G016 or G005+G006+G017 or G005+G006+G018 or G005+G006+G019 or G005+G006+G020 or G005+G007+G015 or G005+G007+G016 or G005+G007+G017 or G005+G007+G018 or G005+G007+G019 or G005+G007+G020 or G006+G010 or G006+G011 or G006+G012 or G006+G013 or G007+G010 or G007+G011 or G007+G012 or G007+G013	not supported	
+graphPatternWhereClause	846	16.4 <graph pattern>	mandatory	supported	
+insertGraphPattern	852	16.5 <insert graph pattern>	GD01	supported	
+insertPathPatternList	856	16.5 <insert graph pattern>	GD01	supported	
+insertPathPattern	860	16.5 <insert graph pattern>	GD01	supported	
+insertNodePattern	864	16.5 <insert graph pattern>	GD01	supported	
+insertEdgePattern	868	16.5 <insert graph pattern>	GD01	supported	
+insertEdgePointingLeft	874	16.5 <insert graph pattern>	GD01	supported	
+insertEdgePointingRight	878	16.5 <insert graph pattern>	GD01	supported	
+insertEdgeUndirected	882	16.5 <insert graph pattern>	GD01+GH02	not supported	
+insertElementPatternFiller	886	16.5 <insert graph pattern>	GD01	supported	
+labelAndPropertySetSpecification	891	16.5 <insert graph pattern>	GD01	supported	
+pathPatternPrefix	898	16.6 <path pattern prefix>	G005+G015 or G005+G016 or G005+G017 or G005+G018 or G005+G019 or G005+G020 or G010 or G011 or G012 or G013	not supported	
+pathModePrefix	903	16.6 <path pattern prefix>	G010 or G011 or G012 or G013	not supported	
+pathMode	907	16.6 <path pattern prefix>	G010 or G011 or G012 or G013	not supported	G010 (alternative 1); G011 (alternative 2); G012 (alternative 3); G013 (alternative 4)
+pathSearchPrefix	914	16.6 <path pattern prefix>	G005+G015 or G005+G016 or G005+G017 or G005+G018 or G005+G019 or G005+G020	not supported	
+allPathSearch	920	16.6 <path pattern prefix>	G005+G015	not supported	
+pathOrPaths	924	16.6 <path pattern prefix>	G014	not supported	
+anyPathSearch	929	16.6 <path pattern prefix>	G005+G016	not supported	
+numberOfPaths	933	16.6 <path pattern prefix>	G005+G016 or G005+G019	not supported	
+shortestPathSearch	937	16.6 <path pattern prefix>	G005+G017 or G005+G018 or G005+G019 or G005+G020	not supported	
+allShortestPathSearch	944	16.6 <path pattern prefix>	G005+G017	not supported	
+anyShortestPathSearch	948	16.6 <path pattern prefix>	G005+G018	not supported	
+countedShortestPathSearch	952	16.6 <path pattern prefix>	G005+G019	not supported	
+countedShortestGroupSearch	956	16.6 <path pattern prefix>	G005+G020	not supported	
+numberOfGroups	960	16.6 <path pattern prefix>	G005+G020	not supported	
+pathPatternExpression	966	16.7 <path pattern expression>	mandatory	supported	G030 (alternative 2); G032 (alternative 3)
+pathTerm	972	16.7 <path pattern expression>	mandatory	supported	
+pathFactor	976	16.7 <path pattern expression>	mandatory	supported	G035 or G036 (alternative 2); G037 (alternative 3)
+pathPrimary	982	16.7 <path pattern expression>	mandatory	supported	
+elementPattern	988	16.7 <path pattern expression>	mandatory	supported	
+nodePattern	993	16.7 <path pattern expression>	mandatory	supported	
+elementPatternFiller	997	16.7 <path pattern expression>	mandatory	supported	
+elementVariableDeclaration	1001	16.7 <path pattern expression>	mandatory	supported	
+isLabelExpression	1005	16.7 <path pattern expression>	mandatory	supported	
+isOrColon	1009	16.7 <path pattern expression>	mandatory	supported	
+elementPatternPredicate	1014	16.7 <path pattern expression>	mandatory	supported	
+elementPatternWhereClause	1019	16.7 <path pattern expression>	mandatory	supported	
+elementPropertySpecification	1023	16.7 <path pattern expression>	mandatory	supported	
+propertyKeyValuePairList	1027	16.7 <path pattern expression>	mandatory	supported	
+propertyKeyValuePair	1031	16.7 <path pattern expression>	mandatory	supported	
+edgePattern	1035	16.7 <path pattern expression>	mandatory	supported	
+fullEdgePattern	1040	16.7 <path pattern expression>	mandatory	supported	
+fullEdgePointingLeft	1050	16.7 <path pattern expression>	G043	not supported	
+fullEdgeUndirected	1054	16.7 <path pattern expression>	GH02	not supported	
+fullEdgePointingRight	1058	16.7 <path pattern expression>	mandatory	supported	
+fullEdgeLeftOrUndirected	1062	16.7 <path pattern expression>	G043+GH02	not supported	
+fullEdgeUndirectedOrRight	1066	16.7 <path pattern expression>	G043+GH02	not supported	
+fullEdgeLeftOrRight	1070	16.7 <path pattern expression>	G043	not supported	
+fullEdgeAnyDirection	1074	16.7 <path pattern expression>	G043	not supported	
+abbreviatedEdgePattern	1078	16.7 <path pattern expression>	G044 or G045	not supported	G044 (alternative 1); G044 (alternative 3); G045 (alternative 6); G045 (alternative 7); G045+GH02 (alternative 2); G045+GH02 (alternative 4); G045+GH02 (alternative 5)
+parenthesizedPathPatternExpression	1088	16.7 <path pattern expression>	G038	not supported	G049 (pathModePrefix)
+subpathVariableDeclaration	1092	16.7 <path pattern expression>	G038+G048	not supported	
+parenthesizedPathPatternWhereClause	1096	16.7 <path pattern expression>	G038+G050	not supported	
+labelExpression	1102	16.8 <label expression>	mandatory	supported	G074 (alternative 5)
+pathVariableReference	1113	16.9 <path variable reference>	-	unreachable	
+elementVariableReference	1119	16.10 <element variable reference>	mandatory	supported	
+graphPatternQuantifier	1125	16.11 <graph pattern quantifier>	G035+G060 or G035+G061 or G036+G060 or G036+G061	not supported	G060 (alternative 3); G061 (alternative 1); G061 (alternative 2)
+fixedQuantifier	1132	16.11 <graph pattern quantifier>	G035+G060 or G036+G060	not supported	
+generalQuantifier	1136	16.11 <graph pattern quantifier>	G035+G060 or G035+G061 or G036+G060 or G036+G061	not supported	
+lowerBound	1140	16.11 <graph pattern quantifier>	G035+G060 or G035+G061 or G036+G060 or G036+G061	not supported	
+upperBound	1144	16.11 <graph pattern quantifier>	G035+G060 or G035+G061 or G036+G060 or G036+G061	not supported	
+simplifiedPathPatternExpression	1150	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDefaultingLeft	1160	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDefaultingUndirected	1164	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDefaultingRight	1168	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDefaultingLeftOrUndirected	1172	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDefaultingUndirectedOrRight	1176	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDefaultingLeftOrRight	1180	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDefaultingAnyDirection	1184	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedContents	1188	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedPathUnion	1194	16.12 <simplified path pattern expression>	G032+G039 or G032+G080	not supported	
+simplifiedMultisetAlternation	1198	16.12 <simplified path pattern expression>	G030+G039 or G030+G080	not supported	
+simplifiedTerm	1202	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedFactorLow	1207	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedFactorHigh	1212	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedQuantified	1218	16.12 <simplified path pattern expression>	G035+G039+G060 or G035+G039+G061 or G035+G060+G080 or G035+G061+G080 or G036+G039+G060 or G036+G039+G061 or G036+G060+G080 or G036+G061+G080	not supported	
+simplifiedQuestioned	1222	16.12 <simplified path pattern expression>	G037+G039 or G037+G080	not supported	
+simplifiedTertiary	1226	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedDirectionOverride	1231	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedOverrideLeft	1241	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedOverrideUndirected	1245	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedOverrideRight	1249	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedOverrideLeftOrUndirected	1253	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedOverrideUndirectedOrRight	1257	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedOverrideLeftOrRight	1261	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedOverrideAnyDirection	1265	16.12 <simplified path pattern expression>	G039+G081 or G039+G082 or G080+G081 or G080+G082	not supported	
+simplifiedSecondary	1269	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedNegation	1274	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+simplifiedPrimary	1278	16.12 <simplified path pattern expression>	G039 or G080	not supported	
+whereClause	1285	16.13 <where clause>	mandatory	supported	
+yieldClause	1291	16.14 <yield clause>	GP04 or GQ20	supported	
+yieldItemList	1295	16.14 <yield clause>	GP04 or GQ20	supported	
+yieldItem	1299	16.14 <yield clause>	GP04 or GQ20	supported	
+yieldItemName	1303	16.14 <yield clause>	GP04 or GQ20	supported	
+yieldItemAlias	1307	16.14 <yield clause>	GP04 or GQ20	supported	
+groupByClause	1313	16.15 <group by clasue>	GQ15	not supported	
+groupingElementList	1317	16.15 <group by clasue>	GQ15	not supported	
+groupingElement	1322	16.15 <group by clasue>	GQ15	not supported	
+emptyGroupingSet	1326	16.15 <group by clasue>	GQ15	not supported	
+orderByClause	1332	16.16 <order by clasue>	mandatory	supported	
+sortSpecificationList	1338	16.17 <sort specification list>	mandatory	supported	
+sortSpecification	1342	16.17 <sort specification list>	mandatory	supported	
+sortKey	1346	16.17 <sort specification list>	mandatory	supported	
+orderingSpecification	1350	16.17 <sort specification list>	mandatory	supported	
+nullOrdering	1357	16.17 <sort specification list>	GA03	not supported	
+limitClause	1364	16.18 <limit clause>	GQ13	not supported	
+offsetClause	1370	16.19 <offset clause>	GQ12	not supported	
+offsetSynonym	1374	16.19 <offset clause>	GQ12	not supported	
+schemaReference	1381	17.1 <schema reference> and <catalog schema parent name>	mandatory	supported	
+absoluteCatalogSchemaReference	1387	17.1 <schema reference> and <catalog schema parent name>	mandatory	supported	
+catalogSchemaParentAndName	1392	17.1 <schema reference> and <catalog schema parent name>	GC01	supported	
+relativeCatalogSchemaReference	1396	17.1 <schema reference> and <catalog schema parent name>	mandatory	supported	
+predefinedSchemaReference	1401	17.1 <schema reference> and <catalog schema parent name>	mandatory	supported	
+absoluteDirectoryPath	1407	17.1 <schema reference> and <catalog schema parent name>	mandatory	supported	
+relativeDirectoryPath	1411	17.1 <schema reference> and <catalog schema parent name>	mandatory	supported	
+simpleDirectoryPath	1415	17.1 <schema reference> and <catalog schema parent name>	mandatory	supported	
+graphReference	1421	17.2 <graph reference> and <catalog graph parent and name>	mandatory	supported	
+catalogGraphParentAndName	1428	17.2 <graph reference> and <catalog graph parent and name>	GC04	supported	
+homeGraph	1432	17.2 <graph reference> and <catalog graph parent and name>	mandatory	supported	
+graphTypeReference	1439	17.3 <graph type reference> and <catalog graph type parent and name>	GC01 or GC04+GG02	supported	
+catalogGraphTypeParentAndName	1444	17.3 <graph type reference> and <catalog graph type parent and name>	GC01 or GC04+GG02	supported	
+bindingTableReference	1450	17.4 <binding table reference> and <catalog binding table parent name>	GE02 or GP08+GP17 or GS02	not supported	
+procedureReference	1458	17.5 <procedure reference> and <catalog procedure parent and name>	GP04	supported	
+catalogProcedureParentAndName	1463	17.5 <procedure reference> and <catalog procedure parent and name>	GP04	supported	
+catalogObjectParentReference	1469	17.6 <catalog object parent reference>	mandatory	supported	
+referenceParameterSpecification	1476	17.7 <reference parameter specification>	GE08	not supported	
+nestedGraphTypeSpecification	1482	18.1 <nested graph type specification>	GA05+GG03+GV60 or GA06+GG03+GV60 or GC01+GG03 or GC04+GG02+GG03 or GE03+GG03+GV60 or GG03+GP05+GP17+GV60 or GG03+GP11+GP17+GV60 or GG03+GQ09+GV60 or GG03+GS01+GV60 or GG03+GS02+GV60+GV61 or GG03+GS03+GV60	supported	
+graphTypeSpecificationBody	1486	18.1 <nested graph type specification>	GA05+GG03+GV60 or GA06+GG03+GV60 or GC01+GG03 or GC04+GG02+GG03 or GE03+GG03+GV60 or GG03+GP05+GP17+GV60 or GG03+GP11+GP17+GV60 or GG03+GQ09+GV60 or GG03+GS01+GV60 or GG03+GS02+GV60+GV61 or GG03+GS03+GV60	supported	
+elementTypeList	1490	18.1 <nested graph type specification>	GA05+GG03+GV60 or GA06+GG03+GV60 or GC01+GG03 or GC04+GG02+GG03 or GE03+GG03+GV60 or GG03+GP05+GP17+GV60 or GG03+GP11+GP17+GV60 or GG03+GQ09+GV60 or GG03+GS01+GV60 or GG03+GS02+GV60+GV61 or GG03+GS03+GV60	supported	
+elementTypeSpecification	1494	18.1 <nested graph type specification>	GA05+GG03+GV60 or GA06+GG03+GV60 or GC01+GG03 or GC04+GG02+GG03 or GE03+GG03+GV60 or GG03+GP05+GP17+GV60 or GG03+GP11+GP17+GV60 or GG03+GQ09+GV60 or GG03+GS01+GV60 or GG03+GS02+GV60+GV61 or GG03+GS03+GV60	supported	
+nodeTypeSpecification	1501	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nodeTypePattern	1506	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nodeTypePhrase	1510	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nodeTypePhraseFiller	1514	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nodeTypeFiller	1519	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+localNodeTypeAlias	1524	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nodeTypeImpliedContent	1528	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nodeTypeKeyLabelSet	1534	18.2 <node type specification>	GA05+GG21 or GA06+GG21 or GC01+GG03+GG21 or GC04+GG02+GG03+GG21 or GE03+GG21 or GG03+GG21+GS01+GV60 or GG21+GP05+GP17 or GG21+GP08+GP17+GV61 or GG21+GQ09 or GG21+GS02+GV61 or GG21+GS03	not supported	
+nodeTypeLabelSet	1538	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nodeTypePropertyTypes	1542	18.2 <node type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypeSpecification	1548	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePattern	1553	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePhrase	1557	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePhraseFiller	1561	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypeFiller	1566	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypeImpliedContent	1571	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypeKeyLabelSet	1577	18.3 <edge type specification>	GA05+GG21 or GA06+GG21 or GC01+GG03+GG21 or GC04+GG02+GG03+GG21 or GE03+GG21 or GG03+GG21+GS01+GV60 or GG21+GP05+GP17 or GG21+GP08+GP17+GV61 or GG21+GQ09 or GG21+GS02+GV61 or GG21+GS03	not supported	
+edgeTypeLabelSet	1581	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePropertyTypes	1585	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePatternDirected	1589	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePatternPointingRight	1594	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePatternPointingLeft	1598	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeTypePatternUndirected	1602	18.3 <edge type specification>	GA05+GH02 or GA06+GH02 or GC01+GG03+GH02 or GC04+GG02+GG03+GH02 or GE03+GH02 or GG03+GH02+GS01+GV60 or GH02+GP05+GP17 or GH02+GP08+GP17+GV61 or GH02+GQ09 or GH02+GS02+GV61 or GH02+GS03	not supported	
+arcTypePointingRight	1606	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+arcTypePointingLeft	1610	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+arcTypeUndirected	1614	18.3 <edge type specification>	GA05+GH02 or GA06+GH02 or GC01+GG03+GH02 or GC04+GG02+GG03+GH02 or GE03+GH02 or GG03+GH02+GS01+GV60 or GH02+GP05+GP17 or GH02+GP08+GP17+GV61 or GH02+GQ09 or GH02+GS02+GV61 or GH02+GS03	not supported	
+sourceNodeTypeReference	1618	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+destinationNodeTypeReference	1623	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeKind	1628	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+endpointPairPhrase	1633	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+endpointPair	1637	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+endpointPairDirected	1642	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+endpointPairPointingRight	1647	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+endpointPairPointingLeft	1651	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+endpointPairUndirected	1655	18.3 <edge type specification>	GA05+GH02 or GA06+GH02 or GC01+GG03+GH02 or GC04+GG02+GG03+GH02 or GE03+GH02 or GG03+GH02+GS01+GV60 or GH02+GP05+GP17 or GH02+GP08+GP17+GV61 or GH02+GQ09 or GH02+GS02+GV61 or GH02+GS03	not supported	
+connectorPointingRight	1659	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+connectorUndirected	1664	18.3 <edge type specification>	GA05+GH02 or GA06+GH02 or GC01+GG03+GH02 or GC04+GG02+GG03+GH02 or GE03+GH02 or GG03+GH02+GS01+GV60 or GH02+GP05+GP17 or GH02+GP08+GP17+GV61 or GH02+GQ09 or GH02+GS02+GV61 or GH02+GS03	not supported	
+sourceNodeTypeAlias	1669	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+destinationNodeTypeAlias	1673	18.3 <edge type specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+labelSetPhrase	1679	18.4 <label set phrase> and <label set specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+labelSetSpecification	1685	18.4 <label set phrase> and <label set specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GD01 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+propertyTypesSpecification	1691	18.5 <property types specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+propertyTypeList	1695	18.5 <property types specification>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+propertyType	1701	18.6 <property type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+propertyValueType	1707	18.7 <property value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+bindingTableType	1713	18.8 <binding table type>	GA05+GV61 or GA06+GV61 or GC01+GG03+GV61 or GC04+GG02+GG03+GV61 or GE03+GV61 or GG03+GS01+GV60+GV61 or GP05+GP17+GV61 or GP08+GP17+GV61 or GQ09+GV61 or GS02+GV61 or GS03+GV61	not supported	
+valueType	1719	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	GV50 (alternative 3); GV50 (alternative 4); GV50 (alternative 5); GV66 (alternative 7); GV67 (alternative 10); GV67 (alternative 9); GV68 (alternative 8)
+typed	1735	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG01 or GC04+GG02 or GE03 or GP05+GP17 or GP08+GP17 or GP11+GP17 or GQ09 or GS01 or GS02 or GS03	supported	
+predefinedType	1740	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+booleanType	1750	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+characterStringType	1754	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	GV30 (minLength); GV31 (alternative 3); GV31 (maxLength); GV32 (alternative 2)
+byteStringType	1760	18.9 <value type>	GA05+GV35 or GA06+GV35 or GC01+GG03+GV35 or GC04+GG02+GG03+GV35 or GE03+GV35 or GG03+GS01+GV35+GV60 or GP05+GP17+GV35 or GP08+GP17+GV35+GV61 or GQ09+GV35 or GS02+GV35+GV61 or GS03+GV35	not supported	GV36 (minLength); GV37 (maxLength); GV38 (fixedLength)
+minLength	1766	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+maxLength	1770	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+fixedLength	1774	18.9 <value type>	GA05+GV32 or GA05+GV35 or GA06+GV32 or GA06+GV35 or GC01+GG03+GV32 or GC01+GG03+GV35 or GC04+GG02+GG03+GV32 or GC04+GG02+GG03+GV35 or GE03+GV32 or GE03+GV35 or GG03+GS01+GV32+GV60 or GG03+GS01+GV35+GV60 or GP05+GP17+GV32 or GP05+GP17+GV35 or GP08+GP17+GV32+GV61 or GP08+GP17+GV35+GV61 or GQ09+GV32 or GQ09+GV35 or GS02+GV32+GV61 or GS02+GV35+GV61 or GS03+GV32 or GS03+GV35	not supported	
+numericType	1778	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+exactNumericType	1783	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+binaryExactNumericType	1788	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+signedBinaryExactNumericType	1793	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	GV02 (alternative 1); GV04 (alternative 2); GV07 (alternative 3); GV09 (precision); GV12 (alternative 4); GV14 (alternative 5); GV16 (alternative 6); GV18 (alternative 7); GV19 (alternative 9)
+unsignedBinaryExactNumericType	1806	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	GV01 (alternative 1); GV03 (alternative 2); GV05 (alternative 7); GV06 (alternative 3); GV08 (alternative 8); GV09 (precision); GV10 (alternative 9); GV11 (alternative 4); GV13 (alternative 5); GV15 (alternative 6)
+verboseBinaryExactNumericType	1819	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	GV02 (alternative 1); GV04 (alternative 2); GV07 (alternative 3); GV09 (precision); GV12 (alternative 4); GV14 (alternative 5); GV16 (alternative 6); GV18 (alternative 7); GV19 (alternative 9)
+decimalExactNumericType	1831	18.9 <value type>	GA05+GV17 or GA06+GV17 or GC01+GG03+GV17 or GC04+GG02+GG03+GV17 or GE03+GV17 or GG03+GS01+GV17+GV60 or GP05+GP17+GV17 or GP08+GP17+GV17+GV61 or GQ09+GV17 or GS02+GV17+GV61 or GS03+GV17	not supported	
+precision	1835	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+scale	1839	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+approximateNumericType	1843	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	GV20 (alternative 1); GV21 (alternative 2); GV22 (precision); GV23 (alternative 7); GV23 (alternative 8); GV24 (alternative 3); GV25 (alternative 4); GV26 (alternative 5)
+temporalType	1854	18.9 <value type>	GA05+GV39 or GA05+GV40 or GA05+GV41 or GA06+GV39 or GA06+GV40 or GA06+GV41 or GC01+GG03+GV39 or GC01+GG03+GV40 or GC01+GG03+GV41 or GC04+GG02+GG03+GV39 or GC04+GG02+GG03+GV40 or GC04+GG02+GG03+GV41 or GE03+GV39 or GE03+GV40 or GE03+GV41 or GG03+GS01+GV39+GV60 or GG03+GS01+GV40+GV60 or GG03+GS01+GV41+GV60 or GP05+GP17+GV39 or GP05+GP17+GV40 or GP05+GP17+GV41 or GP08+GP17+GV39+GV61 or GP08+GP17+GV40+GV61 or GP08+GP17+GV41+GV61 or GQ09+GV39 or GQ09+GV40 or GQ09+GV41 or GS02+GV39+GV61 or GS02+GV40+GV61 or GS02+GV41+GV61 or GS03+GV39 or GS03+GV40 or GS03+GV41	supported	
+temporalInstantType	1859	18.9 <value type>	GA05+GV39 or GA05+GV40 or GA06+GV39 or GA06+GV40 or GC01+GG03+GV39 or GC01+GG03+GV40 or GC04+GG02+GG03+GV39 or GC04+GG02+GG03+GV40 or GE03+GV39 or GE03+GV40 or GG03+GS01+GV39+GV60 or GG03+GS01+GV40+GV60 or GP05+GP17+GV39 or GP05+GP17+GV40 or GP08+GP17+GV39+GV61 or GP08+GP17+GV40+GV61 or GQ09+GV39 or GQ09+GV40 or GS02+GV39+GV61 or GS02+GV40+GV61 or GS03+GV39 or GS03+GV40	supported	
+datetimeType	1867	18.9 <value type>	GA05+GV40 or GA06+GV40 or GC01+GG03+GV40 or GC04+GG02+GG03+GV40 or GE03+GV40 or GG03+GS01+GV40+GV60 or GP05+GP17+GV40 or GP08+GP17+GV40+GV61 or GQ09+GV40 or GS02+GV40+GV61 or GS03+GV40	supported	
+localdatetimeType	1872	18.9 <value type>	GA05+GV39 or GA06+GV39 or GC01+GG03+GV39 or GC04+GG02+GG03+GV39 or GE03+GV39 or GG03+GS01+GV39+GV60 or GP05+GP17+GV39 or GP08+GP17+GV39+GV61 or GQ09+GV39 or GS02+GV39+GV61 or GS03+GV39	supported	
+dateType	1877	18.9 <value type>	GA05+GV39 or GA06+GV39 or GC01+GG03+GV39 or GC04+GG02+GG03+GV39 or GE03+GV39 or GG03+GS01+GV39+GV60 or GP05+GP17+GV39 or GP08+GP17+GV39+GV61 or GQ09+GV39 or GS02+GV39+GV61 or GS03+GV39	supported	
+timeType	1881	18.9 <value type>	GA05+GV40 or GA06+GV40 or GC01+GG03+GV40 or GC04+GG02+GG03+GV40 or GE03+GV40 or GG03+GS01+GV40+GV60 or GP05+GP17+GV40 or GP08+GP17+GV40+GV61 or GQ09+GV40 or GS02+GV40+GV61 or GS03+GV40	supported	
+localtimeType	1886	18.9 <value type>	GA05+GV39 or GA06+GV39 or GC01+GG03+GV39 or GC04+GG02+GG03+GV39 or GE03+GV39 or GG03+GS01+GV39+GV60 or GP05+GP17+GV39 or GP08+GP17+GV39+GV61 or GQ09+GV39 or GS02+GV39+GV61 or GS03+GV39	supported	
+temporalDurationType	1891	18.9 <value type>	GA05+GV41 or GA06+GV41 or GC01+GG03+GV41 or GC04+GG02+GG03+GV41 or GE03+GV41 or GG03+GS01+GV41+GV60 or GP05+GP17+GV41 or GP08+GP17+GV41+GV61 or GQ09+GV41 or GS02+GV41+GV61 or GS03+GV41	supported	
+temporalDurationQualifier	1895	18.9 <value type>	GV41	supported	
+referenceValueType	1900	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+immaterialValueType	1907	18.9 <value type>	GA05+GV71 or GA05+GV72 or GA06+GV71 or GA06+GV72 or GC01+GG03+GV71 or GC01+GG03+GV72 or GC04+GG02+GG03+GV71 or GC04+GG02+GG03+GV72 or GE03+GV71 or GE03+GV72 or GG03+GS01+GV60+GV71 or GG03+GS01+GV60+GV72 or GP05+GP17+GV71 or GP05+GP17+GV72 or GP08+GP17+GV61+GV71 or GP08+GP17+GV61+GV72 or GQ09+GV71 or GQ09+GV72 or GS02+GV61+GV71 or GS02+GV61+GV72 or GS03+GV71 or GS03+GV72	not supported	
+nullType	1912	18.9 <value type>	GA05+GV71 or GA06+GV71 or GC01+GG03+GV71 or GC04+GG02+GG03+GV71 or GE03+GV71 or GG03+GS01+GV60+GV71 or GP05+GP17+GV71 or GP08+GP17+GV61+GV71 or GQ09+GV71 or GS02+GV61+GV71 or GS03+GV71	not supported	
+emptyType	1916	18.9 <value type>	GA05+GV72 or GA06+GV72 or GC01+GG03+GV72 or GC04+GG02+GG03+GV72 or GE03+GV72 or GG03+GS01+GV60+GV72 or GP05+GP17+GV72 or GP08+GP17+GV61+GV72 or GQ09+GV72 or GS02+GV61+GV72 or GS03+GV72	not supported	
+graphReferenceValueType	1921	18.9 <value type>	GA05+GV60 or GA06+GV60 or GC01+GG03+GV60 or GC04+GG02+GG03+GV60 or GE03+GV60 or GP05+GP17+GV60 or GP08+GP17+GV60+GV61 or GP11+GP17+GV60 or GQ09+GV60 or GS01+GV60 or GS02+GV60+GV61 or GS03+GV60	not supported	
+closedGraphReferenceValueType	1926	18.9 <value type>	GA05+GG03+GV60 or GA06+GG03+GV60 or GC01+GG03+GV60 or GC04+GG02+GG03+GV60 or GE03+GG03+GV60 or GG03+GP05+GP17+GV60 or GG03+GP11+GP17+GV60 or GG03+GQ09+GV60 or GG03+GS01+GV60 or GG03+GS02+GV60+GV61 or GG03+GS03+GV60	not supported	
+openGraphReferenceValueType	1930	18.9 <value type>	GA05+GV60 or GA06+GV60 or GC01+GG03+GV60 or GC04+GG02+GG03+GV60 or GE03+GV60 or GP05+GP17+GV60 or GP08+GP17+GV60+GV61 or GP11+GP17+GV60 or GQ09+GV60 or GS01+GV60 or GS02+GV60+GV61 or GS03+GV60	not supported	
+bindingTableReferenceValueType	1934	18.9 <value type>	GA05+GV61 or GA06+GV61 or GC01+GG03+GV61 or GC04+GG02+GG03+GV61 or GE03+GV61 or GG03+GS01+GV60+GV61 or GP05+GP17+GV61 or GP08+GP17+GV61 or GQ09+GV61 or GS02+GV61 or GS03+GV61	not supported	
+nodeReferenceValueType	1938	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+closedNodeReferenceValueType	1943	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+openNodeReferenceValueType	1947	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgeReferenceValueType	1951	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+closedEdgeReferenceValueType	1956	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+openEdgeReferenceValueType	1960	18.9 <value type>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+pathValueType	1964	18.9 <value type>	GA05+GV55 or GA06+GV55 or GC01+GG03+GV55 or GC04+GG02+GG03+GV55 or GE03+GV55 or GG03+GS01+GV55+GV60 or GP05+GP17+GV55 or GP08+GP17+GV55+GV61 or GQ09+GV55 or GS02+GV55+GV61 or GS03+GV55	not supported	
+listValueTypeName	1968	18.9 <value type>	GV50	not supported	
+listValueTypeNameSynonym	1972	18.9 <value type>	GV50	not supported	
+recordType	1977	18.9 <value type>	GA05+GV46 or GA05+GV47 or GA06+GV46 or GA06+GV47 or GC01+GG03+GV46 or GC01+GG03+GV47 or GC04+GG02+GG03+GV46 or GC04+GG02+GG03+GV47 or GE03+GV46 or GE03+GV47 or GG03+GS01+GV46+GV60 or GG03+GS01+GV47+GV60 or GP05+GP17+GV46 or GP05+GP17+GV47 or GP08+GP17+GV46+GV61 or GP08+GP17+GV47+GV61 or GQ09+GV46 or GQ09+GV47 or GS02+GV46+GV61 or GS02+GV47+GV61 or GS03+GV46 or GS03+GV47	not supported	GV46 (alternative 2); GV47 (alternative 1)
+fieldTypesSpecification	1982	18.9 <value type>	GA05+GV46 or GA05+GV61 or GA06+GV46 or GA06+GV61 or GC01+GG03+GV46 or GC01+GG03+GV61 or GC04+GG02+GG03+GV46 or GC04+GG02+GG03+GV61 or GE03+GV46 or GE03+GV61 or GG03+GS01+GV46+GV60 or GG03+GS01+GV60+GV61 or GP05+GP17+GV46 or GP05+GP17+GV61 or GP08+GP17+GV61 or GQ09+GV46 or GQ09+GV61 or GS02+GV61 or GS03+GV46 or GS03+GV61	not supported	
+fieldTypeList	1986	18.9 <value type>	GA05+GV46 or GA05+GV61 or GA06+GV46 or GA06+GV61 or GC01+GG03+GV46 or GC01+GG03+GV61 or GC04+GG02+GG03+GV46 or GC04+GG02+GG03+GV61 or GE03+GV46 or GE03+GV61 or GG03+GS01+GV46+GV60 or GG03+GS01+GV60+GV61 or GP05+GP17+GV46 or GP05+GP17+GV61 or GP08+GP17+GV61 or GQ09+GV46 or GQ09+GV61 or GS02+GV61 or GS03+GV46 or GS03+GV61	not supported	
+notNull	1990	18.9 <value type>	GA05+GV90 or GA06+GV90 or GC01+GG03+GV90 or GC04+GG02+GG03+GV90 or GE03+GV90 or GP05+GP17+GV90 or GP08+GP17+GV61+GV90 or GP11+GP17+GV60+GV90 or GQ09+GV90 or GS01+GV60+GV90 or GS02+GV61+GV90 or GS03+GV90	not supported	
+fieldType	1996	18.10 <field type>	GA05+GV46 or GA05+GV61 or GA06+GV46 or GA06+GV61 or GC01+GG03+GV46 or GC01+GG03+GV61 or GC04+GG02+GG03+GV46 or GC04+GG02+GG03+GV61 or GE03+GV46 or GE03+GV61 or GG03+GS01+GV46+GV60 or GG03+GS01+GV60+GV61 or GP05+GP17+GV46 or GP05+GP17+GV61 or GP08+GP17+GV61 or GQ09+GV46 or GQ09+GV61 or GS02+GV61 or GS03+GV46 or GS03+GV61	not supported	
+searchCondition	2002	19.1 <search condition>	mandatory	supported	
+predicate	2008	19.2 <predicate>	mandatory	supported	
+compOp	2025	19.3 <comparison predicate>	mandatory	supported	
+existsPredicate	2036	19.4 <exists predicate>	mandatory	supported	
+nullPredicate	2042	19.5 <null predicate>	mandatory	supported	
+nullPredicatePart2	2046	19.5 <null predicate>	mandatory	supported	
+valueTypePredicate	2052	19.6 <value type predicate>	GA06	not supported	
+valueTypePredicatePart2	2056	19.6 <value type predicate>	GA06	not supported	
+normalizedPredicatePart2	2062	19.7 <normalized predicate>	mandatory	supported	
+directedPredicate	2068	19.8 <directed predicate>	G110	not supported	
+directedPredicatePart2	2072	19.8 <directed predicate>	G110	not supported	
+labeledPredicate	2078	19.9 <labled predicate>	G111	not supported	
+labeledPredicatePart2	2082	19.9 <labled predicate>	G111	not supported	
+isLabeledOrColon	2086	19.9 <labled predicate>	G111	not supported	
+sourceDestinationPredicate	2093	19.10 <source/destination predicate>	G112	not supported	
+nodeReference	2098	19.10 <source/destination predicate>	G112	not supported	
+sourcePredicatePart2	2102	19.10 <source/destination predicate>	G112	not supported	
+destinationPredicatePart2	2106	19.10 <source/destination predicate>	G112	not supported	
+edgeReference	2110	19.10 <source/destination predicate>	G112	not supported	
+all_differentPredicate	2116	19.11 <all different predicate>	G113	not supported	
+samePredicate	2122	19.12 <same predicate>	G114	not supported	
+property_existsPredicate	2128	19.13 <property exists predicate>	G115	not supported	
+valueExpression	2137	20.1 <value expression>	mandatory	supported	GE01 (alternative 12); GE02 (alternative 13); GE07 (XOR)
+valueFunction	2165	20.1 <value expression>	mandatory	supported	
+booleanValueExpression	2174	20.1 <value expression>	mandatory	supported	
+characterOrByteStringFunction	2178	20.1 <value expression>	mandatory	supported	
+subCharacterOrByteString	2186	20.1 <value expression>	mandatory	supported	
+trimSingleCharacterOrByteString	2190	20.1 <value expression>	mandatory	supported	
+foldCharacterString	2194	20.1 <value expression>	mandatory	supported	
+trimMultiCharacterCharacterString	2198	20.1 <value expression>	GF05	not supported	
+normalizeCharacterString	2202	20.1 <value expression>	mandatory	supported	
+nodeReferenceValueExpression	2206	20.1 <value expression>	GE06	not supported	
+edgeReferenceValueExpression	2210	20.1 <value expression>	GE06	not supported	
+aggregatingValueExpression	2214	20.1 <value expression>	mandatory	supported	
+valueExpressionPrimary	2220	20.2 <value expression primary>	mandatory	supported	
+parenthesizedValueExpression	2237	20.2 <value expression primary>	mandatory	supported	
+nonParenthesizedValueExpressionPrimary	2241	20.2 <value expression primary>	mandatory	supported	
+nonParenthesizedValueExpressionPrimarySpecialCase	2246	20.2 <value expression primary>	mandatory	supported	
+unsignedValueSpecification	2263	20.3 <value specification>	mandatory	supported	
+nonNegativeIntegerSpecification	2268	20.3 <value specification>	G005+G016 or G005+G019 or G005+G020 or GQ12 or GQ13	not supported	
+generalValueSpecification	2273	20.3 <value specification>	mandatory	supported	
+dynamicParameterSpecification	2280	20.4 <dynamic parameter specification>	mandatory	supported	
+letValueExpression	2286	20.5 <let value expression>	GE03	not supported	
+valueQueryExpression	2292	20.6 <value query expression>	GQ18	not supported	
+caseExpression	2298	20.7 <case expression>	mandatory	supported	
+caseAbbreviation	2303	20.7 <case expression>	mandatory	supported	
+caseSpecification	2308	20.7 <case expression>	mandatory	supported	
+simpleCase	2313	20.7 <case expression>	mandatory	supported	
+searchedCase	2317	20.7 <case expression>	mandatory	supported	
+simpleWhenClause	2321	20.7 <case expression>	mandatory	supported	
+searchedWhenClause	2325	20.7 <case expression>	mandatory	supported	
+elseClause	2329	20.7 <case expression>	mandatory	supported	
+caseOperand	2333	20.7 <case expression>	mandatory	supported	
+whenOperandList	2338	20.7 <case expression>	mandatory	supported	
+whenOperand	2342	20.7 <case expression>	mandatory	supported	
+result	2354	20.7 <case expression>	mandatory	supported	
+resultExpression	2359	20.7 <case expression>	mandatory	supported	
+castSpecification	2365	20.8 <cast specification>	GA05	not supported	
+castOperand	2369	20.8 <cast specification>	GA05	not supported	
+castTarget	2374	20.8 <cast specification>	GA05	not supported	
+aggregateFunction	2380	20.9 <aggregate function>	mandatory	supported	
+generalSetFunction	2386	20.9 <aggregate function>	mandatory	supported	
+binarySetFunction	2390	20.9 <aggregate function>	GF11	not supported	
+generalSetFunctionType	2394	20.9 <aggregate function>	mandatory	supported	GF10 (alternative 6)
+setQuantifier	2405	20.9 <aggregate function>	mandatory	supported	
+binarySetFunctionType	2410	20.9 <aggregate function>	GF11	not supported	
+dependentValueExpression	2415	20.9 <aggregate function>	GF11	not supported	
+independentValueExpression	2419	20.9 <aggregate function>	GF11	not supported	
+element_idFunction	2425	20.10 <element_id function>	G100	not supported	
+bindingVariableReference	2433	20.12 <binding variable reference>	mandatory	supported	
+pathValueExpression	2440	20.12 <binding variable reference>	GF04	not supported	
+pathValueConstructor	2446	20.14 <path value constructor>	GE06	not supported	
+pathValueConstructorByEnumeration	2450	20.14 <path value constructor>	GE06	not supported	
+pathElementList	2454	20.14 <path value constructor>	GE06	not supported	
+pathElementListStart	2458	20.14 <path value constructor>	GE06	not supported	
+pathElementListStep	2462	20.14 <path value constructor>	GE06	not supported	
+listValueExpression	2471	20.15 <list value expression>	GF13 or GV50	not supported	
+listValueFunction	2481	20.16 <list value function>	GF04 or GV50	not supported	
+trimListFunction	2486	20.16 <list value function>	GV50	not supported	
+elementsFunction	2490	20.16 <list value function>	GF04	not supported	
+listValueConstructor	2496	20.17 <list value constructor>	-	unreachable	
+listValueConstructorByEnumeration	2500	20.17 <list value constructor>	GV50	not supported	
+listElementList	2504	20.17 <list value constructor>	GV50	not supported	
+listElement	2508	20.17 <list value constructor>	GV50	not supported	
+recordConstructor	2514	20.18 <record constructor>	GV39 or GV40 or GV41 or GV45	supported	
+fieldsSpecification	2518	20.18 <record constructor>	GV39 or GV40 or GV41 or GV45	supported	
+fieldList	2522	20.18 <record constructor>	GV39 or GV40 or GV41 or GV45	supported	
+field	2528	20.19 <field>	GV39 or GV40 or GV41 or GV45	supported	
+truthValue	2536	20.20 <boolean value expression>	mandatory	supported	
+numericValueExpression	2542	20.21 <numeric value expression>	mandatory	supported	
+numericValueFunction	2552	20.22 <numeric value function>	mandatory	supported	GF01 (alternative 11); GF01 (alternative 12); GF01 (alternative 13); GF01 (alternative 3); GF01 (alternative 4); GF01 or GF03 (alternative 10); GF01 or GF03 (alternative 9); GF02 (alternative 5); GF03 (alternative 6); GF03 (alternative 7); GF03 (alternative 8)
+lengthExpression	2568	20.22 <numeric value function>	mandatory	supported	GF04 (alternative 3); GV35 (alternative 2)
+cardinalityExpression	2574	20.22 <numeric value function>	GF12 or GF13	not supported	GF12 (alternative 1); GF13 (alternative 2)
+cardinalityExpressionArgument	2579	20.22 <numeric value function>	GF12	not supported	
+charLengthExpression	2583	20.22 <numeric value function>	mandatory	supported	
+byteLengthExpression	2587	20.22 <numeric value function>	GV35	not supported	
+pathLengthExpression	2591	20.22 <numeric value function>	GF04	not supported	
+absoluteValueExpression	2596	20.22 <numeric value function>	GF01 or GV41	supported	
+modulusExpression	2600	20.22 <numeric value function>	GF01	not supported	
+numericValueExpressionDividend	2604	20.22 <numeric value function>	GF01	not supported	
+numericValueExpressionDivisor	2608	20.22 <numeric value function>	GF01	not supported	
+trigonometricFunction	2612	20.22 <numeric value function>	GF02	not supported	
+trigonometricFunctionName	2616	20.22 <numeric value function>	GF02	not supported	
+generalLogarithmFunction	2631	20.22 <numeric value function>	GF03	not supported	
+generalLogarithmBase	2635	20.22 <numeric value function>	GF03	not supported	
+generalLogarithmArgument	2639	20.22 <numeric value function>	GF03	not supported	
+commonLogarithm	2643	20.22 <numeric value function>	GF03	not supported	
+naturalLogarithm	2647	20.22 <numeric value function>	GF03	not supported	
+exponentialFunction	2651	20.22 <numeric value function>	GF01 or GF03	not supported	
+powerFunction	2655	20.22 <numeric value function>	GF01 or GF03	not supported	
+numericValueExpressionBase	2659	20.22 <numeric value function>	GF01 or GF03	not supported	
+numericValueExpressionExponent	2663	20.22 <numeric value function>	GF01 or GF03	not supported	
+squareRoot	2667	20.22 <numeric value function>	GF01	not supported	
+floorFunction	2671	20.22 <numeric value function>	GF01	not supported	
+ceilingFunction	2675	20.22 <numeric value function>	GF01	not supported	
+characterStringValueExpression	2683	20.23 <string value expression>	mandatory	supported	
+byteStringValueExpression	2687	20.23 <string value expression>	GV35	not supported	
+trimOperands	2697	20.24 <string value function>	mandatory	supported	
+trimCharacterOrByteStringSource	2701	20.24 <string value function>	mandatory	supported	
+trimSpecification	2705	20.24 <string value function>	GF06	not supported	
+trimCharacterOrByteString	2711	20.24 <string value function>	GF06	not supported	
+normalForm	2715	20.24 <string value function>	mandatory	supported	
+stringLength	2722	20.24 <string value function>	mandatory	supported	
+datetimeValueExpression	2735	20.26 <datetime value expression>	GV41	supported	
+datetimeValueFunction	2741	20.27 <datetime value function>	GV39 or GV40	supported	
+dateFunction	2749	20.27 <datetime value function>	GV39	supported	
+timeFunction	2754	20.27 <datetime value function>	GV40	supported	
+localtimeFunction	2759	20.27 <datetime value function>	GV39	supported	
+datetimeFunction	2763	20.27 <datetime value function>	GV40	supported	
+localdatetimeFunction	2768	20.27 <datetime value function>	GV39	supported	
+dateFunctionParameters	2773	20.27 <datetime value function>	GV39	supported	
+timeFunctionParameters	2778	20.27 <datetime value function>	GV39 or GV40	supported	
+datetimeFunctionParameters	2783	20.27 <datetime value function>	GV39 or GV40	supported	
+durationValueExpression	2791	20.28 <duration value expression>	-	unreachable	
+datetimeSubtraction	2795	20.28 <duration value expression>	GV41	supported	
+datetimeSubtractionParameters	2799	20.28 <duration value expression>	GV41	supported	
+datetimeValueExpression1	2803	20.28 <duration value expression>	GV41	supported	
+datetimeValueExpression2	2807	20.28 <duration value expression>	GV41	supported	
+durationValueFunction	2813	20.29 <duration value function>	GV41	supported	GV41 (alternative 2)
+durationFunction	2818	20.29 <duration value function>	GV41	supported	
+durationFunctionParameters	2822	20.29 <duration value function>	GV41	supported	
+objectName	2829	21.1 Names and Variables	mandatory	supported	
+objectNameOrBindingVariable	2833	21.1 Names and Variables	mandatory	supported	
+directoryName	2837	21.1 Names and Variables	mandatory	supported	
+schemaName	2841	21.1 Names and Variables	mandatory	supported	
+graphName	2845	21.1 Names and Variables	mandatory	supported	
+delimitedGraphName	2850	21.1 Names and Variables	mandatory	supported	
+graphTypeName	2856	21.1 Names and Variables	GC01 or GC04+GG02	supported	
+nodeTypeName	2860	21.1 Names and Variables	GA05+GG20 or GA06+GG20 or GC01+GG03+GG20 or GC04+GG02+GG03+GG20 or GE03+GG20 or GG03+GG20+GS01+GV60 or GG20+GP05+GP17 or GG20+GP08+GP17+GV61 or GG20+GQ09 or GG20+GS02+GV61 or GG20+GS03	not supported	
+edgeTypeName	2864	21.1 Names and Variables	GA05+GG20 or GA06+GG20 or GC01+GG03+GG20 or GC04+GG02+GG03+GG20 or GE03+GG20 or GG03+GG20+GS01+GV60 or GG20+GP05+GP17 or GG20+GP08+GP17+GV61 or GG20+GQ09 or GG20+GS02+GV61 or GG20+GS03	not supported	
+bindingTableName	2868	21.1 Names and Variables	GE02 or GP08+GP17 or GS02	not supported	
+delimitedBindingTableName	2873	21.1 Names and Variables	GE02 or GP08+GP17 or GS02	not supported	
+procedureName	2879	21.1 Names and Variables	GP04	supported	
+labelName	2883	21.1 Names and Variables	mandatory	supported	
+propertyName	2887	21.1 Names and Variables	mandatory	supported	
+fieldName	2891	21.1 Names and Variables	GA05+GV46 or GA05+GV61 or GA06+GV46 or GA06+GV61 or GC01+GG03+GV46 or GC01+GG03+GV61 or GC04+GG02+GG03+GV46 or GC04+GG02+GG03+GV61 or GE03+GV46 or GE03+GV61 or GG03+GS01+GV46+GV60 or GG03+GS01+GV60+GV61 or GP04 or GP05+GP17+GV46 or GP05+GP17+GV61 or GP08+GP17+GV61 or GQ09+GV46 or GQ09+GV61 or GQ20 or GS02+GV61 or GS03+GV46 or GS03+GV61 or GV39 or GV40 or GV41 or GV45	supported	
+elementVariable	2895	21.1 Names and Variables	mandatory	supported	
+pathVariable	2899	21.1 Names and Variables	G004	not supported	
+subpathVariable	2903	21.1 Names and Variables	G038+G048	not supported	
+bindingVariable	2907	21.1 Names and Variables	mandatory	supported	
+unsignedLiteral	2913	21.2 <literal>	mandatory	supported	
+generalLiteral	2918	21.2 <literal>	mandatory	supported	GV35 (alternative 3)
+temporalLiteral	2929	21.2 <literal>	GV39 or GV40	supported	
+dateLiteral	2936	21.2 <literal>	GV39	supported	
+timeLiteral	2940	21.2 <literal>	GV40	supported	
+datetimeLiteral	2944	21.2 <literal>	GV40	supported	
+listLiteral	2948	21.2 <literal>	GV50	not supported	
+recordLiteral	2952	21.2 <literal>	GV45	not supported	
+identifier	2956	21.2 <literal>	mandatory	supported	
+regularIdentifier	2963	21.2 <literal>	mandatory	supported	
+timeZoneString	2968	21.2 <literal>	GS15	not supported	
+characterStringLiteral	2972	21.2 <literal>	mandatory	supported	
+unsignedNumericLiteral	2977	21.2 <literal>	mandatory	supported	
+exactNumericLiteral	2982	21.2 <literal>	mandatory	supported	GL04 (alternative 3); GL05 (alternative 2); GL05 (alternative 4); GL06 (alternative 1)
+approximateNumericLiteral	2990	21.2 <literal>	mandatory	supported	GL07 (alternative 3); GL07 (alternative 4); GL08 (alternative 1)
+unsignedInteger	2997	21.2 <literal>	mandatory	supported	GL01 (alternative 2); GL02 (alternative 3); GL03 (alternative 4)
+unsignedDecimalInteger	3004	21.2 <literal>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nullLiteral	3008	21.2 <literal>	mandatory	supported	
+dateString	3012	21.2 <literal>	GV39	supported	
+timeString	3016	21.2 <literal>	GV39 or GV40	supported	
+datetimeString	3020	21.2 <literal>	GV39 or GV40	supported	
+durationLiteral	3024	21.2 <literal>	GV41	supported	
+durationString	3029	21.2 <literal>	GV41	supported	
+nodeSynonym	3033	21.2 <literal>	GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+edgesSynonym	3038	21.2 <literal>	G002	not supported	
+edgeSynonym	3043	21.2 <literal>	G002 or GA05 or GA06 or GC01+GG03 or GC04+GG02+GG03 or GE03 or GG03+GP11+GP17+GV60 or GG03+GS01+GV60 or GP05+GP17 or GP08+GP17+GV61 or GQ09 or GS02+GV61 or GS03	supported	
+nonReservedWords	3061	21.2 <literal>	mandatory	supported	

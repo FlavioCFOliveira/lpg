@@ -1,7 +1,7 @@
 ---
 title: Query engine
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-08
 related:
   - architecture.md
   - catalog-and-indexes.md
@@ -18,11 +18,51 @@ related:
   - **Supplementary source.** The ISO electronic inserts in [docs/standards/iso-iec-39075/ed-1/](../standards/iso-iec-39075/ed-1/README.md) supply only what the grammar does not contain: GQLSTATUS condition codes, feature identifiers and the list of implementation-defined items. They are not the grammar authority.
   - **Parser.** A hand-written, case-insensitive lexer, a recursive-descent parser and a Pratt parser for expressions, producing a typed AST with source spans.
     - It follows the rules of `GQL.g4` clause by clause; each function names the rule it implements.
-    - Each ambiguity of `GQL.g4` is resolved explicitly, and the resolution is recorded in this file as it is implemented.
+    - It parses the whole of `GQL.g4`. Constructs outside the supported feature set fail in the binder ([TS-20](#ts-20-binder-planner-and-execution)).
+  - **Keywords.** The reserved, pre-reserved and non-reserved words are those of `GQL.g4` (`GQL.g4:3276-3584`: 218, 39 and 47 words), generated from it with a drift test. Where the ISO BNF insert differs, `GQL.g4` is followed (NFR-VER-002); provisional (OQ-005):
+    - `TRUE`, `FALSE`, `UNKNOWN` (BNF reserved words) are the token `BOOLEAN_LITERAL` (`GQL.g4:3111-3115`), and `IMPLIES` (BNF reserved) is a token for `IMPLIES` or `=>` (`GQL.g4:3050-3053`): none of the four can be a regular identifier, as in the BNF.
+    - `WHITESPACE` (BNF pre-reserved) is a regular identifier.
+    - `TEMP` (BNF non-reserved, in `[ TEMP ] <element variable>`, `ISO_IEC_39075(en).bnf.txt:753-754`) is a regular identifier, and the `TEMP` prefix is a syntax error: `elementVariableDeclaration` has no such prefix (`GQL.g4:1001-1003`).
+  - **Identifier characters.** `IDENTIFIER_START` is `\p{ID_Start}` or `\p{Pc}` and `IDENTIFIER_EXTEND` is `\p{ID_Continue}` (`GQL.g4:3612-3627`). The lexer uses tables generated from the Unicode Character Database 15.0.0, the version the oracle's ANTLR tool jar uses, with a test that regenerates them and fails on drift. Changing the version needs the oracle's jar to change with it.
+  - **Ambiguities.** Each ambiguous decision is resolved to its lowest-numbered alternative, which is the oracle's choice (antlr4rust 0.6.0 `src/prediction_mode.rs:117-119, 185-196`, used at `src/parser_atn_simulator.rs:494`). Decisions found ambiguous ([round-s](../evidence/planning/round-s/README.md) `ambiguities.py`, 2026-10-08; 4 978 accepted texts):
+
+    | Rule (decision) | Alternatives | Resolution | Example | Texts |
+    |---|---|---|---|---|
+    | `statement` | 1 `compositeQueryStatement`, 3 `linearDataModifyingStatement` | a query | `MATCH (n) RETURN n` | 692 |
+    | `statement` | 2 `linearCatalogModifyingStatement`, 3 `linearDataModifyingStatement` | a catalog-modifying procedure call; the binder treats every `CALL` by the routine's mode ([TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events)) | `CALL { CREATE GRAPH g ANY }` | 10 |
+    | `labelAndPropertySetSpecification` | 1, 2 | 1: labels, then properties | `INSERT (:L {p: 1})` | 23 |
+    | `insertElementPatternFiller` | 1, 2 | 1: variable, then specification | `INSERT (a:L)` | 8 |
+    | `valueFunction` | 1 `numericValueFunction`, 4 `durationValueFunction` | `ABS` as a numeric function; the binder applies it to a duration when the argument is one | `ABS(x)` | 3 |
+    | `existsPredicate` (inner block) | 3 match block in braces, 5 nested query | the match block | `EXISTS { MATCH (a) MATCH (b) }` | 3 |
+    | `graphPattern` (optional `WHERE`) | 1 take, 2 skip | the `WHERE` belongs to the graph pattern | `SELECT … FROM g MATCH (p) WHERE …` | 2 |
+    | `endpointPair` | 1 directed, 2 undirected | directed (`TO`) | `CONNECTING (a TO b)` | 1 |
+    | `result` | 1 `resultExpression`, 2 `nullLiteral` | an expression | `CASE … THEN NULL …` | 1 |
+    | `castOperand` | 1 `valueExpression`, 2 `nullLiteral` | an expression | `CAST(NULL AS …)` | 1 |
+
+    Any other ambiguous decision is resolved the same way and added to this table.
+  - **Feature classification** (provisional, OQ-005). Every parser rule is classified as mandatory or as needing feature codes of the ISO features insert, by gql-compat's placement rule (a construct that a code covers is optional; everything else is mandatory; gql-compat README @ `9de1991`, not ISO text). Method, anchors and evidence: [round-s](../evidence/planning/round-s/README.md). Result: [Rule-to-feature table](#rule-to-feature-table).
+    - **Supported codes** (user decisions 2026-10-08, rmp task #37: "Seis + as exigidas", then "Só GG03"): the mandatory surface and GC01, GC04, GD01, GG01, GG02, GG03, GP04, GP18, GQ01, GT01, GT03, GV39, GV40, GV41. The graph-type creation construct the user approved is `createGraphTypeStatement`, which gql-compat's cases place under GC01; its body, `nestedGraphTypeSpecification`, is GG03, which FR-GQL-004 needs to make a closed graph type.
+    - **Not supported:** the other 214 codes of the insert. Each fails with the "feature not supported" condition ([interfaces.md](interfaces.md#gqlstatus-codes)).
+    - 53 codes have no `GQL.g4` construct of their own (semantic, lexical or refinements): their gates live in the binder and the lexer.
+  - **Implementation-defined choices, lexical** (BR-GQL-002; user approval 2026-10-08 of the rule "Neo4j first, then Memgraph, else the reference the blocking task cites", rmp task #38). Codes and lines are those of `ISO_IEC_39075(en)-implementation-defined.xml`. "zu" is zu @ `a821319` `docs/gql-implementation-defined.md` (R-ZU), the reference task #41 cites, used where neither Neo4j nor Memgraph defines the item. Memgraph (documentation and R-MG source) was checked on 2026-10-08 for every item first answered from zu; it is cited where it defines one, and changed no choice.
+
+    | Item (line) | Choice | Source |
+    |---|---|---|
+    | IV001 (394) | Unicode: the text is a Rust `&str`, so any Unicode scalar value, UTF-8 encoded. | Neo4j lexes the query as a Java `String`, which holds Unicode text (R-NEO `Cypher25AstLexer.java:71-76`). |
+    | IA019 (110) | Bidirectional control characters are permitted in string literals. | Neo4j string literals accept every character except the quote and the backslash (R-NEO `Cypher25Lexer.g4:83-93`). |
+    | IA020 (114) | Characters of category Co are permitted in delimited identifiers. Regular identifiers cannot contain them (`ID_Continue` excludes Co). | Neo4j backtick names accept every character but the backtick (`Cypher25Lexer.g4:95-97`). |
+    | IA023 (122) | U+000A and U+000D both end a simple comment (`GQL.g4:3748-3750`). Line numbers in error positions count U+000A only, as the oracle does. | Neo4j: `//` comments end at `\r` or `\n` (`Cypher25Lexer.g4:51-53`). The oracle's runtime starts a new line at `\n` only (antlr4rust 0.6.0 `src/lexer_atn_simulator.rs:123-131`). |
+    | IL010 (358) | No limit on the number of digits. An integer literal above 9 223 372 036 854 775 807 fails with 22003; a minus sign directly before the literal 9 223 372 036 854 775 808 gives the minimum `INT64`. An approximate literal that overflows `FLOAT64` fails with 22003. | Neo4j: "integer is too large" and an infinite float literal raise 22003 (R-NEO `SemanticExpressionCheck.scala:836-842, 889-895`; `SemanticError.scala:950-953`); its literal includes the sign (`^-?[1-9][0-9]*$`). |
+    | IE003 (310) | The UAX #31 R1-1 profile of `GQL.g4`: start characters `ID_Start` plus `Pc`, continue characters `ID_Continue` (above). | `GQL.g4:3612-3627` (NFR-VER-002). |
+    | IE005 (318) | Text that `GQL.g4` does not accept fails with 42001, with the position and the expected tokens. | BR-GQL-001. |
+    | IW014 (478) | No visual-confusability test: two identifiers are confusable only if equal, so 42004 is never raised. | Neither Neo4j nor Memgraph has such a test (no match for "confusab" in R-NEO `community/cypher`, R-MG `src/query`, `src/utils`); zu declines it (`crates/zu-query/src/lexer.rs:780-785`) |
+    | IW023 (510) | A regular identifier's canonical form is its text as written; a delimited identifier's is its characters after escapes are resolved. Neither is case-folded or trimmed. | Neo4j: names are case-sensitive (Cypher Manual, "Naming rules and recommendations"); a backtick name is its inner text with each doubled backtick made single (R-NEO `ExpressionBuilder.scala:1102-1105`). |
+
+    Not reached by the supported codes: IL018 (374), the upper bound of a general quantifier (G060, G061).
   - **Narrowing.** `GQL.g4` states that it is "more permissive than a GQL implementation would be" and leaves invalid type and function combinations to the implementation. The binder therefore rejects those combinations ([TS-20](#ts-20-binder-planner-and-execution)).
   - **Test oracle.** The ANTLR-generated parser from the same `GQL.g4` ([TS-30](quality-and-testing.md#ts-30-testing-and-conformance)).
   - **Syntax errors.** Input that `GQL.g4` does not accept fails with GQLSTATUS 42001 "syntax error or access rule violation – invalid syntax" (ISO conditions insert, class 42 subclass 001), reported with the position and the expected tokens.
-  - **Provisional rules.** Rules that need the ISO text are provisional (OQ-005), for example identifier character sets and every Syntax Rule.
+  - **Provisional rules.** Rules that need the ISO text are provisional (OQ-005), for example every Syntax Rule and the feature classification below.
   - **Parameters** are never inlined into the text.
 - **Satisfies**: FR-GQL-001, FR-GQL-002, BR-GQL-001, BR-GQL-002, FR-API-004, NFR-VER-002, NFR-SAFE-001, NFR-DEP-001, NFR-PERF-003.
 - **Evidence**:
@@ -33,10 +73,15 @@ related:
     - SLL mode: 32–129 µs;
     - a hand-written SQL parser (`sqlparser`) on comparable SQL: 24–45 µs.
   - The generated parser has 113 000 lines and no `unsafe`.
+  - Keywords, measured by `keywords.py` ([round-s](../evidence/planning/round-s/README.md), 2026-10-08): the ISO BNF insert has 222 reserved, 40 pre-reserved and 48 non-reserved words; `GQL.g4` lacks exactly the six listed above.
+  - Unicode version, measured by `round-s/unicode/` (2026-10-08): the tool jar of antlr4rust release v0.6.0 (`antlr4-4.13.3-SNAPSHOT-complete.jar`, SHA-256 `391e7731…b677`) generates 136 345 `ID_Start` and 139 482 `ID_Continue` code points, equal to Unicode 15.0.0 `DerivedCoreProperties.txt` and different from 13.0.0, 14.0.0, 15.1.0 and 16.0.0.
+  - zu generates its Unicode tables from checked-in UCD files with a drift test (R-ZU `crates/zu-common/tests/unicode_tables.rs:1-12`).
 - **Crates**:
   - `antlr4rust` 0.6.0 (BSD-3-Clause, 3.3 M downloads, released 2026-09-27): dev dependency of the test-only oracle crate only.
   - `sqlparser` 0.63.0: study only, as the reference for hand-written recursive descent with Pratt expressions.
   - `pest`, `peg`, `lalrpop`, `chumsky`, `nom`, `logos`: not used.
+  - `unicode-ident` 1.0.26: not used. It implements `XID_Start` and `XID_Continue` (`src/lib.rs:261, 274`), not the `ID_Start` and `ID_Continue` of `GQL.g4`, at Unicode 18.0.0 (`src/tables.rs:12`).
+  - Rust's `char` methods: not used for identifiers. They follow the toolchain's Unicode version, 17.0.0 on Rust 1.99.0 and 16.0.0 on 1.89 (`char::UNICODE_VERSION`, printed 2026-10-08).
   - `gqlparser`, `drasi-query-gql`, `gqlitedb` (3–12 k downloads): too little use (NFR-DEP-001); study only.
 - **Rejected**:
   - An ANTLR-generated product parser: measured parse cost, 113 000 generated lines, a Java tool chain, a generic parse tree.
@@ -52,7 +97,7 @@ related:
     - Path-pattern rules are checked at bind time: normalisation, termination of unbounded quantifiers, conditional-singleton joins.
     - Type and function combinations that `GQL.g4` accepts but GQL does not allow are rejected here ([TS-19](#ts-19-parser)).
     - Predicates use three-valued logic.
-    - Each optional feature of the ISO features insert maps to a gate that fails with a "feature not supported" GQLSTATUS until the feature is delivered. The ISO conditions insert has no general code for this, so the code is provisional (OQ-005).
+    - Each optional feature of the ISO features insert maps to a gate that fails with a "feature not supported" GQLSTATUS until the feature is delivered: 42001 with the cause 51N26 naming the feature code ([interfaces.md](interfaces.md#gqlstatus-codes)). The ISO conditions insert has no general code for this, so the code is provisional (OQ-005). The supported codes are listed in [TS-19](#ts-19-parser).
     - Each implementation-defined item is implemented only after the user approves its choice (BR-GQL-002).
   - **Planner.**
     - Rule rewrites: predicate, projection and limit pushdown; index seeks for indexed equality and ranges; constant folding.
@@ -63,25 +108,294 @@ related:
   - **Execution.**
     - Pull-based, batch at a time: `next_batch` fills up to 1 024 rows held as columns of `Value`.
     - One thread per statement, through `spawn_blocking` per batch ([TS-02](architecture.md#ts-02-async-api-and-threading)). No intra-query parallelism (NFR-PERF-007).
-    - Only blocking operators (sort, aggregation, hash build) hold rows, and they reserve memory in chunks from the statement's tracker.
+    - Only blocking operators (sort, aggregation, hash build) hold rows. Each reserves from the memory accountant ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)) in chunks: when its held bytes no longer cover the rows it holds, it reserves the larger of the shortfall and 128 KiB. It releases everything when it ends.
   - **Limits and cancellation.**
     - One atomic status per transaction. It is set by Rust API cancel, Bolt `RESET`, termination, and a tokio timer. The timer measures the time limit, or `tx_timeout`, from the start of the transaction (FR-API-007).
-    - Operators check it once per batch, and every K iterations in long loops.
-    - Row and byte limits are counted at the result sink.
+    - Operators check it once per batch, and every 1 024 iterations of a loop that can run longer than one batch, such as an expansion over one node's adjacency, a sort or an aggregation's input (K = 1 024).
+    - **Limits** (FR-API-007, FR-LIM-002): time, memory, rows and bytes, each optional. None has a default.
+      - A `Session` holds the limits its transactions inherit. `begin(options)` replaces any of them for that transaction. An auto-commit statement uses the session's.
+      - Time: from the start of the transaction.
+      - Memory: the bytes the transaction holds from the accountant: its operators' reservations, its write set and the old versions its writes create (FR-LIM-007).
+      - Rows and bytes: per statement, counted at the result sink. The bytes of a row are the sum of its values' sizes in the record encoding of [TS-21](values-and-types.md#ts-21-values-and-types) (header and payload).
     - Crossing any limit fails the statement and aborts the transaction.
   - **EXPLAIN and PROFILE.**
     - EXPLAIN returns the plan with estimated rows per operator and does not execute.
     - PROFILE wraps each operator in a decorator that records rows, batches, time per batch, storage entries read, buffer hits and misses, and peak memory. Normal plans contain no decorator.
+    - **Result.** A tree of plan nodes: operator name, details (index, direction, types, labels), identifiers, estimated rows, children. PROFILE adds per node: rows, batches, time, entries read (Neo4j's "DB Hits"), buffer hits and misses (Neo4j's "Page Cache Hits/Misses") and peak memory (Neo4j's "Memory (Bytes)"). `Session::explain` returns the tree. `Session::profile` returns a `ResultStream` whose `summary()` holds the profiled tree once the last row is pulled, as Bolt returns `plan` and `profile` in the last `PULL` success.
+    - **Operator names.** Neo4j's, where Neo4j has the operator: `NodeByIdSeek` (TS-20 `NodeById`), `AllNodesScan`, `NodeByLabelScan` (`LabelScan`), `NodeIndexSeek`, `NodeIndexSeekByRange`, `NodeUniqueIndexSeek`, `DirectedRelationshipIndexSeek`, `DirectedRelationshipIndexSeekByRange` (`IndexSeek`), `Expand(All)` (`Expand`), `Expand(Into)` (`ExpandInto`), `Filter`, `Projection`, `EagerAggregation`, `Sort`, `Distinct`, `NodeHashJoin`, `ValueHashJoin`, `CartesianProduct`, `Apply`, `Optional`, `Create`, `SetProperty`, `SetProperties`, `ProcedureCall`, `EmptyResult`, `ProduceResults`. An operator Neo4j lacks (catalog statements, `REMOVE` of a property, `Repeat`) keeps its lpg name.
+  - **Implementation-defined choices, statements and sessions** (BR-GQL-002; approval rule of 2026-10-08 and "zu" as in [TS-19](#ts-19-parser); the zu reference is the one tasks #43, #46, #47 and #48 cite).
+
+    | Item (line) | Choice | Source |
+    |---|---|---|
+    | IA017 (106) | Several assignments to one property of one element in one `SET` raise no condition: they apply in order and the last one stays. | Neo4j applies each `SET` item as its own operation on each row (R-NEO `SetPipe.scala:26-36`), and states that Cypher's `SET` is order-dependent (Cypher Manual, "Supported mandatory GQL features", 13.3). zu raises 22G0M instead. |
+    | ID086 (266) | `DIFFERENT EDGES`: an edge is not matched twice within one graph-pattern match. | Neo4j: "By default, Cypher does not allow relationships to be re-traversed in the same graph pattern match" (Cypher Manual, "Match modes"). |
+    | IW011 (470) | An element variable of a graph pattern has the open node or edge reference type (`NODE`, `RELATIONSHIP`). | Neo4j's structural types `NODE` and `RELATIONSHIP` (Cypher Manual, "Property, structural, and constructed values"). |
+    | IW012 (474) | A node variable of an insert node pattern has the open node reference type. | As IW011. |
+    | IE006 (322) | No restriction on transactions that mix catalog and data statements. | FR-CAT-004 (user decision overriding Neo4j, which forbids the mix). |
+    | IE007 (326) | None: there is no restriction to violate. | Follows from IE006; zu. |
+    | IA001 (50) | The declared type of a result is not exposed: a result carries column names and values. | Bolt's `RUN` success carries `fields`, a list of names (Neo4j Bolt documentation, "Message: RUN"). |
+    | IA002 (54) | A failure is one `Error` whose cause may be another `Error`, to any depth. | Bolt's `FAILURE` carries a `cause` with its own nested `cause` (Neo4j Bolt documentation, "Message: FAILURE"). |
+    | ID001 (134) | The principal is the string the application passes to `session` (Rust API) or the authoriser returns (Bolt). | FR-SES-001, ABS-002 ([TS-23](interfaces.md#ts-23-authentication-and-authorisation)). |
+    | ID002 (138) | The home schema and graph come from the caller or the authoriser, else `/public` and `/public/lpg`. | FR-SES-002, FR-DB-005. |
+    | ID003 (142) | The privileges are the answers of the application's authoriser. | FR-AUTH-001, [TS-23](interfaces.md#ts-23-authentication-and-authorisation). |
+    | ID016 (158) | No translations: messages are in English. | Neo4j's status descriptions are English (Status Codes manual); zu. |
+    | ID049 (190) | No session parameters. | Neo4j supports none of GS01–GS03 (Cypher Manual, "Supported optional GQL features"); zu. |
+    | ID061 (206) | `SESSION_USER` is a `STRING`: the session's principal. | Neo4j does not support `SESSION_USER` (Cypher Manual, "Supported mandatory GQL features", 20.3). Memgraph's `SHOW CURRENT USER` returns the session's user name as a string, or null without one (R-MG @ `847e224` `src/query/interpreter.cpp:1664-1668`); an lpg session always has a principal |
+    | IV016 (430) | Each `Error` carries an English message saying what failed. It never contains a value (FR-OBS-002). | Bolt's `FAILURE` has a `message` beside `gql_status` and `description`. |
+    | IW001 (438) | `Database::session` creates a session; dropping the `Session`, or `SESSION CLOSE`, ends it; `execute` submits a request. | FR-API-001, [interfaces.md](interfaces.md#public-api-shape). |
+    | IW002 (442) | The application maps credentials to principals through its authoriser. | ABS-002, [TS-23](interfaces.md#ts-23-authentication-and-authorisation). |
+    | IW003 (446) | The last request is the one before `SESSION CLOSE` or before the `Session` is dropped. | [TS-02](architecture.md#ts-02-async-api-and-threading). |
+    | IW004 (450) | `Session::begin`, `Transaction::commit` and `Transaction::rollback`. | FR-GQL-005, FR-TX-004. |
+    | IW005 (454) | Each call returns `Result<_, Error>`. | [interfaces.md](interfaces.md#public-api-shape). |
+    | IW006 (458) | The `parameters` argument of `execute`, a map from name to value. | [interfaces.md](interfaces.md#public-api-shape). |
+    | IW007 (462) | Exceptions as `Error`; completion conditions in `ResultStream::summary()`. | [interfaces.md](interfaces.md#public-api-shape). |
+    | IW010 (466) | Procedures and functions are registered on the database handle through the Rust API. | FR-API-005, [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events). |
+    | IW015 (482) | `create` makes the root directory, schema `public` and graph `lpg`; nothing else is created automatically. | FR-DB-005, [TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics). |
+    | IW016 (486) | A new schema is empty. | zu: neither Neo4j (GC01 unsupported, "Supported optional GQL features") nor Memgraph (no schema statement; only `SHOW SCHEMA INFO`, R-MG `MemgraphCypher.g4:967`) has GQL schemas |
+    | IE008 (330), IE009 (334) | None: only the ISO conditions are raised. User decision 2026-10-08, "Só ISO" (rmp task #38). | Neo4j adds notifications (01N…, 03N…; Neo4j Status Codes, "Notifications"); the user chose ISO only (NFR-SIMP-001). |
+    | IE010 (338) | `00001` "omitted result" only. Same decision. | ISO conditions insert (57); Neo4j and zu use it. |
+    | IW025 (514) | Every catalog-modifying procedure is under transaction control, any number in one transaction. | FR-CAT-004, FR-PROC-002. |
+
+    Not reached by the supported codes: IA013 (90, selective path patterns, G005, G015–G020), ID005 (150, `ELEMENTS`, GF04), ID017 (162, diagnostic records, GA08), ID076 (254, `ELEMENT_ID`, G100), IE001 (302, URIs: no `GQL.g4` rule takes one), IV015 (426, `<authorization identifier>` is used by no rule of either grammar), IW018 (494, lax casts: no `CAST`, GA05), IW022 (506, `NOT NULL` sites, GV90).
 - **Satisfies**: FR-API-007, FR-API-008, FR-API-009, FR-API-010, FR-CAT-003, FR-GQL-002, FR-GQL-004, BR-GQL-002, FR-LIM-001, FR-LIM-002, FR-LIM-004, FR-BOLT-015, FR-BOLT-021, FR-OBS-004, FR-OBS-005, FR-OBS-006, NFR-PERF-007.
 - **Evidence** (M-QE §Q2–Q4, §Q7, with file and line references):
-  - Memgraph: symbol table and pull cursors; cancellation checked every 20th pull (R-MG `src/query/plan/operator.cpp:510-528`).
+  - Memgraph: symbol table and pull cursors; cancellation checked every 20th call (Check interval, below).
   - Kuzu: binder; dynamic-programming join order up to 7 relationships; cost as a sum of cardinalities; default selectivities. Kuzu materialises the whole result before returning, which fails FR-API-010.
   - Neo4j: chunked memory reservations (`LocalMemoryTracker`) and the `PROFILE` columns.
+  - Chunk size. Neo4j's tracker reserves the larger of the request and its grab size from its pool (R-NEO `community/common/.../memory/LocalMemoryTracker.java:182-188`); the grab size is 2 MiB per transaction and 128 KiB per worker (`GraphDatabaseInternalSettings.java:1167-1178`). Under NFR-PERF-007 a statement is one worker, hence 128 KiB. DataFusion grows a reservation by the exact size of each batch (R-DF `datafusion/physical-plan/src/sorts/sort.rs:868-870`).
+  - Check interval. Memgraph checks for abort on every 20th call, in cursor pulls and inside long loops (R-MG @ `847e224` `src/query/plan/operator.cpp:571-588`). Kuzu checks once per `getNextTuple`, that is once per vector of tuples (R-KUZU `src/processor/operator/physical_operator.cpp:186-189`). lpg's unit of work is the batch of 1 024 rows, so loops check at that granularity.
+  - Limits. Neo4j's transaction timeout and per-transaction memory limit default to 0, meaning none (R-NEO `GraphDatabaseSettings.java:486-491, 1062-1068`), and a timeout the client gives for one transaction replaces the server's (`KernelImpl.java:105-119`). Neo4j has no result-size limit; the byte measure is lpg's own record encoding.
+  - Operator names and `PROFILE` columns: Cypher Manual, "Operators" and "Operators in detail" (checked 2026-10-08). Bolt `PULL` success fields `plan` and `profile`: Neo4j Bolt documentation, "Message: PULL".
   - Measured on the reference hardware: batches of 1 024 rows were 2.3× faster than row-at-a-time in a toy pipeline, and an `Instant::now()` pair costs 2.75 µs, which is why time is read per batch, not per row.
-- **Crates**: none used. DataFusion-class engines are relational and push-based; study only.
+- **Crates**: none used. DataFusion is a relational engine over Arrow batches whose operators return a stream that the consumer pulls (`ExecutionPlan::execute` returns a `SendableRecordBatchStream`, R-DF `datafusion/physical-plan/src/execution_plan.rs:696-700`); study only.
 - **Rejected**:
   - Push pipelines (DuckDB, Neo4j pipelined): buffers and backpressure for no stated need.
   - Row-at-a-time execution: measured 2.3× slower.
   - Factorised vectors (Kuzu): little benefit on short reads, per Kuzu's own evaluation (D-KUZU §4.1, quoted in M-QE §Q3.1).
   - IDP join ordering (Neo4j): more complex, with no measured case that needs it.
   - Execution inline on tokio workers: page misses block.
+
+## Rule-to-feature table
+
+Provisional (OQ-005). Every parser rule of `GQL.g4` @ `16ea71b`, grouped by what it needs ([TS-19](#ts-19-parser) Feature classification). Generated by `docs/evidence/planning/round-s/feature_map.py` on 2026-10-08; do not edit by hand. The exact condition of each rule is in [rules.tsv](../evidence/planning/round-s/rules.tsv).
+
+- **Needs**: `mandatory`; or the rule's own condition (`+`: all of; `or`: any of); and, after `inside`, the codes of the constructs the rule is reachable only within.
+- **Status**: `supported` when one of the rule's conditions uses only supported codes.
+- **Partial anchors**: codes that cover one alternative or element of a supported rule; that part fails with "feature not supported" unless its code is supported.
+
+| Needs | Status | Rules |
+|---|---|---|
+| mandatory | supported | `gqlProgram`, `programActivity`, `sessionActivity`, `transactionActivity`, `sessionSetCommand`, `sessionSetSchemaClause`, `sessionSetGraphClause`, `sessionCloseCommand`, `procedureSpecification`, `nestedDataModifyingProcedureSpecification`, `nestedQuerySpecification`, `procedureBody`, `statementBlock`, `statement`, `graphExpression`, `currentGraph`, `objectExpressionPrimary`, `linearDataModifyingStatement`, `ambientLinearDataModifyingStatement`, `ambientLinearDataModifyingStatementBody`, `simpleLinearDataAccessingStatement`, `simpleDataAccessingStatement`, `compositeQueryStatement`, `compositeQueryExpression`, `compositeQueryPrimary`, `linearQueryStatement`, `focusedLinearQueryStatement`, `ambientLinearQueryStatement`, `simpleLinearQueryStatement`, `simpleQueryStatement`, `primitiveQueryStatement`, `matchStatement`, `simpleMatchStatement`, `optionalMatchStatement`, `optionalOperand`, `matchStatementBlock`, `orderByAndPageStatement`, `primitiveResultStatement`, `returnStatement`, `returnStatementBody`, `returnItemList`, `returnItem`, `returnItemAlias`, `selectStatement`, `selectItemList`, `selectItem`, `selectItemAlias`, `havingClause`, `selectStatementBody`, `selectGraphMatchList`, `selectGraphMatch`, `selectQuerySpecification`, `graphPatternBindingTable`, `graphPattern`, `pathPatternList`, `pathPattern`, `graphPatternWhereClause`, `pathPatternExpression`, `pathTerm`, `pathFactor`, `pathPrimary`, `elementPattern`, `nodePattern`, `elementPatternFiller`, `elementVariableDeclaration`, `isLabelExpression`, `isOrColon`, `elementPatternPredicate`, `elementPatternWhereClause`, `elementPropertySpecification`, `propertyKeyValuePairList`, `propertyKeyValuePair`, `edgePattern`, `fullEdgePattern`, `fullEdgePointingRight`, `labelExpression`, `elementVariableReference`, `whereClause`, `orderByClause`, `sortSpecificationList`, `sortSpecification`, `sortKey`, `orderingSpecification`, `schemaReference`, `absoluteCatalogSchemaReference`, `relativeCatalogSchemaReference`, `predefinedSchemaReference`, `absoluteDirectoryPath`, `relativeDirectoryPath`, `simpleDirectoryPath`, `graphReference`, `homeGraph`, `catalogObjectParentReference`, `searchCondition`, `predicate`, `compOp`, `existsPredicate`, `nullPredicate`, `nullPredicatePart2`, `normalizedPredicatePart2`, `valueExpression`, `valueFunction`, `booleanValueExpression`, `characterOrByteStringFunction`, `subCharacterOrByteString`, `trimSingleCharacterOrByteString`, `foldCharacterString`, `normalizeCharacterString`, `aggregatingValueExpression`, `valueExpressionPrimary`, `parenthesizedValueExpression`, `nonParenthesizedValueExpressionPrimary`, `nonParenthesizedValueExpressionPrimarySpecialCase`, `unsignedValueSpecification`, `generalValueSpecification`, `dynamicParameterSpecification`, `caseExpression`, `caseAbbreviation`, `caseSpecification`, `simpleCase`, `searchedCase`, `simpleWhenClause`, `searchedWhenClause`, `elseClause`, `caseOperand`, `whenOperandList`, `whenOperand`, `result`, `resultExpression`, `aggregateFunction`, `generalSetFunction`, `generalSetFunctionType`, `setQuantifier`, `bindingVariableReference`, `truthValue`, `numericValueExpression`, `numericValueFunction`, `lengthExpression`, `charLengthExpression`, `characterStringValueExpression`, `trimOperands`, `trimCharacterOrByteStringSource`, `normalForm`, `stringLength`, `objectName`, `objectNameOrBindingVariable`, `directoryName`, `schemaName`, `graphName`, `delimitedGraphName`, `labelName`, `propertyName`, `elementVariable`, `bindingVariable`, `unsignedLiteral`, `generalLiteral`, `identifier`, `regularIdentifier`, `characterStringLiteral`, `unsignedNumericLiteral`, `exactNumericLiteral`, `approximateNumericLiteral`, `unsignedInteger`, `nullLiteral`, `nonReservedWords` (165) |
+| G002 | not supported | `differentEdgesMatchMode` (1) |
+| G002 or G003 | not supported | `matchMode` (1) |
+| G003 | not supported | `repeatableElementsMatchMode` (1) |
+| G004 | not supported | `pathVariableDeclaration` (1) |
+| G005+G006+G015 or G005+G006+G016 or G005+G006+G017 or G005+G006+G018 or G005+G006+G019 or G005+G006+G020 or G005+G007+G015 or G005+G007+G016 or G005+G007+G017 or G005+G007+G018 or G005+G007+G019 or G005+G007+G020 or G006+G010 or G006+G011 or G006+G012 or G006+G013 or G007+G010 or G007+G011 or G007+G012 or G007+G013 | not supported | `keepClause` (1) |
+| G005+G015 or G005+G016 or G005+G017 or G005+G018 or G005+G019 or G005+G020 | not supported | `pathSearchPrefix` (1) |
+| G005+G015 or G005+G016 or G005+G017 or G005+G018 or G005+G019 or G005+G020 or G010 or G011 or G012 or G013 | not supported | `pathPatternPrefix` (1) |
+| G010 or G011 or G012 or G013 | not supported | `pathModePrefix`, `pathMode` (2) |
+| G014 | not supported | `pathOrPaths` (1) |
+| G015; inside G005 | not supported | `allPathSearch` (1) |
+| G016; inside G005 | not supported | `anyPathSearch` (1) |
+| G017 or G018 or G019 or G020; inside G005 | not supported | `shortestPathSearch` (1) |
+| G017; inside G005 | not supported | `allShortestPathSearch` (1) |
+| G018; inside G005 | not supported | `anyShortestPathSearch` (1) |
+| G019; inside G005 | not supported | `countedShortestPathSearch` (1) |
+| G020; inside G005 | not supported | `countedShortestGroupSearch` (1) |
+| G030; inside G039, G080 | not supported | `simplifiedMultisetAlternation` (1) |
+| G032; inside G039, G080 | not supported | `simplifiedPathUnion` (1) |
+| G035+G060 or G035+G061 or G036+G060 or G036+G061; inside G039, G080 | not supported | `simplifiedQuantified` (1) |
+| G037; inside G039, G080 | not supported | `simplifiedQuestioned` (1) |
+| G038 | not supported | `parenthesizedPathPatternExpression` (1) |
+| G039 or G080 | not supported | `simplifiedPathPatternExpression` (1) |
+| G043 | not supported | `fullEdgePointingLeft`, `fullEdgeLeftOrRight`, `fullEdgeAnyDirection` (3) |
+| G043+GH02 | not supported | `fullEdgeLeftOrUndirected`, `fullEdgeUndirectedOrRight` (2) |
+| G044 or G045 | not supported | `abbreviatedEdgePattern` (1) |
+| G048; inside G038 | not supported | `subpathVariableDeclaration` (1) |
+| G050; inside G038 | not supported | `parenthesizedPathPatternWhereClause` (1) |
+| G060 or G061; inside G035, G036 | not supported | `graphPatternQuantifier`, `generalQuantifier` (2) |
+| G081 or G082; inside G039, G080 | not supported | `simplifiedDirectionOverride` (1) |
+| G100 | not supported | `element_idFunction` (1) |
+| G110 | not supported | `directedPredicate`, `directedPredicatePart2` (2) |
+| G111 | not supported | `labeledPredicate`, `labeledPredicatePart2` (2) |
+| G112 | not supported | `sourceDestinationPredicate`, `sourcePredicatePart2`, `destinationPredicatePart2` (3) |
+| G113 | not supported | `all_differentPredicate` (1) |
+| G114 | not supported | `samePredicate` (1) |
+| G115 | not supported | `property_existsPredicate` (1) |
+| GA03 | not supported | `nullOrdering` (1) |
+| GA05 | not supported | `castSpecification` (1) |
+| GA06 | not supported | `valueTypePredicate`, `valueTypePredicatePart2` (2) |
+| GC01 | supported | `createSchemaStatement`, `dropSchemaStatement`, `createGraphTypeStatement`, `dropGraphTypeStatement` (4) |
+| GC01 or GC04 | supported | `primitiveCatalogModifyingStatement` (1) |
+| GC01 or GC04 or GP01 or GP04 | supported | `linearCatalogModifyingStatement`, `simpleCatalogModifyingStatement` (2) |
+| GC04 | supported | `dropGraphStatement` (1) |
+| GC04+GG01 or GC04+GG02 or GC04+GG04 | supported | `createGraphStatement` (1) |
+| GD01 | supported | `primitiveDataModifyingStatement`, `insertStatement`, `setStatement`, `removeStatement` (4) |
+| GD01 or GP01 or GP04 | supported | `simpleDataModifyingStatement` (1) |
+| GD01+GD03 or GD01+GD04 | not supported | `deleteStatement` (1) |
+| GD02; inside GD01 | not supported | `setLabelItem`, `removeLabelItem` (2) |
+| GD03 or GD04; inside GD01 | not supported | `deleteItemList`, `deleteItem` (2) |
+| GE03 | not supported | `letValueExpression` (1) |
+| GE06 | not supported | `pathValueConstructor` (1) |
+| GE08 | not supported | `referenceParameterSpecification` (1) |
+| GF04 | not supported | `elementsFunction` (1) |
+| GF04 or GV50 | not supported | `listValueFunction` (1) |
+| GF05 | not supported | `trimMultiCharacterCharacterString` (1) |
+| GF06 | not supported | `trimSpecification`, `trimCharacterOrByteString` (2) |
+| GF11 | not supported | `binarySetFunction` (1) |
+| GF12 or GF13 | not supported | `cardinalityExpression` (1) |
+| GG01; inside GC04 | supported | `openGraphType` (1) |
+| GG02 or GG04; inside GC04 | supported | `ofGraphType` (1) |
+| GG03; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `closedGraphReferenceValueType` (1) |
+| GG03; inside GA05, GA06, GC01, GC04, GE03, GG02, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `nestedGraphTypeSpecification` (1) |
+| GG04; inside GC01, GC04 | not supported | `graphTypeLikeGraph` (1) |
+| GG05; inside GC04 | not supported | `graphSource` (1) |
+| GG20; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `nodeTypeName`, `edgeTypeName` (2) |
+| GG21; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `nodeTypeKeyLabelSet`, `edgeTypeKeyLabelSet` (2) |
+| GH02 | not supported | `fullEdgeUndirected` (1) |
+| GH02; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `edgeTypePatternUndirected`, `endpointPairUndirected` (2) |
+| GH02; inside GD01 | not supported | `insertEdgeUndirected` (1) |
+| GP01 | not supported | `inlineProcedureCall` (1) |
+| GP01 or GP04 | supported | `callCatalogModifyingProcedureStatement`, `callDataModifyingProcedureStatement`, `callQueryStatement`, `callProcedureStatement`, `procedureCall` (5) |
+| GP03; inside GP01 | not supported | `variableScopeClause` (1) |
+| GP04 | supported | `namedProcedureCall` (1) |
+| GP05 or GP08 or GP11; inside GP17 | not supported | `bindingVariableDefinition` (1) |
+| GP05+GP17 or GP08+GP17 or GP11+GP17 | not supported | `bindingVariableDefinitionBlock` (1) |
+| GP16 | not supported | `atSchemaClause` (1) |
+| GQ01 | supported | `focusedLinearDataModifyingStatement`, `focusedLinearDataModifyingStatementBody`, `focusedNestedDataModifyingProcedureSpecification`, `focusedLinearQueryStatementPart`, `focusedLinearQueryAndPrimitiveResultStatementPart`, `focusedPrimitiveResultStatement`, `focusedNestedQuerySpecification`, `useGraphClause` (8) |
+| GQ02 or GQ03 or GQ04 or GQ05 or GQ06 or GQ07 | not supported | `queryConjunction` (1) |
+| GQ03 or GQ04 or GQ05 or GQ06 or GQ07 | not supported | `setOperator` (1) |
+| GQ08 | not supported | `filterStatement` (1) |
+| GQ09 | not supported | `letStatement` (1) |
+| GQ10 or GQ23 | not supported | `forStatement` (1) |
+| GQ11 or GQ24; inside GQ10, GQ23 | not supported | `forOrdinalityOrOffset` (1) |
+| GQ12 | not supported | `offsetClause` (1) |
+| GQ13 | not supported | `limitClause` (1) |
+| GQ15 | not supported | `groupByClause` (1) |
+| GQ18 | not supported | `valueQueryExpression` (1) |
+| GQ19 | not supported | `graphPatternYieldClause` (1) |
+| GQ20 | not supported | `nextStatement` (1) |
+| GS01 | not supported | `sessionSetGraphParameterClause` (1) |
+| GS01 or GS02 or GS03 | not supported | `sessionSetParameterClause` (1) |
+| GS02 | not supported | `sessionSetBindingTableParameterClause` (1) |
+| GS03 | not supported | `sessionSetValueParameterClause` (1) |
+| GS04 or GS05 or GS06 or GS07 or GS08 or GS16 | not supported | `sessionResetCommand` (1) |
+| GS15 | not supported | `sessionSetTimeZoneClause` (1) |
+| GT01 | supported | `endTransactionCommand`, `startTransactionCommand`, `rollbackCommand`, `commitCommand` (4) |
+| GT02; inside GT01 | not supported | `transactionCharacteristics` (1) |
+| GV17; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `decimalExactNumericType` (1) |
+| GV35; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `byteStringType` (1) |
+| GV39 | supported | `dateFunction`, `localtimeFunction`, `localdatetimeFunction`, `dateLiteral` (4) |
+| GV39 or GV40 | supported | `datetimeValueFunction`, `temporalLiteral` (2) |
+| GV39 or GV40 or GV41; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `temporalType` (1) |
+| GV39 or GV40; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `temporalInstantType` (1) |
+| GV39; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `localdatetimeType`, `dateType`, `localtimeType` (3) |
+| GV40 | supported | `timeFunction`, `datetimeFunction`, `timeLiteral`, `datetimeLiteral` (4) |
+| GV40; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `datetimeType`, `timeType` (2) |
+| GV41 | supported | `datetimeSubtraction`, `durationValueFunction`, `durationFunction`, `durationLiteral` (4) |
+| GV41; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `temporalDurationType` (1) |
+| GV45 | not supported | `recordLiteral` (1) |
+| GV46 or GV47; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `recordType` (1) |
+| GV50 | not supported | `trimListFunction`, `listValueConstructorByEnumeration`, `listLiteral` (3) |
+| GV55; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `pathValueType` (1) |
+| GV60; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV61 | not supported | `graphReferenceValueType` (1) |
+| GV61; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60 | not supported | `bindingTableReferenceValueType` (1) |
+| GV71 or GV72; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `immaterialValueType` (1) |
+| GV71; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `nullType` (1) |
+| GV72; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `emptyType` (1) |
+| GV90; inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `notNull` (1) |
+| inside G002 | not supported | `edgeBindingsOrEdges`, `edgesSynonym` (2) |
+| inside G002, GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `edgeSynonym` (1) |
+| inside G003 | not supported | `elementBindingsOrElements` (1) |
+| inside G004 | not supported | `pathVariable` (1) |
+| inside G005, G016, G019 | not supported | `numberOfPaths` (1) |
+| inside G005, G016, G019, G020, GQ12, GQ13 | not supported | `nonNegativeIntegerSpecification` (1) |
+| inside G005, G020 | not supported | `numberOfGroups` (1) |
+| inside G035, G036, G060 | not supported | `fixedQuantifier` (1) |
+| inside G035, G036, G060, G061 | not supported | `lowerBound`, `upperBound` (2) |
+| inside G038, G048 | not supported | `subpathVariable` (1) |
+| inside G039, G080 | not supported | `simplifiedDefaultingLeft`, `simplifiedDefaultingUndirected`, `simplifiedDefaultingRight`, `simplifiedDefaultingLeftOrUndirected`, `simplifiedDefaultingUndirectedOrRight`, `simplifiedDefaultingLeftOrRight`, `simplifiedDefaultingAnyDirection`, `simplifiedContents`, `simplifiedTerm`, `simplifiedFactorLow`, `simplifiedFactorHigh`, `simplifiedTertiary`, `simplifiedSecondary`, `simplifiedNegation`, `simplifiedPrimary` (15) |
+| inside G039, G080, G081, G082 | not supported | `simplifiedOverrideLeft`, `simplifiedOverrideUndirected`, `simplifiedOverrideRight`, `simplifiedOverrideLeftOrUndirected`, `simplifiedOverrideUndirectedOrRight`, `simplifiedOverrideLeftOrRight`, `simplifiedOverrideAnyDirection` (7) |
+| inside G111 | not supported | `isLabeledOrColon` (1) |
+| inside G112 | not supported | `nodeReference`, `edgeReference` (2) |
+| inside GA05 | not supported | `castOperand`, `castTarget` (2) |
+| inside GA05, GA06, GC01, GC04, GD01, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `labelSetSpecification` (1) |
+| inside GA05, GA06, GC01, GC04, GE03, GG01, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03 | supported | `typed` (1) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GH02, GP05, GP08, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `arcTypeUndirected`, `connectorUndirected` (2) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP04, GP05, GP08, GP17, GQ09, GQ20, GS01, GS02, GS03, GV39, GV40, GV41, GV45, GV46, GV60, GV61 | supported | `fieldName` (1) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `openGraphReferenceValueType` (1) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `nodeTypeSpecification`, `nodeTypePattern`, `nodeTypePhrase`, `nodeTypePhraseFiller`, `nodeTypeFiller`, `localNodeTypeAlias`, `nodeTypeImpliedContent`, `nodeTypeLabelSet`, `nodeTypePropertyTypes`, `edgeTypeSpecification`, `edgeTypePattern`, `edgeTypePhrase`, `edgeTypePhraseFiller`, `edgeTypeFiller`, `edgeTypeImpliedContent`, `edgeTypeLabelSet`, `edgeTypePropertyTypes`, `edgeTypePatternDirected`, `edgeTypePatternPointingRight`, `edgeTypePatternPointingLeft`, `arcTypePointingRight`, `arcTypePointingLeft`, `sourceNodeTypeReference`, `destinationNodeTypeReference`, `edgeKind`, `endpointPairPhrase`, `endpointPair`, `endpointPairDirected`, `endpointPairPointingRight`, `endpointPairPointingLeft`, `connectorPointingRight`, `sourceNodeTypeAlias`, `destinationNodeTypeAlias`, `labelSetPhrase`, `propertyTypesSpecification`, `propertyTypeList`, `propertyType`, `propertyValueType`, `valueType`, `predefinedType`, `booleanType`, `characterStringType`, `minLength`, `maxLength`, `numericType`, `exactNumericType`, `binaryExactNumericType`, `signedBinaryExactNumericType`, `unsignedBinaryExactNumericType`, `verboseBinaryExactNumericType`, `precision`, `scale`, `approximateNumericType`, `referenceValueType`, `nodeReferenceValueType`, `closedNodeReferenceValueType`, `openNodeReferenceValueType`, `edgeReferenceValueType`, `closedEdgeReferenceValueType`, `openEdgeReferenceValueType`, `unsignedDecimalInteger`, `nodeSynonym` (62) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP17, GQ09, GS01, GS02, GS03, GV32, GV35, GV60, GV61 | not supported | `fixedLength` (1) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP17, GQ09, GS01, GS02, GS03, GV46, GV60, GV61 | not supported | `fieldTypesSpecification`, `fieldTypeList`, `fieldType` (3) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP08, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | not supported | `bindingTableType` (1) |
+| inside GA05, GA06, GC01, GC04, GE03, GG02, GG03, GP05, GP11, GP17, GQ09, GS01, GS02, GS03, GV60, GV61 | supported | `graphTypeSpecificationBody`, `elementTypeList`, `elementTypeSpecification` (3) |
+| inside GC01 | supported | `graphTypeSource`, `copyOfGraphType`, `catalogSchemaParentAndName` (3) |
+| inside GC01, GC04, GG02 | supported | `graphTypeReference`, `catalogGraphTypeParentAndName`, `graphTypeName` (3) |
+| inside GC04 | supported | `catalogGraphParentAndName` (1) |
+| inside GD01 | supported | `setItemList`, `setItem`, `setPropertyItem`, `setAllPropertiesItem`, `removeItemList`, `removeItem`, `removePropertyItem`, `insertGraphPattern`, `insertPathPatternList`, `insertPathPattern`, `insertNodePattern`, `insertEdgePattern`, `insertEdgePointingLeft`, `insertEdgePointingRight`, `insertElementPatternFiller`, `labelAndPropertySetSpecification` (16) |
+| inside GE02, GP08, GP17, GS02 | not supported | `bindingTableExpression`, `nestedBindingTableQuerySpecification`, `bindingTableReference`, `bindingTableName`, `delimitedBindingTableName` (5) |
+| inside GE03, GP05, GP17, GQ09 | not supported | `valueVariableDefinition` (1) |
+| inside GE03, GP05, GP17, GQ09, GS03 | not supported | `optTypedValueInitializer`, `valueInitializer` (2) |
+| inside GE03, GQ09 | not supported | `letVariableDefinitionList`, `letVariableDefinition` (2) |
+| inside GE06 | not supported | `nodeReferenceValueExpression`, `edgeReferenceValueExpression`, `pathValueConstructorByEnumeration`, `pathElementList`, `pathElementListStart`, `pathElementListStep` (6) |
+| inside GF01 | not supported | `modulusExpression`, `numericValueExpressionDividend`, `numericValueExpressionDivisor`, `squareRoot`, `floorFunction`, `ceilingFunction` (6) |
+| inside GF01, GF03 | not supported | `exponentialFunction`, `powerFunction`, `numericValueExpressionBase`, `numericValueExpressionExponent` (4) |
+| inside GF01, GV41 | supported | `absoluteValueExpression` (1) |
+| inside GF02 | not supported | `trigonometricFunction`, `trigonometricFunctionName` (2) |
+| inside GF03 | not supported | `generalLogarithmFunction`, `generalLogarithmBase`, `generalLogarithmArgument`, `commonLogarithm`, `naturalLogarithm` (5) |
+| inside GF04 | not supported | `pathValueExpression`, `pathLengthExpression` (2) |
+| inside GF11 | not supported | `binarySetFunctionType`, `dependentValueExpression`, `independentValueExpression` (3) |
+| inside GF12 | not supported | `cardinalityExpressionArgument` (1) |
+| inside GF13, GV50 | not supported | `listValueExpression` (1) |
+| inside GP01 | not supported | `nestedProcedureSpecification` (1) |
+| inside GP01, GP03 | not supported | `bindingVariableReferenceList` (1) |
+| inside GP04 | supported | `procedureArgumentList`, `procedureArgument`, `procedureReference`, `catalogProcedureParentAndName`, `procedureName` (5) |
+| inside GP04, GQ20 | supported | `yieldClause`, `yieldItemList`, `yieldItem`, `yieldItemName`, `yieldItemAlias` (5) |
+| inside GP08, GP17 | not supported | `bindingTableVariableDefinition` (1) |
+| inside GP08, GP17, GS02 | not supported | `optTypedBindingTableInitializer`, `bindingTableInitializer` (2) |
+| inside GP11, GP17 | not supported | `graphVariableDefinition` (1) |
+| inside GP11, GP17, GS01 | not supported | `optTypedGraphInitializer`, `graphInitializer` (2) |
+| inside GQ10, GQ23 | not supported | `forItem`, `forItemAlias`, `forItemSource` (3) |
+| inside GQ12 | not supported | `offsetSynonym` (1) |
+| inside GQ15 | not supported | `groupingElementList`, `groupingElement`, `emptyGroupingSet` (3) |
+| inside GQ19 | not supported | `graphPatternYieldItemList`, `graphPatternYieldItem` (2) |
+| inside GS01, GS02, GS03 | not supported | `sessionSetParameterName` (1) |
+| inside GS01, GS02, GS03, GS04, GS05, GS06, GS07, GS08, GS16 | not supported | `sessionParameterSpecification` (1) |
+| inside GS04, GS05, GS06, GS07, GS08, GS16 | not supported | `sessionResetArguments` (1) |
+| inside GS15 | not supported | `setTimeZoneValue`, `timeZoneString` (2) |
+| inside GT01, GT02 | not supported | `transactionMode`, `transactionAccessMode` (2) |
+| inside GV35 | not supported | `byteLengthExpression`, `byteStringValueExpression` (2) |
+| inside GV39 | supported | `dateFunctionParameters`, `dateString` (2) |
+| inside GV39, GV40 | supported | `timeFunctionParameters`, `datetimeFunctionParameters`, `timeString`, `datetimeString` (4) |
+| inside GV39, GV40, GV41, GV45 | supported | `recordConstructor`, `fieldsSpecification`, `fieldList`, `field` (4) |
+| inside GV41 | supported | `temporalDurationQualifier`, `datetimeValueExpression`, `datetimeSubtractionParameters`, `datetimeValueExpression1`, `datetimeValueExpression2`, `durationFunctionParameters`, `durationString` (7) |
+| inside GV50 | not supported | `listValueTypeName`, `listValueTypeNameSynonym`, `listElementList`, `listElement` (4) |
+| unreachable from gqlProgram | never parsed | `pathVariableReference`, `listValueConstructor`, `durationValueExpression` (3) |
+
+| Partial anchors inside supported rules | Rule |
+|---|---|
+| GC02 (IF) | `createSchemaStatement` |
+| GC02 (IF) | `dropSchemaStatement` |
+| GC05 (IF) | `createGraphStatement` |
+| GG02 (alternative 2); GG02 (alternative 3) | `ofGraphType` |
+| GC05 (IF) | `dropGraphStatement` |
+| GC03 (IF) | `createGraphTypeStatement` |
+| GC03 (IF) | `dropGraphTypeStatement` |
+| G030 (alternative 2); G032 (alternative 3) | `pathPatternExpression` |
+| G035 or G036 (alternative 2); G037 (alternative 3) | `pathFactor` |
+| G074 (alternative 5) | `labelExpression` |
+| GV50 (alternative 3); GV50 (alternative 4); GV50 (alternative 5); GV66 (alternative 7); GV67 (alternative 10); GV67 (alternative 9); GV68 (alternative 8) | `valueType` |
+| GV30 (minLength); GV31 (alternative 3); GV31 (maxLength); GV32 (alternative 2) | `characterStringType` |
+| GV02 (alternative 1); GV04 (alternative 2); GV07 (alternative 3); GV09 (precision); GV12 (alternative 4); GV14 (alternative 5); GV16 (alternative 6); GV18 (alternative 7); GV19 (alternative 9) | `signedBinaryExactNumericType` |
+| GV01 (alternative 1); GV03 (alternative 2); GV05 (alternative 7); GV06 (alternative 3); GV08 (alternative 8); GV09 (precision); GV10 (alternative 9); GV11 (alternative 4); GV13 (alternative 5); GV15 (alternative 6) | `unsignedBinaryExactNumericType` |
+| GV02 (alternative 1); GV04 (alternative 2); GV07 (alternative 3); GV09 (precision); GV12 (alternative 4); GV14 (alternative 5); GV16 (alternative 6); GV18 (alternative 7); GV19 (alternative 9) | `verboseBinaryExactNumericType` |
+| GV20 (alternative 1); GV21 (alternative 2); GV22 (precision); GV23 (alternative 7); GV23 (alternative 8); GV24 (alternative 3); GV25 (alternative 4); GV26 (alternative 5) | `approximateNumericType` |
+| GE01 (alternative 12); GE02 (alternative 13); GE07 (XOR) | `valueExpression` |
+| GF10 (alternative 6) | `generalSetFunctionType` |
+| GF01 (alternative 11); GF01 (alternative 12); GF01 (alternative 13); GF01 (alternative 3); GF01 (alternative 4); GF01 or GF03 (alternative 10); GF01 or GF03 (alternative 9); GF02 (alternative 5); GF03 (alternative 6); GF03 (alternative 7); GF03 (alternative 8) | `numericValueFunction` |
+| GF04 (alternative 3); GV35 (alternative 2) | `lengthExpression` |
+| GV41 (alternative 2) | `durationValueFunction` |
+| GV35 (alternative 3) | `generalLiteral` |
+| GL04 (alternative 3); GL05 (alternative 2); GL05 (alternative 4); GL06 (alternative 1) | `exactNumericLiteral` |
+| GL07 (alternative 3); GL07 (alternative 4); GL08 (alternative 1) | `approximateNumericLiteral` |
+| GL01 (alternative 2); GL02 (alternative 3); GL03 (alternative 4) | `unsignedInteger` |

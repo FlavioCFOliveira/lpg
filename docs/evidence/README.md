@@ -1,7 +1,7 @@
 ---
 title: Evidence
 status: frozen records
-last-reviewed: 2026-10-03
+last-reviewed: 2026-10-08
 related:
   - ../technical-spec/README.md
 ---
@@ -25,6 +25,7 @@ This folder keeps the research notes, measurement reports and experiment sources
 | M-TOKIO | [tokio-exp/](tokio-exp/src/main.rs) | Cost of the `spawn_blocking` and channel hand-offs (M-QE §Q4.2) | 2026-09-24 | `cargo run --release` in `tokio-exp/` |
 | M-EXEC | [exec-exp/](exec-exp/e.rs) | Row-at-a-time against batch execution in a toy pipeline (M-QE §Q4.2) | 2026-09-24 | `rustc -O exec-exp/e.rs -o e && ./e` |
 | M-VALUE | [value-exp/](value-exp/v.rs) | `Value` enum sizes (`v.rs`, `w.rs`), clock-read cost (`t.rs`), `rdtsc` under `forbid(unsafe_code)` (`r.rs`, expected not to compile) (M-QE §Q4.2, §Q5) | 2026-09-24 | `rustc -O value-exp/<file>.rs -o x && ./x` |
+| M-FEAT | [planning/round-s/](planning/round-s/README.md) | `GQL.g4` rule-to-feature classification; TCK and gql-compat selection counts; ambiguous `GQL.g4` decisions; keyword differences with the ISO BNF; Unicode version of the oracle's ANTLR jar | 2026-10-08 | Commands in [planning/round-s/README.md](planning/round-s/README.md) |
 | M-LOCK | [locktest/](locktest/main.rs) | `File::try_lock` within one process and across processes (P-STO §Q8) | 2026-09-24 | `rustc -O locktest/main.rs -o lt && ./lt` (needs `flock(1)`) |
 
 **Hardware for every measurement**: the reference hardware of [NFR-PERF-006](../functional-spec/non-functional-requirements.md#performance): AMD Ryzen 9 5900HX (8 cores, 16 threads), about 31 GiB RAM, Samsung 970 EVO Plus 1 TB NVMe with ext4, Linux 6.8, rustc 1.96.0. M-LAYOUT records its full environment in [layout-bench/results.md](layout-bench/results.md).

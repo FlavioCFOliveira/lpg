@@ -1,7 +1,7 @@
 ---
 title: Architecture
 status: draft
-last-reviewed: 2026-10-07
+last-reviewed: 2026-10-08
 related:
   - README.md
   - interfaces.md
@@ -37,9 +37,9 @@ A request flows: API or Bolt → parser → binder → planner → authorisation
 
 ## TS-01 Crate layout
 
-- **Decision**: one crate `lpg` with `#![forbid(unsafe_code)]` at its root. The Bolt endpoints are compiled only with the Cargo feature `bolt`, which is off by default. Internal modules: `api`, `session`, `tx`, `storage`, `catalog`, `index`, `gql`, `types`, `proc`, `algo`, `ops`, `obs`, `bolt`. The algorithm library is always compiled. The test-only parser oracle is a separate, unpublished crate in the same repository ([TS-30](quality-and-testing.md#ts-30-testing-and-conformance)).
+- **Decision**: one crate `lpg` with `#![forbid(unsafe_code)]` at its root. The Bolt endpoints are compiled only with the Cargo feature `bolt`, which is off by default. Internal modules: `api` (the handles `Database`, `Session`, `Transaction`, `ResultStream`), `auth` ([TS-23](interfaces.md#ts-23-authentication-and-authorisation)), `query` (lexer, parser, AST, binder, planner and executor: [query-engine.md](query-engine.md)), `tx`, `storage`, `catalog`, `index`, `types`, `proc`, `algo`, `ops`, `obs`, `bolt`. The algorithm library is always compiled. The test-only parser oracle is a separate, unpublished crate in the same repository ([TS-30](quality-and-testing.md#ts-30-testing-and-conformance)).
 - **Satisfies**: FR-API-003, NFR-REL-002, NFR-SAFE-001, FR-ALG-005, NFR-VER-002.
-- **Evidence**: redb, fjall and neo4rs each publish one crate (R-REDB, R-FJALL, R-NEO4RS).
+- **Evidence**: redb, fjall and neo4rs each publish one crate (R-REDB, R-FJALL, R-NEO4RS). Module `query`: Grafeo keeps its binder, planner, optimizer and executor in one `query` module (R-GRAFEO @ `3c23dbe` `crates/grafeo-engine/src/query/`) and zu its query layer in `zu-query` (R-ZU `crates/zu-query`); the executor is not GQL-specific, so the module is not named `gql`. Sessions live in `api` with the other handles (rmp task #47). Renamed on 2026-10-08 from `gql` and `session`; no code used either name.
 - **Rejected**: several published crates (engine, Bolt, algorithms): NFR-REL-002 names one crate and no requirement needs a split.
 
 ## TS-02 Async API and threading
@@ -52,9 +52,17 @@ A request flows: API or Bolt → parser → binder → planner → authorisation
   - Handles: `Database`, `Session`, `Transaction`, `ResultStream` with `async fn next()`. The API shape is in [interfaces.md](interfaces.md#public-api-shape).
   - `Database` is a cheap clone of one shared engine. `close` acts on the engine, and afterwards every clone fails. "Dropped without close" (FR-DB-009) means that the last clone was dropped while the engine was open.
   - A session holds an atomic "busy" flag. A request that arrives while another runs fails with a GQLSTATUS error (FR-SES-004).
-  - Session and transaction statements in GQL text, and the matching API calls, reach the same session and transaction functions (FR-GQL-005).
+  - **Owned transactions.** `spawn_blocking` takes a `'static` closure (D-TOKIO), so a transaction and its cursor own what they use. A transaction holds an `Engine` handle made by `Engine::handle(Arc<Core>)` (`src/storage/engine.rs:771-777`) instead of `&Engine`, and its snapshot registrations hold owned references (today `Transaction<'e>` borrows both, `src/tx/mod.rs:108-114`). No self-referential crate is used.
+  - Session and transaction statements in GQL text, and the matching API calls, reach the same session and transaction functions (FR-GQL-005):
+    - A session has at most one active transaction, begun by `START TRANSACTION` or by `Session::begin`; text and API act on the same one.
+    - `START TRANSACTION`, or `begin`, while a transaction is active fails with 25G01 and leaves that transaction as it was.
+    - `COMMIT` or `ROLLBACK` with no active transaction fails with 2D000.
+    - `SESSION CLOSE`, or dropping the `Session`, rolls back the active transaction and ends the session. A later request on it fails with 08000.
 - **Satisfies**: NFR-PLAT-003, FR-API-001, FR-API-002, FR-API-010, FR-DB-002, FR-DB-008, FR-DB-009, FR-GQL-005, FR-SES-004, NFR-PERF-007.
-- **Evidence**: tokio states that a running `spawn_blocking` task cannot be aborted and recommends a separate executor or a limit for many CPU-bound jobs (D-TOKIO). Memgraph pulls rows through synchronous cursors (R-MG `src/query/plan/operator.hpp:102-131`), and Neo4j's community runtime is a pull, row-at-a-time iterator model (Cypher Manual, "Runtimes: concepts"; [M-QE](../evidence/research/research-03-query-engine.md) §Q4.1). Measured on the reference hardware (M-QE §Q4.2): one `spawn_blocking` hand-off costs 13.9 µs; a thread with a channel costs 13.8 µs per item; at 1 024 rows per batch the hand-off costs about 14 ns per row.
+- **Evidence**:
+  - tokio states that a running `spawn_blocking` task cannot be aborted and recommends a separate executor or a limit for many CPU-bound jobs (D-TOKIO). Memgraph pulls rows through synchronous cursors (R-MG `src/query/plan/operator.hpp:102-131`), and Neo4j's community runtime is a pull, row-at-a-time iterator model (Cypher Manual, "Runtimes: concepts"; [M-QE](../evidence/research/research-03-query-engine.md) §Q4.1). Measured on the reference hardware (M-QE §Q4.2): one `spawn_blocking` hand-off costs 13.9 µs; a thread with a channel costs 13.8 µs per item; at 1 024 rows per batch the hand-off costs about 14 ns per row.
+  - Turso's Rust binding keeps an `Arc` of its connection (R-TURSO @ `8cc059b` `bindings/rust/src/connection.rs:57`) and its `Rows` own their `Statement` (`bindings/rust/src/rows.rs:8-11`).
+  - Codes: the ISO conditions insert has 25G01 "active GQL-transaction" (line 114), class 2D "invalid transaction termination" (119) and class 08 "connection exception" (67). zu raises 25G01 for a start inside a transaction and 2D000 for an end without one, rolls back on `SESSION CLOSE` and refuses later statements with 08000 (R-ZU `crates/zu/src/session.rs:1030-1051, 1104-1115, 1005-1017`). Neo4j has no GQL transaction statements: its conformance page notes that Cypher has no `START TRANSACTION`, `COMMIT` or `ROLLBACK` (Cypher Manual, "Supported optional GQL features", GD01).
 - **Crates**: tokio is a dependency ([TS-31](dependencies.md#ts-31-dependency-set)). `futures` (for a `Stream` trait) is not used: `next()` follows neo4rs `RowStream::next` (R-NEO4RS).
 - **Rejected**:
   - An async engine throughout: page misses are blocking `pread` calls ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).

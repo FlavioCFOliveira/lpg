@@ -31,6 +31,21 @@ related:
       - sentences generated from `GQL.g4` by a generator written in lpg.
     - A difference is a defect in lpg's parser, unless it is a type or function combination that the binder rejects on purpose ([TS-20](query-engine.md#ts-20-binder-planner-and-execution)).
   - **Semantics.** Scenarios from opengql/tck, and those openCypher TCK scenarios that apply to GQL, run through a small Gherkin-style runner written in lpg. lpg's own scenarios cover the rest. Every scenario names its clause or its feature identifier from the ISO features insert [S45]. Expected GQLSTATUS codes come from the ISO conditions insert, or from Neo4j where it has none ([interfaces.md](interfaces.md#public-api-shape)). The licences and attribution of the test artefacts are kept unchanged.
+    - **Selection rule** (provisional, OQ-005). A scenario instance (a `Scenario`, or one `Examples` row of a `Scenario Outline`) runs when:
+      1. every GQL text it runs is accepted by the parser generated from `GQL.g4`: the docstrings of the steps "executing query", "having executed", "executing control query", "executing the program" and "having executed the program", `Background` steps included, and the setup script of a named graph it uses;
+      2. no construct of those texts needs a feature code outside the supported set ([TS-19](query-engine.md#ts-19-parser) Feature classification); and
+      3. every feature tag it carries or inherits is supported, and it has no `@ignore` or `@Todo` tag and no capability tag lpg does not meet (`@MinNodeTypeKeyLabelsZero`, `@MaxNodeTypeKeyLabelsGTOne`; [TS-21](values-and-types.md#ts-21-values-and-types) IL003).
+    - **gql-compat** (user decision 2026-10-08, "Como input, traduzido", rmp task #37): its mandatory and condition cases whose `features` are supported and whose texts pass rules 1 and 2 feed lpg's own scenarios, translated, with attribution (Apache-2.0).
+    - **Counts** for the supported set of 2026-10-08 (GG03 included), measured by `tck_select.py` ([round-s](../evidence/planning/round-s/README.md)); rule 1 used the ANTLR 4.13.2 Java target of `GQL.g4`, not the oracle of task #36:
+
+      | Artefact | Instances (scenarios) | Selected | Need an unsupported code | Rejected by `GQL.g4` | Excluded by a tag |
+      |---|---|---|---|---|---|
+      | opengql/tck @ `e0700a7` | 206 (92) | 45 | 147 | 10 | 4 |
+      | openCypher TCK @ `677cbaf` | 3 897 (1 615) | 200 | 403 | 3 294 | 0 |
+      | gql-compat @ `9de1991`, mandatory cases | 107 | 106 | 1 | 0 | – |
+      | gql-compat, condition cases | 69 | 24 | 32 | 13, some on purpose | – |
+
+      The codes that exclude most instances: in opengql/tck GV50 (82), GV45 (38), GQ10 and GQ23 (32), GE07 (32), GL04 (27), GQ08 (9); in the openCypher TCK G043 (145), GV50 (89), G004 (86), GV45 (74), GL04 (56).
   - **Durability.**
     - **Fault-injecting storage** (`src/storage/fault.rs`). It keeps in memory the unsynced writes, and the namespace changes not yet covered by a `sync_dir`. On a simulated crash it drops the unsynced writes, keeps a seeded subset of them, or tears them at 512-byte sectors; unsynced namespace changes are always lost.
     - **Faults** (R2, R9). EIO on the *n*-th call of `read_at`, `write_at`, `sync_data`, `create`, `rename`, `remove` and `sync_dir`. ENOSPC from a space budget. A misdirected write, which puts a page at another page's offset. A lost write, which drops a synced write.
@@ -79,6 +94,7 @@ related:
     - `neo4rs` is excluded.
   - **Licences.** `cargo-deny` checks licences on every build of the dependency set.
   - **Performance.** The NFR-PERF-002 baseline (LDBC SNB Interactive and BI, micro-workloads; against Neo4j and Memgraph) runs on the reference hardware. Giant-graph efficiency is measured with the cache at 1 % and 10 % of the data (NFR-PERF-005, NFR-PERF-006). The M-LAYOUT harness is the starting point for the micro-workloads.
+    - Sprint 3 defines the micro-workloads, each as a GQL text with its expected result, and checks their results. Their timing, and [unverified point 8](#unverified-points), move to Sprint 6 (user decision 2026-10-08, "Definir agora, medir no S6", rmp task #39).
 - **Satisfies**: NFR-VER-001, NFR-VER-002, NFR-VER-003, NFR-VER-004, NFR-VER-005, NFR-PLAT-004, NFR-DEP-002, FR-GQL-002, FR-LIM-003, NFR-PERF-002, NFR-PERF-005, NFR-PERF-006.
 - **Evidence**:
   - SQLite simulates OS crashes and power failure in a test VFS (R-SQLITE `src/test6.c`).
@@ -107,7 +123,7 @@ related:
   - Cucumber runners: not used, since a small runner suffices.
 - **Rejected**:
   - Power-loss tests that need root (device-mapper targets) and loop mounts: the reference machine has no root access ([M-LAYOUT](../evidence/layout-bench/results.md) "Method"); the fault-injecting storage covers torn and lost writes without privileges.
-  - Generating test sentences with grammarinator: its licence is reported as `NOASSERTION` (M-QE §Q9).
+  - Generating test sentences with grammarinator: it is a Python tool, while the generator is written in lpg (above), ported from gql-compat's grammar walk (rmp task #36); grammarinator is studied only. Its licence is BSD-3-Clause (`LICENSE.rst` @ `3a6a745`), not the `NOASSERTION` that the GitHub API reports (M-QE §Q9).
   - Running the `NoFlush` tests on the fault-injecting storage: it holds unsynced writes in memory, and several of these tests read files back through the file system directly (DECISION 77).
   - A smaller WAL segment in tests: the segment size is a specified constant ([TS-09](transactions-and-recovery.md#ts-09-wal-and-group-commit)) (DECISION 77).
   - An in-memory `Storage` or tmpfs for speed: 35 durability tests took 3.05 s on ext4 against 3.11 s on tmpfs (P-TEST §5.2).
@@ -123,7 +139,7 @@ related:
 5. The minimum pool size (provisionally 1 % of the cap), `std` latches compared with `parking_lot`, and the cost of double caching in the operating system ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
 6. The free-page reserve estimate and the 64 MiB extent size ([TS-05](storage.md#ts-05-files-and-pages)); derived, not measured. Deferred to Sprint 6 (DECISION 244 on rmp #35).
 7. Closed: the index side-tree protocol is tested ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) Evidence). The number is kept so that earlier citations of the points that follow stay valid.
-8. Parse speed of the hand-written GQL parser; only a SQL proxy was measured ([TS-19](query-engine.md#ts-19-parser)).
+8. Parse speed of the hand-written GQL parser; only a SQL proxy was measured ([TS-19](query-engine.md#ts-19-parser)). Deferred to Sprint 6 (user decision 2026-10-08, rmp task #39).
 9. The parallel classification of every inventory entry other than ALG-024 and ALG-042; the GDS determinism statements for the algorithms listed in [algorithms.md](algorithms.md#ts-25-graph-algorithms); convergence of synchronous rounds.
 10. Bolt 6.1 changes ([bolt.md](bolt.md)).
 11. Whether `cargo-deny` accepts the older licence notation of `crc32c` (`Apache-2.0/MIT`) and `csv` (`Unlicense/MIT`) without configuration.
