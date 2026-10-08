@@ -1,0 +1,27 @@
+[package]
+name = "lpg-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+# libfuzzer-sys is `(MIT OR Apache-2.0) AND NCSA` (crates.io); NCSA is not
+# on the NFR-DEP-002 list, so this crate is never part of lpg's dependency
+# tree.
+[dependencies]
+libfuzzer-sys = "0.4.13"
+
+[dependencies.lpg]
+path = ".."
+
+[[bin]]
+name = "record_decode"
+path = "fuzz_targets/record_decode.rs"
+test = false
+doc = false
+bench = false
+
+# Standalone: never a member of the lpg workspace.
+[workspace]

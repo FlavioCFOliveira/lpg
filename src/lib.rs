@@ -19,6 +19,8 @@
     )
 )]
 pub(crate) mod catalog;
+#[cfg(fuzzing)]
+pub mod fuzz;
 #[cfg_attr(
     not(test),
     allow(

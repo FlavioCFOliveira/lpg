@@ -1,0 +1,8 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.02s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.02s
+     Running `fuzz/target/x86_64-unknown-linux-gnu/release/record_decode -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/record_decode/ -runs=1000000 /data/dev/xumiga/lpg/fuzz/corpus/record_decode`
+INFO: Seed: 927527442
+INFO: Loaded 1 modules   (7728 inline 8-bit counters): 7728 [0x6291f337deb0, 0x6291f337fce0), 
+INFO: Loaded 1 PC tables (7728 PCs): 7728 [0x6291f337fce0,0x6291f339dfe0), 
+#1000000	DONE   cov: 1492 ft: 3719 corp: 1030/69Kb lim: 3381 exec/s: 111111 rss: 397Mb
+Done 1000000 runs in 9 second(s)

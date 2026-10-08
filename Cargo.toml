@@ -31,7 +31,7 @@ loom = "0.7.2"
 shuttle = "0.9.5"
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)', 'cfg(shuttle)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)', 'cfg(shuttle)', 'cfg(fuzzing)'] }
 
 [profile.lab]
 inherits = "release"
