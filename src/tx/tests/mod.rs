@@ -49,6 +49,7 @@ pub(crate) fn db_with_cap(cap: u64) -> (tempfile::TempDir, Engine) {
         d.path(),
         no_flush(),
         cap,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
         tuning(),
     )

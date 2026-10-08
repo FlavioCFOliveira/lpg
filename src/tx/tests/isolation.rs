@@ -235,7 +235,15 @@ fn sixteen_threads_with_disjoint_writes_all_commit_and_survive_reopen() {
 fn a_failed_transaction_ran_its_operations_once() {
     let d = graph_dir();
     let sink = Arc::new(RecordingSink::default());
-    let e = Engine::create_tuned(d.path(), no_flush(), CAP, sink.clone(), tuning()).unwrap();
+    let e = Engine::create_tuned(
+        d.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink.clone(),
+        tuning(),
+    )
+    .unwrap();
     let t = tree(&e);
     commit_puts(&e, t, &[(b"n", b"1")]);
     let before = sink.snapshot();

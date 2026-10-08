@@ -43,7 +43,7 @@ use std::ops::{Deref, DerefMut};
 
 use node::{Encoder, Entries, Found, NONE, Pivots, Value};
 
-pub(crate) use node::Stamps;
+pub(crate) use node::{Keys, Stamps};
 
 use super::datafile::{Datafile, Header};
 use super::error::{Error, Health, Result};
@@ -81,6 +81,31 @@ impl Tree {
 
 /// The tree directory: tree 0 at page 1 (TS-05).
 pub(crate) const DIRECTORY: Tree = Tree { id: 0, root: 1 };
+
+/// A tree that a batch creates: its identifier, drawn with
+/// [`Store::draw_tree_id`], and how its leaves store keys.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct NewTree {
+    /// The tree identifier.
+    pub(crate) id: u64,
+    /// The key storage of its leaves.
+    pub(crate) keys: Keys,
+}
+
+impl Tree {
+    /// The handle of a tree that a transaction creates and whose root page
+    /// is chosen when the commit applies it: root 0, which is the header
+    /// page and never a tree's root ([`Store::apply_batch_new`]).
+    pub(crate) fn pending(id: u64) -> Tree {
+        Tree { id, root: 0 }
+    }
+
+    /// Whether this is the handle of a tree not yet created
+    /// ([`Tree::pending`]).
+    pub(crate) fn is_pending(&self) -> bool {
+        self.root == 0
+    }
+}
 
 /// The root page and drop timestamp of a directory entry: the root as 8
 /// little-endian bytes, followed, once a commit has dropped the tree, by
@@ -362,6 +387,13 @@ pub(crate) struct WriteState {
 /// The tree state of one database.
 pub(crate) struct Trees {
     write: Mutex<WriteState>,
+    /// The next tree identifier to hand out ([`Store::draw_tree_id`]). It
+    /// starts at the header's next tree identifier and never decreases
+    /// while the database is open: an identifier drawn for a tree whose
+    /// batch fails or is never committed is skipped, as TS-07 skips element
+    /// identifiers. The header's field is the high-water mark of the trees
+    /// created, raised under the latch.
+    drawn: AtomicU64,
     readers: Readers,
     /// Number of the last write batch whose apply step has finished.
     applied: AtomicU64,
@@ -385,6 +417,7 @@ impl Trees {
                 fence: None,
                 freeze: 0,
             }),
+            drawn: AtomicU64::new(header.next_tree_id),
             readers: Readers::default(),
             applied: AtomicU64::new(0),
             #[cfg(test)]
@@ -714,6 +747,13 @@ impl<'e> Store<'e> {
     /// ends when the result is dropped.
     pub(crate) fn reader(&self) -> Registered<'e> {
         self.trees.readers.enter(&self.trees.applied)
+    }
+
+    /// Draws a new tree identifier (see [`Trees::drawn`]).
+    pub(crate) fn draw_tree_id(&self) -> u64 {
+        self.trees
+            .drawn
+            .fetch_add(1, crate::sync::atomic::Ordering::Relaxed)
     }
 
     /// Takes the write latch: the single writer (TS-16 commit latch).

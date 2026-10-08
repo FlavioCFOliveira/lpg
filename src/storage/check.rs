@@ -23,8 +23,10 @@
 //!   `sqlite3BtreeIntegrityCheck`). Pages at or above the page count are
 //!   the unused reserve and must not be referenced.
 //!
-//! Cross-tree checks (adjacency against edges, indexes against data) arrive
-//! with the trees of Sprint 2.
+//! The cross-tree checks run after this one, as a read-only transaction
+//! ([`crate::storage::engine::Engine::check_graphs`]: adjacency against
+//! edges; indexes against data arrive with rmp #33). Leaves of either key
+//! form ([`super::btree::Keys`]) are decoded by their own flag.
 
 use super::btree::node::{self, NONE, Value};
 use super::btree::{DIRECTORY, Store, Tree};
@@ -34,7 +36,7 @@ use super::freelist::decode_trunk;
 use super::page::{self, PAGE_SIZE, PageType};
 
 /// Problems reported before the check stops listing them.
-const MAX_PROBLEMS: usize = 1000;
+pub(crate) const MAX_PROBLEMS: usize = 1000;
 
 /// Shape figures of one tree.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

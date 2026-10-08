@@ -148,8 +148,14 @@ fn entries(e: &Engine, tree: Tree) -> Model {
 }
 
 fn assert_intact(e: &Engine, what: &str) {
-    let r = e.store().check().unwrap();
-    assert!(r.is_ok(), "{what}: {:?}", r.problems);
+    let p = e.check_integrity().unwrap();
+    assert!(p.is_empty(), "{what}: {p:?}");
+    // TS-17: after any open, the statistics are exact.
+    let stats = e.core().catalog.stats().counts().clone();
+    assert!(
+        stats == crate::storage::graph::recount(e.core()).unwrap(),
+        "{what}: the statistics differ from a recount"
+    );
 }
 
 /// The Sprint 1 write paths.
@@ -166,7 +172,9 @@ enum Workload {
     BulkLoad,
     /// Sprint 2 paths (audit Round A): stamped transaction commits with
     /// delete stamps, a tree drop, and garbage-collection groups
-    /// ([`tx_batch`]).
+    /// ([`tx_batch`]); a graph created with its nodes and edges, then
+    /// dropped, and a checkpoint's statistics batch (rmp #31, #32;
+    /// [`tx_graph`]).
     Transactions,
 }
 
@@ -194,8 +202,9 @@ fn bulk_records() -> Vec<(Vec<u8>, Vec<u8>)> {
         .collect()
 }
 
-/// The tree of a bulk load: the next tree after the workload's own.
-const BULK_TREE: u64 = 2;
+/// The tree of a bulk load: the next tree after the workload's own, which
+/// follows the trees create makes (TS-17 Creation).
+const BULK_TREE: u64 = crate::catalog::CREATED_TREES + 2;
 
 /// The directories and storage of one run.
 struct Run {
@@ -240,8 +249,15 @@ impl Run {
     }
 
     fn create(&self) -> (Engine, Tree, Model) {
-        let e =
-            Engine::create_tuned(self.db.path(), self.storage(), CAP, sink(), tuning()).unwrap();
+        let e = Engine::create_tuned(
+            self.db.path(),
+            self.storage(),
+            CAP,
+            crate::test_support::OWNER,
+            sink(),
+            tuning(),
+        )
+        .unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let load: Vec<(Vec<u8>, Option<Vec<u8>>)> =
             (0..KEYS).map(|i| (key(i), Some(vec![0; 400]))).collect();
@@ -292,6 +308,8 @@ fn setup(w: Workload, r: &Run) -> State {
             // calls are the same in every run.
             e.core().mvcc.gc_paused.store(true, Ordering::SeqCst);
             let side = e.create_trees(1).unwrap()[0];
+            e.token(crate::catalog::TokenKind::Label, "L").unwrap();
+            e.token(crate::catalog::TokenKind::EdgeType, "T").unwrap();
             let mut tx = e.begin(Isolation::Serializable).unwrap();
             let mut m = Model::new();
             for i in 0..200u32 {
@@ -561,9 +579,15 @@ fn verify(w: Workload, r: &Run, s: &State, arm: Arm, what: &str) {
                     Arm::Nothing => 0,
                 };
                 if n % 2 == 1 {
-                    let e =
-                        Engine::create_tuned(r.restored.path(), r.storage(), CAP, sink(), tuning())
-                            .unwrap_or_else(|e| panic!("{what}: create: {e}"));
+                    let e = Engine::create_tuned(
+                        r.restored.path(),
+                        r.storage(),
+                        CAP,
+                        crate::test_support::OWNER,
+                        sink(),
+                        tuning(),
+                    )
+                    .unwrap_or_else(|e| panic!("{what}: create: {e}"));
                     assert_eq!(e.recovered().groups, 0, "{what}: create replayed WAL");
                     assert!(
                         e.store().tree(s.tree.id()).unwrap().is_none(),
@@ -719,6 +743,74 @@ fn sweep(w: Workload, failures: &[(Kind, Fault)], copies: bool) {
 const TX_BATCHES: u32 = 12;
 /// The batch that drops the side tree.
 const TX_DROP: u32 = 4;
+/// The batch that also creates graph `g` with [`GRAPH_NODES`] nodes in a
+/// chain of edges, and one node in the default graph (rmp #31, #32).
+const TX_GRAPH: u32 = 8;
+/// The batch that also drops graph `g`.
+const TX_GRAPH_DROP: u32 = 11;
+/// The nodes of graph `g`.
+const GRAPH_NODES: usize = 40;
+
+/// The graph changes of [`tx_batch`] `c` in `tx`, with the label and edge
+/// type `tokens`.
+fn tx_graph(tx: &mut crate::tx::Transaction<'_>, c: u32, tokens: (u64, u64)) -> Result<(), Error> {
+    use crate::catalog::{DEFAULT_GRAPH_ID, DEFAULT_SCHEMA_ID};
+    if c == TX_GRAPH {
+        let id = tx.create_graph(DEFAULT_SCHEMA_ID, "g", crate::test_support::OWNER, None)?;
+        let g = tx.graph(id)?;
+        let mut prev = None;
+        for _ in 0..GRAPH_NODES {
+            let n = tx.create_node(&g, &[tokens.0], &[])?;
+            if let Some(p) = prev {
+                tx.create_edge(&g, p, n, tokens.1, &[])?;
+            }
+            prev = Some(n);
+        }
+        let d = tx.graph(DEFAULT_GRAPH_ID)?;
+        tx.create_node(&d, &[tokens.0], &[])?;
+    }
+    if c == TX_GRAPH_DROP {
+        tx.drop_object(DEFAULT_SCHEMA_ID, "g")?;
+    }
+    Ok(())
+}
+
+/// What the graph changes of the batches `done` leave: graph `g`'s nodes
+/// and edges, if it exists, and the default graph's nodes.
+fn graph_model(done: &[u32]) -> (Option<(usize, usize)>, usize) {
+    let created = done.contains(&TX_GRAPH);
+    let dropped = done.contains(&TX_GRAPH_DROP);
+    (
+        (created && !dropped).then_some((GRAPH_NODES, GRAPH_NODES - 1)),
+        usize::from(created),
+    )
+}
+
+/// What a snapshot sees of the graph changes ([`graph_model`]).
+fn graph_visible(e: &Engine) -> (Option<(usize, usize)>, usize) {
+    use crate::catalog::{DEFAULT_GRAPH_ID, DEFAULT_SCHEMA_ID};
+    let mut tx = e.begin(Isolation::Snapshot).unwrap();
+    let count = |tx: &mut crate::tx::Transaction<'_>, t: Tree| {
+        let mut n = 0;
+        tx.scan_prefix(t, b"", |_, _| {
+            n += 1;
+            true
+        })
+        .unwrap();
+        n
+    };
+    let g = match tx.lookup(DEFAULT_SCHEMA_ID, "g").unwrap() {
+        Some(o) => {
+            let g = tx.graph(o.id).unwrap();
+            Some((count(&mut tx, g.nodes), count(&mut tx, g.edges)))
+        }
+        None => None,
+    };
+    let d = tx.graph(DEFAULT_GRAPH_ID).unwrap();
+    let n = count(&mut tx, d.nodes);
+    tx.abort();
+    (g, n)
+}
 
 /// Transaction batch `c` (1-based) on the workload's tree: its marker key
 /// `t<c>`, five puts and one delete, which leaves a delete stamp; batch
@@ -735,7 +827,17 @@ fn tx_batch(c: u32) -> Vec<(Vec<u8>, Option<Vec<u8>>)> {
 
 /// Commits [`tx_batch`] `c` as one serializable transaction.
 fn tx_commit(e: &Engine, tree: Tree, side: Tree, c: u32) -> Result<(), Error> {
+    use crate::catalog::TokenKind;
+    // Created by the setup, so the workload's calls are the same in every
+    // run.
+    let tokens = (
+        e.token_id(TokenKind::Label, "L")
+            .expect("the setup's label"),
+        e.token_id(TokenKind::EdgeType, "T")
+            .expect("the setup's type"),
+    );
     let mut tx = e.begin(Isolation::Serializable)?;
+    tx_graph(&mut tx, c, tokens)?;
     for (k, v) in tx_batch(c) {
         match v {
             Some(v) => tx.put(tree, &k, &v)?,
@@ -783,7 +885,9 @@ fn assert_tx_prefix(e: &Engine, s: &State, what: &str) {
         visible(e, s.tree).expect("the workload's tree"),
         visible(e, s.side.as_ref().unwrap().0),
     );
-    let ok = (s.acked..=s.attempted.len()).any(|i| got == tx_model(s, &s.attempted[..i]));
+    let graphs = graph_visible(e);
+    let ok = (s.acked..=s.attempted.len())
+        .any(|i| got == tx_model(s, &s.attempted[..i]) && graphs == graph_model(&s.attempted[..i]));
     assert!(
         ok,
         "{what}: the visible state is not a prefix with every returned commit"
@@ -818,13 +922,25 @@ fn run_transactions(s: &mut State, arm: Arm) {
                 let want = tx_model(s, &s.attempted);
                 let got = (visible(e, s.tree).unwrap(), visible(e, side));
                 assert!(
-                    got == want,
+                    got == want && graph_visible(e) == graph_model(&s.attempted),
                     "the failed transaction {c} ({err}) left a trace"
                 );
             }
             Err(err) => {
                 assert!(armed, "unexpected failure: {err}");
                 assert!(e.check().is_err(), "{err} left the database usable");
+                return;
+            }
+        }
+        if c == TX_GRAPH + 1 {
+            // A checkpoint whose statistics batch holds graph `g`'s counts
+            // (TS-11).
+            if let Err(err) = e.checkpoint() {
+                assert!(armed, "unexpected failure: {err}");
+                assert!(
+                    e.check().is_err(),
+                    "a failed checkpoint left the database usable"
+                );
                 return;
             }
         }
@@ -1000,8 +1116,15 @@ fn checkpoint_call_order() {
 /// Builds a database with `n` acknowledged commits in `dir` and closes it
 /// without a checkpoint (drop), so its WAL holds them.
 fn unclosed(dir: &Path, n: u32) -> (Tree, Model) {
-    let e =
-        Engine::create_tuned(dir, crate::test_support::no_flush(), CAP, sink(), tuning()).unwrap();
+    let e = Engine::create_tuned(
+        dir,
+        crate::test_support::no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+        tuning(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut m = Model::new();
     for c in 1..=n {

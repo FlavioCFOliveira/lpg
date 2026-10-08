@@ -19,7 +19,7 @@ fn sink() -> Arc<RecordingSink> {
 /// A database in `dir` with one tree of 300 entries, closed, and a backup
 /// of it in `artefact`. Returns the tree and its entries.
 fn backed_up(dir: &Path, artefact: &Path) -> (Tree, Model) {
-    let e = Engine::create(dir, no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(dir, no_flush(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     for i in 0..300u32 {
         let k = i.to_be_bytes();
@@ -51,7 +51,14 @@ fn a_restore_into_a_database_fails_and_changes_nothing() {
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
     backed_up(src.path(), artefact.path());
-    let e = Engine::create(other.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        other.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     e.close().unwrap();
     let before = snapshot(other.path());
     let r = restore(artefact.path(), other.path(), no_flush(), CAP, sink());
@@ -351,7 +358,14 @@ fn create_after_an_interrupted_restore(tree_before_backup: bool) {
     // while the backup is paused after its checkpoint.
     {
         use crate::sync::Mutex;
-        let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+        let e = Engine::create(
+            src.path(),
+            no_flush(),
+            CAP,
+            crate::test_support::OWNER,
+            sink(),
+        )
+        .unwrap();
         let early = tree_before_backup.then(|| e.create_trees(1).unwrap()[0]);
         let (tx, rx) = crate::sync::mpsc::channel::<()>();
         let (go_tx, go) = crate::sync::mpsc::channel::<()>();
@@ -418,14 +432,31 @@ fn create_after_an_interrupted_restore(tree_before_backup: bool) {
         left.iter().any(|n| parse_segment_name(n).is_some()),
         "precondition: segments left: {left:?}"
     );
-    let e = Engine::create(target.path(), no_flush(), CAP, sink());
+    let e = Engine::create(
+        target.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    );
     let e = e.unwrap_or_else(|e| {
         let open = Engine::open(target.path(), no_flush(), CAP, sink()).err();
-        let again = Engine::create(target.path(), no_flush(), CAP, sink()).err();
+        let again = Engine::create(
+            target.path(),
+            no_flush(),
+            CAP,
+            crate::test_support::OWNER,
+            sink(),
+        )
+        .err();
         panic!("create failed: {e}; then open: {open:?}; then create: {again:?}")
     });
+    // The first tree after those create makes (TS-17 Creation).
     assert!(
-        e.store().tree(1).unwrap().is_none(),
+        e.store()
+            .tree(crate::catalog::CREATED_TREES + 1)
+            .unwrap()
+            .is_none(),
         "the new database holds a tree"
     );
     assert_eq!(
@@ -471,7 +502,14 @@ fn audit_a_restore_never_replaces_a_database_created_after_its_first_check() {
         fn try_lock(&self, p: &Path) -> std::io::Result<Box<dyn crate::storage::StorageLock>> {
             if p.parent() == Some(self.target.as_path()) && !self.done.swap(true, Ordering::SeqCst)
             {
-                let e = Engine::create(&self.target, no_flush(), CAP, sink()).unwrap();
+                let e = Engine::create(
+                    &self.target,
+                    no_flush(),
+                    CAP,
+                    crate::test_support::OWNER,
+                    sink(),
+                )
+                .unwrap();
                 let t = e.create_trees(1).unwrap()[0];
                 e.commit(
                     &[Write {
@@ -548,7 +586,14 @@ fn audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact() 
         fn try_lock(&self, p: &Path) -> std::io::Result<Box<dyn crate::storage::StorageLock>> {
             if p.parent() == Some(self.target.as_path()) && !self.done.swap(true, Ordering::SeqCst)
             {
-                let e = Engine::create(&self.target, no_flush(), CAP, sink()).unwrap();
+                let e = Engine::create(
+                    &self.target,
+                    no_flush(),
+                    CAP,
+                    crate::test_support::OWNER,
+                    sink(),
+                )
+                .unwrap();
                 let t = e.create_trees(1).unwrap()[0];
                 e.commit(
                     &[Write {

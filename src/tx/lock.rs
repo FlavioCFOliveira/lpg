@@ -61,9 +61,12 @@ impl Mode {
 }
 
 /// A lockable resource (TS-15 Lock table). The transaction API over trees
-/// locks keys and whole trees; the graph resources of TS-15 (node content,
-/// node existence, edge, unique value, schema, catalog name) are keys of
-/// the trees that hold them.
+/// locks keys and whole trees. Of the graph resources of TS-15, node
+/// content, edge and catalog name are the keys that hold them: the node's
+/// key in its graph's node tree, the edge's key in its edge tree, and the
+/// `(parent_id, name)` key in the catalog tree ([`crate::catalog`],
+/// [`crate::storage::graph`]). Graph, schema and node existence have no key
+/// and are resources of their own.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Resource {
     /// One key of a tree.
@@ -75,6 +78,25 @@ pub(crate) enum Resource {
     },
     /// A whole tree: S for every writer of it, X to drop it.
     Tree(u64),
+    /// A graph, by its catalog object identifier: S for every writer of
+    /// the graph, X for a fast initial load (TS-26).
+    Graph(u64),
+    /// A label or an edge type of a graph (schema): S for every writer of
+    /// it, X for a constraint creation (TS-18).
+    Schema {
+        /// The graph's catalog object identifier.
+        graph: u64,
+        /// The label or edge-type token.
+        token: u64,
+    },
+    /// The existence of a node: X to delete it, S to create or delete an
+    /// edge at it. Label and property changes do not take it.
+    Existence {
+        /// The graph's catalog object identifier.
+        graph: u64,
+        /// The node's element identifier.
+        node: u64,
+    },
 }
 
 impl Resource {
@@ -84,7 +106,10 @@ impl Resource {
     pub(crate) fn charge(&self) -> u64 {
         let key = match self {
             Resource::Key { key, .. } => key.len() as u64,
-            Resource::Tree(_) => 0,
+            Resource::Tree(_)
+            | Resource::Graph(_)
+            | Resource::Schema { .. }
+            | Resource::Existence { .. } => 0,
         };
         key + 128
     }

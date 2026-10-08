@@ -17,6 +17,10 @@ jiff = { version = "0.2.38", default-features = false, features = ["std", "tzdb-
 
 [dev-dependencies]
 tempfile = "3.27.0"
+# Replaces the global allocator of the test binary with one that counts
+# the current thread's heap use (peak bytes of a closure). The crate
+# forbids `unsafe`, so it cannot define its own `GlobalAlloc`.
+allocation-counter = "0.8.1"
 
 # Concurrency model checkers (TS-30 Concurrency, R11), compiled only under
 # their `cfg`: `RUSTFLAGS="--cfg loom"` or `RUSTFLAGS="--cfg shuttle"`.

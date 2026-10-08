@@ -47,9 +47,20 @@ fn check(buf: &[u8], p: u64) {
     assert!(buf == expected.as_slice(), "page {p} is not intact");
 }
 
+/// Marks dirty every page that create and open left in the pool (the
+/// trees of TS-17 Creation, read at open), so that every frame a test does
+/// not use is dirty with a durable page LSN, like the frames it dirties.
+fn dirty_residents(e: &Engine) {
+    for p in 0..e.data().page_count() {
+        if let Some((pin, _)) = e.pool().resident(p) {
+            drop(pin.write().unwrap());
+        }
+    }
+}
+
 fn engine(dir: &Path, storage: Arc<dyn Storage>, cap: u64) -> (Engine, Arc<RecordingSink>) {
     let sink = Arc::new(RecordingSink::default());
-    let e = Engine::create(dir, storage, cap, sink.clone()).unwrap();
+    let e = Engine::create(dir, storage, cap, crate::test_support::OWNER, sink.clone()).unwrap();
     (e, sink)
 }
 
@@ -57,6 +68,8 @@ fn engine(dir: &Path, storage: Arc<dyn Storage>, cap: u64) -> (Engine, Arc<Recor
 fn hits_and_misses_are_counted_and_published() {
     for dir in test_dirs() {
         let (e, sink) = engine(dir.path(), crate::test_support::no_flush(), 16 << 20);
+        // What open read (TS-13 step 7) was published by its checkpoint.
+        let base = sink.snapshot();
         let pages = write_pages(e.data(), 100);
         for _ in 0..2 {
             for p in pages.clone() {
@@ -64,13 +77,14 @@ fn hits_and_misses_are_counted_and_published() {
             }
         }
         e.pool().publish_metrics();
-        let m = sink.snapshot();
+        let abs = sink.snapshot();
+        let m = abs.since(&base);
         assert_eq!(m.counter(PAGE_FAULTS), 100);
         assert_eq!(m.counter(HITS), 100);
         assert_eq!(m.counter(EVICTIONS), 0);
         assert_eq!(m.gauge(ACCOUNTED_BYTES), Some(e.accountant().used()));
         e.pool().publish_metrics();
-        assert_eq!(sink.snapshot().since(&m).counter(HITS), 0, "deltas only");
+        assert_eq!(sink.snapshot().since(&abs).counter(HITS), 0, "deltas only");
     }
 }
 
@@ -81,6 +95,7 @@ fn pages_worth_ten_times_the_cap_are_returned_intact() {
     const CAP: u64 = 2 << 20;
     for dir in test_dirs() {
         let (e, sink) = engine(dir.path(), crate::test_support::no_flush(), CAP);
+        let base = sink.snapshot();
         let n = 10 * CAP / PAGE_BYTES;
         let pages = write_pages(e.data(), n);
         let mut rng = StdRng::seed_from_u64(5);
@@ -97,7 +112,7 @@ fn pages_worth_ten_times_the_cap_are_returned_intact() {
         }
         assert!(e.accountant().peak() <= CAP);
         e.pool().publish_metrics();
-        let m = sink.snapshot();
+        let m = sink.snapshot().since(&base);
         assert!(m.counter(EVICTIONS) > 2 * n, "{m}");
         assert_eq!(m.counter(HITS) + m.counter(PAGE_FAULTS), 3 * n);
     }
@@ -346,6 +361,7 @@ fn reserve_takes_clean_frames_before_dirty_ones() {
     let dir = test_dirs().remove(0);
     let fault = Arc::new(FaultStorage::new(Box::new(FsStorage)));
     let (e, _) = engine(dir.path(), fault.clone(), CAP);
+    dirty_residents(&e);
     let pages = write_pages(e.data(), CAP / PAGE_BYTES / 2);
     for p in pages.clone() {
         e.pool().fetch(p).unwrap();
@@ -395,6 +411,7 @@ fn a_page_copy_reservation_takes_the_first_victim_dirty_or_clean() {
     let dir = test_dirs().remove(0);
     let fault = Arc::new(FaultStorage::new(Box::new(FsStorage)));
     let (e, _) = engine(dir.path(), fault.clone(), CAP);
+    dirty_residents(&e);
     let pages = write_pages(e.data(), CAP / PAGE_BYTES / 2);
     for p in pages.clone() {
         e.pool().fetch(p).unwrap();

@@ -193,6 +193,7 @@ fn a_group_of_only_collector_changes_is_durable_and_replayed() {
             d.path(),
             f.clone(),
             CAP,
+            crate::test_support::OWNER,
             Arc::new(RecordingSink::default()),
             tuning(),
         )
@@ -364,6 +365,7 @@ fn a_clean_close_leaves_no_garbage_behind() {
             d.path(),
             no_flush(),
             CAP,
+            crate::test_support::OWNER,
             Arc::new(RecordingSink::default()),
             tuning(),
         )
@@ -398,6 +400,7 @@ fn after_a_crash_the_collector_finds_the_garbage_again() {
             d.path(),
             no_flush(),
             CAP,
+            crate::test_support::OWNER,
             Arc::new(RecordingSink::default()),
             tuning(),
         )
@@ -537,6 +540,7 @@ fn crashed_with_garbage(d: &std::path::Path) -> Tree {
         d,
         no_flush(),
         CAP,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
         tuning(),
     )
@@ -587,6 +591,7 @@ fn a_failed_last_pass_still_closes_with_the_clean_flag_clear() {
             d.path(),
             no_flush(),
             CAP,
+            crate::test_support::OWNER,
             Arc::new(RecordingSink::default()),
             tuning(),
         )

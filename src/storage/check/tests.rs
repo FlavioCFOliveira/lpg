@@ -68,8 +68,9 @@ fn a_clean_database_passes_with_its_figures() {
         let (e, tree, leaves) = built(dir.path());
         let r = e.store().check().unwrap();
         assert!(r.is_ok());
-        assert_eq!(r.trees.len(), 2);
-        let t = &r.trees[1];
+        // The directory, the trees create made (TS-17 Creation), the test's.
+        assert_eq!(r.trees.len() as u64, 2 + crate::catalog::CREATED_TREES);
+        let t = r.trees.last().unwrap();
         assert_eq!(t.id, tree.id());
         assert_eq!(t.leaves, leaves.len() as u64);
         assert_eq!(

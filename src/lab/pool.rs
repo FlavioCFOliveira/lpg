@@ -62,7 +62,14 @@ fn database() -> PathBuf {
         Err(e) => panic!("mkdir {}: {e}", dir.display()),
     }
     let sink: Arc<dyn MetricsSink> = Arc::new(RecordingSink::default());
-    let e = Engine::create(&dir, Arc::new(FsStorage), 16 << 20, sink).expect("create");
+    let e = Engine::create(
+        &dir,
+        Arc::new(FsStorage),
+        16 << 20,
+        crate::test_support::OWNER,
+        sink,
+    )
+    .expect("create");
     let data = e.data();
     data.ensure(DATA_PAGES).expect("ensure");
     let mut buf = vec![0u8; PAGE_SIZE];

@@ -53,6 +53,9 @@ pub(crate) fn seed() -> u64 {
     seed
 }
 
+/// The owner principal of the databases the tests create (FR-DB-005).
+pub(crate) const OWNER: &str = "owner";
+
 /// The bound of [`wait_until`]: far above the few milliseconds the waited
 /// background work takes, so only a regression reaches it.
 pub(crate) const WAIT_BOUND: std::time::Duration = std::time::Duration::from_secs(30);

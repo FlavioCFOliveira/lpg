@@ -11,6 +11,14 @@
 // built in; the code the other tests use is then unused (TS-30).
 #![cfg_attr(any(loom, shuttle), allow(dead_code, unused_imports))]
 
+#[cfg_attr(
+    not(test),
+    allow(
+        dead_code,
+        reason = "the catalog API's first non-test callers come with Sprint 3"
+    )
+)]
+pub(crate) mod catalog;
 pub mod obs;
 pub mod ops;
 pub mod storage;

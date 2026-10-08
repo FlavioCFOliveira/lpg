@@ -78,6 +78,7 @@ fn migrate() {
             dir.path(),
             Arc::new(FsStorage),
             CAP,
+            crate::test_support::OWNER,
             Arc::new(RecordingSink::default()),
         )
         .unwrap();

@@ -312,6 +312,7 @@ fn reopen_after_a_drop_shows_the_committed_stamped_entries_and_no_old_version() 
             d.path(),
             no_flush(),
             CAP,
+            crate::test_support::OWNER,
             Arc::new(RecordingSink::default()),
             tuning(),
         )

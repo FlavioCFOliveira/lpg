@@ -32,7 +32,8 @@ use super::node::{
     self, Applied, Change, Edit, MAX_INLINE, MAX_KEY, NONE, OVERFLOW_CAP, Place, Stamps, Value,
 };
 use super::{
-    DIRECTORY, LogState, PageWriter, Saved, Scratch, Step, Store, Tree, Undo, Write, WriteState,
+    DIRECTORY, Keys, LogState, NewTree, PageWriter, Saved, Scratch, Step, Store, Tree, Undo, Write,
+    WriteState,
 };
 use crate::storage::datafile::Header;
 use crate::storage::error::{Error, Result};
@@ -67,7 +68,13 @@ impl Store<'_> {
     /// Errors of [`super::super::pool::Pool::fetch`] while reading tree
     /// heights.
     pub(crate) fn estimate(&self, batch: &[Write<'_>], new_trees: usize) -> Result<u64> {
-        let mut trees: Vec<Tree> = batch.iter().map(|w| w.tree).collect();
+        // A tree the batch creates is counted as a new tree: it has no
+        // height yet ([`Tree::pending`]).
+        let mut trees: Vec<Tree> = batch
+            .iter()
+            .map(|w| w.tree)
+            .filter(|t| !t.is_pending())
+            .collect();
         if new_trees > 0 {
             trees.push(DIRECTORY);
         }
@@ -151,9 +158,8 @@ impl Store<'_> {
     ) -> Result<Tree> {
         self.health.check()?;
         self.run(st, Some(wal), |a| {
-            debug_assert_eq!(*a.next_tree_id, id, "the build holds the commit latch");
             a.put(DIRECTORY, &id.to_be_bytes(), &root.to_le_bytes())?;
-            *a.next_tree_id = id + 1;
+            *a.next_tree_id = (*a.next_tree_id).max(id + 1);
             a.pw.header_changed();
             Ok(())
         })?;
@@ -207,16 +213,55 @@ impl Store<'_> {
         batch: &[Write<'_>],
         new_trees: usize,
     ) -> Result<Vec<Tree>> {
+        let new: Vec<NewTree> = (0..new_trees)
+            .map(|_| NewTree {
+                id: self.draw_tree_id(),
+                keys: Keys::Prefix,
+            })
+            .collect();
+        self.apply_batch_new(st, wal, batch, &new)
+    }
+
+    /// [`Store::apply_batch`] creating the trees `create`, with identifiers
+    /// already drawn. A write whose tree is [`Tree::pending`] goes to the
+    /// created tree of that identifier.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::apply_batch`]; [`Error::InvalidArgument`] for a write to
+    /// a pending tree that `create` does not list, with nothing changed.
+    pub(crate) fn apply_batch_new(
+        &self,
+        st: &mut WriteState,
+        wal: Option<&Wal>,
+        batch: &[Write<'_>],
+        create: &[NewTree],
+    ) -> Result<Vec<Tree>> {
         self.health.check()?;
         if batch.iter().any(|w| w.key.len() > MAX_KEY) {
             return Err(Error::InvalidArgument("key longer than 1 024 bytes"));
         }
-        let mut created = Vec::with_capacity(new_trees);
+        if batch
+            .iter()
+            .any(|w| w.tree.is_pending() && !create.iter().any(|t| t.id == w.tree.id))
+        {
+            return Err(Error::InvalidArgument("a write to a tree not created"));
+        }
+        let mut created: Vec<Tree> = Vec::with_capacity(create.len());
         self.run(st, wal, |a| {
-            for _ in 0..new_trees {
-                created.push(a.create_tree()?);
+            for &t in create {
+                created.push(a.create_tree(t)?);
             }
             for w in batch {
+                let tree = if w.tree.is_pending() {
+                    *created
+                        .iter()
+                        .find(|t| t.id == w.tree.id)
+                        .expect("checked above")
+                } else {
+                    w.tree
+                };
+                let w = Write { tree, ..*w };
                 match (w.value, w.stamp) {
                     (Some(v), created) => a.put_stamped(
                         w.tree,
@@ -489,19 +534,18 @@ impl<'a> Apply<'a> {
         Ok(())
     }
 
-    /// Creates an empty tree with the next identifier and records its root
-    /// in the directory (TS-05).
-    fn create_tree(&mut self) -> Result<Tree> {
-        let id = *self.next_tree_id;
+    /// Creates the empty tree `t` and records its root in the directory
+    /// (TS-05); the header's next tree identifier is raised above it.
+    fn create_tree(&mut self, t: NewTree) -> Result<Tree> {
         let root = self.allocate()?;
         {
             let pin = self.pw.create(root)?;
-            node::init_empty_leaf(&mut pin.write()?, id);
+            node::init_empty_leaf(&mut pin.write()?, t.id, t.keys);
         }
-        self.put(DIRECTORY, &id.to_be_bytes(), &root.to_le_bytes())?;
-        *self.next_tree_id = id + 1;
+        self.put(DIRECTORY, &t.id.to_be_bytes(), &root.to_le_bytes())?;
+        *self.next_tree_id = (*self.next_tree_id).max(t.id + 1);
         self.pw.header_changed();
-        Ok(Tree { id, root })
+        Ok(Tree { id: t.id, root })
     }
 
     /// Takes a page for this batch (TS-05: free pages first). A page that

@@ -14,8 +14,14 @@
 //!   runs a checkpoint, whose `CONTROL` slot clears the clean-shutdown flag
 //!   and whose sequence number becomes this open's salt (TS-09). Only then
 //!   do the threads start.
-//! - **Create** writes the files of TS-05, then opens the location as open
-//!   does: its log is empty and its flag set.
+//! - **Create** writes the files of TS-05, `data-1` with the catalog tree
+//!   holding the default schema and default graph owned by the principal it
+//!   receives, the statistics tree and the default graph's trees (TS-17
+//!   Creation), then opens the location as open does: its log is empty and
+//!   its flag set.
+//! - **Open** also loads the catalog (tokens, cache, statistics) before its
+//!   checkpoint, recounting the statistics after a crash (TS-13 step 7;
+//!   [`crate::catalog::open`]).
 //! - **Close** stops the checkpointer, runs the final checkpoint with the
 //!   flag set, stops the writer, then releases `LOCK` (TS-11). An unusable
 //!   database runs no checkpoint (TS-12).
@@ -43,7 +49,9 @@ use super::recovery;
 use super::sort::is_sort_temp;
 use super::wal::{ClosedGroup, OpenGroup, TEMP_SEGMENT, Wal};
 use super::{Storage, StorageLock};
+use crate::catalog::{self, Catalog};
 use crate::obs::MetricsSink;
+use crate::tx::commit::{IdCounters, Ids};
 use crate::tx::gc;
 use crate::tx::mvcc::Mvcc;
 
@@ -188,6 +196,11 @@ pub(crate) struct Core {
     pub(crate) checkpoints: Checkpoints,
     /// The MVCC state (TS-14); empty at open (TS-13 step 7).
     pub(crate) mvcc: Mvcc,
+    /// The identifier counters (TS-07), from the recovered high-water
+    /// marks.
+    pub(crate) ids: IdCounters,
+    /// The catalog state: tokens, cache, statistics (TS-17).
+    pub(crate) catalog: Catalog,
     pub(crate) sink: Arc<dyn MetricsSink>,
     pub(crate) recovered: RecoveryStats,
     /// Sorts started in this open: the number of the next one's files.
@@ -298,7 +311,9 @@ fn has_control(storage: &dyn Storage, location: &Path) -> Result<bool> {
 impl Engine {
     /// Creates a database at `location`, an existing directory, and opens
     /// it (TS-05). `memory_cap` bounds the memory the database accounts for
-    /// (FR-LIM-003).
+    /// (FR-LIM-003). `owner` is the principal recorded as the owner of the
+    /// default schema and default graph; it is required and has no default
+    /// (FR-DB-005, FR-AUTH-002). No authorisation request is made.
     ///
     /// Order: fail if `CONTROL` exists; create and lock `LOCK`; fail if
     /// `CONTROL` exists now; remove every file of the file set, `wal-temp`,
@@ -313,7 +328,8 @@ impl Engine {
     /// # Errors
     ///
     /// [`Error::InvalidArgument`] if `memory_cap` is too small for the
-    /// buffer pool; [`Error::DatabaseExists`] if `CONTROL` exists, with
+    /// buffer pool, or `owner` is empty or longer than 1 024 bytes, both with
+    /// nothing changed; [`Error::DatabaseExists`] if `CONTROL` exists, with
     /// nothing changed (FR-DB-003); [`Error::Locked`] if another handle holds
     /// `LOCK`; [`Error::LockMissing`] if `LOCK` is deleted between its
     /// creation and the lock; [`Error::Io`].
@@ -321,9 +337,17 @@ impl Engine {
         location: &Path,
         storage: Arc<dyn Storage>,
         memory_cap: u64,
+        owner: &str,
         sink: Arc<dyn MetricsSink>,
     ) -> Result<Engine> {
-        Engine::create_tuned(location, storage, memory_cap, sink, Tuning::default())
+        Engine::create_tuned(
+            location,
+            storage,
+            memory_cap,
+            owner,
+            sink,
+            Tuning::default(),
+        )
     }
 
     /// [`Engine::create`] with the checkpoint triggers `tuning`.
@@ -335,10 +359,12 @@ impl Engine {
         location: &Path,
         storage: Arc<dyn Storage>,
         memory_cap: u64,
+        owner: &str,
         sink: Arc<dyn MetricsSink>,
         tuning: Tuning,
     ) -> Result<Engine> {
         Sizing::new(memory_cap, DEFAULT_FLOOR_PERMILLE)?;
+        let trees = catalog::bootstrap(owner)?;
         let s = &*storage;
         if has_control(s, location)? {
             return Err(Error::DatabaseExists);
@@ -376,6 +402,7 @@ impl Engine {
             FORMAT_VERSION,
             health.clone(),
             sink.clone(),
+            &catalog::bootstrap_trees(&trees),
         )?;
         // The names of LOCK and data-1 are durable before CONTROL exists.
         s.sync_dir(location)?;
@@ -387,9 +414,9 @@ impl Engine {
             clean_shutdown: true,
             redo_point: 0,
             commit_ts: 0,
-            next_element_id: 0,
-            next_catalog_id: 0,
-            next_token_id: 0,
+            next_element_id: catalog::created_ids().next_element_id,
+            next_catalog_id: catalog::created_ids().next_catalog_id,
+            next_token_id: catalog::created_ids().next_token_id,
         };
         let control = ControlSlots::create(s, location, control, health.clone())?;
         Engine::start(
@@ -621,6 +648,12 @@ impl Engine {
             checkpoints: Checkpoints::new(c.redo_point, tuning),
             // TS-13 step 7: the old-version store starts empty.
             mvcc: Mvcc::default(),
+            ids: IdCounters::new(Ids {
+                next_element_id: rec.counters.next_element_id,
+                next_catalog_id: rec.counters.next_catalog_id,
+                next_token_id: rec.counters.next_token_id,
+            }),
+            catalog: Catalog::default(),
             sink,
             recovered,
             sorts: AtomicU64::new(0),
@@ -631,11 +664,13 @@ impl Engine {
             skip_reserve: crate::sync::atomic::AtomicBool::new(false),
             _lock: lock,
         });
+        // Step 7: the catalog and the statistics.
+        catalog::open(&core, rec.counters.commit_ts)?;
         // Step 8.
         if rec.empty_log {
             core.wal.create_first(rec.wal_end)?;
         }
-        checkpoint::run(&core, false)?;
+        checkpoint::run_open(&core)?;
         core.wal.set_salt(core.control().sequence());
         let mut engine = Engine {
             core,

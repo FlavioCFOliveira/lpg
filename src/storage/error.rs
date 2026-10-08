@@ -84,6 +84,20 @@ pub(crate) enum Error {
     TreeDropped(u64),
     /// An operation of a transaction that an earlier failure aborted.
     Aborted,
+    /// A catalog object or an element that the operation needs is not
+    /// visible to the transaction; the text names it.
+    NotFound(&'static str),
+    /// The catalog already holds an object of that name in that parent
+    /// (TS-17).
+    CatalogObjectExists,
+    /// A directory or schema to drop still holds an object.
+    NotEmpty,
+    /// A graph type to drop is the type of a graph: GQLSTATUS class G1,
+    /// "dependent object error" (ISO/IEC 39075 conditions insert).
+    GraphTypeInUse,
+    /// A node to delete still has edges: GQLSTATUS G1001, "edges still
+    /// exist" (ISO/IEC 39075 conditions insert).
+    EdgesStillExist,
 }
 
 /// Result of the storage kernel.
@@ -157,6 +171,13 @@ impl fmt::Display for Error {
             }
             Error::TreeDropped(id) => write!(f, "tree {id} was dropped"),
             Error::Aborted => f.write_str("the transaction was aborted by an earlier failure"),
+            Error::NotFound(what) => write!(f, "{what} does not exist"),
+            Error::CatalogObjectExists => {
+                f.write_str("a catalog object of that name already exists in that parent")
+            }
+            Error::NotEmpty => f.write_str("the directory or schema still holds an object"),
+            Error::GraphTypeInUse => f.write_str("a graph still uses the graph type"),
+            Error::EdgesStillExist => f.write_str("the node still has edges"),
         }
     }
 }

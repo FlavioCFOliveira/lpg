@@ -276,6 +276,7 @@ fn records_round_trip_after_commit_and_reopen() {
             d.path(),
             crate::test_support::no_flush(),
             CAP,
+            crate::test_support::OWNER,
             Arc::new(crate::obs::recording::RecordingSink::default()),
             tuning(),
         )

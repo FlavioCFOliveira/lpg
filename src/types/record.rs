@@ -500,15 +500,8 @@ impl Reader<'_> {
     }
 }
 
-/// A decoded record: its label tokens, and its properties as (key token,
-/// value) in key order.
-pub(crate) type Decoded = (Vec<u64>, Vec<(u64, Value)>);
-
-/// Decodes a record: its labels and its properties in key order. `None`
-/// for malformed bytes, a reserved tag included, or a named zone the
-/// operating system does not know.
-pub(crate) fn decode(b: &[u8]) -> Option<Decoded> {
-    let mut r = Reader { b, at: 0 };
+/// The label tokens at the start of a record (module documentation).
+fn read_labels(r: &mut Reader<'_>) -> Option<Vec<u64>> {
     let n = usize::try_from(r.varint()?).ok()?;
     let mut labels = Vec::with_capacity(n.min(1024));
     for i in 0..n {
@@ -523,6 +516,25 @@ pub(crate) fn decode(b: &[u8]) -> Option<Decoded> {
         };
         labels.push(l);
     }
+    Some(labels)
+}
+
+/// The label tokens of a record, in ascending order, without decoding its
+/// properties (the statistics, TS-17). `None` for malformed label bytes.
+pub(crate) fn decode_labels(b: &[u8]) -> Option<Vec<u64>> {
+    read_labels(&mut Reader { b, at: 0 })
+}
+
+/// A decoded record: its label tokens, and its properties as (key token,
+/// value) in key order.
+pub(crate) type Decoded = (Vec<u64>, Vec<(u64, Value)>);
+
+/// Decodes a record: its labels and its properties in key order. `None`
+/// for malformed bytes, a reserved tag included, or a named zone the
+/// operating system does not know.
+pub(crate) fn decode(b: &[u8]) -> Option<Decoded> {
+    let mut r = Reader { b, at: 0 };
+    let labels = read_labels(&mut r)?;
     let mut props = Vec::new();
     let mut prev: Option<u64> = None;
     while r.at < b.len() {

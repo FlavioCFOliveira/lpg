@@ -78,7 +78,7 @@ fn drop_without_close_then_crash(n: u8, mode: Crash) {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     let v = vec![n; 2000];
@@ -158,7 +158,7 @@ fn a_torn_last_group_is_discarded() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     drop(e);
     let mut model = Model::new();
@@ -216,7 +216,7 @@ fn a_torn_last_group_is_discarded() {
 fn a_corrupt_frame_followed_by_a_valid_group_fails_the_open() {
     for dir in test_dirs() {
         let d = dir.path();
-        let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         for i in 0..5 {
@@ -286,7 +286,7 @@ fn write_group(dir: &Path, start: u64, salt: u64, page: u64, image: &[u8]) {
 fn leftover_frames_at_reused_positions_are_never_replayed() {
     for dir in test_dirs() {
         let d = dir.path();
-        let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         commit_kv(&e, tree, &mut model, b"g1", b"v");
@@ -368,7 +368,7 @@ fn a_missing_segment_at_or_after_the_redo_point_fails_the_open() {
                 "{what}: {err}"
             );
         };
-        let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+        let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
         let tree = e.create_trees(1).unwrap()[0];
         let mut model = Model::new();
         // WAL end past three quarters of segment 1: segments 0, 1, 2.
@@ -408,9 +408,20 @@ fn a_missing_segment_at_or_after_the_redo_point_fails_the_open() {
         restore();
         let e = Engine::open(d, fs(), CAP, sink()).unwrap();
         assert_state(&e, tree, &model);
-        let r = e.wal().durable_lsn();
         e.close().unwrap();
-        // After a clean close, R is the WAL end, in segment 1.
+        // After a clean close, R is the WAL end, in segment 1. It is read
+        // from `CONTROL`: close's statistics batch (TS-11) follows the
+        // last commit.
+        let r = {
+            let file = FsStorage.open(&d.join(CONTROL)).unwrap();
+            let c = crate::storage::control::ControlSlots::open(
+                file,
+                Arc::default(),
+                &crate::obs::recording::RecordingSink::default(),
+            )
+            .unwrap();
+            c.current().redo_point
+        };
         let holder = SEGMENT_SPAN;
         assert!(holder <= r && r < 2 * SEGMENT_SPAN);
         // Flag set, R's segment removed, a later one present.
@@ -441,7 +452,7 @@ fn a_missing_segment_at_or_after_the_redo_point_fails_the_open() {
 fn counters_are_the_maximum_of_control_and_the_commit_frames() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
-    let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let ids = Ids {
         next_element_id: 500,
@@ -486,7 +497,7 @@ fn counters_are_the_maximum_of_control_and_the_commit_frames() {
 fn a_torn_data_page_is_repaired_from_the_wal() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
-    let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     commit_kv(&e, tree, &mut model, b"a", b"1");
@@ -513,7 +524,7 @@ fn a_torn_data_page_is_repaired_from_the_wal() {
 fn audit_a_crc_valid_frame_with_a_hostile_page_number_fails_the_open_as_corruption() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
-    let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     commit_kv(&e, tree, &mut model, b"a", b"v");
@@ -558,7 +569,7 @@ fn a_segment_gets_its_name_only_once_complete_and_synced() {
     let dir = test_dirs().remove(0);
     let d = dir.path();
     let fault = fault();
-    let e = Engine::create(d, fault.clone(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fault.clone(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     fill_wal_to(&e, tree, &mut model, SEGMENT_SPAN + FRAME_BYTES);
@@ -618,7 +629,7 @@ fn open_removes_a_partial_segment_left_by_a_crash() {
     use crate::storage::wal::TEMP_SEGMENT;
     let dir = test_dirs().remove(0);
     let d = dir.path();
-    let e = Engine::create(d, fs(), CAP, sink()).unwrap();
+    let e = Engine::create(d, fs(), CAP, crate::test_support::OWNER, sink()).unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let mut model = Model::new();
     commit_kv(&e, tree, &mut model, b"a", b"1");

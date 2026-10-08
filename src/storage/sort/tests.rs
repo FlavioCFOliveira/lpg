@@ -14,7 +14,14 @@ use crate::test_support::{seed, test_dirs};
 const CAP: u64 = 16 << 20;
 
 fn engine(dir: &Path, storage: Arc<dyn Storage>) -> Engine {
-    Engine::create(dir, storage, CAP, Arc::new(RecordingSink::default())).unwrap()
+    Engine::create(
+        dir,
+        storage,
+        CAP,
+        crate::test_support::OWNER,
+        Arc::new(RecordingSink::default()),
+    )
+    .unwrap()
 }
 
 /// `n` records with random keys of 8 to 40 bytes and values of 0 to 60

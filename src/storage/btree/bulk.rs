@@ -209,7 +209,7 @@ impl Builder<'_, '_> {
     ) -> Result<()> {
         self.buf.fill(0);
         if es.len() == 0 {
-            node::init_empty_leaf(&mut self.buf, self.id);
+            node::init_empty_leaf(&mut self.buf, self.id, node::Keys::Prefix);
         } else {
             let at = Place {
                 tree: self.id,
@@ -483,7 +483,7 @@ impl Engine {
         let store = core.store();
         let mut st = store.lock();
         let before = core.data.page_count();
-        let id = st.next_tree_id;
+        let id = store.draw_tree_id();
         let r = build_pages(&store, &mut st, id, source).and_then(|(root, entries)| {
             core.data.sync()?;
             Ok((root, entries))

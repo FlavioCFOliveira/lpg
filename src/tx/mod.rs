@@ -31,6 +31,18 @@
 //!   reads as intervals (`conflict`) and are validated at commit; under
 //!   **snapshot isolation** (FR-TX-004) they are not.
 //! - A transaction dropped without commit or abort is aborted.
+//! - **Trees it creates** (`Transaction::create_tree`) get their
+//!   identifier at once, drawn as TS-07 draws element identifiers, and a
+//!   root page only when the commit applies them (TS-16 step 6): a graph
+//!   created in a transaction and the data written into it commit or roll
+//!   back together (FR-CAT-004). PostgreSQL likewise assigns a new
+//!   relation's file number from its OID counter, outside transaction
+//!   control, when the relation is created (`GetNewRelFileNumber`, R-PG @
+//!   `1f22453` `src/backend/catalog/catalog.c:584`, called at
+//!   `src/backend/catalog/heap.c:1285`); it creates the file at once and
+//!   deletes it if the transaction aborts (`RelationCreateStorage`,
+//!   `src/backend/catalog/storage.c:122, 168`), while lpg creates the tree
+//!   at commit, so an abort leaves nothing.
 
 pub(crate) mod commit;
 pub(crate) mod conflict;
@@ -48,7 +60,7 @@ use conflict::{Interval, ReadSet, WriteKeys};
 use lock::{Granted, Mode, Resource, TxId};
 use versions::{Older, version_bytes, visible};
 
-use crate::storage::btree::{DIRECTORY, MAX_KEY, Tree};
+use crate::storage::btree::{DIRECTORY, Keys, MAX_KEY, NewTree, Tree};
 use crate::storage::engine::Engine;
 use crate::storage::error::{Error, Result};
 use crate::storage::freelist::Registered;
@@ -104,6 +116,13 @@ pub(crate) struct Transaction<'e> {
     pub(crate) writes: BTreeMap<(u64, Vec<u8>), Pending>,
     /// Trees dropped by this transaction.
     pub(crate) drops: Vec<Tree>,
+    /// Trees created by this transaction, created when it commits.
+    pub(crate) created: Vec<NewTree>,
+    /// The graphs this transaction wrote, for the statistics its commit
+    /// applies (TS-17 Statistics).
+    pub(crate) graphs: Vec<crate::storage::graph::Graph>,
+    /// The graphs this transaction dropped, by catalog object identifier.
+    pub(crate) dropped_graphs: Vec<u64>,
     /// The read set (serializable transactions).
     pub(crate) reads: ReadSet,
     /// The memory of the write set, before-images, write keys and lock
@@ -154,6 +173,9 @@ impl Engine {
             regs: Some((reg, ser)),
             writes: BTreeMap::new(),
             drops: Vec::new(),
+            created: Vec::new(),
+            graphs: Vec::new(),
+            dropped_graphs: Vec::new(),
             reads: ReadSet::default(),
             charge: Some(
                 core.accountant
@@ -170,6 +192,27 @@ impl<'e> Transaction<'e> {
     /// The transaction's snapshot: the highest commit timestamp it reads.
     pub(crate) fn snapshot(&self) -> u64 {
         self.snapshot
+    }
+
+    /// The database the transaction runs on.
+    pub(crate) fn engine(&self) -> &'e Engine {
+        self.engine
+    }
+
+    /// Aborts the transaction because of `e` and returns `e`, for the
+    /// layers built on this API (catalog, graph) when a rule of TS-15 fails.
+    pub(crate) fn abort_with(&mut self, e: Error) -> Error {
+        self.fail(e)
+    }
+
+    /// Fails with [`Error::Aborted`] once the transaction is aborted, and
+    /// with [`Error::Unusable`] on an unusable database.
+    ///
+    /// # Errors
+    ///
+    /// As above.
+    pub(crate) fn check_active(&self) -> Result<()> {
+        self.active()
     }
 
     fn active(&self) -> Result<()> {
@@ -194,6 +237,9 @@ impl<'e> Transaction<'e> {
         core.mvcc.locks.release_all(self.id);
         self.writes.clear();
         self.drops.clear();
+        self.created.clear();
+        self.graphs.clear();
+        self.dropped_graphs.clear();
         self.reads = ReadSet::default();
         self.charge = None;
         self.regs = None;
@@ -233,6 +279,14 @@ impl<'e> Transaction<'e> {
     /// drop writes (TS-15): a drop committed after its snapshot then fails
     /// its validation, as a write to a key it read.
     fn use_tree(&mut self, tree: Tree, write: bool) -> Result<()> {
+        if tree.is_pending() {
+            // Created by this transaction, so visible to no other one.
+            return if self.created.iter().any(|t| t.id == tree.id()) {
+                Ok(())
+            } else {
+                Err(Error::TreeDropped(tree.id()))
+            };
+        }
         let known = self.trees.get(&tree.id()).copied();
         if known == Some(TreeUse::Write) || (known == Some(TreeUse::Read) && !write) {
             return Ok(());
@@ -266,6 +320,94 @@ impl<'e> Transaction<'e> {
         Ok(())
     }
 
+    /// Creates a tree, whose leaves store keys as `keys`, when the
+    /// transaction commits: the returned handle is [`Tree::pending`] until
+    /// then, and only this transaction can read or write it (module
+    /// documentation).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Aborted`]; [`Error::Unusable`].
+    pub(crate) fn create_tree(&mut self, keys: Keys) -> Result<Tree> {
+        self.active()?;
+        let id = self.engine.store().draw_tree_id();
+        self.created.push(NewTree { id, keys });
+        Ok(Tree::pending(id))
+    }
+
+    /// The handle of tree `id` as this transaction sees it: a tree it
+    /// creates, else the directory's entry.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::TreeDropped`] if the directory does not list it; storage
+    /// errors.
+    pub(crate) fn tree(&mut self, id: u64) -> Result<Tree> {
+        if self.created.iter().any(|t| t.id == id) {
+            return Ok(Tree::pending(id));
+        }
+        match self.engine.store().tree(id) {
+            Ok(Some(t)) => Ok(t),
+            Ok(None) => Err(Error::TreeDropped(id)),
+            Err(e) => Err(self.fail(e)),
+        }
+    }
+
+    /// Takes `res` in `mode`, reserving the lock entry (TS-14, TS-08), for
+    /// the layers built on this API.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Deadlock`] and [`Error::MemoryLimit`], which abort;
+    /// [`Error::Aborted`].
+    pub(crate) fn lock_resource(&mut self, res: Resource, mode: Mode) -> Result<()> {
+        self.active()?;
+        self.lock(res, mode)
+    }
+
+    /// Locks `key` of `tree` in `mode` and applies the write-write rule to
+    /// its entry (TS-15): an entry created or delete-stamped after the
+    /// snapshot fails the transaction with [`Error::Serialization`]. The
+    /// catalog takes X on a name it creates or drops and S on the name of
+    /// the parent it creates in ([`crate::catalog`]).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::put`].
+    pub(crate) fn lock_key(&mut self, tree: Tree, key: &[u8], mode: Mode) -> Result<()> {
+        self.active()?;
+        self.use_tree(tree, mode == Mode::X)?;
+        if tree.is_pending() {
+            return Ok(());
+        }
+        self.lock(
+            Resource::Key {
+                tree: tree.id(),
+                key: key.into(),
+            },
+            mode,
+        )?;
+        self.unchanged(tree, key).map(drop)
+    }
+
+    /// The write-write rule for `key` of `tree`, whose lock is held: fails
+    /// the transaction with [`Error::Serialization`] if the committed entry
+    /// was created or delete-stamped after the snapshot. Returns the
+    /// committed entry's value length, if any.
+    fn unchanged(&mut self, tree: Tree, key: &[u8]) -> Result<Option<usize>> {
+        let mut v = Vec::new();
+        let stamps = match self.engine.store().get_stamped(tree, key, &mut v) {
+            Ok(s) => s,
+            Err(e) => return Err(self.fail(e)),
+        };
+        if let Some(st) = stamps
+            && (st.created > self.snapshot || st.deleted > self.snapshot)
+        {
+            return Err(self.fail(Error::Serialization));
+        }
+        Ok(stamps.map(|_| v.len()))
+    }
+
     /// Takes `res` in `mode`, reserving the lock entry (TS-14, TS-08).
     fn lock(&mut self, res: Resource, mode: Mode) -> Result<()> {
         let core = self.engine.core();
@@ -279,6 +421,9 @@ impl<'e> Transaction<'e> {
 
     /// The committed version of `key` in `tree` that the snapshot sees.
     fn read_committed(&mut self, tree: Tree, key: &[u8]) -> Result<Option<Vec<u8>>> {
+        if tree.is_pending() {
+            return Ok(None);
+        }
         let store = self.engine.store();
         let mut v = Vec::new();
         let stamps = match store.get_stamped(tree, key, &mut v) {
@@ -321,6 +466,24 @@ impl<'e> Transaction<'e> {
         self.read_committed(tree, key)
     }
 
+    /// [`Transaction::get`] that records no read (TS-15 Read sets), for a
+    /// read whose result a lock the transaction holds keeps valid until it
+    /// ends: an edge's endpoint, under its existence lock, which a label or
+    /// property change of the endpoint must not fail (TS-15 Write-write
+    /// rule).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::get`].
+    pub(crate) fn get_locked(&mut self, tree: Tree, key: &[u8]) -> Result<Option<Vec<u8>>> {
+        self.active()?;
+        self.use_tree(tree, false)?;
+        if let Some(p) = self.writes.get(&(tree.id(), key.to_vec())) {
+            return Ok(p.value.clone());
+        }
+        self.read_committed(tree, key)
+    }
+
     /// Calls `f(key, value)` for every entry of `tree` whose key starts with
     /// `prefix`, in key order, as the snapshot sees it with this
     /// transaction's writes applied, until `f` returns `false`.
@@ -343,23 +506,26 @@ impl<'e> Transaction<'e> {
         let mut committed: Vec<(Vec<u8>, Option<Vec<u8>>)> = Vec::new();
         let core = self.engine.core();
         let s = self.snapshot;
-        let r = self
-            .engine
-            .store()
-            .scan_prefix_stamped(tree, prefix, |k, v, st| {
-                let value = match visible(st, s) {
-                    Some(true) => Some(v.to_vec()),
-                    Some(false) => None,
-                    None => match core.mvcc.versions.find(tree.id(), k, s) {
-                        Older::Value(v) => Some(v),
-                        Older::Absent => None,
-                    },
-                };
-                if let Some(v) = value {
-                    committed.push((k.to_vec(), Some(v)));
-                }
-                true
-            });
+        let r = if tree.is_pending() {
+            Ok(())
+        } else {
+            self.engine
+                .store()
+                .scan_prefix_stamped(tree, prefix, |k, v, st| {
+                    let value = match visible(st, s) {
+                        Some(true) => Some(v.to_vec()),
+                        Some(false) => None,
+                        None => match core.mvcc.versions.find(tree.id(), k, s) {
+                            Older::Value(v) => Some(v),
+                            Older::Absent => None,
+                        },
+                    };
+                    if let Some(v) = value {
+                        committed.push((k.to_vec(), Some(v)));
+                    }
+                    true
+                })
+        };
         if let Err(e) = r {
             return Err(self.fail(e));
         }
@@ -415,7 +581,11 @@ impl<'e> Transaction<'e> {
         }
         self.use_tree(tree, true)?;
         let first = !self.writes.contains_key(&(tree.id(), key.to_vec()));
-        if first {
+        if first && tree.is_pending() {
+            // A tree this transaction creates: no other transaction can
+            // see it, and its entries have no before-image.
+            self.reserve(WriteKeys::charge_of(key))?;
+        } else if first {
             self.lock(
                 Resource::Key {
                     tree: tree.id(),
@@ -426,19 +596,10 @@ impl<'e> Transaction<'e> {
             // The write-write rule (TS-15): with the lock held, no other
             // transaction can change the entry; one that changed it after
             // the snapshot has committed and published.
-            let mut v = Vec::new();
-            let stamps = match self.engine.store().get_stamped(tree, key, &mut v) {
-                Ok(s) => s,
-                Err(e) => return Err(self.fail(e)),
-            };
-            if let Some(st) = stamps
-                && (st.created > self.snapshot || st.deleted > self.snapshot)
-            {
-                return Err(self.fail(Error::Serialization));
-            }
+            let committed = self.unchanged(tree, key)?;
             // The before-image this write will move into the old-version
             // store, and its write key (TS-14).
-            let before = stamps.map_or(0, |_| version_bytes(key, v.len()));
+            let before = committed.map_or(0, |len| version_bytes(key, len));
             self.reserve(before + WriteKeys::charge_of(key))?;
         }
         self.reserve(key.len() as u64 + value_len as u64 + WRITE_OVERHEAD)?;
@@ -519,6 +680,24 @@ impl<'e> Transaction<'e> {
     /// As [`Transaction::put`].
     pub(crate) fn drop_tree(&mut self, tree: Tree) -> Result<()> {
         self.active()?;
+        if tree.is_pending() {
+            // Created by this transaction: it is never created.
+            if !self.created.iter().any(|t| t.id == tree.id()) {
+                return Err(Error::TreeDropped(tree.id()));
+            }
+            self.created.retain(|t| t.id != tree.id());
+            let keys: Vec<(u64, Vec<u8>)> = self
+                .writes
+                .range((tree.id(), Vec::new())..)
+                .take_while(|((t, _), _)| *t == tree.id())
+                .map(|(k, _)| k.clone())
+                .collect();
+            for k in keys {
+                let old = self.writes.remove(&k);
+                self.release_pending(old);
+            }
+            return Ok(());
+        }
         self.lock(Resource::Tree(tree.id()), Mode::X)?;
         self.use_tree(tree, true)?;
         let key = tree.id().to_be_bytes();

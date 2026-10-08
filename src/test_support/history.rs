@@ -150,8 +150,9 @@ impl History {
     }
 }
 
-/// What `elle-cli` reported for one history.
-#[derive(Debug, Clone)]
+/// What `elle-cli` reported for one history. Dropping it removes the
+/// history file unless the thread is panicking.
+#[derive(Debug)]
 pub(crate) struct Verdict {
     /// Whether the history obeys the consistency model.
     pub(crate) valid: bool,
@@ -161,6 +162,15 @@ pub(crate) struct Verdict {
     pub(crate) output: String,
     /// Where the history was written.
     pub(crate) path: PathBuf,
+}
+
+impl Drop for Verdict {
+    fn drop(&mut self) {
+        if !std::thread::panicking() {
+            // A file already gone is no problem: nothing else uses it.
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
 }
 
 /// The `elle-cli` jar: `$LPG_ELLE_CLI`, else the install path recorded in
@@ -179,10 +189,14 @@ fn elle_jar() -> PathBuf {
     p
 }
 
-/// Writes `edn` to `target/lpg-histories/<name>.edn` and checks it with
-/// `elle-cli` under `model` (`list-append` or `rw-register`) and
+/// Writes `edn` to `target/lpg-histories/<name>-<pid>.edn` and checks it
+/// with `elle-cli` under `model` (`list-append` or `rw-register`) and
 /// `consistency` (such as `serializable`): the history is valid when it
-/// has none of the anomalies that model prohibits.
+/// has none of the anomalies that model prohibits. The process
+/// identifier keeps the file of each concurrent copy of a test apart
+/// (the `stress` profile runs 16); the file is removed when the
+/// [`Verdict`] is dropped, unless the thread is panicking, so a failed
+/// test keeps it as evidence.
 ///
 /// # Panics
 ///
@@ -191,7 +205,7 @@ fn elle_jar() -> PathBuf {
 pub(crate) fn elle(name: &str, edn: &str, model: &str, consistency: &str) -> Verdict {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("target/lpg-histories");
     std::fs::create_dir_all(&dir).expect("create target/lpg-histories");
-    let path = dir.join(format!("{name}.edn"));
+    let path = dir.join(format!("{name}-{}.edn", std::process::id()));
     std::fs::write(&path, edn).expect("write the history");
     let out = Command::new("java")
         .arg("-jar")

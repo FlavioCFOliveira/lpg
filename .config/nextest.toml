@@ -15,9 +15,9 @@ experimental = ["wrapper-scripts"]
 # The modules whose tests use the most space in `/tmp/lpgram`: each test
 # was measured alone (`du -sk` every 20 ms, 2026-10-08); these modules
 # hold all 35 tests that peak at 60 MiB or more (largest 274 MiB). At most
-# three of their 89 tests run at once, so a default run stays under the
-# 1 GiB limit of CLAUDE.md: the three largest with the thirteen largest
-# other tests sum to 990 MiB.
+# three of their 89 tests run at once, which bounds the peak space of a
+# default run in `/tmp/lpgram`, on a `/tmp` that enforces user quotas: the
+# three largest with the thirteen largest other tests sum to 990 MiB.
 [test-groups]
 disk-heavy = { max-threads = 3 }
 
@@ -75,6 +75,14 @@ test(=obs::recording::tests::concurrent_calls_are_all_recorded)
 | test(=tx::tests::gc::after_a_crash_the_collector_finds_the_garbage_again)
 | test(=tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_list_append_histories)
 | test(=tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_rw_register_histories)
+| test(=catalog::tests::catalog::two_concurrent_creators_of_one_graph_name_exactly_one_commits_at_both_levels)
+| test(=catalog::tests::catalog::two_concurrent_creators_of_one_label_get_one_token_that_survives_reopen)
+| test(=catalog::tests::catalog::a_schema_dropped_while_a_graph_is_created_in_it_leaves_no_orphan)
+| test(=catalog::tests::catalog::a_graph_type_dropped_while_a_graph_of_it_is_created_leaves_no_dangling_type)
+| test(=storage::graph::tests::graph::the_integrity_check_reports_nothing_while_edges_change_and_are_collected)
+| test(=storage::graph::tests::graph::sixteen_threads_creating_disjoint_nodes_and_edges_all_commit_and_survive_reopen)
+| test(=storage::graph::tests::graph::an_edge_to_a_node_deleted_concurrently_fails_or_waits_and_leaves_no_dangling_entry)
+| test(=storage::graph::tests::graph::an_expansion_at_a_snapshot_returns_exactly_the_live_edges_of_its_direction_and_type)
 '''
 # Sixteen copies share the machine: one test at a time.
 test-threads = 1

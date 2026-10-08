@@ -114,6 +114,7 @@ fn a_bulk_built_tree_answers_like_a_tree_built_by_puts() {
         dir.path(),
         storage.clone(),
         CAP,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap();
@@ -144,7 +145,8 @@ fn a_bulk_built_tree_answers_like_a_tree_built_by_puts() {
     assert_same_answers(&e, by_put, built, &m);
     let r = e.store().check().unwrap();
     assert!(r.is_ok(), "{:?}", r.problems);
-    assert!(r.trees[2].height >= 2 && r.trees[2].entries == m.len() as u64);
+    let t = r.trees.iter().find(|t| t.id == built.id()).unwrap();
+    assert!(t.height >= 2 && t.entries == m.len() as u64);
     e.close().unwrap();
     let e = open(dir.path(), storage);
     assert!(entries(&e, built) == m);
@@ -190,6 +192,7 @@ fn bulk_built_leaves_are_filled_to_ninety_percent() {
         dir.path(),
         crate::test_support::no_flush(),
         CAP,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap();
@@ -230,6 +233,7 @@ fn a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free() {
         dir.path(),
         fault.clone(),
         CAP,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap();
@@ -281,6 +285,7 @@ fn unsorted_input_fails_the_build_and_empty_input_builds_an_empty_tree() {
         dir.path(),
         crate::test_support::no_flush(),
         CAP,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap();
@@ -314,6 +319,7 @@ fn a_sorted_spill_feeds_the_build() {
         dir.path(),
         crate::test_support::no_flush(),
         CAP,
+        crate::test_support::OWNER,
         Arc::new(RecordingSink::default()),
     )
     .unwrap();
@@ -355,7 +361,14 @@ fn audit_a_stale_frame_never_overwrites_a_bulk_built_page() {
     let d = dir.path();
     let fault = fault();
     let e = Arc::new(
-        Engine::create(d, fault.clone(), CAP, Arc::new(RecordingSink::default())).unwrap(),
+        Engine::create(
+            d,
+            fault.clone(),
+            CAP,
+            crate::test_support::OWNER,
+            Arc::new(RecordingSink::default()),
+        )
+        .unwrap(),
     );
     let tree = e.create_trees(1).unwrap()[0];
     let mut puts = Model::new();

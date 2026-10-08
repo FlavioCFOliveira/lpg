@@ -61,7 +61,14 @@ fn bulk() {
         let dir = tempfile::tempdir_in(&base).unwrap();
         let tmp = tempfile::tempdir_in(&base).unwrap();
         let sink = Arc::new(RecordingSink::default());
-        let e = Engine::create(dir.path(), Arc::new(FsStorage), cap, sink).unwrap();
+        let e = Engine::create(
+            dir.path(),
+            Arc::new(FsStorage),
+            cap,
+            crate::test_support::OWNER,
+            sink,
+        )
+        .unwrap();
         let mut s = Sampler::uniform((n / 10).max(1), 17);
         let p0 = Probe::now();
         let t = Instant::now();

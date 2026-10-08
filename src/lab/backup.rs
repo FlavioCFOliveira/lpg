@@ -79,7 +79,14 @@ fn backup() {
         let n = (gib << 30) / 440;
         let dir = tempfile::tempdir_in(&base).unwrap();
         let sink = Arc::new(RecordingSink::default());
-        let e = Engine::create(dir.path(), Arc::new(FsStorage), CAP, sink.clone()).unwrap();
+        let e = Engine::create(
+            dir.path(),
+            Arc::new(FsStorage),
+            CAP,
+            crate::test_support::OWNER,
+            sink.clone(),
+        )
+        .unwrap();
         let tree = e
             .bulk_build(&mut Counting {
                 n,

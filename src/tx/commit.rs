@@ -35,9 +35,12 @@
 
 use std::time::Instant;
 
+use crate::sync::atomic::{AtomicU64, Ordering};
+
 use super::conflict::WriteKeys;
 use super::versions::version_bytes;
 use super::{Isolation, Transaction};
+use crate::catalog::Effects;
 use crate::obs::names::transactions::{COMMIT_LATENCY, COMMITTED, FAILED_COMMITS};
 use crate::storage::btree::{
     CommitLatch, DIRECTORY, Store, Tree, Write, WriteState, dropped_directory_entry,
@@ -58,6 +61,80 @@ pub(crate) struct Ids {
     pub(crate) next_catalog_id: u64,
     /// Next token identifier.
     pub(crate) next_token_id: u64,
+}
+
+/// The upper bound of every identifier counter (TS-07: kept below 2⁶³).
+pub(crate) const ID_LIMIT: u64 = 1 << 63;
+
+/// The in-memory identifier counters of an open database (TS-07
+/// Drawing): element, catalog-object and token identifiers are drawn when
+/// the write that needs them enters the write set. An identifier drawn by a
+/// transaction that aborts is skipped; the counters never decrease while
+/// the database is open. Each commit records their current values as its
+/// high-water marks ([`IdCounters::current`]), and open restarts them from
+/// the recovered marks.
+#[derive(Debug, Default)]
+pub(crate) struct IdCounters {
+    element: AtomicU64,
+    catalog: AtomicU64,
+    token: AtomicU64,
+}
+
+impl IdCounters {
+    /// Counters whose next values are `ids`.
+    pub(crate) fn new(ids: Ids) -> IdCounters {
+        IdCounters {
+            element: AtomicU64::new(ids.next_element_id),
+            catalog: AtomicU64::new(ids.next_catalog_id),
+            token: AtomicU64::new(ids.next_token_id),
+        }
+    }
+
+    fn draw(counter: &AtomicU64) -> Result<u64> {
+        let id = counter.fetch_add(1, Ordering::Relaxed);
+        if id >= ID_LIMIT {
+            return Err(Error::InvalidArgument("identifier counter exhausted"));
+        }
+        Ok(id)
+    }
+
+    /// Draws an element identifier.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::InvalidArgument`] once 2⁶³ identifiers are drawn.
+    pub(crate) fn element(&self) -> Result<u64> {
+        IdCounters::draw(&self.element)
+    }
+
+    /// Draws a catalog-object identifier.
+    ///
+    /// # Errors
+    ///
+    /// As [`IdCounters::element`].
+    pub(crate) fn catalog(&self) -> Result<u64> {
+        IdCounters::draw(&self.catalog)
+    }
+
+    /// Draws a token identifier.
+    ///
+    /// # Errors
+    ///
+    /// As [`IdCounters::element`].
+    pub(crate) fn token(&self) -> Result<u64> {
+        IdCounters::draw(&self.token)
+    }
+
+    /// The next value of each counter: the high-water marks a commit
+    /// records, read under the commit latch.
+    pub(crate) fn current(&self) -> Ids {
+        let load = |c: &AtomicU64| c.load(Ordering::Relaxed).min(ID_LIMIT);
+        Ids {
+            next_element_id: load(&self.element),
+            next_catalog_id: load(&self.catalog),
+            next_token_id: load(&self.token),
+        }
+    }
 }
 
 /// The outcome of a successful commit.
@@ -218,7 +295,7 @@ impl Engine {
     /// the database unusable, as [`Engine::commit`].
     pub(crate) fn commit_transaction(&self, tx: &mut Transaction<'_>) -> Result<Option<u64>> {
         // Step 1.
-        if tx.writes.is_empty() && tx.drops.is_empty() {
+        if tx.writes.is_empty() && tx.drops.is_empty() && tx.created.is_empty() {
             return Ok(None);
         }
         let started = Instant::now();
@@ -244,11 +321,17 @@ impl Engine {
         // Step 2, with placeholder stamps and drop entries: the estimate
         // counts key and value bytes only, and is not a bound (TS-05).
         let placeholder = vec![[0u8; 16]; tx.drops.len()];
-        self.reserve_space(&store, &batch_of(tx, 1, &dir_keys, &placeholder), 0)?;
-        // Step 3.
+        self.reserve_space(
+            &store,
+            &batch_of(tx, 1, &dir_keys, &placeholder),
+            tx.created.len(),
+        )?;
+        // Step 3. The identifier counters are read under the latch: they
+        // cover every identifier this transaction drew (TS-07).
         let st = store.lock();
+        let ids = core.ids.current();
         let mvcc = &core.mvcc;
-        let committed = self.commit_latched(st, Ids::default(), |store, st, wal, ts| {
+        let committed = self.commit_latched(st, ids, |store, st, wal, ts| {
             // Step 4.
             if tx.isolation == Isolation::Serializable {
                 mvcc.committed.validate(tx.snapshot, &tx.reads)?;
@@ -299,9 +382,10 @@ impl Engine {
         let mut value = Vec::new();
         let mut r = Ok(());
         for ((tree, key), p) in &tx.writes {
-            if p.value.is_none() {
+            if p.value.is_none() || p.tree.is_pending() {
                 // A delete is a stamp: the page keeps the value, which older
-                // snapshots read there.
+                // snapshots read there. A tree this commit creates holds no
+                // entry yet.
                 continue;
             }
             let stamps = match store.get_stamped(p.tree, key, &mut value) {
@@ -337,18 +421,24 @@ impl Engine {
             .iter()
             .map(|t| dropped_directory_entry(t.root(), ts))
             .collect();
-        let r = r.and_then(|()| {
+        // The catalog-cache and statistics changes of this commit, read from
+        // the committed state before any page changes (TS-17).
+        let r = r.and_then(|()| Effects::of(core, store, tx));
+        let r = r.and_then(|effects| {
             // Leaves this batch rewrites drop the stamps every snapshot
             // sees (TS-14).
             let horizon = super::mvcc::horizon(&mvcc.snapshots, core.wal.progress.published_ts());
             st.set_freeze_horizon(horizon);
             let batch = batch_of(tx, ts, dir_keys, &dir_values);
-            let r = store.apply_batch(st, Some(wal), &batch, 0).map(drop);
+            let r = store
+                .apply_batch_new(st, Some(wal), &batch, &tx.created)
+                .map(drop);
             st.set_freeze_horizon(0);
-            r
+            r.map(|()| effects)
         });
         match r {
-            Ok(()) => {
+            Ok(effects) => {
+                effects.publish(core);
                 let mut q = mvcc.gc();
                 for ((_, key), p) in &tx.writes {
                     if p.value.is_none() {

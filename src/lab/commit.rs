@@ -122,8 +122,15 @@ pub(crate) fn populate(engine: &Engine, keys: u64) -> Tree {
 pub(crate) fn build(base: &Path, keys: u64, cap: u64, tuning: Tuning) -> Db {
     let dir = tempfile::tempdir_in(base).expect("work directory");
     let sink = Arc::new(RecordingSink::default());
-    let engine = Engine::create_tuned(dir.path(), Arc::new(FsStorage), cap, sink.clone(), tuning)
-        .expect("create");
+    let engine = Engine::create_tuned(
+        dir.path(),
+        Arc::new(FsStorage),
+        cap,
+        crate::test_support::OWNER,
+        sink.clone(),
+        tuning,
+    )
+    .expect("create");
     let tree = populate(&engine, keys);
     Db {
         engine,

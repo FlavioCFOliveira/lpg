@@ -91,7 +91,14 @@ fn build(dist: &str) -> Option<String> {
         Ok(()) | Err(rustix::io::Errno::EXIST) => {}
         Err(e) => panic!("mkdir {}: {e}", dir.display()),
     }
-    let e = Engine::create(&dir, Arc::new(FsStorage), BUILD_CAP, sink()).expect("create");
+    let e = Engine::create(
+        &dir,
+        Arc::new(FsStorage),
+        BUILD_CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .expect("create");
     let s = e.store();
     let tree = s.create_tree().expect("tree");
     let mut smp = sampler(dist);

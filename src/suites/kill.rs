@@ -24,16 +24,23 @@
 //!
 //! A fifth thread runs serializable transactions on a second tree (audit
 //! Round A): each puts its own key and deletes the previous one, so each
-//! commit is stamped and leaves a delete stamp; the first and every 16th
-//! after it also creates a
-//! tree, fills it and drops it in a second transaction. Commits notify the
-//! garbage collector, whose groups remove the stamps and free the dropped
-//! trees. It prints `TX` after each commit and `DROP` after each drop.
-//! After the reopen, a snapshot sees exactly one key of the thread for the
-//! iteration, the last printed or the one after it, every printed drop is
-//! dropped, and once the collector's seed scan and pass have freed the
-//! dropped trees, no entry keeps a delete stamp at or below the horizon of
-//! a pass with no snapshot open, and the integrity check passes again.
+//! commit is stamped and leaves a delete stamp. Each also creates a node of
+//! the iteration's label in the default graph, with an edge from the node
+//! of the transaction before (rmp #31, #32). The first transaction and
+//! every 16th after it also creates a graph, fills it and drops it in a
+//! second transaction. Commits notify the garbage collector, whose groups
+//! remove the stamps and free the dropped graphs' trees. It prints the
+//! label's token, `TX` with the node after each commit, `CAT` with the
+//! graph after each graph creation and `DROP` with each of its trees after
+//! the drop. After the reopen, a snapshot sees exactly one key of the
+//! thread for the iteration, the last printed or the one after it, and as
+//! many nodes of the label as transactions committed, the printed ones
+//! among them; the element, catalog-object and token counters are above
+//! every printed identifier; every printed drop is dropped, and once the
+//! collector's seed scan and pass have freed the dropped trees, no entry
+//! keeps a delete stamp at or below the horizon of a pass with no snapshot
+//! open; the integrity check, graphs included, passes again, and the
+//! statistics equal a recount.
 //!
 //! The parent counts the kills that fell inside a checkpoint and inside a
 //! backup, and the checkpoints that recycled or removed a segment; the full
@@ -70,6 +77,10 @@ use crate::tx::Isolation;
 use crate::tx::commit::Ids;
 
 const CAP: u64 = 64 << 20;
+/// The tree of the batches: the first after the trees create makes.
+const BATCH_TREE: u64 = crate::catalog::CREATED_TREES + 1;
+/// The tree of the transaction thread.
+const TX_TREE: u64 = crate::catalog::CREATED_TREES + 2;
 const THREADS: u64 = 4;
 const DIR_VAR: &str = "LPG_KILL_DIR";
 const BACKUP_VAR: &str = "LPG_KILL_BACKUP_DIR";
@@ -91,27 +102,56 @@ fn tx_key(iter: u64, i: u64) -> Vec<u8> {
     format!("x/{iter:03}/{i:07}").into_bytes()
 }
 
+/// The label of the transaction thread's nodes in iteration `iter`.
+fn kill_label(iter: u64) -> String {
+    format!("K{iter}")
+}
+
 /// The transaction thread: see the module documentation.
 fn tx_work(e: &Engine, tree: Tree, iter: u64, say: &(dyn Fn(String) + Sync)) {
+    use crate::catalog::{DEFAULT_GRAPH_ID, DEFAULT_SCHEMA_ID, TokenKind};
+    let label = e.token(TokenKind::Label, &kill_label(iter)).unwrap();
+    let next = e.token(TokenKind::EdgeType, "NEXT").unwrap();
+    say(format!("TOKEN {label}"));
+    let mut prev = None;
     for i in 0u64..u64::MAX {
         let mut tx = e.begin(Isolation::Serializable).unwrap();
         tx.put(tree, &tx_key(iter, i), &[9u8; 200]).unwrap();
         if i > 0 {
             assert!(tx.delete(tree, &tx_key(iter, i - 1)).unwrap());
         }
+        let g = tx.graph(DEFAULT_GRAPH_ID).unwrap();
+        let node = tx.create_node(&g, &[label], &[]).unwrap();
+        if let Some(p) = prev {
+            tx.create_edge(&g, p, node, next, &[]).unwrap();
+        }
         tx.commit().unwrap();
-        say(format!("TX {iter} {i}"));
+        prev = Some(node);
+        say(format!("TX {iter} {i} {node}"));
         if i % 16 == 0 {
-            let t = e.create_trees(1).unwrap()[0];
             let mut tx = e.begin(Isolation::Serializable).unwrap();
-            for k in 0..60u32 {
-                tx.put(t, &k.to_be_bytes(), &[3u8; 300]).unwrap();
+            let name = format!("g{iter}-{i}");
+            let id = tx
+                .create_graph(DEFAULT_SCHEMA_ID, &name, crate::test_support::OWNER, None)
+                .unwrap();
+            let g = tx.graph(id).unwrap();
+            let mut last = None;
+            for _ in 0..60 {
+                let n = tx.create_node(&g, &[label], &[]).unwrap();
+                if let Some(p) = last {
+                    tx.create_edge(&g, p, n, next, &[]).unwrap();
+                }
+                last = Some(n);
             }
             tx.commit().unwrap();
+            say(format!("CAT {id}"));
             let mut tx = e.begin(Isolation::Serializable).unwrap();
-            tx.drop_tree(t).unwrap();
+            let g = tx.graph(id).unwrap();
+            assert!(tx.drop_object(DEFAULT_SCHEMA_ID, &name).unwrap());
             tx.commit().unwrap();
-            say(format!("DROP {}", t.id()));
+            for t in [g.nodes, g.edges, g.adj] {
+                say(format!("DROP {}", t.id()));
+            }
         }
     }
 }
@@ -184,11 +224,12 @@ fn work() {
     let e = if FsStorage.list(dir).unwrap().iter().any(|n| n == CONTROL) {
         Engine::open(dir, storage, CAP, sink).unwrap()
     } else {
-        Engine::create(dir, storage, CAP, sink).unwrap()
+        Engine::create(dir, storage, CAP, crate::test_support::OWNER, sink).unwrap()
     };
-    // Tree 1 for the batches, tree 2 for the transactions.
-    let (tree, tx_tree) = match e.store().tree(1).unwrap() {
-        Some(t) => (t, e.store().tree(2).unwrap().expect("tree 2")),
+    // The first two trees after create's own (TS-17 Creation): one for the
+    // batches, one for the transactions.
+    let (tree, tx_tree) = match e.store().tree(BATCH_TREE).unwrap() {
+        Some(t) => (t, e.store().tree(TX_TREE).unwrap().expect("tx tree")),
         None => {
             let t = e.create_trees(2).unwrap();
             (t[0], t[1])
@@ -274,6 +315,19 @@ struct Figures {
     drops: Vec<u64>,
 }
 
+/// What the transaction thread of one iteration printed.
+#[derive(Default)]
+struct Printed {
+    /// The last transaction printed.
+    last: Option<u64>,
+    /// The nodes of the printed transactions.
+    nodes: Vec<u64>,
+    /// The graphs whose creation was printed.
+    graphs: Vec<u64>,
+    /// The label's token.
+    token: Option<u64>,
+}
+
 /// One line of the child.
 enum Line {
     Commit(u64, u64),
@@ -283,8 +337,12 @@ enum Line {
     },
     BackupStart,
     BackupEnd,
-    /// Transaction `i` of the transaction thread returned.
-    Tx(u64),
+    /// Transaction `i` of the transaction thread returned, with its node.
+    Tx(u64, u64),
+    /// The graph with this identifier was created.
+    Catalog(u64),
+    /// The token of the iteration's label.
+    Token(u64),
     /// The tree with this identifier was dropped.
     Drop(u64),
     /// The filler step failed with this message.
@@ -342,7 +400,11 @@ fn iteration(
                     .map(|x| x.parse().unwrap())
                     .collect();
                 assert_eq!(v[0], iter);
-                Line::Tx(v[1])
+                Line::Tx(v[1], v[2])
+            } else if let Some(at) = line.find("CAT ") {
+                Line::Catalog(line[at + 4..].parse().unwrap())
+            } else if let Some(at) = line.find("TOKEN ") {
+                Line::Token(line[at + 6..].parse().unwrap())
             } else if let Some(at) = line.find("FILL failed: ") {
                 Line::FillFailed(line[at + "FILL failed: ".len()..].to_owned())
             } else if let Some(at) = line.find("DROP ") {
@@ -378,7 +440,7 @@ fn iteration(
     lines.extend(rx.try_iter());
     let mut n = 0;
     let mut last = BTreeMap::new();
-    let mut last_tx = None;
+    let mut txs = Printed::default();
     let (mut checkpointing, mut backing_up) = (false, false);
     for l in lines {
         match l {
@@ -394,7 +456,12 @@ fn iteration(
             }
             Line::BackupStart => backing_up = true,
             Line::BackupEnd => backing_up = false,
-            Line::Tx(i) => last_tx = Some(i),
+            Line::Tx(i, node) => {
+                txs.last = Some(i);
+                txs.nodes.push(node);
+            }
+            Line::Catalog(id) => txs.graphs.push(id),
+            Line::Token(id) => txs.token = Some(id),
             Line::Drop(id) => fig.drops.push(id),
             Line::FillFailed(m) => panic!("the child's filler step failed: {m}"),
         }
@@ -417,7 +484,12 @@ fn iteration(
     .unwrap_or_else(|e| panic!("iteration {iter}: reopen: {e}"));
     fig.recovery_ms.push(t0.elapsed().as_secs_f64() * 1e3);
     fig.replayed.push(e.recovered().bytes);
-    let t = *tree.get_or_insert_with(|| e.store().tree(1).unwrap().expect("the tree exists"));
+    let t = *tree.get_or_insert_with(|| {
+        e.store()
+            .tree(BATCH_TREE)
+            .unwrap()
+            .expect("the tree exists")
+    });
     let mut present: BTreeMap<(u64, u64), BTreeSet<u64>> = BTreeMap::new();
     let mut halves: BTreeMap<(u64, u64, u64), u8> = BTreeMap::new();
     e.store()
@@ -456,14 +528,16 @@ fn iteration(
     }
     let r = e.store().check().unwrap();
     assert!(r.is_ok(), "iteration {iter}: {:?}", r.problems);
-    check_transactions(&e, iter, last_tx, &fig.drops);
+    check_transactions(&e, iter, &txs, &fig.drops);
     e.close().unwrap();
 }
 
 /// The transaction thread's oracle after the reopen (module
 /// documentation).
-fn check_transactions(e: &Engine, iter: u64, last: Option<u64>, drops: &[u64]) {
-    let t = e.store().tree(2).unwrap().expect("tree 2");
+fn check_transactions(e: &Engine, iter: u64, txs: &Printed, drops: &[u64]) {
+    use crate::catalog::{DEFAULT_GRAPH_ID, TokenKind};
+    let last = txs.last;
+    let t = e.store().tree(TX_TREE).unwrap().expect("tx tree");
     let mut tx = e.begin(Isolation::Snapshot).unwrap();
     let mut seen = Vec::new();
     let prefix = format!("x/{iter:03}/").into_bytes();
@@ -473,7 +547,6 @@ fn check_transactions(e: &Engine, iter: u64, last: Option<u64>, drops: &[u64]) {
         true
     })
     .unwrap();
-    drop(tx);
     let ok = match last {
         Some(l) => seen == [l] || seen == [l + 1],
         None => seen.is_empty() || seen == [0],
@@ -482,6 +555,44 @@ fn check_transactions(e: &Engine, iter: u64, last: Option<u64>, drops: &[u64]) {
         ok,
         "iteration {iter}: transaction keys {seen:?}, last printed {last:?}"
     );
+    // The graph writes of each transaction commit with its keys: as many
+    // nodes of the iteration's label as transactions committed, the
+    // printed ones among them (rmp #31, #32).
+    let label = e.token_id(TokenKind::Label, &kill_label(iter));
+    if let Some(printed) = txs.token {
+        assert_eq!(label, Some(printed), "iteration {iter}: the token");
+    }
+    let g = tx.graph(DEFAULT_GRAPH_ID).unwrap();
+    let mut nodes = BTreeSet::new();
+    tx.scan_prefix(g.nodes, b"", |k, v| {
+        let labels = crate::types::record::decode_labels(v).unwrap();
+        if label.is_some_and(|l| labels.contains(&l)) {
+            nodes.insert(u64::from_be_bytes(k.try_into().unwrap()));
+        }
+        true
+    })
+    .unwrap();
+    drop(tx);
+    let committed = seen.first().map_or(0, |i| i + 1);
+    assert_eq!(
+        nodes.len() as u64,
+        committed,
+        "iteration {iter}: nodes {nodes:?}"
+    );
+    for n in &txs.nodes {
+        assert!(nodes.contains(n), "iteration {iter}: printed node {n} lost");
+    }
+    let ids = e.core().ids.current();
+    let max = |v: &[u64]| v.iter().max().copied();
+    assert!(
+        max(&txs.nodes).is_none_or(|m| ids.next_element_id > m),
+        "{ids:?}"
+    );
+    assert!(
+        max(&txs.graphs).is_none_or(|m| ids.next_catalog_id > m),
+        "{ids:?}"
+    );
+    assert!(txs.token.is_none_or(|m| ids.next_token_id > m), "{ids:?}");
     for &id in drops {
         let st = e.store().tree_status(id).unwrap();
         assert!(
@@ -501,11 +612,12 @@ fn check_transactions(e: &Engine, iter: u64, last: Option<u64>, drops: &[u64]) {
         },
     );
     super::assert_stamps_collected(e, &format!("iteration {iter}"));
-    let r = e.store().check().unwrap();
+    let p = e.check_integrity().unwrap();
+    assert!(p.is_empty(), "iteration {iter} after collection: {p:?}");
+    let stats = e.core().catalog.stats().counts().clone();
     assert!(
-        r.is_ok(),
-        "iteration {iter} after collection: {:?}",
-        r.problems
+        stats == crate::storage::graph::recount(e.core()).unwrap(),
+        "iteration {iter}: the statistics differ from a recount"
     );
 }
 

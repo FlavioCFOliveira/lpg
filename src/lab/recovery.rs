@@ -454,8 +454,15 @@ fn recovery_fixed() {
     match step.as_str() {
         "prepare" => {
             let sink = Arc::new(RecordingSink::default());
-            let e = Engine::create_tuned(&dir, Arc::new(FsStorage), CAP, sink, no_trigger())
-                .expect("create (LPG_TEST_DIR must hold no database)");
+            let e = Engine::create_tuned(
+                &dir,
+                Arc::new(FsStorage),
+                CAP,
+                crate::test_support::OWNER,
+                sink,
+                no_trigger(),
+            )
+            .expect("create (LPG_TEST_DIR must hold no database)");
             let tree = populate(&e, KEYS);
             fill_wal(&e, tree, mib, 0);
             println!(

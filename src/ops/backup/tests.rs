@@ -69,7 +69,14 @@ fn a_backup_under_four_committers_restores_to_one_commit_point() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     let done = Mutex::new(Vec::<Done>::new());
     let stop = AtomicBool::new(false);
@@ -171,7 +178,14 @@ fn the_backup_target_must_be_empty() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     FsStorage.create(&target.path().join("x")).unwrap();
     let before = snapshot(target.path());
     assert!(matches!(
@@ -187,7 +201,14 @@ fn the_backup_target_must_be_empty() {
 #[test]
 fn the_backup_hold_keeps_segments_from_its_start() {
     let dir = test_dirs().remove(0);
-    let e = Engine::create(dir.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        dir.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     // 2 400 keys of 300 bytes: about 96 leaves.
     let keys: Vec<Vec<u8>> = (0..2_400u32).map(|i| i.to_be_bytes().to_vec()).collect();
@@ -287,7 +308,14 @@ fn audit_a_bulk_build_waits_for_a_running_backup() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
     let before = entries(&e, tree);
@@ -369,7 +397,14 @@ fn a_backup_requested_during_a_bulk_build_fails_at_once() {
         tempfile::tempdir_in(dir.path()).unwrap(),
         tempfile::tempdir_in(dir.path()).unwrap(),
     );
-    let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
+    let e = Engine::create(
+        src.path(),
+        no_flush(),
+        CAP,
+        crate::test_support::OWNER,
+        sink(),
+    )
+    .unwrap();
     let tree = e.create_trees(1).unwrap()[0];
     e.commit(&[put(tree, b"a", b"1")], Ids::default()).unwrap();
     let before = entries(&e, tree);

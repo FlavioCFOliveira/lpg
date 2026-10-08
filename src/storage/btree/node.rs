@@ -6,7 +6,7 @@
 //!
 //! | Offset | Size | Field |
 //! |---|---|---|
-//! | 24 | 1 | flags: bit 0 = deleted (TS-05 Underflow) |
+//! | 24 | 1 | flags: bit 0 = deleted (TS-05 Underflow); bit 1 = field-delta keys ([`Keys::Fields`]) |
 //! | 25 | 1 | level: 0 for a leaf, child level + 1 for an inner page |
 //! | 26 | 2 | count: entries of a leaf, keys of an inner page |
 //! | 28 | 2 | restart points of a leaf; 0 in an inner page |
@@ -32,6 +32,23 @@
 //! restart points are `u16`s at the end of the page, restart `i` at
 //! `PAGE_SIZE - 2 * (i + 1)`, so adding a restart point never moves the
 //! others.
+//!
+//! **Field-delta keys** (TS-06: "in the adjacency tree, the other entries
+//! store their key fields as deltas from the previous key, with integers as
+//! varints", M-LAYOUT layout B). A leaf with flag bit 1 holds adjacency
+//! keys ([`ADJ_KEY_LEN`] bytes: node, direction, edge type, neighbour, edge
+//! id, big-endian). Its restart points store their whole key as above
+//! (`shared` 0). Every other entry stores, in the `shared` slot, a code and,
+//! in the `unshared` bytes, the fields that differ from the previous key:
+//! code 0 stores the whole key (a key of another shape); otherwise bit 1 of
+//! the code marks the same node and bit 2 the same direction and edge type,
+//! and the bytes are, as varints, the node delta unless the node is the
+//! same, `edge_type << 1 | direction` unless both are the same, the
+//! neighbour as a delta when node, direction and edge type are the same and
+//! whole otherwise, then the edge id. Layout B packs the same fields behind
+//! one flag byte (`docs/evidence/layout-bench/src/adj.rs:136-177`); here the
+//! `unshared` length and the tag keep the generic entry header, about two
+//! bytes more per entry.
 //!
 //! **Inner page** (slotted). After the high key comes one `u16` slot per
 //! key, in key order, each the offset of a cell; cells are packed from the
@@ -63,6 +80,25 @@ pub(crate) const NONE: u64 = 0;
 /// High-key length meaning "no high key" (+∞).
 const NO_HIGH_KEY: u16 = u16::MAX;
 const DELETED: u8 = 1;
+/// Flag of a leaf whose keys are field-delta adjacency keys.
+const FIELD_KEYS: u8 = 2;
+
+/// Bytes of an adjacency key (TS-06): node (8), direction (1), edge type
+/// (8), neighbour (8), edge identifier (8), each big-endian.
+pub(crate) const ADJ_KEY_LEN: usize = 33;
+
+/// How a leaf stores the keys of its entries that are not restart points
+/// (TS-06 Compressed leaves). Set per tree when the tree is created and
+/// carried by every leaf of it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub(crate) enum Keys {
+    /// Byte-string keys: the prefix shared with the previous key, then the
+    /// rest (every tree but adjacency trees).
+    #[default]
+    Prefix,
+    /// Adjacency keys: fields as varint deltas from the previous key.
+    Fields,
+}
 
 const FLAGS: usize = HEADER_LEN;
 const LEVEL: usize = 25;
@@ -138,11 +174,175 @@ fn get_varint(p: &[u8], at: &mut usize, end: usize) -> Option<u64> {
 }
 
 // ---------------------------------------------------------------------------
+// Field-delta adjacency keys (TS-06; module documentation).
+
+/// The fields of an adjacency key: node, direction, edge type, neighbour,
+/// edge identifier. `None` for a key of another length.
+fn adj_fields(k: &[u8]) -> Option<[u64; 5]> {
+    if k.len() != ADJ_KEY_LEN {
+        return None;
+    }
+    let be = |at: usize| u64::from_be_bytes(k[at..at + 8].try_into().expect("8 bytes"));
+    Some([be(0), u64::from(k[8]), be(9), be(17), be(25)])
+}
+
+/// Writes the adjacency key of fields `f` into `k`, [`ADJ_KEY_LEN`] bytes.
+fn put_adj(k: &mut [u8], f: [u64; 5]) {
+    k[0..8].copy_from_slice(&f[0].to_be_bytes());
+    k[8] = f[1] as u8;
+    k[9..17].copy_from_slice(&f[2].to_be_bytes());
+    k[17..25].copy_from_slice(&f[3].to_be_bytes());
+    k[25..33].copy_from_slice(&f[4].to_be_bytes());
+}
+
+/// The field deltas of one entry: at most four varints of 10 bytes.
+struct Delta {
+    buf: [u8; 40],
+    len: usize,
+}
+
+impl Delta {
+    fn new() -> Delta {
+        Delta {
+            buf: [0; 40],
+            len: 0,
+        }
+    }
+
+    fn push(&mut self, mut v: u64) {
+        while v >= 0x80 {
+            self.buf[self.len] = (v as u8) | 0x80;
+            self.len += 1;
+            v >>= 7;
+        }
+        self.buf[self.len] = v as u8;
+        self.len += 1;
+    }
+
+    fn bytes(&self) -> &[u8] {
+        &self.buf[..self.len]
+    }
+}
+
+/// Encodes adjacency key `key` as field deltas from `prev` into `d` and
+/// returns its code (module documentation); `None` when either key has
+/// another shape, `key` is not above `prev`, the direction is not 0 or 1
+/// or the edge type is not below 2⁶³, which the code-0 form then stores.
+fn field_delta(prev: &[u8], key: &[u8], d: &mut Delta) -> Option<u64> {
+    let (a, b) = (adj_fields(prev)?, adj_fields(key)?);
+    if key <= prev || b[1] > 1 || b[2] >= 1 << 63 {
+        return None;
+    }
+    let same_node = a[0] == b[0];
+    let same_dt = a[1] == b[1] && a[2] == b[2];
+    d.len = 0;
+    if !same_node {
+        d.push(b[0] - a[0]);
+    }
+    if !same_dt {
+        d.push(b[2] << 1 | b[1]);
+    }
+    if same_node && same_dt {
+        d.push(b[3] - a[3]);
+    } else {
+        d.push(b[3]);
+    }
+    d.push(b[4]);
+    Some(1 | u64::from(same_node) << 1 | u64::from(same_dt) << 2)
+}
+
+/// Decodes the fields of an entry with code `code` and field deltas
+/// `bytes` after the key `prev`. `None` if malformed.
+fn field_decode(prev: &[u8], code: usize, bytes: &[u8]) -> Option<[u64; 5]> {
+    if code & 1 == 0 || code > 7 {
+        return None;
+    }
+    let a = adj_fields(prev)?;
+    let (mut at, end) = (0, bytes.len());
+    let node = if code & 2 != 0 {
+        a[0]
+    } else {
+        a[0].checked_add(get_varint(bytes, &mut at, end)?)?
+    };
+    let (dir, ty) = if code & 4 != 0 {
+        (a[1], a[2])
+    } else {
+        let v = get_varint(bytes, &mut at, end)?;
+        (v & 1, v >> 1)
+    };
+    let nbr = if code & 6 == 6 {
+        a[3].checked_add(get_varint(bytes, &mut at, end)?)?
+    } else {
+        get_varint(bytes, &mut at, end)?
+    };
+    let eid = get_varint(bytes, &mut at, end)?;
+    (at == end).then_some([node, dir, ty, nbr, eid])
+}
+
+/// Rebuilds in `key`, which holds the previous key (empty before a restart
+/// point), the key of entry `e` of leaf `p`, which stores `keys`. `None` if
+/// malformed.
+fn rebuild(keys: Keys, key: &mut Vec<u8>, p: &[u8], e: &RawEntry) -> Option<()> {
+    let stored = &p[e.key.clone()];
+    match keys {
+        Keys::Prefix => {
+            if e.shared > key.len() {
+                return None;
+            }
+            key.truncate(e.shared);
+            key.extend_from_slice(stored);
+        }
+        Keys::Fields if e.shared == 0 => {
+            key.clear();
+            key.extend_from_slice(stored);
+        }
+        Keys::Fields => {
+            let f = field_decode(key, e.shared, stored)?;
+            key.resize(ADJ_KEY_LEN, 0);
+            put_adj(key, f);
+        }
+    }
+    Some(())
+}
+
+/// [`rebuild`] into `out` from the previous key `prev`.
+fn rebuild_into(keys: Keys, prev: &[u8], p: &[u8], e: &RawEntry, out: &mut Vec<u8>) -> Option<()> {
+    out.clear();
+    match keys {
+        Keys::Prefix => {
+            out.extend_from_slice(prev.get(..e.shared)?);
+            out.extend_from_slice(&p[e.key.clone()]);
+            Some(())
+        }
+        Keys::Fields => {
+            out.extend_from_slice(prev);
+            rebuild(keys, out, p, e)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Fields common to leaves and inner pages.
 
 /// Whether the page is marked deleted (TS-05 Underflow).
 pub(crate) fn is_deleted(p: &[u8]) -> bool {
     p[FLAGS] & DELETED != 0
+}
+
+/// How the leaf `p` stores its keys.
+pub(crate) fn keys(p: &[u8]) -> Keys {
+    if p[FLAGS] & FIELD_KEYS != 0 {
+        Keys::Fields
+    } else {
+        Keys::Prefix
+    }
+}
+
+fn set_keys(p: &mut [u8], keys: Keys) {
+    match keys {
+        Keys::Prefix => p[FLAGS] &= !FIELD_KEYS,
+        Keys::Fields => p[FLAGS] |= FIELD_KEYS,
+    }
 }
 
 /// Level: 0 for a leaf.
@@ -230,9 +430,11 @@ fn init_tree_page(
     }
 }
 
-/// Writes an empty root leaf of `tree`: no high key, no sibling.
-pub(crate) fn init_empty_leaf(p: &mut [u8], tree: u64) {
+/// Writes an empty root leaf of `tree`, whose keys are stored as `keys`:
+/// no high key, no sibling.
+pub(crate) fn init_empty_leaf(p: &mut [u8], tree: u64, keys: Keys) {
     let start = init_tree_page(p, PageType::Leaf, tree, 0, None, NONE);
+    set_keys(p, keys);
     put_u16(p, DATA_END, start as u16);
 }
 
@@ -406,7 +608,9 @@ fn raw_entry(p: &[u8], at: usize, end: usize) -> Option<RawEntry> {
     if tag & TAG_DELETED != 0 {
         stamps.deleted = get_varint(p, &mut o, end).filter(|&t| t != 0)?;
     }
-    if shared + unshared > MAX_KEY || unshared > end - o {
+    // `checked_add`: a checksum-valid but malformed leaf can hold any
+    // varint here, and an overflow must decode as malformed, not panic.
+    if shared.checked_add(unshared)? > MAX_KEY || unshared > end - o {
         return None;
     }
     let key = o..o + unshared;
@@ -484,15 +688,12 @@ pub(crate) fn leaf_get<'a>(p: &'a [u8], key: &[u8], buf: &mut Vec<u8>) -> Option
     }
     let g = find_group(p, &v, key)?;
     let mut at = v.restart(p, g)?;
+    let mode = keys(p);
     buf.clear();
     let last = (g + 1) * RESTART_INTERVAL;
     for _ in g * RESTART_INTERVAL..last.min(v.count) {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > buf.len() {
-            return None;
-        }
-        buf.truncate(e.shared);
-        buf.extend_from_slice(&p[e.key]);
+        rebuild(mode, buf, p, &e)?;
         match buf.as_slice().cmp(key) {
             Ordering::Less => at = e.next,
             Ordering::Equal => return Some(Found::Hit(value_of(p, e.value), e.stamps)),
@@ -517,14 +718,11 @@ pub(crate) fn leaf_for_each_from<'a>(
     }
     let g = find_group(p, &v, from)?;
     let mut at = v.restart(p, g)?;
+    let mode = keys(p);
     buf.clear();
     for _ in g * RESTART_INTERVAL..v.count {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > buf.len() {
-            return None;
-        }
-        buf.truncate(e.shared);
-        buf.extend_from_slice(&p[e.key]);
+        rebuild(mode, buf, p, &e)?;
         at = e.next;
         if buf.as_slice() >= from && !f(buf, value_of(p, e.value), e.stamps) {
             return Some(());
@@ -544,6 +742,9 @@ pub(crate) struct Entries {
     items: Vec<Item>,
     /// Scratch for key reconstruction while decoding.
     key: Vec<u8>,
+    /// How the leaf these entries are written to stores its keys: the
+    /// decoded leaf's, else [`Keys::Prefix`].
+    keys: Keys,
 }
 
 #[derive(Debug, Clone)]
@@ -685,14 +886,30 @@ impl Entries {
         (i, i < self.items.len() && self.key(i) == key)
     }
 
+    /// Sets how the leaf these entries are written to stores its keys.
+    pub(crate) fn set_keys(&mut self, keys: Keys) {
+        self.keys = keys;
+    }
+
     /// Bytes entry `i` takes when encoded after entry `i - 1`, as a
     /// restart point if `restart`.
     pub(crate) fn encoded_len(&self, i: usize, restart: bool) -> usize {
         let key = self.key(i);
-        let shared = if restart { 0 } else { self.shared(i) };
-        varint_len(shared as u64)
-            + varint_len((key.len() - shared) as u64)
-            + (key.len() - shared)
+        let mut d = Delta::new();
+        let (slot, stored) = match (self.keys, restart) {
+            (_, true) => (0, key.len()),
+            (Keys::Prefix, false) => {
+                let shared = self.shared(i);
+                (shared as u64, key.len() - shared)
+            }
+            (Keys::Fields, false) => match field_delta(self.key(i - 1), key, &mut d) {
+                Some(code) => (code, d.len),
+                None => (0, key.len()),
+            },
+        };
+        varint_len(slot)
+            + varint_len(stored as u64)
+            + stored
             + self.value(i).encoded_len()
             + self.stamps(i).encoded_len()
     }
@@ -742,6 +959,8 @@ pub(crate) fn leaf_decode(p: &[u8], first_group: usize, out: &mut Entries) -> Op
 /// ([`Stamps::frozen`]); 0 drops none.
 fn leaf_decode_frozen(p: &[u8], first_group: usize, out: &mut Entries, horizon: u64) -> Option<()> {
     out.clear();
+    let mode = keys(p);
+    out.keys = mode;
     let v = leaf_view(p)?;
     if v.count == 0 {
         return Some(());
@@ -751,15 +970,18 @@ fn leaf_decode_frozen(p: &[u8], first_group: usize, out: &mut Entries, horizon: 
     key.clear();
     let mut ok = true;
     for _ in first_group * RESTART_INTERVAL..v.count {
-        let Some(e) = raw_entry(p, at, v.end).filter(|e| e.shared <= key.len()) else {
+        let Some(e) = raw_entry(p, at, v.end) else {
             ok = false;
             break;
         };
-        key.truncate(e.shared);
-        key.extend_from_slice(&p[e.key]);
-        // A restart point stores no shared length: it stays unknown.
+        if rebuild(mode, &mut key, p, &e).is_none() {
+            ok = false;
+            break;
+        }
+        // A restart point stores no shared length, and a field-delta entry
+        // none at all: it stays unknown.
         let stamps = e.stamps.frozen(horizon);
-        if out.len().is_multiple_of(RESTART_INTERVAL) {
+        if out.len().is_multiple_of(RESTART_INTERVAL) || mode == Keys::Fields {
             out.push_stamped(&key, value_of(p, e.value), stamps);
         } else {
             out.push_shared(&key, value_of(p, e.value), stamps, e.shared);
@@ -782,11 +1004,11 @@ pub(crate) struct Encoder {
     prev: Vec<u8>,
 }
 
-/// Appends an entry with key `key`, value `value` and `stamps`, sharing
-/// `shared` bytes with the previous key.
-fn encode_parts(out: &mut Vec<u8>, key: &[u8], shared: usize, value: Value<'_>, stamps: Stamps) {
-    put_varint(out, shared as u64);
-    put_varint(out, (key.len() - shared) as u64);
+/// Appends an entry whose `shared` slot is `slot` and whose stored key
+/// bytes are `stored`, with value `value` and `stamps`.
+fn encode_parts(out: &mut Vec<u8>, slot: u64, stored: &[u8], value: Value<'_>, stamps: Stamps) {
+    put_varint(out, slot);
+    put_varint(out, stored.len() as u64);
     let tag = match value {
         Value::Inline(v) => (v.len() as u64) << 3,
         Value::Overflow { len, .. } => (len << 3) | TAG_OVERFLOW,
@@ -798,17 +1020,54 @@ fn encode_parts(out: &mut Vec<u8>, key: &[u8], shared: usize, value: Value<'_>, 
     if stamps.deleted != 0 {
         put_varint(out, stamps.deleted);
     }
-    out.extend_from_slice(&key[shared..]);
+    out.extend_from_slice(stored);
     match value {
         Value::Inline(v) => out.extend_from_slice(v),
         Value::Overflow { first, .. } => out.extend_from_slice(&first.to_le_bytes()),
     }
 }
 
+/// Appends an entry with key `key` after the key `prev` (`None` for a
+/// restart point) of a leaf that stores `keys`. `known` is the length of
+/// the prefix `key` shares with `prev`, when the caller knows it
+/// ([`Keys::Prefix`] only).
+fn encode_key_entry(
+    out: &mut Vec<u8>,
+    keys: Keys,
+    prev: Option<&[u8]>,
+    key: &[u8],
+    known: Option<usize>,
+    value: Value<'_>,
+    stamps: Stamps,
+) {
+    let mut d = Delta::new();
+    let (slot, stored): (u64, &[u8]) = match (keys, prev) {
+        (_, None) => (0, key),
+        (Keys::Prefix, Some(prev)) => {
+            let shared = known.unwrap_or_else(|| common_prefix(prev, key));
+            (shared as u64, &key[shared..])
+        }
+        (Keys::Fields, Some(prev)) => match field_delta(prev, key, &mut d) {
+            Some(code) => (code, d.bytes()),
+            None => (0, key),
+        },
+    };
+    encode_parts(out, slot, stored, value, stamps);
+}
+
 /// Appends entry `i` of `es` to `out`.
 fn encode_entry(out: &mut Vec<u8>, es: &Entries, i: usize, restart: bool) {
-    let shared = if restart { 0 } else { es.shared(i) };
-    encode_parts(out, es.key(i), shared, es.value(i), es.stamps(i));
+    let prev = (!restart).then(|| es.key(i - 1));
+    let known = (!restart && es.keys == Keys::Prefix).then(|| es.shared(i));
+    encode_key_entry(
+        out,
+        es.keys,
+        prev,
+        es.key(i),
+        known,
+        es.value(i),
+        es.stamps(i),
+    );
 }
 
 /// Writes `bytes` as the leaf's entry stream from offset `base` to its end,
@@ -893,6 +1152,7 @@ pub(crate) fn write_leaf(
 ) -> bool {
     debug_assert_eq!(at.level, 0);
     init_tree_page(p, PageType::Leaf, at.tree, 0, at.high_key, at.right);
+    set_keys(p, es.keys);
     write_entries(p, 0, es, range, enc)
 }
 
@@ -951,6 +1211,7 @@ pub(crate) fn leaf_apply(
     enc: &mut Encoder,
 ) -> Option<Applied> {
     let v = leaf_view(p)?;
+    let mode = keys(p);
     let (g, base) = if v.count == 0 {
         (0, v.start)
     } else {
@@ -974,12 +1235,7 @@ pub(crate) fn leaf_apply(
     let mut found = None;
     while k < v.count {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > cur.len() {
-            return None;
-        }
-        next.clear();
-        next.extend_from_slice(&cur[..e.shared]);
-        next.extend_from_slice(&p[e.key.clone()]);
+        rebuild_into(mode, cur, p, &e, next)?;
         if next.as_slice() >= key {
             found = Some(e);
             break;
@@ -1003,8 +1259,8 @@ pub(crate) fn leaf_apply(
             if restart(i) {
                 offsets.push(at_i as u16);
             }
-            let shared = if restart(i) { 0 } else { e.shared };
-            encode_parts(bytes, next, shared, value, stamps);
+            let pred = (!restart(i)).then_some(cur.as_slice());
+            encode_key_entry(bytes, mode, pred, next, Some(e.shared), value, stamps);
             std::mem::swap(cur, next);
             (up, down, pred_changed) = (false, false, false);
             (k, at, run) = (i + 1, e.next, e.next);
@@ -1014,12 +1270,20 @@ pub(crate) fn leaf_apply(
             if restart(i) {
                 offsets.push(at_i as u16);
             }
-            let shared = if restart(i) { 0 } else { e.shared };
             let stamps = Stamps {
                 deleted,
                 ..e.stamps
             };
-            encode_parts(bytes, next, shared, value_of(p, e.value), stamps);
+            let pred = (!restart(i)).then_some(cur.as_slice());
+            encode_key_entry(
+                bytes,
+                mode,
+                pred,
+                next,
+                Some(e.shared),
+                value_of(p, e.value),
+                stamps,
+            );
             std::mem::swap(cur, next);
             (up, down, pred_changed) = (false, false, false);
             (k, at, run) = (i + 1, e.next, e.next);
@@ -1029,12 +1293,8 @@ pub(crate) fn leaf_apply(
             if restart(i) {
                 offsets.push(at_i as u16);
             }
-            let shared = if restart(i) {
-                0
-            } else {
-                common_prefix(cur, key)
-            };
-            encode_parts(bytes, key, shared, value, stamps);
+            let pred = (!restart(i)).then_some(cur.as_slice());
+            encode_key_entry(bytes, mode, pred, key, None, value, stamps);
             prev.clear();
             prev.extend_from_slice(key);
             (up, down, pred_changed) = (true, false, true);
@@ -1054,9 +1314,6 @@ pub(crate) fn leaf_apply(
     // `cur` holds the key of old entry `k - 1`.
     while k < v.count {
         let e = raw_entry(p, at, v.end)?;
-        if e.shared > cur.len() {
-            return None;
-        }
         let nk = if up {
             k + 1
         } else if down {
@@ -1069,22 +1326,16 @@ pub(crate) fn leaf_apply(
         }
         if restart(nk) == restart(k) && (restart(nk) || !pred_changed) {
             // Same predecessor (or none) and restart status: same bytes.
-            cur.truncate(e.shared);
-            cur.extend_from_slice(&p[e.key]);
+            rebuild(mode, cur, p, &e)?;
         } else {
             bytes.extend_from_slice(&p[run..at]);
             if !restart(nk) && !pred_changed {
                 prev.clear();
                 prev.extend_from_slice(cur);
             }
-            cur.truncate(e.shared);
-            cur.extend_from_slice(&p[e.key.clone()]);
-            let shared = if restart(nk) {
-                0
-            } else {
-                common_prefix(prev, cur)
-            };
-            encode_parts(bytes, cur, shared, value_of(p, e.value), e.stamps);
+            rebuild(mode, cur, p, &e)?;
+            let pred = (!restart(nk)).then_some(prev.as_slice());
+            encode_key_entry(bytes, mode, pred, cur, None, value_of(p, e.value), e.stamps);
             run = e.next;
         }
         pred_changed = false;
@@ -1552,6 +1803,7 @@ pub(crate) fn leaf_entries(
     mut f: impl FnMut(usize, LeafEntry<'_>),
 ) -> Result<LeafView, String> {
     let v = leaf_view(p).ok_or("malformed leaf header")?;
+    let mode = keys(p);
     let mut at = v.start;
     let mut key = Vec::new();
     for i in 0..v.count {
@@ -1560,11 +1812,9 @@ pub(crate) fn leaf_entries(
             return Err(format!("restart point {} is not at entry {i}", i / 16));
         }
         let e = raw_entry(p, at, v.end).ok_or_else(|| format!("entry {i} is malformed"))?;
-        if (restart && e.shared != 0) || e.shared > key.len() {
+        if (restart && e.shared != 0) || rebuild(mode, &mut key, p, &e).is_none() {
             return Err(format!("entry {i} has a bad shared length {}", e.shared));
         }
-        key.truncate(e.shared);
-        key.extend_from_slice(&p[e.key.clone()]);
         f(
             i,
             LeafEntry {
@@ -1985,5 +2235,314 @@ mod tests {
         // Nine later boundaries: it does not fit.
         let (r, _) = apply_both(&p, &keys[1], Change::Delete);
         assert_eq!(r, Some(Applied::Full));
+    }
+
+    /// The adjacency key of fields `(node, direction, type, neighbour,
+    /// edge)` (TS-06).
+    fn adj(f: [u64; 5]) -> Vec<u8> {
+        let mut k = vec![0u8; ADJ_KEY_LEN];
+        put_adj(&mut k, f);
+        k
+    }
+
+    /// A seeded set of adjacency keys, sorted: few nodes with many edges,
+    /// both directions, small and very large edge types, neighbours and
+    /// edge identifiers over the whole `u64` range; with `odd`, also keys
+    /// that the field-delta form cannot hold (another length, direction 2,
+    /// an edge type from 2⁶³), which are stored whole (code 0); with
+    /// `narrow`, every key has direction 0 and type 1, so the first key of
+    /// a node repeats the direction and type of the key before it (code 5).
+    fn adj_set(rng: &mut rand::rngs::StdRng, n: usize, odd: bool, narrow: bool) -> Vec<Vec<u8>> {
+        use rand::RngExt;
+        let mut set = std::collections::BTreeSet::new();
+        let nodes: Vec<u64> = (0..rng.random_range(2..6))
+            .map(|_| match rng.random_range(0..3) {
+                0 => rng.random_range(0..100),
+                1 => rng.random(),
+                _ => u64::MAX - rng.random_range(0..3),
+            })
+            .collect();
+        while set.len() < n {
+            let node = nodes[rng.random_range(0..nodes.len())];
+            let ty = match rng.random_range(0..4) {
+                0 => rng.random_range(0..4),
+                1 => rng.random_range(0..1 << 20),
+                2 => (1 << 63) - 1,
+                _ => rng.random_range(0..1 << 63),
+            };
+            let big = |rng: &mut rand::rngs::StdRng| match rng.random_range(0..3) {
+                0 => rng.random_range(0..1000),
+                1 => rng.random(),
+                _ => u64::MAX,
+            };
+            let k = match rng.random_range(0..40) {
+                0 if odd => {
+                    let mut k = adj([node, 0, ty, big(rng), big(rng)]);
+                    k[8] = 2;
+                    k
+                }
+                1 if odd => adj([node, 1, (1 << 63) + rng.random_range(0..9), 5, 6]),
+                2 if odd => {
+                    let mut k = node.to_be_bytes().to_vec();
+                    k.extend_from_slice(&[7; 5]);
+                    k
+                }
+                _ if narrow => adj([node, 0, 1, big(rng), big(rng)]),
+                _ => adj([node, rng.random_range(0..2), ty, big(rng), big(rng)]),
+            };
+            set.insert(k);
+        }
+        set.into_iter().collect()
+    }
+
+    /// TS-06 field-delta leaves (rmp #32): for seeded key sets, a leaf of
+    /// adjacency keys written with [`Keys::Fields`] decodes to exactly the
+    /// keys encoded, through every reader (whole-leaf iteration, point
+    /// lookups, a scan from each key, the decoder of rewrites).
+    /// Non-vacuity: entries were stored as field deltas with each code, and
+    /// the odd keys whole. Space is not asserted: it is Sprint 6's
+    /// measurement (a full-range `u64` takes a 10-byte varint).
+    #[test]
+    fn field_delta_leaves_decode_to_the_keys_encoded() {
+        use rand::SeedableRng;
+        let seed = crate::test_support::seed();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut codes = [0usize; 8];
+        for trial in 0..300 {
+            let odd = trial % 3 == 0;
+            let keys = adj_set(&mut rng, 1 + trial % 150, odd, trial % 4 == 1);
+            let leaf = |mode: Keys| {
+                let mut es = Entries::default();
+                es.set_keys(mode);
+                for k in &keys {
+                    es.push(k, Value::Inline(&[]));
+                }
+                let mut p = vec![0u8; PAGE_SIZE];
+                let at = Place {
+                    tree: 9,
+                    level: 0,
+                    high_key: None,
+                    right: NONE,
+                };
+                assert!(write_leaf(
+                    &mut p,
+                    at,
+                    &es,
+                    0..es.len(),
+                    &mut Encoder::default()
+                ));
+                p
+            };
+            let p = leaf(Keys::Fields);
+            assert_eq!(super::keys(&p), Keys::Fields);
+            let mut got = Vec::new();
+            let v = leaf_entries(&p, |i, e| {
+                assert_eq!(e.restart, i % RESTART_INTERVAL == 0);
+                got.push(e.key.to_vec());
+            })
+            .unwrap();
+            assert_eq!(got, keys, "seed {seed} trial {trial}");
+            // The stored code of each entry.
+            let mut at = v.start;
+            for i in 0..v.count {
+                let e = raw_entry(&p, at, v.end).unwrap();
+                if i % RESTART_INTERVAL != 0 {
+                    codes[e.shared] += 1;
+                }
+                at = e.next;
+            }
+            let mut buf = Vec::new();
+            for k in &keys {
+                assert!(matches!(
+                    leaf_get(&p, k, &mut buf),
+                    Some(Found::Hit(Value::Inline(&[]), Stamps::NONE))
+                ));
+                let mut from = Vec::new();
+                leaf_for_each_from(&p, k, &mut buf, |key, _, _| {
+                    from.push(key.to_vec());
+                    true
+                })
+                .unwrap();
+                let i = keys.iter().position(|x| x == k).unwrap();
+                assert_eq!(from, keys[i..], "seed {seed} trial {trial}");
+            }
+            let mut es = Entries::default();
+            leaf_decode(&p, 0, &mut es).unwrap();
+            assert_eq!(es.keys, Keys::Fields);
+            let decoded: Vec<Vec<u8>> = (0..es.len()).map(|i| es.key(i).to_vec()).collect();
+            assert_eq!(decoded, keys);
+            // The prefix form holds the same keys.
+            let mut got = Vec::new();
+            leaf_entries(&leaf(Keys::Prefix), |_, e| got.push(e.key.to_vec())).unwrap();
+            assert_eq!(got, keys);
+        }
+        for (code, n) in codes.iter().enumerate() {
+            if code % 2 == 1 || code == 0 {
+                assert!(*n > 0, "code {code} never stored: {codes:?}");
+            }
+        }
+    }
+
+    /// A leaf whose page checksum is valid can still hold any bytes: an
+    /// entry header whose shared and unshared lengths overflow when added
+    /// decodes as malformed, never panics, in both key forms. Seeded
+    /// leaves get such a header at a random entry; each decoder then
+    /// reports a malformed leaf or returns, and the header itself decodes
+    /// to `None` (rmp #32 audit: `raw_entry` added them unchecked).
+    #[test]
+    fn an_entry_header_whose_lengths_overflow_decodes_as_malformed() {
+        use rand::{RngExt, SeedableRng};
+        let seed = crate::test_support::seed();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut malformed = 0;
+        for trial in 0..200 {
+            let mode = if trial % 2 == 0 {
+                Keys::Fields
+            } else {
+                Keys::Prefix
+            };
+            let keys = adj_set(&mut rng, 2 + trial % 60, trial % 3 == 0, false);
+            let mut es = Entries::default();
+            es.set_keys(mode);
+            for k in &keys {
+                es.push(k, Value::Inline(b"v"));
+            }
+            let mut p = vec![0u8; PAGE_SIZE];
+            let at = Place {
+                tree: 9,
+                level: 0,
+                high_key: None,
+                right: NONE,
+            };
+            assert!(write_leaf(
+                &mut p,
+                at,
+                &es,
+                0..es.len(),
+                &mut Encoder::default()
+            ));
+            let v = leaf_view(&p).unwrap();
+            let mut starts = Vec::new();
+            let mut o = v.start;
+            for _ in 0..v.count {
+                starts.push(o);
+                o = raw_entry(&p, o, v.end).unwrap().next;
+            }
+            let o = starts[rng.random_range(0..starts.len())];
+            // Lengths whose sum exceeds `usize::MAX`.
+            let shared = u64::MAX - rng.random_range(0..1 << 20);
+            let unshared = rng.random_range(1 << 21..=u64::MAX);
+            let mut header = Vec::new();
+            put_varint(&mut header, shared);
+            put_varint(&mut header, unshared);
+            header.push(0);
+            if o + header.len() > v.end {
+                continue;
+            }
+            p[o..o + header.len()].copy_from_slice(&header);
+            assert!(
+                raw_entry(&p, o, v.end).is_none(),
+                "seed {seed} trial {trial}"
+            );
+            let mut buf = Vec::new();
+            let mut none = leaf_entries(&p, |_, _| {}).is_err();
+            none |= leaf_decode(&p, 0, &mut Entries::default()).is_none();
+            for k in [&keys[0], &keys[keys.len() - 1]] {
+                none |= leaf_get(&p, k, &mut buf).is_none();
+                none |= leaf_for_each_from(&p, k, &mut buf, |_, _, _| true).is_none();
+            }
+            malformed += usize::from(none);
+        }
+        assert!(
+            malformed > 150,
+            "seed {seed}: {malformed} leaves reported malformed"
+        );
+    }
+
+    /// [`leaf_apply`] writes the same bytes as decoding and re-encoding the
+    /// tail in field-delta leaves too, and the keys stay the model's:
+    /// random puts, deletes and delete stamps of seeded adjacency keys,
+    /// some of a shape stored whole, until leaves are full.
+    #[test]
+    fn apply_matches_the_full_reencode_in_field_delta_leaves() {
+        use rand::rngs::StdRng;
+        use rand::{RngExt, SeedableRng};
+        let seed = crate::test_support::seed();
+        let mut rng = StdRng::seed_from_u64(seed);
+        let (mut full, mut shifted) = (0, 0);
+        // 3 trials: over seeds 1-5 they give 232-415 puts that do not fit
+        // and 2 623-2 792 moved boundaries (60 trials gave about 20 times
+        // as many), above the thresholds asserted below.
+        for trial in 0..3 {
+            let mut p = vec![0u8; PAGE_SIZE];
+            let mut es = Entries::default();
+            es.set_keys(Keys::Fields);
+            let at = Place {
+                tree: 9,
+                level: 0,
+                high_key: None,
+                right: NONE,
+            };
+            assert!(write_leaf(&mut p, at, &es, 0..0, &mut Encoder::default()));
+            let mut model = std::collections::BTreeMap::<Vec<u8>, Stamps>::new();
+            for _ in 0..1500 {
+                let mut key = adj([
+                    rng.random_range(0..4),
+                    rng.random_range(0..2),
+                    [1, 2, 1 << 40][rng.random_range(0..3)],
+                    rng.random_range(0..60),
+                    rng.random_range(0..2000),
+                ]);
+                if rng.random_range(0..50) == 0 {
+                    key[8] = 2;
+                }
+                let kind = if model.is_empty() {
+                    0
+                } else {
+                    [0, 0, 0, 1, 2][rng.random_range(0..5)]
+                };
+                if kind > 0 && rng.random_range(0..4) > 0 {
+                    let n = rng.random_range(0..model.len());
+                    key = model.keys().nth(n).unwrap().clone();
+                }
+                let stamps = Stamps {
+                    created: rng.random_range(0..1 << 30),
+                    deleted: 0,
+                };
+                let restamp = rng.random_range(1..1 << 30);
+                let change = match kind {
+                    0 => Change::Put(Value::Inline(&[]), stamps),
+                    1 => Change::Delete,
+                    _ => Change::Restamp(restamp),
+                };
+                let pos = model.range::<Vec<u8>, _>(..&key).count();
+                let (r, after) = apply_both(&p, &key, change);
+                match (r, kind) {
+                    (Some(Applied::Done(_)), 0) => {
+                        if model.insert(key, stamps).is_none() {
+                            shifted += usize::from(model.len() - pos > RESTART_INTERVAL);
+                        }
+                    }
+                    (Some(Applied::Done(_)), 1) => {
+                        model.remove(&key);
+                        shifted += usize::from(model.len() - pos >= RESTART_INTERVAL);
+                    }
+                    (Some(Applied::Done(_)), _) => {
+                        model.get_mut(&key).unwrap().deleted = restamp;
+                    }
+                    (Some(Applied::NotFound), k) => assert!(k > 0 && !model.contains_key(&key)),
+                    // A put that does not fit, or a delete or delete stamp
+                    // that grows the leaf (moved restart points).
+                    (Some(Applied::Full), _) => full += 1,
+                    other => panic!("seed {seed} trial {trial}: {other:?}"),
+                }
+                p = after;
+            }
+            let mut got = Vec::new();
+            leaf_entries(&p, |_, e| got.push((e.key.to_vec(), e.stamps))).unwrap();
+            assert_eq!(got, model.into_iter().collect::<Vec<_>>(), "seed {seed}");
+        }
+        assert!(full > 20, "{full} puts did not fit");
+        assert!(shifted > 1000, "{shifted} changes moved a boundary");
     }
 }
