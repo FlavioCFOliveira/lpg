@@ -1,7 +1,7 @@
 ---
 title: Glossary
 status: draft
-last-reviewed: 2026-10-07
+last-reviewed: 2026-10-08
 related:
   - README.md
 ---
@@ -21,7 +21,7 @@ related:
 - **Database**: one full GQL catalog with its data, stored at one location ([FR-DB-001](functional-requirements.md#database-lifecycle)).
 - **Database handle**: the Rust value through which the application uses one open database ([FR-DB-002](functional-requirements.md#database-lifecycle)).
 - **Deadlock**: a cycle of transactions in which each waits for a lock that the next holds.
-- **Default schema, default graph**: the schema and graph that a new database's catalog contains, used as a session's home schema and home graph when none is supplied ([FR-DB-005](functional-requirements.md#database-lifecycle)).
+- **Default schema, default graph**: the schema `public` and the graph `lpg` in it, at catalog path `/public/lpg`, that a new database's catalog contains, used as a session's home schema and home graph when none is supplied ([FR-DB-005](functional-requirements.md#database-lifecycle)).
 - **Element identifier**: the identifier of a node or edge. It is stable for the element's lifetime and never reused.
 - **Fast initial load**: the import mode that loads data into an empty graph ([FR-IMP-002](functional-requirements.md#import-and-export)).
 - **Feature identifier**: a code, such as GG01, that ISO/IEC 39075 assigns to an optional GQL feature; the ISO features insert lists them ([S45](README.md#sources)).

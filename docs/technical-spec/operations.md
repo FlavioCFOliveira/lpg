@@ -1,7 +1,7 @@
 ---
 title: Operations
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-08
 related:
   - storage.md
   - transactions-and-recovery.md
@@ -21,8 +21,13 @@ related:
       3. Flush the WAL, take `stop` and the length of `data-<g>`, and copy the WAL from `start` to `stop`.
       4. Release WAL recycling.
       5. Write the manifest, as below.
-    - Every page written during step 2 was changed after `start` through a logged commit, so its full image is in the copied WAL. A fast initial load, whose pages bypass the WAL, cannot run during a backup: a load requested while a backup runs waits until the backup ends.
-    - **Exclusion.** A backup and the bulk build of a fast initial load (fast-load steps 3, 5 and 6, below) exclude each other through one latch (`Core::backup_or_load`, `src/storage/engine.rs:212`). The backup tries the latch without waiting (`Core::try_backup_or_load`, `src/storage/engine.rs:257-263`): if a build holds it, the backup fails with `Error::LoadRunning` before it writes anything to the target (`src/ops/backup.rs:235-237`, `src/storage/error.rs:56`); otherwise it holds the latch from step 1 to its end. The build waits for the latch while a backup holds it (`Core::backup_or_load`, `src/storage/engine.rs:239-251`), takes it before the commit latch, and holds it until its tree is installed or dropped (`src/storage/btree/bulk.rs:482`).
+    - Every page written during step 2 was either changed after `start` through a logged commit, so its full image is in the copied WAL, or written by a bulk build, outside the WAL, into a page its build record owns ([TS-05](storage.md#ts-05-files-and-pages) Build pages).
+      - A fast initial load cannot run during a backup: a load requested while a backup runs waits until the backup ends.
+      - Any other build (an index, or a constraint's owned index) runs during a backup, but no commit that installs its tree or releases its pages falls between `start` and `stop` (Exclusion, below). The restored database therefore holds either the installed tree, whose pages were synced before `start`, or the build record, whose pages its open releases; an index left POPULATING is built again ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) step 7).
+    - **Exclusion.** Two latches, each taken before the commit latch:
+      - **Fast initial load** (`Core::backup_or_load`, `src/storage/engine.rs:208-213`). A backup and the bulk build of a fast initial load (fast-load steps 3, 5 and 6, below) exclude each other. The backup tries the latch without waiting (`Core::try_backup_or_load`, `engine.rs:269-278`): if a build holds it, the backup fails with `Error::LoadRunning` before it writes anything to the target (`src/ops/backup.rs:258-261`, `src/storage/error.rs:56`); otherwise it holds the latch from step 1 to its end. The build waits for the latch while a backup holds it (`Core::backup_or_load`, `engine.rs:250-267`), takes it before its first run of pages ([TS-05](storage.md#ts-05-files-and-pages) Build pages), and holds it until its tree is installed or dropped (`src/storage/btree/bulk.rs:72-78, 684-688`). Other builds do not take it (`Engine::bulk_build_pages_as`, `bulk.rs:690-705`).
+      - **Install and release steps** (`Core::backup_or_install`, a read-write latch, `engine.rs:218-225`). A backup holds it exclusively from before step 1 to its end (`backup.rs:262-263`). Each install commit of a build (`bulk.rs:643-653`; for a constraint's owned index, the creating transaction's commit, `src/tx/commit.rs:352-354`) and each release step, from its page writes to its commit (`bulk.rs:745-747`), holds it shared (`Core::install_step`, `engine.rs:280-296`). A build's scan, sort, runs and page writes take neither latch. A backup therefore waits only for the steps in progress, and a step waits for a running backup; a constraint's commit that arrives during a backup waits for its end, a cost in liveness only.
+      - **Bounded wait.** `std`'s futex-based read-write lock admits no new reader while a writer waits (`is_read_lockable`, Rust 1.99.0 `library/std/src/sys/sync/rwlock/futex.rs:47-54`), so a backup waits for at most one step of each running build. That implementation serves Linux, Windows other than `win7`, and the other targets listed in `library/std/src/sys/sync/rwlock/mod.rs:2-13`. For other targets, macOS among them, the bound is not confirmed.
     - **Target.** A location the caller provides. It must exist, because the storage trait cannot create a directory ([TS-03](interfaces.md#ts-03-storage-abstraction)), and it must be empty: if `list` returns any entry, the backup fails before writing. Files of an earlier backup can therefore never mix with this one.
     - **Artefact.** Flat files directly in the target, written through the storage trait, as in the database location ([TS-05](storage.md#ts-05-files-and-pages)):
       - `CONTROL`, the copy from step 2;
@@ -40,7 +45,7 @@ related:
     5. Write `CONTROL` last, atomically ([TS-05](storage.md#ts-05-files-and-pages)): one valid slot holding the artefact's authoritative slot with its redo point set to `start` and the clean-shutdown flag cleared; the other slot zeroed.
     6. Open the database. Recovery ([TS-13](transactions-and-recovery.md#ts-13-recovery)) replays the WAL from `start` to its end, which is `stop`.
 
-    **Backup end.** While `BACKUP_END` exists, every open of the location reads it before recovery and fails as corruption if the file fails its CRC-32C or if the recovered WAL ends before `stop`. That open writes no `CONTROL` slot. After the open checkpoint has recorded a redo point at or past `stop` ([TS-13](transactions-and-recovery.md#ts-13-recovery) step 8), open removes `BACKUP_END` and calls `sync_dir` (`src/storage/engine.rs:521-530, 557-562, 587-594`). A later open of a restore whose WAL is incomplete therefore fails too, not only the open of step 6.
+    **Backup end.** While `BACKUP_END` exists, every open of the location reads it before recovery and fails as corruption if the file fails its CRC-32C or if the recovered WAL ends before `stop`. That open writes no `CONTROL` slot. After the open checkpoint has recorded a redo point at or past `stop` ([TS-13](transactions-and-recovery.md#ts-13-recovery) step 8), open removes `BACKUP_END` and calls `sync_dir` (`src/storage/engine.rs:571-580, 606-611, 636-643`). A later open of a restore whose WAL is incomplete therefore fails too, not only the open of step 6.
 
     The result is the state of one commit point, with element identifiers unchanged. A restore interrupted before step 5 completes leaves no `CONTROL`, so the location holds no database; a new restore, after step 4 takes `LOCK`, removes `wal-temp` and every `data-<h>` and `wal-<h>-<lsn>` the artefact does not contain, of any generation, then overwrites the files it writes (`src/ops/restore.rs:220-226`).
   - **Export layouts** (database, graph or query result, as FR-IMP-003 assigns):
@@ -73,13 +78,13 @@ related:
   - **Fast initial load** targets an empty graph.
     1. Wait for a running backup to end. Take the X graph lock ([TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)), so writers of the graph wait; readers keep reading the empty graph. If the graph is not empty, fail.
     2. External merge sort of the input into temporary files through the storage trait, in the database location ([TS-05](storage.md#ts-05-files-and-pages)). On the sorted runs, check the constraints already defined on the graph. Each violation is an invalid record, handled by the abort-or-skip option (FR-IMP-004). An edge whose endpoint was skipped is invalid as well.
-    3. Build the node, edge and adjacency trees bottom-up into newly reserved pages, filled to 90 % ([TS-05](storage.md#ts-05-files-and-pages)).
+    3. Build the node, edge and adjacency trees bottom-up, filled to 90 %, into pages taken in logged runs and owned by the build's record ([TS-05](storage.md#ts-05-files-and-pages) Build pages).
     4. Then build every index already defined on the graph bottom-up from sorted runs. The label or edge-type lookup tree is built only if that index exists.
     5. `sync_data`.
     6. Write one WAL group that installs the tree roots and the new allocation state.
     7. Release the graph lock.
 
-    If the load fails or crashes before step 6, the recovered allocation state does not include its pages, so they are free again and the graph stays empty. ENOSPC during reservation fails the load.
+    If the load fails or crashes before step 6, the graph stays empty and its pages stay owned by its build record, whose release runs at once after a failure (again at close or the next open if that release fails) and at the next open after a crash ([TS-05](storage.md#ts-05-files-and-pages) Build pages). ENOSPC during reservation fails the load.
   - **Element identifiers.** Both import modes assign new identifiers; input identifiers only connect edges to nodes.
 - **Satisfies**: FR-OPS-001, FR-OPS-002, FR-OPS-003, FR-OPS-007, FR-OPS-008, FR-OPS-009, FR-OPS-010, FR-REC-003, FR-REC-004, FR-IMP-001, FR-IMP-002, FR-IMP-003, FR-IMP-004, FR-IMP-005, FR-IMP-006, FR-IDX-001, FR-LIM-007, BR-TYPE-002, NFR-PERF-005.
 - **Evidence**:
