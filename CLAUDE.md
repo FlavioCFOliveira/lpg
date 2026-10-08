@@ -92,6 +92,7 @@ Profiling tooling:
   - `opengql/grammar`: the GQL grammar, including a parser generated from it in a test-only crate.
   - `opengql/tck`: the GQL technology compatibility kit.
   - The openCypher TCK: only the scenarios applicable to GQL.
+  - `gql-compat`: its mandatory and condition cases only, as an input to lpg's own scenarios, translated and attributed (user decision, 2026-10-08).
 - **ISO electronic inserts:** the official ISO/IEC 39075:2024 electronic inserts (grammar, GQLSTATUS conditions, features, implementation-defined and implementation-dependent items) are stored unmodified in `docs/standards/iso-iec-39075/`. They are a supplementary source for the tables the grammar does not contain (GQLSTATUS conditions, feature identifiers, implementation-defined items), not the grammar authority. Never edit them.
 - **GQL reference:** the ISO/IEC 39075:2024 text is not available to this project. The trusted reference for GQL syntax is the official community ANTLR4 grammar, `opengql/grammar` (<https://github.com/opengql/grammar>).
 
