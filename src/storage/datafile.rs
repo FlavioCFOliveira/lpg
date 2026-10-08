@@ -23,9 +23,9 @@
 //! handed out by [`Datafile::allocate`]. Writes go only to reserved pages, so
 //! a full device fails `ensure`, never a write or a read (FR-REC-007).
 
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::{Arc, Mutex, PoisonError};
 use std::path::Path;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, PoisonError};
 
 use super::error::{Error, Health, Result};
 use super::page::{self, PAGE_BYTES, PAGE_SIZE, PageType};

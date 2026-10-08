@@ -1,13 +1,14 @@
 //! Helpers shared by the crate's tests.
 
+use crate::sync::Arc;
 use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use crate::storage::{FsStorage, Storage, StorageFile, StorageLock};
 
 pub(crate) mod child;
+pub(crate) mod history;
 
 /// The names of this process's threads, from `/proc/self/task/*/comm`.
 pub(crate) fn thread_names() -> Vec<String> {
@@ -50,6 +51,24 @@ pub(crate) fn seed() -> u64 {
     );
     eprintln!("LPG_SEED={seed}");
     seed
+}
+
+/// The bound of [`wait_until`]: far above the few milliseconds the waited
+/// background work takes, so only a regression reaches it.
+pub(crate) const WAIT_BOUND: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// Yields until `done` returns `true`; panics naming `what` once
+/// [`WAIT_BOUND`] has passed, so a regression in background work (the
+/// garbage collector) fails its test instead of hanging the run.
+pub(crate) fn wait_until(what: &str, mut done: impl FnMut() -> bool) {
+    let deadline = std::time::Instant::now() + WAIT_BOUND;
+    while !done() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "not reached within {WAIT_BOUND:?}: {what}"
+        );
+        std::thread::yield_now();
+    }
 }
 
 /// Base directory of the tests' graph data files (CLAUDE.md, "Graph data

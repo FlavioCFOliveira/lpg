@@ -290,3 +290,83 @@ impl DurableScan {
         found(&self.groups)
     }
 }
+
+/// `loom` model of the commit latch and publish order (TS-30, TS-16 steps
+/// 3, 7, 8 and 9): two committers draw timestamps and join groups under a
+/// latch, as [`crate::tx::commit`] does; the writer closes each group under
+/// the latch and marks it durable through the real [`Progress`]; the main
+/// thread reads the published timestamp. In every interleaving, a committer
+/// returns only once its timestamp is published, a published timestamp
+/// never exceeds the durable counters, and published timestamps never
+/// decrease.
+#[cfg(loom)]
+const PREEMPTIONS: usize = 3;
+
+#[cfg(loom)]
+#[test]
+fn loom_published_timestamps_increase_and_never_exceed_the_durable_ones() {
+    use crate::sync::{Arc, Mutex};
+    // Four threads over two mutexes and two condition variables: the
+    // preemptions are bounded, as loom's documentation advises for models
+    // of this size (`loom` 0.7.2 `src/model.rs`, `preemption_bound`).
+    let mut b = loom::model::Builder::new();
+    b.preemption_bound = Some(PREEMPTIONS);
+    b.check(|| {
+        let progress = Arc::new(Progress::new(
+            Arc::new(AtomicU64::new(0)),
+            Counters::default(),
+        ));
+        // The commit latch over the counter and the open group: last
+        // timestamp drawn, open group number, its commits.
+        let latch = Arc::new(Mutex::new((0u64, 1u64, 0u64)));
+        let committers: Vec<_> = (0..2)
+            .map(|_| {
+                let (p, latch) = (Arc::clone(&progress), Arc::clone(&latch));
+                loom::thread::spawn(move || {
+                    let mut l = latch.lock().unwrap();
+                    l.0 += 1;
+                    l.2 += 1;
+                    let (ts, seq) = (l.0, l.1);
+                    p.note_join(seq);
+                    drop(l);
+                    p.wait_durable(seq).unwrap();
+                    assert!(p.published() >= ts, "returned before publication");
+                })
+            })
+            .collect();
+        let writer = {
+            let (p, latch) = (Arc::clone(&progress), Arc::clone(&latch));
+            loom::thread::spawn(move || {
+                while p.wait_for_group(Duration::ZERO) != Work::Stop {
+                    let (seq, last, commits) = {
+                        let mut l = latch.lock().unwrap();
+                        let g = (l.1, l.0, l.2);
+                        l.1 += 1;
+                        l.2 = 0;
+                        g
+                    };
+                    assert!(commits > 0, "a group is closed only after a join");
+                    let counters = Counters {
+                        commit_ts: last,
+                        ..Counters::default()
+                    };
+                    p.group_durable(seq, seq * FRAME_BYTES, counters, commits);
+                }
+            })
+        };
+        let a = progress.published();
+        let (_, durable) = progress.durable_point();
+        assert!(
+            durable.commit_ts >= a,
+            "published {a} above durable {durable:?}"
+        );
+        let b = progress.published();
+        assert!(b >= a);
+        for c in committers {
+            c.join().unwrap();
+        }
+        progress.stop();
+        writer.join().unwrap();
+        assert_eq!(progress.published(), 2);
+    });
+}

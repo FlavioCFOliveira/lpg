@@ -14,8 +14,8 @@
 //! (integrity-check figures), to compare with M-LAYOUT's bulk load (1.88 M
 //! edges/s) and with the tree task #14 built by puts.
 
+use crate::sync::Arc;
 use std::fmt::Write as _;
-use std::sync::Arc;
 use std::time::Instant;
 
 use super::generator::Sampler;

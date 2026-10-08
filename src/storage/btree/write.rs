@@ -25,10 +25,12 @@
 //! (FR-REC-007, FR-LIM-005, FR-LIM-007); any other failure is undone the
 //! same way and also sets the unusable latch (FR-REC-005, FR-REC-006).
 
+use crate::sync::atomic::Ordering;
 use std::collections::HashSet;
-use std::sync::atomic::Ordering;
 
-use super::node::{self, Applied, Change, MAX_INLINE, MAX_KEY, NONE, OVERFLOW_CAP, Place, Value};
+use super::node::{
+    self, Applied, Change, Edit, MAX_INLINE, MAX_KEY, NONE, OVERFLOW_CAP, Place, Stamps, Value,
+};
 use super::{
     DIRECTORY, LogState, PageWriter, Saved, Scratch, Step, Store, Tree, Undo, Write, WriteState,
 };
@@ -158,6 +160,35 @@ impl Store<'_> {
         Ok(Tree { id, root })
     }
 
+    /// An internal batch of garbage collection (TS-14, TS-09 Members) under
+    /// the commit latch `st`: removes the entries `deletes` and frees every
+    /// page of the trees `free_trees`, whose directory entries it removes.
+    /// It draws no commit timestamp; with `wal`, its pages take frame
+    /// positions in the open group, which the caller then joins. Any
+    /// failure is undone.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::apply_batch`].
+    pub(crate) fn apply_internal(
+        &self,
+        st: &mut WriteState,
+        wal: Option<&Wal>,
+        deletes: &[(Tree, &[u8])],
+        free_trees: &[Tree],
+    ) -> Result<()> {
+        self.health.check()?;
+        self.run(st, wal, |a| {
+            for &(tree, key) in deletes {
+                a.delete(tree, key)?;
+            }
+            for &tree in free_trees {
+                a.free_tree(tree)?;
+            }
+            Ok(())
+        })
+    }
+
     /// TS-16 step 6 under the commit latch `st`: creates `new_trees` empty
     /// trees, then applies `batch`, as one batch. With `wal`, every changed
     /// page takes its frame position in the open group, the segments the
@@ -186,9 +217,18 @@ impl Store<'_> {
                 created.push(a.create_tree()?);
             }
             for w in batch {
-                match w.value {
-                    Some(v) => a.put(w.tree, w.key, v)?,
-                    None => a.delete(w.tree, w.key)?,
+                match (w.value, w.stamp) {
+                    (Some(v), created) => a.put_stamped(
+                        w.tree,
+                        w.key,
+                        v,
+                        Stamps {
+                            created,
+                            deleted: 0,
+                        },
+                    )?,
+                    (None, 0) => a.delete(w.tree, w.key)?,
+                    (None, deleted) => a.restamp(w.tree, w.key, deleted)?,
                 }
             }
             Ok(())
@@ -224,6 +264,7 @@ impl Store<'_> {
             scratch,
             log,
             fence,
+            freeze,
         } = st;
         let r = {
             let mut a = Apply {
@@ -241,6 +282,7 @@ impl Store<'_> {
                 batch,
                 store: *self,
                 fence,
+                freeze: *freeze,
             };
             body(&mut a).and_then(|()| a.finish())
         };
@@ -423,6 +465,9 @@ pub(super) struct Apply<'a> {
     batch: u64,
     store: Store<'a>,
     fence: &'a mut Option<(u64, HashSet<u64>)>,
+    /// A leaf this batch rewrites drops every `created_ts` at or below it
+    /// ([`super::WriteState::freeze`]).
+    freeze: u64,
 }
 
 impl<'a> Apply<'a> {
@@ -477,15 +522,77 @@ impl<'a> Apply<'a> {
             while self.readers.horizon() < batch {
                 spins += 1;
                 if spins < 64 {
-                    std::thread::yield_now();
+                    crate::sync::thread::yield_now();
                 } else {
-                    std::thread::sleep(std::time::Duration::from_micros(50));
+                    crate::sync::thread::pause(std::time::Duration::from_micros(50));
                 }
             }
             *self.fence = None;
         }
         self.pw.undo.taken.push(p);
         Ok(p)
+    }
+
+    /// Frees every page of `tree`, a dropped tree no snapshot can read any
+    /// more, and removes its directory entry (TS-14 Garbage collection).
+    /// The pages are found from the root: inner pages, leaves and the
+    /// overflow chains of leaf entries. A tree read operation that still
+    /// holds one of them keeps it from reuse ([`super::super::freelist`]).
+    /// A tree whose directory entry is already gone was freed before: its
+    /// pages are not freed again.
+    fn free_tree(&mut self, tree: Tree) -> Result<()> {
+        if !self.remove(DIRECTORY, &tree.id.to_be_bytes())? {
+            return Ok(());
+        }
+        let mut stack = vec![tree.root];
+        let mut pages = Vec::new();
+        while let Some(p) = stack.pop() {
+            if pages.len() as u64 > self.store.data.page_count() {
+                return Err(self.corrupt(tree.root, "tree has more pages than the file"));
+            }
+            let pin = self.pw.fetch(p)?;
+            let g = pin.read()?;
+            if page::tree(&g) != tree.id {
+                return Err(self.corrupt(p, "page of another tree"));
+            }
+            match page::page_type(&g) {
+                Some(PageType::Inner) => {
+                    stack.push(node::leftmost(&g));
+                    node::inner_entries(&g, |_, c| stack.push(c))
+                        .map_err(|e| self.corrupt(p, &e))?;
+                }
+                Some(PageType::Leaf) => {
+                    let mut chains = Vec::new();
+                    node::leaf_entries(&g, |_, e| {
+                        if let Value::Overflow { first, .. } = e.value {
+                            chains.push(first);
+                        }
+                    })
+                    .map_err(|e| self.corrupt(p, &e))?;
+                    drop(g);
+                    for first in chains {
+                        let mut o = first;
+                        while o != NONE {
+                            let pin = self.pw.fetch(o)?;
+                            let g = pin.read()?;
+                            if page::page_type(&g) != Some(PageType::Overflow) {
+                                return Err(self.corrupt(o, "not an overflow page"));
+                            }
+                            pages.push(o);
+                            o = node::overflow(&g)
+                                .ok_or_else(|| self.corrupt(o, "malformed overflow page"))?
+                                .0;
+                        }
+                    }
+                }
+                _ => return Err(self.corrupt(p, "not a tree page")),
+            }
+            pages.push(p);
+        }
+        for p in pages {
+            self.free_page(p)?;
+        }
+        Ok(())
     }
 
     /// Frees page `p`, which this batch has unlinked.
@@ -559,8 +666,46 @@ impl<'a> Apply<'a> {
         }
     }
 
-    /// Puts `value` under `key` in `tree`.
+    /// Puts `value` under `key` in `tree`, unstamped.
     pub(super) fn put(&mut self, tree: Tree, key: &[u8], value: &[u8]) -> Result<()> {
+        self.put_stamped(tree, key, value, Stamps::NONE)
+    }
+
+    /// Applies `change` for `key` to the leaf at the end of `self.s.path`,
+    /// in place. When the leaf holds a `created_ts` at or below the batch's
+    /// horizon, the whole leaf is rewritten without it (TS-14: stamps are
+    /// frozen when a page is next rewritten). Returns the outcome and
+    /// whether the leaf is now empty.
+    fn change_leaf(&mut self, key: &[u8], change: Change<'_>) -> Result<(Applied, bool)> {
+        let leaf = self.s.path.last().expect("path holds the leaf").page;
+        let pin = self.pw.change(leaf)?;
+        let mut g = pin.write()?;
+        let rewrite = node::leaf_has_frozen(&g, self.freeze)
+            .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
+        let applied = if rewrite {
+            node::leaf_rewrite(
+                &mut g,
+                key,
+                change,
+                &mut self.s.es,
+                &mut self.s.enc,
+                self.freeze,
+            )
+        } else {
+            node::leaf_apply(&mut g, key, change, &mut self.s.enc)
+        }
+        .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
+        Ok((applied, node::count(&g) == 0))
+    }
+
+    /// Puts `value` under `key` in `tree` with `stamps`.
+    pub(super) fn put_stamped(
+        &mut self,
+        tree: Tree,
+        key: &[u8],
+        value: &[u8],
+        stamps: Stamps,
+    ) -> Result<()> {
         let first = if value.len() > MAX_INLINE {
             Some(self.write_overflow(tree, value)?)
         } else {
@@ -575,15 +720,10 @@ impl<'a> Apply<'a> {
         };
         self.descend(tree, key)?;
         let leaf = self.s.path.last().expect("path holds the leaf").page;
-        let applied = {
-            let pin = self.pw.change(leaf)?;
-            let mut g = pin.write()?;
-            node::leaf_apply(&mut g, key, Change::Put(stored), &mut self.s.enc)
-                .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?
-        };
+        let (applied, _) = self.change_leaf(key, Change::Put(stored, stamps))?;
         let freed = match applied {
             Applied::Done(freed) => freed,
-            Applied::Full => self.split_apply(tree, key, Change::Put(stored))?,
+            Applied::Full => self.split_apply(tree, key, Change::Put(stored, stamps))?,
             Applied::NotFound => return Err(self.corrupt(leaf, "a put found nothing to apply")),
         };
         if let Some(f) = freed {
@@ -595,18 +735,16 @@ impl<'a> Apply<'a> {
     /// Removes `key` from `tree`, if present, and frees its leaf if that
     /// leaves it empty and TS-05 allows it.
     pub(super) fn delete(&mut self, tree: Tree, key: &[u8]) -> Result<()> {
+        self.remove(tree, key).map(drop)
+    }
+
+    /// As [`Apply::delete`]; returns whether `key` was present.
+    fn remove(&mut self, tree: Tree, key: &[u8]) -> Result<bool> {
         self.descend(tree, key)?;
-        let leaf = self.s.path.last().expect("path holds the leaf").page;
-        let (applied, empty) = {
-            let pin = self.pw.change(leaf)?;
-            let mut g = pin.write()?;
-            let r = node::leaf_apply(&mut g, key, Change::Delete, &mut self.s.enc)
-                .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
-            (r, node::count(&g) == 0)
-        };
+        let (applied, empty) = self.change_leaf(key, Change::Delete)?;
         let freed = match applied {
             Applied::Done(freed) => freed,
-            Applied::NotFound => return Ok(()),
+            Applied::NotFound => return Ok(false),
             // Restart points moved and the leaf grew: split it (see
             // `node::leaf_decode_with`).
             Applied::Full => self.split_apply(tree, key, Change::Delete)?,
@@ -617,7 +755,22 @@ impl<'a> Apply<'a> {
         if empty {
             self.free_empty_leaf(tree)?;
         }
-        Ok(())
+        Ok(true)
+    }
+
+    /// Sets the delete stamp of `key` in `tree` to `deleted`, keeping the
+    /// entry (TS-14); nothing if `key` is absent.
+    pub(super) fn restamp(&mut self, tree: Tree, key: &[u8], deleted: u64) -> Result<()> {
+        self.descend(tree, key)?;
+        let (applied, _) = self.change_leaf(key, Change::Restamp(deleted))?;
+        match applied {
+            Applied::Done(_) | Applied::NotFound => Ok(()),
+            // The encoding of an entry grew, or restart points moved under
+            // a frozen rewrite: split it.
+            Applied::Full => self
+                .split_apply(tree, key, Change::Restamp(deleted))
+                .map(drop),
+        }
     }
 
     /// Splits the leaf at the end of `self.s.path`, which cannot take
@@ -647,8 +800,12 @@ impl<'a> Apply<'a> {
         let leaf = path[k].page;
         self.pw.mark(leaf)?;
         let mut g = pins[k].write()?;
-        let freed = node::leaf_decode_with(&g, key, change, &mut self.s.es)
-            .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?;
+        let freed = match node::leaf_decode_with(&g, key, change, &mut self.s.es, self.freeze)
+            .ok_or_else(|| self.corrupt(leaf, "malformed leaf"))?
+        {
+            Edit::Done(freed) => freed,
+            Edit::NotFound => return Err(self.corrupt(leaf, "a split found nothing to apply")),
+        };
         let hk = node::high_key(&g).map(<[u8]>::to_vec);
         let right = node::right(&g);
         let n = self.s.es.len();
@@ -714,7 +871,7 @@ impl<'a> Apply<'a> {
         path: &[Step],
         pins: &'p [PinnedPage<'a>],
         mut k: usize,
-        child: std::sync::RwLockWriteGuard<'p, Box<[u8]>>,
+        child: crate::sync::RwLockWriteGuard<'p, Box<[u8]>>,
         mut sep: Vec<u8>,
         mut new_child: u64,
     ) -> Result<()> {

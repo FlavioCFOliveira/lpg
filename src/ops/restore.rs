@@ -39,8 +39,8 @@
 //! backup from the start location in `backup_label`, not from the copied
 //! `pg_control` (R-PG `src/backend/access/transam/xlogrecovery.c:543-557`).
 
+use crate::sync::Arc;
 use std::path::Path;
-use std::sync::Arc;
 
 use super::backup::{MANIFEST, Manifest};
 use super::{COPY_BUFFER, copy_range, create_or_truncate};

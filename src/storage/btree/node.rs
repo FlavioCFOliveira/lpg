@@ -21,10 +21,14 @@
 //! entries in key order. Entry `i` is a restart point when `i % 16 == 0`:
 //! it stores its whole key. Every other entry stores the length of the
 //! prefix it shares with the previous key and only the rest. Each entry is
-//! `shared` varint, `unshared` varint, `tag` varint, the `unshared` key
-//! bytes, then the value: `tag = value_len << 1` for an inline value, whose
-//! bytes follow; `tag = value_len << 1 | 1` for a value in an overflow
-//! chain, followed by the first overflow page as 8 bytes. The offsets of the
+//! `shared` varint, `unshared` varint, `tag` varint, the entry's stamps, the
+//! `unshared` key bytes, then the value. The tag is `value_len << 3 | bits`
+//! (TS-06 Stamp encoding): bit 0 marks a value in an overflow chain, bit 1 a
+//! present `created_ts`, bit 2 a present `deleted_ts`. Present stamps follow
+//! the tag as varints, `created_ts` first; a present stamp is never 0. An
+//! inline value's bytes follow the key; a value in an overflow chain is
+//! followed by the first overflow page as 8 bytes. Unstamped trees never set
+//! bits 1 and 2. The offsets of the
 //! restart points are `u16`s at the end of the page, restart `i` at
 //! `PAGE_SIZE - 2 * (i + 1)`, so adding a restart point never moves the
 //! others.
@@ -251,11 +255,67 @@ pub(crate) enum Value<'a> {
 
 impl Value<'_> {
     /// Bytes the value takes in an entry: the tag and the inline bytes or
-    /// the page number.
+    /// the page number. The stamp bits never change the tag's length.
     fn encoded_len(&self) -> usize {
         match *self {
-            Value::Inline(v) => varint_len((v.len() as u64) << 1) + v.len(),
-            Value::Overflow { len, .. } => varint_len((len << 1) | 1) + 8,
+            Value::Inline(v) => varint_len((v.len() as u64) << 3) + v.len(),
+            Value::Overflow { len, .. } => varint_len((len << 3) | 1) + 8,
+        }
+    }
+}
+
+/// Tag bit of a value in an overflow chain.
+const TAG_OVERFLOW: u64 = 1;
+/// Tag bit of a present `created_ts`.
+const TAG_CREATED: u64 = 2;
+/// Tag bit of a present `deleted_ts`.
+const TAG_DELETED: u64 = 4;
+
+/// The MVCC stamps of a leaf entry (TS-06 Stamps, TS-14): commit
+/// timestamps, 0 when absent. Commit timestamps start at 1, so 0 is never
+/// one. An absent `created` means the entry is visible to every snapshot
+/// ("frozen", or an unstamped tree); an absent `deleted` means it is live.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) struct Stamps {
+    /// `created_ts`; in the node and edge trees, the record's `version_ts`.
+    pub(crate) created: u64,
+    /// `deleted_ts`.
+    pub(crate) deleted: u64,
+}
+
+impl Stamps {
+    /// No stamp: an unstamped entry, or a frozen live one.
+    pub(crate) const NONE: Stamps = Stamps {
+        created: 0,
+        deleted: 0,
+    };
+
+    /// The tag bits of the present stamps.
+    fn bits(self) -> u64 {
+        (if self.created != 0 { TAG_CREATED } else { 0 })
+            | (if self.deleted != 0 { TAG_DELETED } else { 0 })
+    }
+
+    /// Bytes of the present stamps.
+    fn encoded_len(self) -> usize {
+        (if self.created != 0 {
+            varint_len(self.created)
+        } else {
+            0
+        }) + (if self.deleted != 0 {
+            varint_len(self.deleted)
+        } else {
+            0
+        })
+    }
+
+    /// These stamps with `created` dropped if it is at or below `horizon`:
+    /// the entry is then visible to every snapshot (TS-06 frozen, TS-14).
+    pub(crate) fn frozen(self, horizon: u64) -> Stamps {
+        if self.created != 0 && self.created <= horizon {
+            Stamps { created: 0, ..self }
+        } else {
+            self
         }
     }
 }
@@ -312,6 +372,7 @@ struct RawEntry {
     shared: usize,
     key: Range<usize>,
     value: RawValue,
+    stamps: Stamps,
     next: usize,
 }
 
@@ -338,13 +399,20 @@ fn raw_entry(p: &[u8], at: usize, end: usize) -> Option<RawEntry> {
         let t = get_varint(p, &mut o, end)?;
         (usize::try_from(s).ok()?, usize::try_from(u).ok()?, t)
     };
+    let mut stamps = Stamps::NONE;
+    if tag & TAG_CREATED != 0 {
+        stamps.created = get_varint(p, &mut o, end).filter(|&t| t != 0)?;
+    }
+    if tag & TAG_DELETED != 0 {
+        stamps.deleted = get_varint(p, &mut o, end).filter(|&t| t != 0)?;
+    }
     if shared + unshared > MAX_KEY || unshared > end - o {
         return None;
     }
     let key = o..o + unshared;
     o += unshared;
-    let value = if tag & 1 == 0 {
-        let len = usize::try_from(tag >> 1).ok()?;
+    let value = if tag & TAG_OVERFLOW == 0 {
+        let len = usize::try_from(tag >> 3).ok()?;
         if len > MAX_INLINE || len > end - o {
             return None;
         }
@@ -357,7 +425,7 @@ fn raw_entry(p: &[u8], at: usize, end: usize) -> Option<RawEntry> {
         let first = u64_at(p, o);
         o += 8;
         RawValue::Overflow {
-            len: tag >> 1,
+            len: tag >> 3,
             first,
         }
     };
@@ -365,6 +433,7 @@ fn raw_entry(p: &[u8], at: usize, end: usize) -> Option<RawEntry> {
         shared,
         key,
         value,
+        stamps,
         next: o,
     })
 }
@@ -401,8 +470,8 @@ fn find_group(p: &[u8], v: &LeafView, key: &[u8]) -> Option<usize> {
 
 /// Result of a leaf search.
 pub(crate) enum Found<'a> {
-    /// The key is present with this value.
-    Hit(Value<'a>),
+    /// The key is present with this value and these stamps.
+    Hit(Value<'a>, Stamps),
     /// The key is absent.
     Miss,
 }
@@ -426,7 +495,7 @@ pub(crate) fn leaf_get<'a>(p: &'a [u8], key: &[u8], buf: &mut Vec<u8>) -> Option
         buf.extend_from_slice(&p[e.key]);
         match buf.as_slice().cmp(key) {
             Ordering::Less => at = e.next,
-            Ordering::Equal => return Some(Found::Hit(value_of(p, e.value))),
+            Ordering::Equal => return Some(Found::Hit(value_of(p, e.value), e.stamps)),
             Ordering::Greater => return Some(Found::Miss),
         }
     }
@@ -434,12 +503,13 @@ pub(crate) fn leaf_get<'a>(p: &'a [u8], key: &[u8], buf: &mut Vec<u8>) -> Option
 }
 
 /// Calls `f` with each entry of the leaf whose key is at least `from`, in
-/// order, until `f` returns `false`. Returns `None` on a malformed leaf.
+/// order, with its value and stamps, until `f` returns `false`. Returns
+/// `None` on a malformed leaf.
 pub(crate) fn leaf_for_each_from<'a>(
     p: &'a [u8],
     from: &[u8],
     buf: &mut Vec<u8>,
-    mut f: impl FnMut(&[u8], Value<'a>) -> bool,
+    mut f: impl FnMut(&[u8], Value<'a>, Stamps) -> bool,
 ) -> Option<()> {
     let v = leaf_view(p)?;
     if v.count == 0 {
@@ -456,7 +526,7 @@ pub(crate) fn leaf_for_each_from<'a>(
         buf.truncate(e.shared);
         buf.extend_from_slice(&p[e.key]);
         at = e.next;
-        if buf.as_slice() >= from && !f(buf, value_of(p, e.value)) {
+        if buf.as_slice() >= from && !f(buf, value_of(p, e.value), e.stamps) {
             return Some(());
         }
     }
@@ -480,6 +550,7 @@ pub(crate) struct Entries {
 struct Item {
     key: Range<u32>,
     value: ItemValue,
+    stamps: Stamps,
     /// Length of the prefix shared with the previous entry, when known
     /// from decoding ([`UNKNOWN`] otherwise), so re-encoding an unchanged
     /// neighbour needs no comparison.
@@ -511,7 +582,7 @@ impl Entries {
         at..self.bytes.len() as u32
     }
 
-    fn item(&mut self, key: &[u8], value: Value<'_>) -> Item {
+    fn item(&mut self, key: &[u8], value: Value<'_>, stamps: Stamps) -> Item {
         let key = self.store(key);
         let value = match value {
             Value::Inline(v) => ItemValue::Inline(self.store(v)),
@@ -520,26 +591,32 @@ impl Entries {
         Item {
             key,
             value,
+            stamps,
             shared: UNKNOWN,
         }
     }
 
-    /// Appends an entry.
+    /// Appends an unstamped entry.
     pub(crate) fn push(&mut self, key: &[u8], value: Value<'_>) {
-        let it = self.item(key, value);
+        self.push_stamped(key, value, Stamps::NONE);
+    }
+
+    /// Appends an entry with `stamps`.
+    pub(crate) fn push_stamped(&mut self, key: &[u8], value: Value<'_>, stamps: Stamps) {
+        let it = self.item(key, value, stamps);
         self.items.push(it);
     }
 
     /// Appends an entry that shares `shared` bytes with the previous one.
-    fn push_shared(&mut self, key: &[u8], value: Value<'_>, shared: usize) {
-        let mut it = self.item(key, value);
+    fn push_shared(&mut self, key: &[u8], value: Value<'_>, stamps: Stamps, shared: usize) {
+        let mut it = self.item(key, value, stamps);
         it.shared = shared as u16;
         self.items.push(it);
     }
 
     /// Inserts an entry at position `i`.
-    pub(crate) fn insert(&mut self, i: usize, key: &[u8], value: Value<'_>) {
-        let it = self.item(key, value);
+    pub(crate) fn insert(&mut self, i: usize, key: &[u8], value: Value<'_>, stamps: Stamps) {
+        let it = self.item(key, value, stamps);
         self.items.insert(i, it);
         self.forget_shared(i + 1);
     }
@@ -559,10 +636,21 @@ impl Entries {
         }
     }
 
-    /// Replaces the value of entry `i`.
-    pub(crate) fn set_value(&mut self, i: usize, value: Value<'_>) {
-        let it = self.item(&[], value);
+    /// Replaces the value and stamps of entry `i`.
+    pub(crate) fn set_value(&mut self, i: usize, value: Value<'_>, stamps: Stamps) {
+        let it = self.item(&[], value, stamps);
         self.items[i].value = it.value;
+        self.items[i].stamps = stamps;
+    }
+
+    /// Stamps of entry `i`.
+    pub(crate) fn stamps(&self, i: usize) -> Stamps {
+        self.items[i].stamps
+    }
+
+    /// Replaces the stamps of entry `i`.
+    pub(crate) fn set_stamps(&mut self, i: usize, stamps: Stamps) {
+        self.items[i].stamps = stamps;
     }
 
     /// Removes entry `i`.
@@ -606,6 +694,7 @@ impl Entries {
             + varint_len((key.len() - shared) as u64)
             + (key.len() - shared)
             + self.value(i).encoded_len()
+            + self.stamps(i).encoded_len()
     }
 
     /// Encoded body bytes (entries and restart array) of entries
@@ -646,6 +735,12 @@ pub(crate) fn common_prefix(a: &[u8], b: &[u8]) -> usize {
 /// Decodes entries `first_group * 16 ..` of a leaf into `out`, which is
 /// cleared first.
 pub(crate) fn leaf_decode(p: &[u8], first_group: usize, out: &mut Entries) -> Option<()> {
+    leaf_decode_frozen(p, first_group, out, 0)
+}
+
+/// [`leaf_decode`], dropping every `created_ts` at or below `horizon`
+/// ([`Stamps::frozen`]); 0 drops none.
+fn leaf_decode_frozen(p: &[u8], first_group: usize, out: &mut Entries, horizon: u64) -> Option<()> {
     out.clear();
     let v = leaf_view(p)?;
     if v.count == 0 {
@@ -663,10 +758,11 @@ pub(crate) fn leaf_decode(p: &[u8], first_group: usize, out: &mut Entries) -> Op
         key.truncate(e.shared);
         key.extend_from_slice(&p[e.key]);
         // A restart point stores no shared length: it stays unknown.
+        let stamps = e.stamps.frozen(horizon);
         if out.len().is_multiple_of(RESTART_INTERVAL) {
-            out.push(&key, value_of(p, e.value));
+            out.push_stamped(&key, value_of(p, e.value), stamps);
         } else {
-            out.push_shared(&key, value_of(p, e.value), e.shared);
+            out.push_shared(&key, value_of(p, e.value), stamps, e.shared);
         }
         at = e.next;
     }
@@ -686,29 +782,33 @@ pub(crate) struct Encoder {
     prev: Vec<u8>,
 }
 
-/// Appends an entry with key `key` and value `value`, sharing `shared` bytes
-/// with the previous key.
-fn encode_parts(out: &mut Vec<u8>, key: &[u8], shared: usize, value: Value<'_>) {
+/// Appends an entry with key `key`, value `value` and `stamps`, sharing
+/// `shared` bytes with the previous key.
+fn encode_parts(out: &mut Vec<u8>, key: &[u8], shared: usize, value: Value<'_>, stamps: Stamps) {
     put_varint(out, shared as u64);
     put_varint(out, (key.len() - shared) as u64);
+    let tag = match value {
+        Value::Inline(v) => (v.len() as u64) << 3,
+        Value::Overflow { len, .. } => (len << 3) | TAG_OVERFLOW,
+    };
+    put_varint(out, tag | stamps.bits());
+    if stamps.created != 0 {
+        put_varint(out, stamps.created);
+    }
+    if stamps.deleted != 0 {
+        put_varint(out, stamps.deleted);
+    }
+    out.extend_from_slice(&key[shared..]);
     match value {
-        Value::Inline(v) => {
-            put_varint(out, (v.len() as u64) << 1);
-            out.extend_from_slice(&key[shared..]);
-            out.extend_from_slice(v);
-        }
-        Value::Overflow { len, first } => {
-            put_varint(out, (len << 1) | 1);
-            out.extend_from_slice(&key[shared..]);
-            out.extend_from_slice(&first.to_le_bytes());
-        }
+        Value::Inline(v) => out.extend_from_slice(v),
+        Value::Overflow { first, .. } => out.extend_from_slice(&first.to_le_bytes()),
     }
 }
 
 /// Appends entry `i` of `es` to `out`.
 fn encode_entry(out: &mut Vec<u8>, es: &Entries, i: usize, restart: bool) {
     let shared = if restart { 0 } else { es.shared(i) };
-    encode_parts(out, es.key(i), shared, es.value(i));
+    encode_parts(out, es.key(i), shared, es.value(i), es.stamps(i));
 }
 
 /// Writes `bytes` as the leaf's entry stream from offset `base` to its end,
@@ -799,10 +899,14 @@ pub(crate) fn write_leaf(
 /// A change to one key of a leaf.
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Change<'a> {
-    /// Insert or replace the value.
-    Put(Value<'a>),
+    /// Insert or replace the value, with these stamps.
+    Put(Value<'a>, Stamps),
     /// Remove the key.
     Delete,
+    /// Set the delete stamp of the key to this commit timestamp, keeping
+    /// its value and `created_ts` (TS-14 immutable entries, mutable records:
+    /// a delete is a stamp).
+    Restamp(u64),
 }
 
 /// Outcome of [`leaf_apply`].
@@ -895,18 +999,33 @@ pub(crate) fn leaf_apply(
     let mut run;
     let mut pred_changed;
     let freed = match (change, found) {
-        (Change::Put(value), Some(e)) if exists => {
+        (Change::Put(value, stamps), Some(e)) if exists => {
             if restart(i) {
                 offsets.push(at_i as u16);
             }
             let shared = if restart(i) { 0 } else { e.shared };
-            encode_parts(bytes, next, shared, value);
+            encode_parts(bytes, next, shared, value, stamps);
             std::mem::swap(cur, next);
             (up, down, pred_changed) = (false, false, false);
             (k, at, run) = (i + 1, e.next, e.next);
             chain_of(value_of(p, e.value))
         }
-        (Change::Put(value), _) => {
+        (Change::Restamp(deleted), Some(e)) if exists => {
+            if restart(i) {
+                offsets.push(at_i as u16);
+            }
+            let shared = if restart(i) { 0 } else { e.shared };
+            let stamps = Stamps {
+                deleted,
+                ..e.stamps
+            };
+            encode_parts(bytes, next, shared, value_of(p, e.value), stamps);
+            std::mem::swap(cur, next);
+            (up, down, pred_changed) = (false, false, false);
+            (k, at, run) = (i + 1, e.next, e.next);
+            None
+        }
+        (Change::Put(value, stamps), _) => {
             if restart(i) {
                 offsets.push(at_i as u16);
             }
@@ -915,7 +1034,7 @@ pub(crate) fn leaf_apply(
             } else {
                 common_prefix(cur, key)
             };
-            encode_parts(bytes, key, shared, value);
+            encode_parts(bytes, key, shared, value, stamps);
             prev.clear();
             prev.extend_from_slice(key);
             (up, down, pred_changed) = (true, false, true);
@@ -930,7 +1049,7 @@ pub(crate) fn leaf_apply(
             (k, at, run) = (i + 1, e.next, e.next);
             chain_of(value_of(p, e.value))
         }
-        (Change::Delete, _) => return Some(Applied::NotFound),
+        (Change::Delete | Change::Restamp(_), _) => return Some(Applied::NotFound),
     };
     // `cur` holds the key of old entry `k - 1`.
     while k < v.count {
@@ -965,7 +1084,7 @@ pub(crate) fn leaf_apply(
             } else {
                 common_prefix(prev, cur)
             };
-            encode_parts(bytes, cur, shared, value_of(p, e.value));
+            encode_parts(bytes, cur, shared, value_of(p, e.value), e.stamps);
             run = e.next;
         }
         pred_changed = false;
@@ -1010,30 +1129,8 @@ fn leaf_apply_reencode(
         find_group(p, &v, key)?
     };
     leaf_decode(p, g, es)?;
-    let (i, exists) = es.search(key);
-    let old = |es: &Entries| match es.value(i) {
-        Value::Overflow { first, .. } => Some(first),
-        Value::Inline(_) => None,
-    };
-    let freed = match change {
-        Change::Put(value) => {
-            if exists {
-                let o = old(es);
-                es.set_value(i, value);
-                o
-            } else {
-                es.insert(i, key, value);
-                None
-            }
-        }
-        Change::Delete => {
-            if !exists {
-                return Some(Applied::NotFound);
-            }
-            let o = old(es);
-            es.remove(i);
-            o
-        }
+    let Edit::Done(freed) = edit_entries(es, key, change) else {
+        return Some(Applied::NotFound);
     };
     let n = es.len();
     Some(if write_entries(p, g, es, 0..n, enc) {
@@ -1043,8 +1140,52 @@ fn leaf_apply_reencode(
     })
 }
 
-/// Decodes the whole leaf into `es` and applies `change` there, for a
-/// split. Returns the replaced or removed value's overflow chain, if any.
+/// Outcome of a change applied to decoded entries.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Edit {
+    /// Applied; holds the replaced or removed value's overflow chain.
+    Done(Option<u64>),
+    /// A delete or a delete stamp found no such key.
+    NotFound,
+}
+
+/// Applies `change` for `key` to decoded entries `es`.
+fn edit_entries(es: &mut Entries, key: &[u8], change: Change<'_>) -> Edit {
+    let (i, exists) = es.search(key);
+    let old = |es: &Entries| match es.value(i) {
+        Value::Overflow { first, .. } => Some(first),
+        Value::Inline(_) => None,
+    };
+    match change {
+        Change::Put(value, stamps) if exists => {
+            let o = old(es);
+            es.set_value(i, value, stamps);
+            Edit::Done(o)
+        }
+        Change::Put(value, stamps) => {
+            es.insert(i, key, value, stamps);
+            Edit::Done(None)
+        }
+        Change::Restamp(deleted) if exists => {
+            let stamps = Stamps {
+                deleted,
+                ..es.stamps(i)
+            };
+            es.set_stamps(i, stamps);
+            Edit::Done(None)
+        }
+        Change::Delete if exists => {
+            let o = old(es);
+            es.remove(i);
+            Edit::Done(o)
+        }
+        Change::Delete | Change::Restamp(_) => Edit::NotFound,
+    }
+}
+
+/// Decodes the whole leaf into `es`, dropping every `created_ts` at or
+/// below `horizon` (0: none), and applies `change` there, for a split or a
+/// rewrite. Returns `None` for a malformed leaf.
 ///
 /// A delete can need a split too: removing an entry moves every later
 /// restart point by one entry, and the entry that becomes a restart point
@@ -1054,32 +1195,63 @@ pub(crate) fn leaf_decode_with(
     key: &[u8],
     change: Change<'_>,
     es: &mut Entries,
-) -> Option<Option<u64>> {
-    leaf_decode(p, 0, es)?;
-    let (i, exists) = es.search(key);
-    let old = |es: &Entries| match es.value(i) {
-        Value::Overflow { first, .. } => Some(first),
-        Value::Inline(_) => None,
+    horizon: u64,
+) -> Option<Edit> {
+    leaf_decode_frozen(p, 0, es, horizon)?;
+    Some(edit_entries(es, key, change))
+}
+
+/// Whether the leaf holds a `created_ts` at or below `horizon`, which a
+/// rewrite of the leaf drops (TS-14: stamps are frozen when a page is next
+/// rewritten). `None` for a malformed leaf.
+pub(crate) fn leaf_has_frozen(p: &[u8], horizon: u64) -> Option<bool> {
+    if horizon == 0 {
+        return Some(false);
+    }
+    let v = leaf_view(p)?;
+    let mut at = v.start;
+    for _ in 0..v.count {
+        let e = raw_entry(p, at, v.end)?;
+        if e.stamps.created != 0 && e.stamps.created <= horizon {
+            return Some(true);
+        }
+        at = e.next;
+    }
+    Some(false)
+}
+
+/// Rewrites the whole leaf with `change` applied for `key` and every
+/// `created_ts` at or below `horizon` dropped, keeping its place (tree,
+/// high key, right link). Leaves the page unchanged and returns
+/// [`Applied::Full`] if the entries do not fit, [`Applied::NotFound`] if a
+/// delete or delete stamp finds no such key.
+pub(crate) fn leaf_rewrite(
+    p: &mut [u8],
+    key: &[u8],
+    change: Change<'_>,
+    es: &mut Entries,
+    enc: &mut Encoder,
+    horizon: u64,
+) -> Option<Applied> {
+    let freed = match leaf_decode_with(p, key, change, es, horizon)? {
+        Edit::Done(freed) => freed,
+        Edit::NotFound => return Some(Applied::NotFound),
     };
-    Some(match change {
-        Change::Put(value) if exists => {
-            let o = old(es);
-            es.set_value(i, value);
-            o
-        }
-        Change::Put(value) => {
-            es.insert(i, key, value);
-            None
-        }
-        Change::Delete => {
-            if !exists {
-                return None;
-            }
-            let o = old(es);
-            es.remove(i);
-            o
-        }
-    })
+    let n = es.len();
+    let hk = high_key(p).map(<[u8]>::to_vec);
+    let place = Place {
+        tree: page::tree(p),
+        level: 0,
+        high_key: hk.as_deref(),
+        right: right(p),
+    };
+    // Check the fit before touching the page, so a full leaf is unchanged.
+    if es.body_len(0..n) + hk.as_ref().map_or(0, Vec::len) > USABLE {
+        return Some(Applied::Full);
+    }
+    let ok = write_leaf(p, place, es, 0..n, enc);
+    debug_assert!(ok, "fit checked above");
+    Some(Applied::Done(freed))
 }
 
 /// The shortest separator `s` with `left < s <= right`: the prefix of
@@ -1367,6 +1539,8 @@ pub(crate) struct LeafEntry<'a> {
     pub(crate) key: &'a [u8],
     /// The value.
     pub(crate) value: Value<'a>,
+    /// The stamps.
+    pub(crate) stamps: Stamps,
 }
 
 /// Calls `f` with every entry of a leaf in stored order, checking the
@@ -1397,6 +1571,7 @@ pub(crate) fn leaf_entries(
                 restart,
                 key: &key,
                 value: value_of(p, e.value),
+                stamps: e.stamps,
             },
         );
         at = e.next;
@@ -1488,7 +1663,7 @@ mod tests {
         for k in &keys {
             assert!(matches!(
                 leaf_get(&p, k, &mut buf),
-                Some(Found::Hit(Value::Inline(b"v")))
+                Some(Found::Hit(Value::Inline(b"v"), Stamps::NONE))
             ));
         }
         assert!(matches!(leaf_get(&p, b"key-", &mut buf), Some(Found::Miss)));
@@ -1509,7 +1684,7 @@ mod tests {
             let r = leaf_apply(
                 &mut p,
                 k.as_bytes(),
-                Change::Put(Value::Inline(&[])),
+                Change::Put(Value::Inline(&[]), Stamps::NONE),
                 &mut enc,
             );
             assert_eq!(r, Some(Applied::Done(None)));
@@ -1543,7 +1718,14 @@ mod tests {
         loop {
             let k = i.to_be_bytes();
             let before = p.clone();
-            match leaf_apply(&mut p, &k, Change::Put(Value::Inline(&big)), &mut enc).unwrap() {
+            match leaf_apply(
+                &mut p,
+                &k,
+                Change::Put(Value::Inline(&big), Stamps::NONE),
+                &mut enc,
+            )
+            .unwrap()
+            {
                 Applied::Done(_) => i += 1,
                 Applied::Full => {
                     assert_eq!(p, before);
@@ -1640,15 +1822,18 @@ mod tests {
     /// re-encoding the tail, on random leaves: short keys over a small
     /// alphabet and keys with a 150-byte common prefix (two-byte shared
     /// varints), inline values of up to 300 bytes (two-byte tags) and
-    /// overflow values, high key or none; random inserts, replacements,
-    /// deletes and deletes of absent keys, 1 000 per leaf, until leaves are
-    /// full.
+    /// overflow values, high key or none, random stamps (TS-06: none, a
+    /// `created_ts`, a `deleted_ts`, both, of one to six varint bytes);
+    /// random inserts, replacements, deletes, delete stamps, and deletes
+    /// and delete stamps of absent keys, 1 000 per leaf, until leaves are
+    /// full. Every key keeps the stamps last written.
     #[test]
     fn apply_matches_the_full_reencode() {
         use rand::rngs::StdRng;
         use rand::{RngExt, SeedableRng};
         let mut rng = StdRng::seed_from_u64(14);
         let (mut grow_deletes, mut full_puts, mut shifted, mut ops) = (0, 0, 0, 0);
+        let mut restamps = 0;
         for trial in 0..120 {
             let long = trial % 2 == 1;
             let hk: Option<&[u8]> = if trial % 3 == 0 { Some(b"zz") } else { None };
@@ -1666,7 +1851,7 @@ mod tests {
                 0..0,
                 &mut Encoder::default()
             ));
-            let mut model = std::collections::BTreeSet::<Vec<u8>>::new();
+            let mut model = std::collections::BTreeMap::<Vec<u8>, Stamps>::new();
             let vbuf = vec![9u8; 300];
             for _ in 0..1000 {
                 let mut key = if long && rng.random_range(0..4) > 0 {
@@ -1685,35 +1870,66 @@ mod tests {
                     1 | 2 => Value::Inline(&vbuf[..rng.random_range(64..300)]),
                     _ => Value::Inline(&vbuf[..rng.random_range(0..20)]),
                 };
-                let delete = !model.is_empty() && rng.random_range(0..4) == 0;
-                if delete && rng.random_range(0..4) > 0 {
+                let stamp = |rng: &mut StdRng| match rng.random_range(0..3) {
+                    0 => rng.random_range(1..128),
+                    1 => rng.random_range(128..1 << 20),
+                    _ => rng.random_range(1 << 20..1 << 42),
+                };
+                let stamps = match rng.random_range(0..4) {
+                    0 => Stamps::NONE,
+                    1 => Stamps {
+                        created: stamp(&mut rng),
+                        deleted: 0,
+                    },
+                    2 => Stamps {
+                        created: stamp(&mut rng),
+                        deleted: stamp(&mut rng),
+                    },
+                    _ => Stamps {
+                        created: 0,
+                        deleted: stamp(&mut rng),
+                    },
+                };
+                // 0: put, 1: delete, 2: delete stamp.
+                let kind = if model.is_empty() {
+                    0
+                } else {
+                    [0, 0, 0, 1, 2][rng.random_range(0..5)]
+                };
+                if kind > 0 && rng.random_range(0..4) > 0 {
                     // An existing key, picked by position.
                     let n = rng.random_range(0..model.len());
-                    key = model.iter().nth(n).unwrap().clone();
+                    key = model.keys().nth(n).unwrap().clone();
                 }
-                let change = if delete {
-                    Change::Delete
-                } else {
-                    Change::Put(value)
+                let restamp = stamp(&mut rng);
+                let change = match kind {
+                    0 => Change::Put(value, stamps),
+                    1 => Change::Delete,
+                    _ => Change::Restamp(restamp),
                 };
                 let before = used(&p);
                 let pos = model.range::<Vec<u8>, _>(..&key).count();
                 let (r, after) = apply_both(&p, &key, change);
                 ops += 1;
-                match (r, delete) {
-                    (Some(Applied::Done(_)), true) => {
+                match (r, kind) {
+                    (Some(Applied::Done(_)), 1) => {
                         model.remove(&key);
                         if used(&after) > before {
                             grow_deletes += 1;
                         }
                         shifted += usize::from(model.len() - pos >= RESTART_INTERVAL);
                     }
-                    (Some(Applied::Done(_)), false) => {
-                        if model.insert(key) {
+                    (Some(Applied::Done(_)), 0) => {
+                        if model.insert(key, stamps).is_none() {
                             shifted += usize::from(model.len() - pos > RESTART_INTERVAL);
                         }
                     }
-                    (Some(Applied::Full), false) => full_puts += 1,
+                    (Some(Applied::Done(_)), _) => {
+                        model.get_mut(&key).expect("restamped key exists").deleted = restamp;
+                        restamps += 1;
+                    }
+                    (Some(Applied::NotFound), k) => assert!(k > 0 && !model.contains_key(&key)),
+                    (Some(Applied::Full), 0) => full_puts += 1,
                     _ => {}
                 }
                 p = after;
@@ -1721,11 +1937,12 @@ mod tests {
             let mut keys = Vec::new();
             leaf_entries(&p, |i, e| {
                 assert_eq!(e.restart, i % RESTART_INTERVAL == 0);
-                keys.push(e.key.to_vec());
+                keys.push((e.key.to_vec(), e.stamps));
             })
             .unwrap();
             assert_eq!(keys, model.into_iter().collect::<Vec<_>>());
         }
+        assert!(restamps > 1000, "{restamps} delete stamps applied");
         // Non-vacuity: the cases the copying path must get right occurred.
         assert!(grow_deletes > 50, "{grow_deletes} deletes grew a leaf");
         assert!(full_puts > 50, "{full_puts} puts did not fit");

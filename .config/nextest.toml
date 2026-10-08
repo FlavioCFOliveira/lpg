@@ -7,9 +7,34 @@
 #
 #     cargo nextest run -p lpg --profile stress
 #
-# The default profile is unchanged.
+# The default profile caps the tests that use the most space in
+# `/tmp/lpgram` (test group `disk-heavy`, below).
 
 experimental = ["wrapper-scripts"]
+
+# The modules whose tests use the most space in `/tmp/lpgram`: each test
+# was measured alone (`du -sk` every 20 ms, 2026-10-08); these modules
+# hold all 35 tests that peak at 60 MiB or more (largest 274 MiB). At most
+# three of their 89 tests run at once, so a default run stays under the
+# 1 GiB limit of CLAUDE.md: the three largest with the thirteen largest
+# other tests sum to 990 MiB.
+[test-groups]
+disk-heavy = { max-threads = 3 }
+
+# A hung test fails the run: it is killed after 10 periods of 60 s. The
+# slowest legitimate test, `suites::fault::restore_` in full on both lab
+# file systems, took 189.9 s (2026-10-08, docs/evidence/lab-sprint-2).
+[profile.default]
+slow-timeout = { period = "60s", terminate-after = 10 }
+
+[[profile.default.overrides]]
+filter = '''
+test(/^ops::(backup|migrate|restore)::/)
+| test(/^storage::(btree::bulk|checkpoint|recovery)::/)
+| test(/^suites::/)
+| test(/^tx::commit::/)
+'''
+test-group = "disk-heavy"
 
 [scripts.wrapper.copies]
 command = { command-line = ".config/stress-copies.sh", relative-to = "workspace-root" }
@@ -36,6 +61,20 @@ test(=obs::recording::tests::concurrent_calls_are_all_recorded)
 | test(=tx::commit::tests::four_closed_loop_committers_share_one_flush)
 | test(=tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable)
 | test(=tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once)
+| test(/^tx::lock::tests::threads::/)
+| test(=tx::tests::mvcc::a_paused_commit_is_invisible_until_published_then_wholly_visible)
+| test(=tx::tests::isolation::a_writer_waits_for_a_held_lock_and_continues_when_its_holder_ends)
+| test(=tx::tests::isolation::a_closed_wait_cycle_aborts_the_requester_with_deadlock)
+| test(=tx::tests::isolation::reads_never_wait_for_writers_or_the_commit_latch)
+| test(=tx::tests::isolation::sixteen_threads_with_disjoint_writes_all_commit_and_survive_reopen)
+| test(=tx::tests::hermitage::g0_write_cycles_are_prevented)
+| test(=tx::tests::hermitage::otv_observed_transaction_vanishes_is_prevented)
+| test(=tx::tests::hermitage::pmp_predicate_many_preceders_is_prevented)
+| test(=tx::tests::hermitage::p4_lost_update_is_prevented)
+| test(=tx::tests::gc::the_collector_frees_old_versions_after_commits)
+| test(=tx::tests::gc::after_a_crash_the_collector_finds_the_garbage_again)
+| test(=tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_list_append_histories)
+| test(=tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_rw_register_histories)
 '''
 # Sixteen copies share the machine: one test at a time.
 test-threads = 1

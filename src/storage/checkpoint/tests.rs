@@ -1,5 +1,5 @@
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
+use crate::sync::Arc;
+use crate::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::time::{Duration, Instant};
 
 use super::*;
@@ -93,6 +93,7 @@ fn a_hundred_thousand_commits_trigger_exactly_one_checkpoint() {
     let tuning = Tuning {
         checkpoint_interval: Duration::from_secs(3600),
         checkpoint_commits: 100_000,
+        ..Tuning::default()
     };
     let e = Engine::create_tuned(d, fault(), CAP, s.clone(), tuning).unwrap();
     let before = s.snapshot();
@@ -145,6 +146,7 @@ fn the_interval_triggers_checkpoints() {
     let tuning = Tuning {
         checkpoint_interval: Duration::from_millis(100),
         checkpoint_commits: 100_000,
+        ..Tuning::default()
     };
     let e = Engine::create_tuned(dir.path(), fs(), CAP, s.clone(), tuning).unwrap();
     wait_for("three checkpoints", Duration::from_secs(10), || {

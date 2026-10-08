@@ -20,10 +20,10 @@
 //!   gives the setup to subtract). Below 100 %, puts evict and write
 //!   frames, so they change the database on disk: run them on a copy.
 
+use crate::sync::Arc;
 use std::fmt::Write as _;
 use std::hint::black_box;
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::time::Instant;
 
 use rand::rngs::StdRng;
@@ -104,11 +104,13 @@ fn build(dist: &str) -> Option<String> {
                 tree,
                 key: &a,
                 value: Some(&[]),
+                stamp: 0,
             },
             Write {
                 tree,
                 key: &b,
                 value: Some(&[]),
+                stamp: 0,
             },
         ])
         .expect("put");
@@ -195,6 +197,7 @@ fn put_loop(s: &Store<'_>, tree: Tree, keys: &[[u8; 29]]) {
             tree,
             key: k,
             value: Some(&[]),
+            stamp: 0,
         }])
         .expect("put");
     }
@@ -250,7 +253,7 @@ fn leaf_costs(s: &Store<'_>, tree: Tree, keys: &[[u8; 29]]) -> (Vec<f64>, Vec<f6
         for _ in 0..50 {
             for (img, k) in &leaves {
                 let f = node::leaf_get(black_box(img), k, &mut buf).expect("leaf");
-                assert!(matches!(f, Found::Hit(_)));
+                assert!(matches!(f, Found::Hit(..)));
             }
         }
         search.push(t.elapsed().as_nanos() as f64 / (50 * leaves.len()) as f64);
@@ -258,7 +261,7 @@ fn leaf_costs(s: &Store<'_>, tree: Tree, keys: &[[u8; 29]]) -> (Vec<f64>, Vec<f6
         let mut n = 0usize;
         for _ in 0..5 {
             for (img, _) in &leaves {
-                node::leaf_for_each_from(black_box(img), &[], &mut buf, |k, _| {
+                node::leaf_for_each_from(black_box(img), &[], &mut buf, |k, _, _| {
                     black_box(k);
                     n += 1;
                     true

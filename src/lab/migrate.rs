@@ -11,10 +11,10 @@
 //! and wrote (`/proc/self/io`). `strace -c` runs alongside (see the
 //! report).
 
+use crate::sync::Arc;
+use crate::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::fmt::Write as _;
 use std::path::Path;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use super::{Probe, env_dir, env_list, header, write_text};

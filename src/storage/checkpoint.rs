@@ -35,8 +35,8 @@
 //!
 //! [`Wal::recycle`]: super::wal::Wal::recycle
 
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Condvar, Mutex, MutexGuard, PoisonError};
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::{Condvar, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
 use super::control::Control;

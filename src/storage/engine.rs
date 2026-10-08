@@ -22,12 +22,12 @@
 //! - **Drop** without close stops the threads without a checkpoint; the
 //!   flag stays clear, so the next open recovers (FR-DB-009).
 
+use crate::sync::atomic::{AtomicU64, Ordering};
+use crate::sync::thread::JoinHandle;
+use crate::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::ffi::OsStr;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::AtomicU64;
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
-use std::thread::JoinHandle;
 use std::time::Duration;
 
 use super::btree::{LogState, Store, Trees};
@@ -44,6 +44,8 @@ use super::sort::is_sort_temp;
 use super::wal::{ClosedGroup, OpenGroup, TEMP_SEGMENT, Wal};
 use super::{Storage, StorageLock};
 use crate::obs::MetricsSink;
+use crate::tx::gc;
+use crate::tx::mvcc::Mvcc;
 
 /// The on-disk format version this crate reads and writes (TS-28).
 pub(crate) const FORMAT_VERSION: u32 = 1;
@@ -128,22 +130,28 @@ fn is_leftover(name: &OsStr, live: Option<u64>) -> bool {
 }
 
 /// Checkpoint triggers (TS-11): every `interval` or every `commits`
-/// commits, whichever comes first.
+/// commits, whichever comes first; and the period of garbage collection
+/// (TS-14).
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Tuning {
     /// Time between periodic checkpoints.
     pub(crate) checkpoint_interval: Duration,
     /// Commits between checkpoints.
     pub(crate) checkpoint_commits: u64,
+    /// Time between periodic garbage-collection passes; commits also wake
+    /// the collector.
+    pub(crate) gc_interval: Duration,
 }
 
 impl Default for Tuning {
     /// Neo4j's `db.checkpoint.interval.time` and `db.checkpoint.interval.tx`
-    /// defaults, 15 minutes and 100 000 transactions (TS-11).
+    /// defaults, 15 minutes and 100 000 transactions (TS-11), and
+    /// Memgraph's garbage-collection period, 30 seconds (TS-14).
     fn default() -> Tuning {
         Tuning {
             checkpoint_interval: Duration::from_secs(15 * 60),
             checkpoint_commits: 100_000,
+            gc_interval: Duration::from_secs(30),
         }
     }
 }
@@ -159,6 +167,8 @@ pub(crate) struct RecoveryStats {
     pub(crate) bytes: u64,
     /// Whether the log was empty.
     pub(crate) empty_log: bool,
+    /// Whether `CONTROL` recorded a clean shutdown.
+    pub(crate) clean: bool,
 }
 
 /// The state of one open database, shared with its threads.
@@ -176,6 +186,8 @@ pub(crate) struct Core {
     pub(crate) trees: Trees,
     pub(crate) wal: Wal,
     pub(crate) checkpoints: Checkpoints,
+    /// The MVCC state (TS-14); empty at open (TS-13 step 7).
+    pub(crate) mvcc: Mvcc,
     pub(crate) sink: Arc<dyn MetricsSink>,
     pub(crate) recovered: RecoveryStats,
     /// Sorts started in this open: the number of the next one's files.
@@ -191,7 +203,7 @@ pub(crate) struct Core {
     pub(crate) load_waits: AtomicU64,
     /// Tests only: skip TS-16 step 2, so that the apply meets an overrun.
     #[cfg(test)]
-    pub(crate) skip_reserve: std::sync::atomic::AtomicBool,
+    pub(crate) skip_reserve: crate::sync::atomic::AtomicBool,
     /// Declared last, so it is released after every file is closed.
     _lock: Box<dyn StorageLock>,
 }
@@ -214,11 +226,11 @@ impl Core {
     pub(crate) fn backup_or_load(&self) -> MutexGuard<'_, ()> {
         match self.backup_or_load.try_lock() {
             Ok(g) => g,
-            Err(std::sync::TryLockError::Poisoned(p)) => p.into_inner(),
-            Err(std::sync::TryLockError::WouldBlock) => {
+            Err(crate::sync::TryLockError::Poisoned(p)) => p.into_inner(),
+            Err(crate::sync::TryLockError::WouldBlock) => {
                 #[cfg(test)]
                 self.load_waits
-                    .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    .fetch_add(1, crate::sync::atomic::Ordering::SeqCst);
                 self.backup_or_load
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
@@ -232,8 +244,8 @@ impl Core {
     pub(crate) fn try_backup_or_load(&self) -> Option<MutexGuard<'_, ()>> {
         match self.backup_or_load.try_lock() {
             Ok(g) => Some(g),
-            Err(std::sync::TryLockError::Poisoned(p)) => Some(p.into_inner()),
-            Err(std::sync::TryLockError::WouldBlock) => None,
+            Err(crate::sync::TryLockError::Poisoned(p)) => Some(p.into_inner()),
+            Err(crate::sync::TryLockError::WouldBlock) => None,
         }
     }
 
@@ -244,7 +256,8 @@ impl Core {
     }
 
     /// Closes the open group for the writer, under the commit latch, if a
-    /// commit has joined it.
+    /// member, a commit or an internal batch, has joined it (TS-09
+    /// Members).
     ///
     /// Once the database is unusable it closes nothing (TS-12): the writer
     /// then fails the waiting commits. Checked under the latch, after any
@@ -255,7 +268,7 @@ impl Core {
             return None;
         }
         let log = st.log();
-        log.group.has_commits().then(|| log.group.close(spare))
+        log.group.has_members().then(|| log.group.close(spare))
     }
 }
 
@@ -582,6 +595,7 @@ impl Engine {
             pages: rec.pages,
             bytes: rec.bytes,
             empty_log: rec.empty_log,
+            clean: c.clean_shutdown,
         };
         let wal = Wal::new(
             location,
@@ -605,6 +619,8 @@ impl Engine {
             trees,
             wal,
             checkpoints: Checkpoints::new(c.redo_point, tuning),
+            // TS-13 step 7: the old-version store starts empty.
+            mvcc: Mvcc::default(),
             sink,
             recovered,
             sorts: AtomicU64::new(0),
@@ -612,7 +628,7 @@ impl Engine {
             #[cfg(test)]
             load_waits: AtomicU64::new(0),
             #[cfg(test)]
-            skip_reserve: std::sync::atomic::AtomicBool::new(false),
+            skip_reserve: crate::sync::atomic::AtomicBool::new(false),
             _lock: lock,
         });
         // Step 8.
@@ -623,7 +639,7 @@ impl Engine {
         core.wal.set_salt(core.control().sequence());
         let mut engine = Engine {
             core,
-            threads: Vec::with_capacity(2),
+            threads: Vec::with_capacity(3),
         };
         let core = engine.core.clone();
         engine.spawn("lpg-wal", move || {
@@ -634,18 +650,27 @@ impl Engine {
         })?;
         let core = engine.core.clone();
         engine.spawn("lpg-checkpoint", move || checkpoint::run_thread(&core))?;
+        let core = engine.core.clone();
+        let seed = !c.clean_shutdown;
+        core.mvcc.unseeded.store(seed, Ordering::SeqCst);
+        engine.spawn("lpg-gc", move || {
+            gc::run_thread(&core, tuning.gc_interval, seed);
+        })?;
         Ok(engine)
     }
 
     fn spawn(&mut self, name: &str, f: impl FnOnce() + Send + 'static) -> Result<()> {
-        let handle = std::thread::Builder::new().name(name.to_owned()).spawn(f)?;
+        let handle = crate::sync::thread::Builder::new()
+            .name(name.to_owned())
+            .spawn(f)?;
         self.threads.push(handle);
         Ok(())
     }
 
-    /// Stops the checkpointer and the WAL writer and waits for them. The
-    /// writer first makes every joined group durable.
+    /// Stops the garbage collector, the checkpointer and the WAL writer and
+    /// waits for them. The writer first makes every joined group durable.
     fn stop_threads(&mut self) {
+        self.core.mvcc.stop_gc();
         self.core.checkpoints.stop();
         self.core.wal.stop();
         for t in self.threads.drain(..) {
@@ -654,29 +679,56 @@ impl Engine {
         }
     }
 
-    /// Stops the checkpointer only (clean close, before the final
-    /// checkpoint).
+    /// Stops the garbage collector and the checkpointer only (clean close,
+    /// before the last garbage-collection pass and the final checkpoint).
     fn stop_checkpointer(&mut self) {
+        self.core.mvcc.stop_gc();
         self.core.checkpoints.stop();
-        if self.threads.len() == 2 {
-            let _ = self.threads.pop().expect("checkpointer handle").join();
+        while self.threads.len() > 1 {
+            let _ = self.threads.pop().expect("thread handle").join();
         }
     }
 
     /// Closes the database cleanly (TS-11): stops the checkpointer, runs
-    /// the final checkpoint, whose `CONTROL` slot records a clean shutdown,
-    /// stops the WAL writer and releases `LOCK`. No commit can be running:
-    /// `close` takes the engine by value.
+    /// the last garbage-collection pass and the final checkpoint, whose
+    /// `CONTROL` slot records a clean shutdown, stops the WAL writer and
+    /// releases `LOCK`. No commit can be running: `close` takes the engine
+    /// by value.
+    ///
+    /// The clean-shutdown flag also tells the next open that no garbage is
+    /// left to find (`tx::gc` work queues). When the last pass fails with
+    /// the database usable (ENOSPC or [`Error::MemoryLimit`], undone), or
+    /// the seed scan of a crash-open never succeeded, the close still
+    /// completes, with the flag clear: the next open recovers and scans for
+    /// the garbage again. Shutdown does not depend on garbage collection in
+    /// Memgraph (its storage destructor stops the collector without a last
+    /// pass, R-MG @ `847e224` `src/storage/v2/inmemory/storage.cpp:545-563`)
+    /// or PostgreSQL (the shutdown checkpoint runs no vacuum, R-PG @
+    /// `1f22453` `src/backend/access/transam/xlog.c:7381-7420`).
     ///
     /// # Errors
     ///
     /// [`Error::Unusable`] if the database is unusable: then no checkpoint
     /// runs and the flag stays clear, so the next open recovers (TS-11);
-    /// errors of the checkpoint. `LOCK` is released in every case.
+    /// errors of the checkpoint, and of the wait for the last pass's WAL
+    /// group. `LOCK` is released in every case.
     pub(crate) fn close(mut self) -> Result<()> {
         self.stop_checkpointer();
         self.core.health.check()?;
-        checkpoint::run(&self.core, true)?;
+        let mut clean = !self.core.mvcc.unseeded.load(Ordering::SeqCst);
+        // No transaction is left, so the last pass removes every queued
+        // delete stamp and dropped tree; its group is made durable before
+        // the final checkpoint (TS-14; `tx::gc`).
+        match gc::pass(&self.core) {
+            Ok(p) => {
+                if let Some(seq) = p.group {
+                    self.core.wal.wait_durable(seq)?;
+                }
+            }
+            Err(_) if !self.core.health.is_unusable() => clean = false,
+            Err(e) => return Err(e),
+        }
+        checkpoint::run(&self.core, clean)?;
         self.stop_threads();
         Ok(())
     }

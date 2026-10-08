@@ -1,5 +1,5 @@
+use crate::sync::Arc;
 use std::collections::BTreeMap;
-use std::sync::Arc;
 
 use super::*;
 use crate::obs::recording::RecordingSink;
@@ -101,6 +101,7 @@ pub(crate) fn closed_database(
                 tree,
                 key: k,
                 value: Some(&[3; 200]),
+                stamp: 0,
             })
             .collect();
         e.commit(

@@ -1,7 +1,7 @@
 //! The buffer pool (TS-08).
 //!
 //! - **Frames.** Each frame holds one page in a `Box<[u8]>` behind a
-//!   [`std::sync::RwLock`] latch, with an atomic pin count, an atomic usage
+//!   [`crate::sync::RwLock`] latch, with an atomic pin count, an atomic usage
 //!   count and an atomic dirty flag. The frame table has one slot per page
 //!   the memory cap could hold; a slot gets its page buffer only when the
 //!   accountant grants the bytes.
@@ -36,12 +36,12 @@
 //! [`Pool::publish_metrics`], which every checkpoint calls, so a hit makes
 //! no sink call. Evictions and dirty writes are sent as they happen.
 
-use std::collections::HashMap;
-use std::hash::{BuildHasherDefault, Hasher};
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{
+use crate::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
+use crate::sync::{
     Arc, Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard, TryLockError,
 };
+use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
 
 use super::datafile::Datafile;
 use super::error::{Error, Health, Result};

@@ -1,6 +1,6 @@
+use crate::sync::Arc;
 use std::collections::BTreeMap;
 use std::path::Path;
-use std::sync::Arc;
 
 use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
@@ -134,6 +134,7 @@ fn a_bulk_built_tree_answers_like_a_tree_built_by_puts() {
                 tree: by_put,
                 key: k,
                 value: Some(v),
+                stamp: 0,
             })
             .collect();
         e.commit(&batch, Ids::default()).unwrap();
@@ -238,6 +239,7 @@ fn a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free() {
             tree: small,
             key: b"a",
             value: Some(b"1"),
+            stamp: 0,
         }],
         Ids::default(),
     )
@@ -345,8 +347,8 @@ fn a_sorted_spill_feeds_the_build() {
 /// database fails its integrity check or answers differently.
 #[test]
 fn audit_a_stale_frame_never_overwrites_a_bulk_built_page() {
+    use crate::sync::atomic::Ordering;
     use std::collections::BTreeSet;
-    use std::sync::atomic::Ordering;
 
     use crate::tx::commit::tests::{audit_join, fault, put, use_up_reserve};
     let dir = test_dirs().remove(0);
@@ -373,6 +375,7 @@ fn audit_a_stale_frame_never_overwrites_a_bulk_built_page() {
                     tree,
                     key: b"big",
                     value: None,
+                    stamp: 0,
                 }],
                 0,
             )

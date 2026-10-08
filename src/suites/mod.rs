@@ -38,3 +38,47 @@ pub(crate) fn suite_dirs() -> (Vec<(&'static str, PathBuf)>, bool) {
         (dirs, true)
     }
 }
+
+/// The crash oracle of the garbage collector (TS-14, audit Round A N3):
+/// once the reopened database's seed scan has run, a pass with no snapshot
+/// open leaves no entry of any live tree with a delete stamp at or below
+/// its horizon. Entries the seed scan missed would stay forever, since the
+/// commit queues that found them were lost with the process.
+///
+/// # Panics
+///
+/// If the seed scan does not succeed within
+/// [`crate::test_support::WAIT_BOUND`], the pass fails, or an entry keeps
+/// a collectable delete stamp.
+fn assert_stamps_collected(e: &crate::storage::engine::Engine, what: &str) {
+    use crate::storage::btree::{DIRECTORY, Tree, decode_directory_entry};
+    use crate::sync::atomic::Ordering;
+    crate::test_support::wait_until(&format!("{what}: the seed scan"), || {
+        !e.core().mvcc.unseeded.load(Ordering::SeqCst)
+    });
+    let pass = crate::tx::gc::pass(e.core()).unwrap_or_else(|err| panic!("{what}: pass: {err}"));
+    let store = e.store();
+    let mut trees = Vec::new();
+    store
+        .scan_prefix(DIRECTORY, b"", |k, v| {
+            if let (Ok(id), Some((root, 0))) = (<[u8; 8]>::try_from(k), decode_directory_entry(v)) {
+                trees.push(Tree::new(u64::from_be_bytes(id), root));
+            }
+            true
+        })
+        .unwrap();
+    for t in trees {
+        store
+            .scan_prefix_stamped(t, b"", |k, _, st| {
+                assert!(
+                    st.deleted == 0 || st.deleted > pass.horizon,
+                    "{what}: tree {} key {k:?} keeps delete stamp {} at or below the horizon {}",
+                    t.id(),
+                    st.deleted,
+                    pass.horizon
+                );
+                true
+            })
+            .unwrap();
+    }
+}

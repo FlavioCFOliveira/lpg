@@ -25,6 +25,7 @@ fn built(dir: &Path) -> (Engine, Tree, Vec<u64>) {
                 tree,
                 key: k,
                 value: Some(&values),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -187,12 +188,14 @@ fn a_page_in_a_tree_and_the_free_list_is_reported() {
             tree,
             key: b"big",
             value: Some(&big),
+            stamp: 0,
         }])
         .unwrap();
         s.apply(&[Write {
             tree,
             key: b"big",
             value: None,
+            stamp: 0,
         }])
         .unwrap();
         let trunk = s.lock().free_list().head();

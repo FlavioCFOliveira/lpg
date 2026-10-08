@@ -10,9 +10,9 @@
 //!   one extent per `ensure`, in `LPG_TEST_DIR`, for
 //!   `strace -T -e trace=fallocate`.
 
+use crate::sync::Arc;
 use std::fmt::Write as _;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::Instant;
 
 use super::{env_dir, median_range, write_text};

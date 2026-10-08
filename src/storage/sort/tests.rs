@@ -1,5 +1,5 @@
+use crate::sync::Arc;
 use std::path::Path;
-use std::sync::Arc;
 
 use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};

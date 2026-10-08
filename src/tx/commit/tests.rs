@@ -1,7 +1,7 @@
+use crate::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use crate::sync::{Arc, Mutex};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use super::*;
@@ -43,6 +43,7 @@ pub(crate) fn put<'a>(tree: Tree, k: &'a [u8], v: &'a [u8]) -> Write<'a> {
         tree,
         key: k,
         value: Some(v),
+        stamp: 0,
     }
 }
 
@@ -51,6 +52,7 @@ pub(crate) fn del(tree: Tree, k: &[u8]) -> Write<'_> {
         tree,
         key: k,
         value: None,
+        stamp: 0,
     }
 }
 
@@ -706,7 +708,7 @@ fn audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data() {
 #[test]
 fn audit_a_failed_capture_never_reaches_the_wal() {
     use crate::storage::wal::segment_name;
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     let dir = test_dirs().remove(0);
     let d = dir.path().to_path_buf();
     let e =
@@ -1429,7 +1431,7 @@ fn a_lone_committer_never_waits_in_a_gather_window() {
 /// held at its pause point they never return, and the test fails.
 #[test]
 fn commits_become_durable_while_a_segment_is_created_ahead_of_use() {
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     let dir = test_dirs().remove(0);
     let e = Arc::new(Engine::create(dir.path(), fault(), CAP, sink()).unwrap());
     let tree = e.create_trees(1).unwrap()[0];
@@ -1443,15 +1445,16 @@ fn commits_become_durable_while_a_segment_is_created_ahead_of_use() {
     // Only the checkpointer thread's creation stops: a committer that had to
     // create the segment itself would block under the commit latch.
     let (entered_tx, entered) = mpsc::channel();
-    let release = Arc::new((Mutex::new(false), std::sync::Condvar::new()));
+    let release = Arc::new((Mutex::new(false), crate::sync::Condvar::new()));
     /// Releases the paused creation when dropped, also when an assertion
     /// below fails: otherwise the engine's drop would wait for the paused
     /// checkpointer forever and the test would hang instead of failing.
-    struct Release(Arc<(Mutex<bool>, std::sync::Condvar)>);
+    struct Release(Arc<(Mutex<bool>, crate::sync::Condvar)>);
     impl Drop for Release {
         fn drop(&mut self) {
             let (m, cv) = &*self.0;
-            *m.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = true;
+            *m.lock()
+                .unwrap_or_else(crate::sync::PoisonError::into_inner) = true;
             cv.notify_all();
         }
     }
@@ -1515,7 +1518,7 @@ fn commits_become_durable_while_a_segment_is_created_ahead_of_use() {
 /// 2). The interleaving is set by the points, without sleeps.
 #[test]
 fn a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit() {
-    use std::sync::mpsc;
+    use crate::sync::mpsc;
     let dir = test_dirs().remove(0);
     let e = Arc::new(Engine::create(dir.path(), fault(), CAP, sink()).unwrap());
     let tree = e.create_trees(1).unwrap()[0];

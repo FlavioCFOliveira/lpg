@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use crate::sync::Arc;
 
 use super::*;
 use crate::obs::recording::RecordingSink;
@@ -28,6 +28,7 @@ fn backed_up(dir: &Path, artefact: &Path) -> (Tree, Model) {
                 tree,
                 key: &k,
                 value: Some(&[5; 100]),
+                stamp: 0,
             }],
             Ids::default(),
         )
@@ -349,11 +350,11 @@ fn create_after_an_interrupted_restore(tree_before_backup: bool) {
     // A backup with commits between `start` and `stop`: the commits run
     // while the backup is paused after its checkpoint.
     {
-        use std::sync::Mutex;
+        use crate::sync::Mutex;
         let e = Engine::create(src.path(), no_flush(), CAP, sink()).unwrap();
         let early = tree_before_backup.then(|| e.create_trees(1).unwrap()[0]);
-        let (tx, rx) = std::sync::mpsc::channel::<()>();
-        let (go_tx, go) = std::sync::mpsc::channel::<()>();
+        let (tx, rx) = crate::sync::mpsc::channel::<()>();
+        let (go_tx, go) = crate::sync::mpsc::channel::<()>();
         let (tx, go) = (Mutex::new(tx), Mutex::new(go));
         *e.wal().points.backup_started.lock().unwrap() = Some(Box::new(move || {
             tx.lock().unwrap().send(()).unwrap();
@@ -370,6 +371,7 @@ fn create_after_an_interrupted_restore(tree_before_backup: bool) {
                         tree,
                         key: &k,
                         value: Some(&[5; 100]),
+                        stamp: 0,
                     }],
                     Ids::default(),
                 )
@@ -441,8 +443,8 @@ fn create_after_an_interrupted_restore(tree_before_backup: bool) {
 /// `Engine::create` does by checking again under the lock.
 #[test]
 fn audit_a_restore_never_replaces_a_database_created_after_its_first_check() {
+    use crate::sync::atomic::{AtomicBool, Ordering};
     use std::ffi::OsString;
-    use std::sync::atomic::{AtomicBool, Ordering};
     struct CreateOnLock {
         target: std::path::PathBuf,
         done: AtomicBool,
@@ -476,6 +478,7 @@ fn audit_a_restore_never_replaces_a_database_created_after_its_first_check() {
                         tree: t,
                         key: b"created",
                         value: Some(b"1"),
+                        stamp: 0,
                     }],
                     Ids::default(),
                 )
@@ -515,9 +518,9 @@ fn audit_a_restore_never_replaces_a_database_created_after_its_first_check() {
 /// working, and leave a database every later open accepts, holding its data.
 #[test]
 fn audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact() {
+    use crate::sync::Mutex;
+    use crate::sync::atomic::{AtomicBool, Ordering};
     use std::ffi::OsString;
-    use std::sync::Mutex;
-    use std::sync::atomic::{AtomicBool, Ordering};
     struct CreateOnLock {
         target: std::path::PathBuf,
         done: AtomicBool,
@@ -552,6 +555,7 @@ fn audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact() 
                         tree: t,
                         key: b"created",
                         value: Some(b"1"),
+                        stamp: 0,
                     }],
                     Ids::default(),
                 )
@@ -594,6 +598,7 @@ fn audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact() 
             tree: t,
             key: b"after",
             value: Some(b"2"),
+            stamp: 0,
         }],
         Ids::default(),
     )
@@ -601,7 +606,11 @@ fn audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact() 
     e.close().unwrap();
     // A plain restore now refuses at step 1; the database opens with both keys.
     let r = restore(artefact.path(), target.path(), no_flush(), CAP, sink());
-    assert!(matches!(r, Err(Error::DatabaseExists)), "{:?}", r.as_ref().err());
+    assert!(
+        matches!(r, Err(Error::DatabaseExists)),
+        "{:?}",
+        r.as_ref().err()
+    );
     assert_eq!(std::fs::metadata(&lock).unwrap().ino(), ino);
     let e = Engine::open(target.path(), no_flush(), CAP, sink()).unwrap();
     let got = entries(&e, t);

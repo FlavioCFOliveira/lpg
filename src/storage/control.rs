@@ -29,9 +29,9 @@
 //! slot that is not authoritative. The file itself is created whole under
 //! a temporary name and renamed ([`write_new`]).
 
+use crate::sync::Arc;
 use std::io;
 use std::path::Path;
-use std::sync::Arc;
 
 use super::engine::{CONTROL, CONTROL_TMP};
 use super::error::{Error, Health, Result};

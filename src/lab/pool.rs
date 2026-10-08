@@ -19,12 +19,12 @@
 //! - [`pool_double_cache`]: OS-cache residency of `data-1` while the pool
 //!   is full, and miss cost with the OS cache warm and evicted.
 
+use crate::sync::Arc;
+use crate::sync::atomic::AtomicU64;
 use std::fmt::Write as _;
 use std::hint::black_box;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::Arc;
-use std::sync::atomic::AtomicU64;
 use std::time::Instant;
 
 use rand::rngs::StdRng;

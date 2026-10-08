@@ -140,9 +140,9 @@ impl Builder<'_, '_> {
             while self.store.trees.readers.horizon() < batch {
                 spins += 1;
                 if spins < 64 {
-                    std::thread::yield_now();
+                    crate::sync::thread::yield_now();
                 } else {
-                    std::thread::sleep(std::time::Duration::from_micros(50));
+                    crate::sync::thread::pause(std::time::Duration::from_micros(50));
                 }
             }
             self.st.fence = None;
@@ -403,7 +403,7 @@ pub(crate) struct Built<'e> {
     engine: &'e Engine,
     st: Option<CommitLatch<'e>>,
     /// The backup-or-load latch, held until the install ends.
-    _load: std::sync::MutexGuard<'e, ()>,
+    _load: crate::sync::MutexGuard<'e, ()>,
     id: u64,
     root: u64,
     /// The page count before the build.
@@ -427,7 +427,7 @@ impl Built<'_> {
         let (id, root, before) = (self.id, self.root, self.before);
         let engine = self.engine;
         let core = engine.core();
-        let r = engine.commit_latched(st, Ids::default(), |store, st, wal| {
+        let r = engine.commit_latched(st, Ids::default(), |store, st, wal, _ts| {
             let r = core
                 .data
                 .ensure(store.estimate(&[], 1)?)

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use crate::sync::Arc;
 
 use super::*;
 use crate::obs::names::checkpointing::CONTROL_SLOT_INVALID;

@@ -1,6 +1,6 @@
+use crate::sync::Arc;
+use crate::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::collections::BTreeMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -42,6 +42,7 @@ fn put(s: &Store<'_>, tree: Tree, k: &[u8], v: &[u8]) {
         tree,
         key: k,
         value: Some(v),
+        stamp: 0,
     }])
     .unwrap();
 }
@@ -154,6 +155,7 @@ fn a_million_random_puts_and_deletes_match_a_btreemap_model() {
                 tree,
                 key: k,
                 value: v.as_deref(),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -243,6 +245,7 @@ fn a_tree_ten_times_larger_than_the_cap_reads_back_intact() {
                 tree,
                 key: k,
                 value: Some(v),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -313,6 +316,7 @@ fn overflow_values_round_trip() {
                 tree,
                 key: &[i as u8],
                 value: None,
+                stamp: 0,
             }])
             .unwrap();
         }
@@ -355,11 +359,13 @@ fn keys_at_the_limit_work_and_longer_keys_are_refused() {
                 tree,
                 key: b"ok",
                 value: Some(b"v"),
+                stamp: 0,
             },
             Write {
                 tree,
                 key: &long,
                 value: Some(b"v"),
+                stamp: 0,
             },
         ];
         assert!(matches!(s.apply(&batch), Err(Error::InvalidArgument(_))));
@@ -547,6 +553,7 @@ fn concurrent_readers_during_splits_see_every_committed_key_exactly_once() {
                     tree,
                     key: k,
                     value: v.as_deref(),
+                    stamp: 0,
                 })
                 .collect();
             s.apply(&batch).unwrap();
@@ -591,12 +598,14 @@ fn a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away() {
             tree,
             key: k,
             value: Some(&v),
+            stamp: 0,
         })
         .collect();
     batch.push(Write {
         tree,
         key: b"z",
         value: Some(&v),
+        stamp: 0,
     });
     s.apply(&batch).unwrap();
     let behind = b"a00000b".to_vec();
@@ -609,6 +618,7 @@ fn a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away() {
                     tree,
                     key: k,
                     value: None,
+                    stamp: 0,
                 })
                 .collect();
             s.apply(&deletes).unwrap();
@@ -683,6 +693,7 @@ fn a_failure_after_the_first_change_makes_the_database_unusable() {
             tree,
             key: b"b",
             value: Some(b"2"),
+            stamp: 0,
         }]);
         assert!(matches!(r, Err(Error::Corruption(_))), "{r:?}");
         assert!(matches!(e.check(), Err(Error::Unusable)));
@@ -748,6 +759,7 @@ fn stale_descents_recover_by_moving_right() {
             tree,
             key: k,
             value: None,
+            stamp: 0,
         }])
         .unwrap();
     }
@@ -795,6 +807,7 @@ fn emptying_a_subtree_frees_its_inner_pages() {
                 tree,
                 key: k,
                 value: Some(&v),
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -818,6 +831,7 @@ fn emptying_a_subtree_frees_its_inner_pages() {
                 tree,
                 key: k,
                 value: None,
+                stamp: 0,
             })
             .collect();
         s.apply(&batch).unwrap();
@@ -885,7 +899,12 @@ fn audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable() {
     .unwrap();
     let trees = e.create_trees(2).unwrap();
     let (t1, t2) = (trees[0], trees[1]);
-    let w = |tree, key: &'static [u8], value: Option<&'static [u8]>| Write { tree, key, value };
+    let w = |tree, key: &'static [u8], value: Option<&'static [u8]>| Write {
+        tree,
+        key,
+        value,
+        stamp: 0,
+    };
     let other: &'static [u8] = Box::leak(vec![5u8; 100_000].into_boxed_slice());
     e.commit(&[w(t2, b"big", Some(other))], Ids::default())
         .unwrap();
@@ -993,6 +1012,7 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
                 tree,
                 key: k,
                 value: Some(&v),
+                stamp: 0,
             })
             .collect();
         e.commit(&batch, Ids::default()).unwrap();
@@ -1005,6 +1025,7 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
             tree,
             key: k,
             value: None,
+            stamp: 0,
         })
         .collect();
     e.commit(&batch, Ids::default()).unwrap();
@@ -1028,11 +1049,13 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
                 tree,
                 key: split,
                 value: Some(&wide),
+                stamp: 0,
             },
             Write {
                 tree,
                 key: b"y",
                 value: Some(&huge),
+                stamp: 0,
             },
         ],
         Ids::default(),
@@ -1053,6 +1076,7 @@ fn a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key() {
             tree,
             key: split,
             value: Some(&wide),
+            stamp: 0,
         }],
         Ids::default(),
     )

@@ -1,6 +1,6 @@
+use crate::sync::Arc;
+use crate::sync::atomic::Ordering;
 use std::path::Path;
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
 
 use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};

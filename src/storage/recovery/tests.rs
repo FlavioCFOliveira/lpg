@@ -1,5 +1,5 @@
+use crate::sync::Arc;
 use std::path::Path;
-use std::sync::Arc;
 
 use crate::storage::btree::Tree;
 use crate::storage::control::tests::patch_slot;

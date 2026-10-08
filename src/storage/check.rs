@@ -479,14 +479,14 @@ impl Store<'_> {
         }
         let entries = c.check_tree(DIRECTORY, true)?;
         for (k, v) in entries {
-            let (Ok(id), Ok(root)) = (
+            let (Ok(id), Some((root, _))) = (
                 <[u8; 8]>::try_from(k.as_slice()),
-                <[u8; 8]>::try_from(v.as_slice()),
+                super::btree::decode_directory_entry(&v),
             ) else {
                 c.problem("malformed directory entry".into());
                 continue;
             };
-            let (id, root) = (u64::from_be_bytes(id), u64::from_le_bytes(root));
+            let id = u64::from_be_bytes(id);
             if id == 0 || id >= st.next_tree_id() {
                 c.problem(format!(
                     "directory lists tree {id}, not below the next tree id"

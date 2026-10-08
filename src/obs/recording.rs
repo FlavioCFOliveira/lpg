@@ -1,9 +1,9 @@
 //! A thread-safe [`MetricsSink`] that records every call, for tests and the
 //! laboratory.
 
+use crate::sync::Mutex;
 use std::collections::BTreeMap;
 use std::fmt;
-use std::sync::Mutex;
 
 use super::MetricsSink;
 
@@ -97,7 +97,7 @@ impl RecordingSink {
         self.lock().clone()
     }
 
-    fn lock(&self) -> std::sync::MutexGuard<'_, Metrics> {
+    fn lock(&self) -> crate::sync::MutexGuard<'_, Metrics> {
         self.0
             .lock()
             .expect("recording sink poisoned by a panicking test")
@@ -120,7 +120,7 @@ impl MetricsSink for RecordingSink {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use crate::sync::Arc;
 
     use super::*;
 

@@ -1,8 +1,8 @@
 //! Storage kernel errors and the database-wide "unusable" latch (TS-12).
 
+use crate::sync::atomic::{AtomicBool, Ordering};
 use std::fmt;
 use std::io;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 /// An error of the storage kernel.
 #[derive(Debug)]
@@ -69,6 +69,21 @@ pub(crate) enum Error {
         /// The crate version that migrates format `found` to the next one.
         crate_version: Option<&'static str>,
     },
+    /// The transaction cannot be serialised with the transactions that
+    /// committed while it ran: its reads overlap their writes (TS-15
+    /// Validation), or a resource it locked changed after its snapshot
+    /// (TS-15 Write-write rule). The transaction is aborted. GQLSTATUS
+    /// 25N11 ([`Error::gqlstatus`]; FR-TX-008).
+    Serialization,
+    /// The transaction's lock request closed a cycle of waiting
+    /// transactions; it is aborted (TS-15 Deadlocks). GQLSTATUS 50N05
+    /// (FR-TX-007).
+    Deadlock,
+    /// A transaction used a tree that was dropped at or before its
+    /// snapshot.
+    TreeDropped(u64),
+    /// An operation of a transaction that an earlier failure aborted.
+    Aborted,
 }
 
 /// Result of the storage kernel.
@@ -133,6 +148,15 @@ impl fmt::Display for Error {
                 "format version {found} is too old to migrate and no crate version is known \
                  that migrates it"
             ),
+            Error::Serialization => f.write_str(
+                "the transaction could not be serialized with concurrent transactions \
+                 and was aborted",
+            ),
+            Error::Deadlock => {
+                f.write_str("the transaction was aborted to break a deadlock between lock waits")
+            }
+            Error::TreeDropped(id) => write!(f, "tree {id} was dropped"),
+            Error::Aborted => f.write_str("the transaction was aborted by an earlier failure"),
         }
     }
 }
@@ -157,6 +181,19 @@ impl Error {
     /// the database usable (TS-05, TS-12).
     pub(crate) fn is_no_space(&self) -> bool {
         matches!(self, Error::Io(e) if e.kind() == io::ErrorKind::StorageFull)
+    }
+
+    /// The GQLSTATUS code of the error kinds that carry one now (sprint
+    /// exit condition; `interfaces.md`): 25N11 for
+    /// [`Error::Serialization`] (provisional, OQ-005) and 50N05 for
+    /// [`Error::Deadlock`], both Neo4j status codes. The full mapping is
+    /// Sprint 3's.
+    pub(crate) fn gqlstatus(&self) -> Option<&'static str> {
+        match self {
+            Error::Serialization => Some("25N11"),
+            Error::Deadlock => Some("50N05"),
+            _ => None,
+        }
     }
 }
 

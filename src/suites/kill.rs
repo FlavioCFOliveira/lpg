@@ -22,9 +22,25 @@
 //!   at most one past its last printed commit;
 //! - the integrity check passes.
 //!
+//! A fifth thread runs serializable transactions on a second tree (audit
+//! Round A): each puts its own key and deletes the previous one, so each
+//! commit is stamped and leaves a delete stamp; the first and every 16th
+//! after it also creates a
+//! tree, fills it and drops it in a second transaction. Commits notify the
+//! garbage collector, whose groups remove the stamps and free the dropped
+//! trees. It prints `TX` after each commit and `DROP` after each drop.
+//! After the reopen, a snapshot sees exactly one key of the thread for the
+//! iteration, the last printed or the one after it, every printed drop is
+//! dropped, and once the collector's seed scan and pass have freed the
+//! dropped trees, no entry keeps a delete stamp at or below the horizon of
+//! a pass with no snapshot open, and the integrity check passes again.
+//!
 //! The parent counts the kills that fell inside a checkpoint and inside a
 //! backup, and the checkpoints that recycled or removed a segment; the full
-//! run requires each count to be above 0.
+//! run requires each count, and the printed drops, to be above 0. In a
+//! full run the first child, before its workload, fills the WAL past its
+//! first segment and checkpoints, so at least one checkpoint recycles
+//! whatever the file system's speed ([`fill_one_segment`]).
 //!
 //! The parent then closes the database, and the next iteration's child
 //! opens it again. The suite runs 200 iterations in each lab directory
@@ -33,11 +49,11 @@
 //! per reopen and the WAL bytes replayed (TS-13), and the child's commits
 //! per second.
 
+use crate::sync::Arc;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Write as _};
 use std::path::Path;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use rand::rngs::StdRng;
@@ -50,6 +66,7 @@ use crate::storage::engine::{CONTROL, Engine};
 use crate::storage::{FsStorage, Storage};
 use crate::test_support::child;
 use crate::test_support::seed;
+use crate::tx::Isolation;
 use crate::tx::commit::Ids;
 
 const CAP: u64 = 64 << 20;
@@ -57,6 +74,8 @@ const THREADS: u64 = 4;
 const DIR_VAR: &str = "LPG_KILL_DIR";
 const BACKUP_VAR: &str = "LPG_KILL_BACKUP_DIR";
 const ITER_VAR: &str = "LPG_KILL_ITER";
+/// Set for the first child of a full run: see [`fill_one_segment`].
+const FILL_VAR: &str = "LPG_KILL_FILL";
 
 /// The two keys of commit `i` of thread `t` in iteration `iter`.
 fn keys(iter: u64, t: u64, i: u64) -> [Vec<u8>; 2] {
@@ -64,6 +83,80 @@ fn keys(iter: u64, t: u64, i: u64) -> [Vec<u8>; 2] {
         format!("a/{iter:03}/{t}/{i:07}").into_bytes(),
         format!("z/{iter:03}/{t}/{i:07}").into_bytes(),
     ]
+}
+
+/// The key of transaction `i` of the transaction thread in iteration
+/// `iter`.
+fn tx_key(iter: u64, i: u64) -> Vec<u8> {
+    format!("x/{iter:03}/{i:07}").into_bytes()
+}
+
+/// The transaction thread: see the module documentation.
+fn tx_work(e: &Engine, tree: Tree, iter: u64, say: &(dyn Fn(String) + Sync)) {
+    for i in 0u64..u64::MAX {
+        let mut tx = e.begin(Isolation::Serializable).unwrap();
+        tx.put(tree, &tx_key(iter, i), &[9u8; 200]).unwrap();
+        if i > 0 {
+            assert!(tx.delete(tree, &tx_key(iter, i - 1)).unwrap());
+        }
+        tx.commit().unwrap();
+        say(format!("TX {iter} {i}"));
+        if i % 16 == 0 {
+            let t = e.create_trees(1).unwrap()[0];
+            let mut tx = e.begin(Isolation::Serializable).unwrap();
+            for k in 0..60u32 {
+                tx.put(t, &k.to_be_bytes(), &[3u8; 300]).unwrap();
+            }
+            tx.commit().unwrap();
+            let mut tx = e.begin(Isolation::Serializable).unwrap();
+            tx.drop_tree(t).unwrap();
+            tx.commit().unwrap();
+            say(format!("DROP {}", t.id()));
+        }
+    }
+}
+
+/// Commits filler entries (prefix `f/`, outside every oracle's prefix)
+/// into `tree` until the durable WAL passes its first segment, then runs a
+/// checkpoint, printed like the checkpoint thread's: its redo point lies in
+/// the second segment, and no backup holds the first, so it recycles or
+/// removes it. A full run's workload alone writes a few segments' worth on
+/// a slow file system, so whether a printed checkpoint recycled depended
+/// on timing (audit Round A N2: 0, 3 and 1 on XFS); this makes it certain,
+/// and the later children write over the recycled segment.
+///
+/// # Errors
+///
+/// The failure's message, which the child prints for the parent to report.
+fn fill_one_segment(e: &Engine, tree: Tree, say: &(dyn Fn(String) + Sync)) -> Result<(), String> {
+    let v = [5u8; 2000];
+    let mut n = 0u64;
+    while e.core().wal.durable_lsn() <= crate::storage::wal::SEGMENT_SPAN {
+        let keys: Vec<Vec<u8>> = (0..64)
+            .map(|k| format!("f/{n:06}/{k:02}").into_bytes())
+            .collect();
+        let batch: Vec<Write<'_>> = keys
+            .iter()
+            .map(|key| Write {
+                tree,
+                key,
+                value: Some(&v),
+                stamp: 0,
+            })
+            .collect();
+        e.commit(&batch, Ids::default())
+            .map_err(|err| format!("filler commit {n}: {err:?}"))?;
+        n += 1;
+    }
+    say("CKPT start".into());
+    let st = e
+        .checkpoint()
+        .map_err(|err| format!("filler checkpoint: {err:?}"))?;
+    if st.recycled + st.removed == 0 {
+        return Err("the filled segment was not recycled".into());
+    }
+    say(format!("CKPT end {}", st.recycled + st.removed));
+    Ok(())
 }
 
 /// Parses a key back into `(iter, t, i)`.
@@ -93,11 +186,15 @@ fn work() {
     } else {
         Engine::create(dir, storage, CAP, sink).unwrap()
     };
-    let tree = match e.store().tree(1).unwrap() {
-        Some(t) => t,
-        None => e.create_trees(1).unwrap()[0],
+    // Tree 1 for the batches, tree 2 for the transactions.
+    let (tree, tx_tree) = match e.store().tree(1).unwrap() {
+        Some(t) => (t, e.store().tree(2).unwrap().expect("tree 2")),
+        None => {
+            let t = e.create_trees(2).unwrap();
+            (t[0], t[1])
+        }
     };
-    let out = std::sync::Mutex::new(std::io::stdout());
+    let out = crate::sync::Mutex::new(std::io::stdout());
     let say = |line: String| {
         let mut o = out.lock().unwrap();
         writeln!(o, "{line}").unwrap();
@@ -105,6 +202,12 @@ fn work() {
     };
     let backups = std::env::var_os(BACKUP_VAR).expect("backup directory");
     let backups = Path::new(&backups);
+    if std::env::var_os(FILL_VAR).is_some()
+        && let Err(m) = fill_one_segment(&e, tx_tree, &say)
+    {
+        say(format!("FILL failed: {m}"));
+        panic!("{m}");
+    }
     std::thread::scope(|s| {
         let (e, say) = (&e, &say);
         s.spawn(move || {
@@ -126,6 +229,7 @@ fn work() {
                 std::fs::remove_dir_all(&target).unwrap();
             }
         });
+        s.spawn(move || tx_work(e, tx_tree, iter, say));
         for t in 0..THREADS {
             s.spawn(move || {
                 for i in 0u64..u64::MAX {
@@ -136,11 +240,13 @@ fn work() {
                             tree,
                             key: &a,
                             value: Some(&v),
+                            stamp: 0,
                         },
                         Write {
                             tree,
                             key: &b,
                             value: Some(&v),
+                            stamp: 0,
                         },
                     ];
                     e.commit(&batch, Ids::default()).unwrap();
@@ -164,15 +270,25 @@ struct Figures {
     in_backup: u64,
     /// Completed checkpoints that recycled or removed a segment.
     recycling: u64,
+    /// Trees whose drop was printed.
+    drops: Vec<u64>,
 }
 
 /// One line of the child.
 enum Line {
     Commit(u64, u64),
     CheckpointStart,
-    CheckpointEnd { recycled: u64 },
+    CheckpointEnd {
+        recycled: u64,
+    },
     BackupStart,
     BackupEnd,
+    /// Transaction `i` of the transaction thread returned.
+    Tx(u64),
+    /// The tree with this identifier was dropped.
+    Drop(u64),
+    /// The filler step failed with this message.
+    FillFailed(String),
 }
 
 /// One kill-and-reopen iteration in `dir`. Adds the commits printed to
@@ -188,17 +304,18 @@ fn iteration(
 ) {
     let test = child::test_path(module_path!(), "kill_and_reopen");
     let iter_s = iter.to_string();
-    let mut c = child::spawn(
-        &test,
-        "work",
-        &[
-            (DIR_VAR, dir.as_os_str()),
-            (BACKUP_VAR, backups.as_os_str()),
-            (ITER_VAR, OsStr::new(&iter_s)),
-        ],
-    );
+    let mut env = vec![
+        (DIR_VAR, dir.as_os_str()),
+        (BACKUP_VAR, backups.as_os_str()),
+        (ITER_VAR, OsStr::new(&iter_s)),
+    ];
+    // The first child of a full run fills a segment first.
+    if iter == 0 && suite_dirs().1 {
+        env.push((FILL_VAR, OsStr::new("1")));
+    }
+    let mut c = child::spawn(&test, "work", &env);
     let stdout = c.stdout.take().unwrap();
-    let (tx, rx) = std::sync::mpsc::channel::<Line>();
+    let (tx, rx) = crate::sync::mpsc::channel::<Line>();
     let reader = std::thread::spawn(move || {
         for line in BufReader::new(stdout).lines() {
             let Ok(line) = line else { break };
@@ -219,6 +336,17 @@ fn iteration(
                 Line::BackupStart
             } else if line.ends_with("BACKUP end") {
                 Line::BackupEnd
+            } else if let Some(at) = line.find("TX ") {
+                let v: Vec<u64> = line[at + 3..]
+                    .split(' ')
+                    .map(|x| x.parse().unwrap())
+                    .collect();
+                assert_eq!(v[0], iter);
+                Line::Tx(v[1])
+            } else if let Some(at) = line.find("FILL failed: ") {
+                Line::FillFailed(line[at + "FILL failed: ".len()..].to_owned())
+            } else if let Some(at) = line.find("DROP ") {
+                Line::Drop(line[at + 5..].parse().unwrap())
             } else {
                 continue;
             };
@@ -232,6 +360,9 @@ fn iteration(
         let l = rx
             .recv_timeout(Duration::from_secs(60))
             .expect("the child commits");
+        if let Line::FillFailed(m) = l {
+            panic!("the child's filler step failed: {m}");
+        }
         let commit = matches!(l, Line::Commit(..));
         lines.push(l);
         if commit {
@@ -247,6 +378,7 @@ fn iteration(
     lines.extend(rx.try_iter());
     let mut n = 0;
     let mut last = BTreeMap::new();
+    let mut last_tx = None;
     let (mut checkpointing, mut backing_up) = (false, false);
     for l in lines {
         match l {
@@ -262,6 +394,9 @@ fn iteration(
             }
             Line::BackupStart => backing_up = true,
             Line::BackupEnd => backing_up = false,
+            Line::Tx(i) => last_tx = Some(i),
+            Line::Drop(id) => fig.drops.push(id),
+            Line::FillFailed(m) => panic!("the child's filler step failed: {m}"),
         }
     }
     fig.in_checkpoint += u64::from(checkpointing);
@@ -321,7 +456,57 @@ fn iteration(
     }
     let r = e.store().check().unwrap();
     assert!(r.is_ok(), "iteration {iter}: {:?}", r.problems);
+    check_transactions(&e, iter, last_tx, &fig.drops);
     e.close().unwrap();
+}
+
+/// The transaction thread's oracle after the reopen (module
+/// documentation).
+fn check_transactions(e: &Engine, iter: u64, last: Option<u64>, drops: &[u64]) {
+    let t = e.store().tree(2).unwrap().expect("tree 2");
+    let mut tx = e.begin(Isolation::Snapshot).unwrap();
+    let mut seen = Vec::new();
+    let prefix = format!("x/{iter:03}/").into_bytes();
+    tx.scan_prefix(t, &prefix, |k, _| {
+        let i = std::str::from_utf8(&k[prefix.len()..]).unwrap();
+        seen.push(i.parse::<u64>().unwrap());
+        true
+    })
+    .unwrap();
+    drop(tx);
+    let ok = match last {
+        Some(l) => seen == [l] || seen == [l + 1],
+        None => seen.is_empty() || seen == [0],
+    };
+    assert!(
+        ok,
+        "iteration {iter}: transaction keys {seen:?}, last printed {last:?}"
+    );
+    for &id in drops {
+        let st = e.store().tree_status(id).unwrap();
+        assert!(
+            st.is_none_or(|(_, d)| d != 0),
+            "iteration {iter}: printed drop of tree {id} lost"
+        );
+    }
+    // The open recovered: the collector's seed scan and pass free the
+    // dropped trees and remove the delete-stamped entries; then the
+    // integrity check passes again.
+    crate::test_support::wait_until(
+        &format!("iteration {iter}: the dropped trees are freed"),
+        || {
+            drops
+                .iter()
+                .all(|&id| e.store().tree_status(id).unwrap().is_none())
+        },
+    );
+    super::assert_stamps_collected(e, &format!("iteration {iter}"));
+    let r = e.store().check().unwrap();
+    assert!(
+        r.is_ok(),
+        "iteration {iter} after collection: {:?}",
+        r.problems
+    );
 }
 
 /// rmp #21: a process killed with SIGKILL during a commit workload reopens
@@ -365,7 +550,8 @@ fn kill_and_reopen() {
             "SUITE kill fs={fs} dir={} iterations={iterations} printed_commits={} \
              recovery_ms_p50={:.1} recovery_ms_p99={:.1} replayed_bytes_p50={:.0} \
              replayed_bytes_p99={:.0} child_commits_per_s_p50={:.0} \
-             kills_in_checkpoint={} kills_in_backup={} recycling_checkpoints={} seconds={:.1}",
+             kills_in_checkpoint={} kills_in_backup={} recycling_checkpoints={} \
+             printed_drops={} seconds={:.1}",
             base.display(),
             fig.printed,
             pct(&fig.recovery_ms, 0.5),
@@ -376,12 +562,17 @@ fn kill_and_reopen() {
             fig.in_checkpoint,
             fig.in_backup,
             fig.recycling,
+            fig.drops.len(),
             started.elapsed().as_secs_f64(),
         );
         if full {
             assert!(
-                fig.in_checkpoint > 0 && fig.in_backup > 0 && fig.recycling > 0,
-                "{fs}: no kill fell in a checkpoint or in a backup, or no checkpoint recycled"
+                fig.in_checkpoint > 0
+                    && fig.in_backup > 0
+                    && fig.recycling > 0
+                    && !fig.drops.is_empty(),
+                "{fs}: no kill fell in a checkpoint or in a backup, no checkpoint recycled, \
+                 or no drop was printed"
             );
         }
     }

@@ -32,9 +32,9 @@
 //!   time in milliseconds at the start and end of the measured phase, to
 //!   select the matching `iostat` samples.
 
+use crate::sync::Arc;
 use std::fmt::Write as _;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use rand::rngs::StdRng;
@@ -75,6 +75,7 @@ pub(crate) fn no_trigger() -> Tuning {
     Tuning {
         checkpoint_interval: Duration::from_secs(3600),
         checkpoint_commits: u64::MAX,
+        ..Tuning::default()
     }
 }
 
@@ -107,6 +108,7 @@ pub(crate) fn populate(engine: &Engine, keys: u64) -> Tree {
                 tree,
                 key: k,
                 value: Some(&value),
+                stamp: 0,
             })
             .collect();
         engine.commit(&batch, Ids::default()).expect("build commit");
@@ -151,6 +153,7 @@ pub(crate) fn commit_pages(
             tree,
             key: k,
             value: Some(&value),
+            stamp: 0,
         })
         .collect();
     e.commit(&batch, Ids::default()).expect("commit");

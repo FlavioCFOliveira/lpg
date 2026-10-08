@@ -25,7 +25,10 @@
 //! **Reuse** (TS-05). A page freed by the write batch numbered `c` enters
 //! the persisted list in that batch, and may be reused once every tree
 //! read operation registered in [`Readers`] has registered a value of at
-//! least `c`. With MVCC the value becomes the snapshot (Sprint 2). At open
+//! least `c`. Snapshots do not take part: a transaction holds no page
+//! number between two tree read operations and no old version refers to a
+//! page, so snapshots bound garbage collection only, through their own
+//! registry of this kind (TS-05 Reuse, TS-14 Snapshot registry). At open
 //! no reader exists, so every listed page is reusable. A trunk page whose
 //! entries are all taken is reused at once: readers never hold trunk pages.
 //!
@@ -37,9 +40,10 @@
 //! when a batch is undone (TS-16 step 6); the trunk pages themselves are
 //! restored from their page copies.
 
+use crate::sync::atomic::{AtomicU64, AtomicUsize, Ordering, fence};
+use crate::sync::{Arc, Mutex, PoisonError};
 use std::cell::Cell;
 use std::collections::VecDeque;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering, fence};
 
 use super::btree::PageWriter;
 use super::error::{Error, Result};
@@ -370,65 +374,129 @@ impl FreeList {
     }
 }
 
-/// Registry of running tree read operations (TS-05 Reuse).
+/// A slot registry: the registry of running tree read operations (TS-05
+/// Reuse), and with the same protocol the snapshot registry (TS-14,
+/// [`crate::tx`]).
 ///
-/// Each read operation registers, when it starts, the number of the last
-/// write batch whose apply step has finished, and withdraws it when it
+/// Each tree read operation registers, when it starts, the number of the
+/// last write batch whose apply step has finished, and withdraws it when it
 /// ends. Slots are atomics, each on its own cache line; a reader takes a
 /// free slot with a compare-and-swap, starting from a per-thread hint, so
 /// registering costs one uncontended atomic operation.
+///
+/// **No fixed cap** (FR-TX-006: reads never block). When one lap finds
+/// every slot of the first block taken, the reader takes a free slot of
+/// the overflow blocks, or appends a new block, under the overflow mutex;
+/// the horizon reads the overflow blocks under the same mutex. Blocks are
+/// never removed; their slots are reused. crossbeam-epoch registers
+/// participants the same way, in an append-only list that every epoch
+/// advance scans (`crossbeam-epoch` 0.9.18 `src/internal.rs:158, 235,
+/// 316-330`), and Turso's MVCC keeps its running transactions in a growable
+/// map whose minimum begin timestamp is the collector's low-water mark
+/// (R-TURSO @ `8cc059b` `core/mvcc/database/mod.rs:4390, 7750-7762`).
+/// PostgreSQL's fixed `ProcArray` refuses a backend beyond `MaxBackends`
+/// (R-PG @ `1f22453` `src/backend/storage/ipc/procarray.c:441, 475-484`),
+/// a connection cap that a registry of transactions cannot borrow.
+///
+/// **Overflow protocol.** A reader stores its value in an overflow slot
+/// while it holds the overflow mutex; a horizon reads the overflow slots
+/// under the same mutex, after its fence. If the horizon takes the mutex
+/// after the reader released it, it reads the slot. Otherwise the reader
+/// takes the mutex after the horizon released it, so everything the writer
+/// did before its horizon (its unlink, or the snapshot registry's load of
+/// the published timestamp) happens before the reader's next load: the
+/// mutex orders what the fences order in the first block, and the reader
+/// needs no fence. A `loom` model checks it.
 pub(crate) struct Readers {
     slots: Box<[Slot]>,
+    /// Hands out the per-thread starting slots.
+    next_hint: AtomicUsize,
+    /// Blocks appended when the first block was full.
+    more: Mutex<Vec<Arc<[Slot]>>>,
 }
 
 #[repr(align(64))]
 struct Slot(AtomicU64);
 
+impl Slot {
+    fn free() -> Slot {
+        Slot(AtomicU64::new(FREE))
+    }
+}
+
 /// Value of a free slot.
 const FREE: u64 = u64::MAX;
 
-/// Slots in the registry; more concurrent readers wait for a slot.
+/// Slots in the first block, and in each overflow block.
+#[cfg(not(loom))]
 const SLOTS: usize = 256;
+/// Under `loom`, every slot is a modelled atomic that each horizon reads:
+/// one per block keeps the explored state space small and lets a model
+/// reach the overflow blocks with a second registration.
+#[cfg(loom)]
+const SLOTS: usize = 1;
 
-thread_local! {
+#[cfg(not(loom))]
+crate::sync::thread_local! {
     static HINT: Cell<usize> = const { Cell::new(usize::MAX) };
 }
-
-static NEXT_HINT: AtomicUsize = AtomicUsize::new(0);
+// `loom`'s `thread_local!` takes no `const` initialiser (`loom` 0.7.2
+// `src/lib.rs:395-410`).
+#[cfg(loom)]
+crate::sync::thread_local! {
+    static HINT: Cell<usize> = Cell::new(usize::MAX);
+}
 
 impl Default for Readers {
     fn default() -> Self {
         Readers {
-            slots: (0..SLOTS).map(|_| Slot(AtomicU64::new(FREE))).collect(),
+            slots: (0..SLOTS).map(|_| Slot::free()).collect(),
+            next_hint: AtomicUsize::new(0),
+            more: Mutex::new(Vec::new()),
         }
     }
 }
 
 /// A registered read operation; dropping it withdraws the registration.
 pub(crate) struct Registered<'a> {
-    slot: &'a AtomicU64,
+    slot: Taken<'a>,
+}
+
+/// The slot a registration holds.
+enum Taken<'a> {
+    /// A slot of the first block.
+    First(&'a AtomicU64),
+    /// Slot `.1` of an overflow block.
+    More(Arc<[Slot]>, usize),
 }
 
 impl Drop for Registered<'_> {
     fn drop(&mut self) {
+        let slot = match &self.slot {
+            Taken::First(s) => s,
+            Taken::More(b, i) => &b[*i].0,
+        };
         // Release: the reader's page reads happen before the writer sees
         // the slot free.
-        self.slot.store(FREE, Ordering::Release);
+        slot.store(FREE, Ordering::Release);
     }
 }
 
 impl Readers {
     /// Registers a read operation that starts now, with the value of
     /// `applied`, the number of the last batch whose apply has finished.
+    /// The snapshot registry passes the highest published commit
+    /// timestamp instead (TS-14 Snapshot registry). Never waits for
+    /// another registration to end.
     pub(crate) fn enter(&self, applied: &AtomicU64) -> Registered<'_> {
         let mut i = HINT.with(|h| {
             if h.get() == usize::MAX {
-                h.set(NEXT_HINT.fetch_add(1, Ordering::Relaxed) % SLOTS);
+                h.set(self.next_hint.fetch_add(1, Ordering::Relaxed) % SLOTS);
             }
             h.get()
         });
         let value = applied.load(Ordering::SeqCst);
-        loop {
+        for _ in 0..SLOTS {
             let slot = &self.slots[i].0;
             if slot
                 .compare_exchange(FREE, value, Ordering::SeqCst, Ordering::Relaxed)
@@ -440,24 +508,62 @@ impl Readers {
                 // (store-buffering with SeqCst fences on both sides).
                 fence(Ordering::SeqCst);
                 HINT.with(|h| h.set(i));
-                return Registered { slot };
+                return Registered {
+                    slot: Taken::First(slot),
+                };
             }
             i = (i + 1) % SLOTS;
-            if i == 0 {
-                std::thread::yield_now();
+        }
+        // The overflow mutex orders it (the type's documentation).
+        Registered {
+            slot: self.enter_more(value),
+        }
+    }
+
+    /// Stores `value` in a free overflow slot, appending a block if none
+    /// is free, under the overflow mutex.
+    fn enter_more(&self, value: u64) -> Taken<'_> {
+        let mut more = self.more.lock().unwrap_or_else(PoisonError::into_inner);
+        for block in more.iter() {
+            for (j, s) in block.iter().enumerate() {
+                if s.0
+                    .compare_exchange(FREE, value, Ordering::SeqCst, Ordering::Relaxed)
+                    .is_ok()
+                {
+                    return Taken::More(Arc::clone(block), j);
+                }
             }
         }
+        let block: Arc<[Slot]> = (0..SLOTS).map(|_| Slot::free()).collect();
+        block[0].0.store(value, Ordering::SeqCst);
+        more.push(Arc::clone(&block));
+        Taken::More(block, 0)
     }
 
     /// The lowest registered value, or `u64::MAX` if no reader is
     /// registered. The writer calls it after its page changes.
     pub(crate) fn horizon(&self) -> u64 {
         fence(Ordering::SeqCst);
-        self.slots
+        let first = self
+            .slots
             .iter()
             .map(|s| s.0.load(Ordering::SeqCst))
             .min()
-            .unwrap_or(FREE)
+            .unwrap_or(FREE);
+        let more = self.more.lock().unwrap_or_else(PoisonError::into_inner);
+        more.iter()
+            .flat_map(|b| b.iter())
+            .map(|s| s.0.load(Ordering::SeqCst))
+            .fold(first, u64::min)
+    }
+
+    /// The number of overflow blocks, for tests.
+    #[cfg(test)]
+    pub(crate) fn overflow_blocks(&self) -> usize {
+        self.more
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .len()
     }
 }
 
