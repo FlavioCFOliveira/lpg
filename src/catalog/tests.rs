@@ -7,7 +7,7 @@ mod catalog {
     use crate::storage::Storage;
     use crate::storage::error::Error;
     use crate::sync::Arc;
-    use crate::test_support::{OWNER, graph_dir, no_flush};
+    use crate::test_support::{OWNER, graph_dir, mid_batch, no_flush};
     use crate::tx::Isolation;
     use crate::tx::tests::{CAP, db, pause_gc, reopen, tuning, until_waiting};
 
@@ -647,6 +647,126 @@ mod catalog {
         assert_eq!(tx.resolve(&refs).unwrap().unwrap().id, leaf);
         tx.abort();
         assert_intact(&e);
+    }
+
+    /// Round C audit, unverified point (TS-16 step 6): a schema drop, or a
+    /// graph-type drop, checks the latest committed graphs without the
+    /// commit latch while the drop of a graph created after its snapshot is
+    /// half applied; that drop then fails with ENOSPC and is undone. The
+    /// schema or graph-type drop fails with 25N11, so no graph is left in a
+    /// dropped schema or of a dropped graph type.
+    #[test]
+    fn a_drop_that_saw_an_undone_drop_of_a_newer_graph_fails() {
+        for (of_type, iso) in [false, true]
+            .into_iter()
+            .flat_map(|t| [(t, Isolation::Snapshot), (t, Isolation::Serializable)])
+        {
+            let (_d, e) = db();
+            pause_gc(&e);
+            let mut tx = e.begin(Isolation::Serializable).unwrap();
+            let s = tx.create_schema(ROOT, "s", OWNER).unwrap();
+            let gt = tx
+                .create_graph_type(DEFAULT_SCHEMA_ID, "t", OWNER, b"def")
+                .unwrap();
+            tx.commit().unwrap();
+            // Under snapshot isolation only the latest committed check
+            // stops the drop; a serializable dropper's read set also does.
+            let mut dropper = e.begin(iso).unwrap();
+            let parent = if of_type { DEFAULT_SCHEMA_ID } else { s };
+            let mut tx = e.begin(Isolation::Serializable).unwrap();
+            tx.create_graph(parent, "g", OWNER, of_type.then_some(gt))
+                .unwrap();
+            tx.commit().unwrap();
+            let r = std::thread::scope(|sc| {
+                let mid = mid_batch(&e);
+                let child = sc.spawn(|| {
+                    let mut tx = e.begin(Isolation::Serializable)?;
+                    tx.drop_object(parent, "g")?;
+                    tx.commit()
+                });
+                mid.wait();
+                // The dropper sees the half-applied drop and waits on the
+                // graph's name until the child's drop is undone.
+                let d = sc.spawn(move || {
+                    if of_type {
+                        dropper.drop_object(DEFAULT_SCHEMA_ID, "t")?;
+                    } else {
+                        dropper.drop_object(ROOT, "s")?;
+                    }
+                    dropper.commit().map(drop)
+                });
+                crate::test_support::wait_until("the dropper waits", || {
+                    e.core().mvcc.locks.waiting() >= 1
+                });
+                mid.fail.send(true).unwrap();
+                let c = child.join().unwrap();
+                assert!(c.as_ref().is_err_and(Error::is_no_space), "{c:?}");
+                d.join().unwrap()
+            });
+            assert!(
+                matches!(r, Err(Error::Serialization)),
+                "graph type {of_type}, {iso:?}: {r:?}"
+            );
+            let mut tx = e.begin(Isolation::Snapshot).unwrap();
+            assert!(tx.lookup(parent, "g").unwrap().is_some());
+            tx.abort();
+            assert_intact(&e);
+        }
+    }
+
+    /// Round C audit N2: a graph created and dropped after a schema or
+    /// graph-type dropper's snapshot does not fail the drop under snapshot
+    /// isolation, since the serial order creator, graph dropper, dropper
+    /// exists. A serializable dropper still fails at commit: its read of
+    /// the children (or of the graphs) overlaps the graph's creation,
+    /// committed after its snapshot (FR-TX-009).
+    #[test]
+    fn a_child_created_and_dropped_after_the_snapshot_fails_only_a_serializable_drop() {
+        for (of_type, iso) in [false, true]
+            .into_iter()
+            .flat_map(|t| [(t, Isolation::Snapshot), (t, Isolation::Serializable)])
+        {
+            let (_d, e) = db();
+            pause_gc(&e);
+            let mut tx = e.begin(Isolation::Serializable).unwrap();
+            let s = tx.create_schema(ROOT, "s", OWNER).unwrap();
+            let gt = tx
+                .create_graph_type(DEFAULT_SCHEMA_ID, "t", OWNER, b"def")
+                .unwrap();
+            tx.commit().unwrap();
+            let mut dropper = e.begin(iso).unwrap();
+            let parent = if of_type { DEFAULT_SCHEMA_ID } else { s };
+            let mut tx = e.begin(Isolation::Serializable).unwrap();
+            tx.create_graph(parent, "g", OWNER, of_type.then_some(gt))
+                .unwrap();
+            tx.commit().unwrap();
+            let mut tx = e.begin(Isolation::Serializable).unwrap();
+            assert!(tx.drop_object(parent, "g").unwrap());
+            tx.commit().unwrap();
+            let (dparent, dname) = if of_type {
+                (DEFAULT_SCHEMA_ID, "t")
+            } else {
+                (ROOT, "s")
+            };
+            assert!(dropper.drop_object(dparent, dname).unwrap(), "{iso:?}");
+            let r = dropper.commit();
+            if iso == Isolation::Snapshot {
+                assert!(r.is_ok(), "graph type {of_type}: {r:?}");
+            } else {
+                assert!(
+                    matches!(r, Err(Error::Serialization)),
+                    "graph type {of_type}: {r:?}"
+                );
+            }
+            let mut tx = e.begin(Isolation::Snapshot).unwrap();
+            assert!(tx.lookup(parent, "g").unwrap().is_none());
+            assert_eq!(
+                tx.lookup(dparent, dname).unwrap().is_none(),
+                iso == Isolation::Snapshot
+            );
+            tx.abort();
+            assert_intact(&e);
+        }
     }
 
     /// A dropped directory or schema must be empty.

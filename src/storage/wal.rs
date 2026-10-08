@@ -800,6 +800,12 @@ pub(crate) struct Wal {
 #[cfg(test)]
 pub(crate) type Hook = Box<dyn Fn() + Send + Sync>;
 
+/// A test hook run inside a logged write batch ([`TestPoints::batch_body`]):
+/// it receives the number of pages the batch frees, and an error it returns
+/// fails the batch, which is then undone.
+#[cfg(test)]
+pub(crate) type BatchHook = Box<dyn Fn(usize) -> crate::storage::error::Result<()> + Send + Sync>;
+
 /// Test-only pause points: a test installs a hook that runs at a named
 /// point, so it can order its own steps against the writer and the
 /// committers without timing them (TS-30 R10). Turso consults an injected
@@ -822,6 +828,18 @@ pub(crate) struct TestPoints {
     pub(crate) checkpoint_revisit: Mutex<Option<Hook>>,
     /// In a backup, after step 1, with the backup-or-load latch held.
     pub(crate) backup_started: Mutex<Option<Hook>>,
+    /// In a backup, after the data file is copied and before `stop` is
+    /// read (step 2), with its latches held.
+    pub(crate) backup_copied: Mutex<Option<Hook>>,
+    /// In a bulk build, after each page it writes, with no latch held but,
+    /// for a fast load, the backup-or-load latch (the page-writing phase,
+    /// [`crate::storage::btree::bulk`]).
+    pub(crate) bulk_page: Mutex<Option<Hook>>,
+    /// In every logged write batch, after its body has changed its pages
+    /// and before its images are captured, with the commit latch held: the
+    /// point where a reader without the latch can see the batch half done,
+    /// and where an error makes the batch undo itself (TS-16 step 6).
+    pub(crate) batch_body: Mutex<Option<BatchHook>>,
 }
 
 #[cfg(test)]
@@ -834,6 +852,19 @@ impl TestPoints {
             .as_ref()
         {
             hook();
+        }
+    }
+
+    /// Runs the batch hook, if any, for a batch that frees `freed` pages.
+    pub(crate) fn run_batch(&self, freed: usize) -> crate::storage::error::Result<()> {
+        match self
+            .batch_body
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_ref()
+        {
+            Some(hook) => hook(freed),
+            None => Ok(()),
         }
     }
 }

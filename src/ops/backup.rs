@@ -21,13 +21,35 @@
 //!
 //! A failed read of the database (its `CONTROL`, data file or WAL) is a
 //! failed read like any other: it sets the unusable latch (TS-12). A failed
-//! write to the target fails only the backup. A backup and a bulk build
-//! exclude each other for their whole run
-//! ([`crate::storage::engine::Core::backup_or_load`]): the pages a bulk
-//! build writes bypass the WAL, so the backup's WAL copy could not cover
-//! them. A backup requested while a build runs fails with
-//! [`Error::LoadRunning`] before it writes anything (FR-OPS-001); a build
-//! requested while a backup runs waits until the backup ends (TS-26).
+//! write to the target fails only the backup.
+//!
+//! **Bulk builds.** The pages a bulk build writes bypass the WAL
+//! ([`crate::storage::btree::bulk`]), so the backup's WAL copy cannot
+//! cover them.
+//!
+//! - A backup and the bulk build of a fast initial load exclude each other
+//!   for their whole run ([`crate::storage::engine::Core::backup_or_load`]):
+//!   a backup requested while a fast load runs fails with
+//!   [`Error::LoadRunning`] before it writes anything (FR-OPS-001); a fast
+//!   load requested while a backup runs waits until the backup ends
+//!   (TS-26).
+//! - An index build or a constraint's owned-index build runs during a
+//!   backup. Only the commits that make its unlogged pages part of the
+//!   database, its install and each step of its release, exclude a backup
+//!   ([`crate::storage::engine::Core::backup_or_install`]): the backup
+//!   waits for the steps in progress, and a step waits for the backup. So
+//!   no such commit lies in the copied WAL range. A build whose install
+//!   precedes the backup has its pages written and synced before it, so the
+//!   data copy holds them, and later changes are logged. A build not yet
+//!   installed at `stop` is, in the restored database, a POPULATING index
+//!   whose pages are owned by its build record, or a constraint not yet
+//!   created: the open releases the record and builds the index again, as
+//!   after a crash at that point. MySQL Enterprise Backup likewise treats
+//!   an index built without redo as unsafe to copy until a backup lock
+//!   that DDL waits for is held (R-MYSQL @ `49ef33f7`
+//!   `storage/innobase/log/log0recv.cc:1641-1650`, `MLOG_INDEX_LOAD`;
+//!   `sql/lock.cc:754-763`, DDL takes `BACKUP_LOCK` in intention-exclusive
+//!   mode; GPL, studied only).
 //!
 //! This is PostgreSQL's base backup: a checkpoint, a copy of the files
 //! while the server runs, and the WAL from the backup's start to its stop
@@ -212,14 +234,16 @@ impl Drop for Hold<'_> {
 impl Engine {
     /// Backs the open database up into `target`, an existing, empty
     /// directory of the database's storage (TS-26; module documentation).
-    /// Commits continue meanwhile; a bulk build requested meanwhile waits
-    /// for the backup.
+    /// Commits and index builds continue meanwhile; it first waits for the
+    /// install and release steps of bulk builds in progress; a fast load
+    /// requested meanwhile, and an install or release step, wait for the
+    /// backup.
     ///
     /// # Errors
     ///
     /// [`Error::InvalidArgument`] if `target` holds any entry, and
-    /// [`Error::LoadRunning`] if a bulk build runs, both without waiting and
-    /// before anything is written; [`Error::Unusable`]; errors of the checkpoint,
+    /// [`Error::LoadRunning`] if a fast initial load runs, both without
+    /// waiting and before anything is written; [`Error::Unusable`]; errors of the checkpoint,
     /// which set the unusable latch; [`Error::Io`] for a failed read of the
     /// database, which sets the unusable latch (TS-12), or for a failed
     /// write to the target, which leaves the database usable. Either way the
@@ -231,10 +255,12 @@ impl Engine {
         if !s.list(target)?.is_empty() {
             return Err(Error::InvalidArgument("the backup target is not empty"));
         }
-        // FR-OPS-001: fail, do not wait, while a bulk build holds the latch.
+        // FR-OPS-001: fail, do not wait, while a fast load holds the latch.
         let Some(_load) = core.try_backup_or_load() else {
             return Err(Error::LoadRunning);
         };
+        // No install or release step of a bulk build commits until the end.
+        let _installs = core.backup_installs();
         let began = Instant::now();
         // A failed read of the database sets the unusable latch (TS-12).
         let read_failed = |e: Error| core.health.fail(e);
@@ -276,6 +302,8 @@ impl Engine {
             crc,
         });
         out.push(f);
+        #[cfg(test)]
+        crate::storage::wal::TestPoints::run(&core.wal.points.backup_copied);
         // Step 3.
         let stop = core.wal.durable_lsn();
         let data_len = core.data.reserved_pages() * crate::storage::page::PAGE_BYTES;

@@ -1,6 +1,6 @@
-//! Statistics (TS-17 Statistics): node counts per label and edge counts
-//! per `(label, edge type, direction)` with the label on one side, per
-//! graph.
+//! Statistics (TS-17 Statistics): node counts per label, edge counts per
+//! `(label, edge type, direction)` with the label on one side, per graph,
+//! and entry and distinct-key counts per ONLINE index ([`crate::index`]).
 //!
 //! - **In memory**, changed by the committer when it applies a commit
 //!   (TS-16 step 6; [`super::Effects`]), under the commit latch. A label
@@ -25,7 +25,9 @@
 //!
 //! **Statistics tree** (tree [`super::STATS_TREE`]). Key `N`, graph,
 //! label → count; key `E`, graph, label, edge type, direction → count;
-//! key `T` → the last commit timestamp the counts include. Integers in keys
+//! key `I`, graph, index, distinct flag (1 byte) → count of the index's
+//! entries (flag 0) or distinct keys (flag 1); key `T` → the last commit
+//! timestamp the counts include. Integers in keys
 //! are 8 bytes big-endian (the direction 1 byte), counts and the timestamp
 //! 8 bytes little-endian.
 
@@ -38,6 +40,7 @@ use crate::storage::error::{Error, Result};
 
 const NODES: u8 = b'N';
 const EDGES: u8 = b'E';
+const INDEX: u8 = b'I';
 const TS_KEY: &[u8] = b"T";
 
 /// One statistic.
@@ -62,13 +65,25 @@ pub(crate) enum StatKey {
         /// The side of the labelled endpoint.
         dir: u8,
     },
+    /// The entries of index `index` of `graph`, or, with `distinct`, its
+    /// distinct keys (TS-17; [`crate::index::prefix_of`]).
+    Index {
+        /// The graph's catalog object identifier.
+        graph: u64,
+        /// The index's catalog object identifier.
+        index: u64,
+        /// Distinct keys rather than entries.
+        distinct: bool,
+    },
 }
 
 impl StatKey {
     /// The graph the statistic counts in.
     pub(crate) fn graph(&self) -> u64 {
         match *self {
-            StatKey::Nodes { graph, .. } | StatKey::Edges { graph, .. } => graph,
+            StatKey::Nodes { graph, .. }
+            | StatKey::Edges { graph, .. }
+            | StatKey::Index { graph, .. } => graph,
         }
     }
 
@@ -92,6 +107,16 @@ impl StatKey {
                 k.extend_from_slice(&ty.to_be_bytes());
                 k.push(dir);
             }
+            StatKey::Index {
+                graph,
+                index,
+                distinct,
+            } => {
+                k.push(INDEX);
+                k.extend_from_slice(&graph.to_be_bytes());
+                k.extend_from_slice(&index.to_be_bytes());
+                k.push(u8::from(distinct));
+            }
         }
         k
     }
@@ -109,6 +134,11 @@ impl StatKey {
                 ty: be(17)?,
                 dir: k[25],
             }),
+            (Some(&INDEX), 18) if k[17] <= 1 => Some(StatKey::Index {
+                graph: be(1)?,
+                index: be(9)?,
+                distinct: k[17] == 1,
+            }),
             _ => None,
         }
     }
@@ -125,6 +155,13 @@ impl Delta {
         *e += d;
         if *e == 0 {
             self.0.remove(&k);
+        }
+    }
+
+    /// Adds every change of `other`.
+    pub(crate) fn merge(&mut self, other: &Delta) {
+        for (k, d) in &other.0 {
+            self.add(*k, *d);
         }
     }
 }
@@ -175,6 +212,12 @@ impl Stats {
     /// Removes every statistic of `graph`, which a commit dropped.
     pub(crate) fn remove_graph(&mut self, graph: u64) {
         self.counts.retain(|k, _| k.graph() != graph);
+    }
+
+    /// Removes the statistics of index `index`, which a commit dropped.
+    pub(crate) fn remove_index(&mut self, index: u64) {
+        self.counts
+            .retain(|k, _| !matches!(k, StatKey::Index { index: i, .. } if *i == index));
     }
 
     /// Replaces the counts with a recount's.

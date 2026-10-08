@@ -30,7 +30,7 @@
 
 use crate::sync::atomic::{AtomicU64, Ordering};
 use crate::sync::thread::JoinHandle;
-use crate::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use crate::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::ffi::OsStr;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -205,18 +205,33 @@ pub(crate) struct Core {
     pub(crate) recovered: RecoveryStats,
     /// Sorts started in this open: the number of the next one's files.
     pub(crate) sorts: AtomicU64,
-    /// Held by a backup and by a bulk build for their whole run: they
-    /// exclude each other (TS-26, FR-OPS-001). A bulk build that finds it
-    /// held waits ([`Core::backup_or_load`]); a backup that finds it held
-    /// fails ([`Core::try_backup_or_load`]). Taken before the commit latch.
+    /// Held by a backup and by the bulk build of a fast initial load for
+    /// their whole run: they exclude each other (TS-26, FR-OPS-001). A
+    /// fast load that finds it held waits ([`Core::backup_or_load`]); a
+    /// backup that finds it held fails ([`Core::try_backup_or_load`]).
+    /// Taken before [`Core::backup_or_install`] and the commit latch.
     pub(crate) backup_or_load: Mutex<()>,
     /// Tests only: how often a bulk build found [`Core::backup_or_load`]
     /// held and waited for it.
     #[cfg(test)]
     pub(crate) load_waits: AtomicU64,
+    /// Held exclusively by a backup for its whole run, and shared by each
+    /// step of a bulk build that writes pages the WAL does not cover and
+    /// commits their use: its install and each step of its release
+    /// ([`crate::storage::btree::bulk`]). A backup therefore waits only
+    /// for the steps in progress, and such a step waits for a running
+    /// backup. Taken after [`Core::backup_or_load`] and before the commit
+    /// latch.
+    pub(crate) backup_or_install: RwLock<()>,
+    /// Tests only: how often a step of a bulk build found
+    /// [`Core::backup_or_install`] held by a backup and waited for it.
+    #[cfg(test)]
+    pub(crate) install_waits: AtomicU64,
     /// Tests only: skip TS-16 step 2, so that the apply meets an overrun.
     #[cfg(test)]
     pub(crate) skip_reserve: crate::sync::atomic::AtomicBool,
+    /// The online index builds of this open (TS-18).
+    pub(crate) builds: crate::index::Builds,
     /// Declared last, so it is released after every file is closed.
     _lock: Box<dyn StorageLock>,
 }
@@ -232,10 +247,10 @@ impl Core {
         }
     }
 
-    /// The backup-or-load latch ([`Core::backup_or_load`]), for a bulk
-    /// build: waits while a backup holds it (TS-26 "a load requested while a
-    /// backup runs waits"). Counts a wait in tests. A panic under it leaves
-    /// nothing half done that the latch protects.
+    /// The backup-or-load latch ([`Core::backup_or_load`]), for a fast
+    /// initial load: waits while a backup holds it (TS-26 "a load requested
+    /// while a backup runs waits"). Counts a wait in tests. A panic under it
+    /// leaves nothing half done that the latch protects.
     pub(crate) fn backup_or_load(&self) -> MutexGuard<'_, ()> {
         match self.backup_or_load.try_lock() {
             Ok(g) => g,
@@ -260,6 +275,36 @@ impl Core {
             Err(crate::sync::TryLockError::Poisoned(p)) => Some(p.into_inner()),
             Err(crate::sync::TryLockError::WouldBlock) => None,
         }
+    }
+
+    /// The backup-or-install latch ([`Core::backup_or_install`]), shared,
+    /// for one install or release step of a bulk build: waits while a
+    /// backup holds it. Counts a wait in tests.
+    pub(crate) fn install_step(&self) -> RwLockReadGuard<'_, ()> {
+        match self.backup_or_install.try_read() {
+            Ok(g) => g,
+            Err(crate::sync::TryLockError::Poisoned(p)) => p.into_inner(),
+            Err(crate::sync::TryLockError::WouldBlock) => {
+                #[cfg(test)]
+                self.install_waits
+                    .fetch_add(1, crate::sync::atomic::Ordering::SeqCst);
+                self.backup_or_install
+                    .read()
+                    .unwrap_or_else(PoisonError::into_inner)
+            }
+        }
+    }
+
+    /// The backup-or-install latch ([`Core::backup_or_install`]),
+    /// exclusive, for a backup: waits for the install and release steps in
+    /// progress. Linux's `std` read-write lock lets no new reader in while
+    /// a writer waits (`is_read_lockable`,
+    /// `library/std/src/sys/sync/rwlock/futex.rs:47-54`, Rust 1.99.0), so
+    /// the wait is bounded by one step of each running build.
+    pub(crate) fn backup_installs(&self) -> RwLockWriteGuard<'_, ()> {
+        self.backup_or_install
+            .write()
+            .unwrap_or_else(PoisonError::into_inner)
     }
 
     /// The `CONTROL` file, locked.
@@ -289,6 +334,10 @@ impl Core {
 pub(crate) struct Engine {
     core: Arc<Core>,
     threads: Vec<JoinHandle<()>>,
+    /// Whether this handle owns the database: its drop stops the threads.
+    /// An index build thread works through a handle that does not
+    /// ([`Engine::handle`]).
+    owner: bool,
 }
 
 /// Takes `LOCK` (TS-27). A missing `LOCK` is [`Error::LockMissing`] and is
@@ -660,8 +709,12 @@ impl Engine {
             backup_or_load: Mutex::new(()),
             #[cfg(test)]
             load_waits: AtomicU64::new(0),
+            backup_or_install: RwLock::new(()),
+            #[cfg(test)]
+            install_waits: AtomicU64::new(0),
             #[cfg(test)]
             skip_reserve: crate::sync::atomic::AtomicBool::new(false),
+            builds: crate::index::Builds::default(),
             _lock: lock,
         });
         // Step 7: the catalog and the statistics.
@@ -670,11 +723,15 @@ impl Engine {
         if rec.empty_log {
             core.wal.create_first(rec.wal_end)?;
         }
+        // Build records a crash left (`storage::btree::bulk`), read before
+        // the open checkpoint publishes what open read.
+        let leftover = core.store().build_records()?;
         checkpoint::run_open(&core)?;
         core.wal.set_salt(core.control().sequence());
         let mut engine = Engine {
             core,
             threads: Vec::with_capacity(3),
+            owner: true,
         };
         let core = engine.core.clone();
         engine.spawn("lpg-wal", move || {
@@ -691,7 +748,37 @@ impl Engine {
         engine.spawn("lpg-gc", move || {
             gc::run_thread(&core, tuning.gc_interval, seed);
         })?;
+        // The pages of builds a crash interrupted, still owned by their
+        // records, are released (`storage::btree::bulk`). ENOSPC or the
+        // memory cap leaves a record in place, for a later release; the
+        // database is consistent and stays usable (FR-REC-007).
+        for (owner, _) in leftover {
+            match engine.release_build(owner) {
+                Err(e) if !(e.is_no_space() || matches!(e, Error::MemoryLimit { .. })) => {
+                    return Err(e);
+                }
+                _ => {}
+            }
+        }
+        // TS-18 step 7: every POPULATING index is built again.
+        crate::index::restart_builds(&engine)?;
         Ok(engine)
+    }
+
+    /// A handle of the open database for a thread of its own (an index
+    /// build, TS-18): it reads and commits like the owner's handle, and
+    /// its drop stops nothing.
+    pub(crate) fn handle(core: Arc<Core>) -> Engine {
+        Engine {
+            core,
+            threads: Vec::new(),
+            owner: false,
+        }
+    }
+
+    /// The shared state, for a thread of its own ([`Engine::handle`]).
+    pub(crate) fn core_arc(&self) -> Arc<Core> {
+        self.core.clone()
     }
 
     fn spawn(&mut self, name: &str, f: impl FnOnce() + Send + 'static) -> Result<()> {
@@ -705,6 +792,7 @@ impl Engine {
     /// Stops the garbage collector, the checkpointer and the WAL writer and
     /// waits for them. The writer first makes every joined group durable.
     fn stop_threads(&mut self) {
+        self.core.builds.stop();
         self.core.mvcc.stop_gc();
         self.core.checkpoints.stop();
         self.core.wal.stop();
@@ -717,6 +805,9 @@ impl Engine {
     /// Stops the garbage collector and the checkpointer only (clean close,
     /// before the last garbage-collection pass and the final checkpoint).
     fn stop_checkpointer(&mut self) {
+        // A stopped build leaves its index POPULATING: the next open builds
+        // it again (TS-18 step 7).
+        self.core.builds.stop();
         self.core.mvcc.stop_gc();
         self.core.checkpoints.stop();
         while self.threads.len() > 1 {
@@ -751,6 +842,16 @@ impl Engine {
         self.stop_checkpointer();
         self.core.health.check()?;
         let mut clean = !self.core.mvcc.unseeded.load(Ordering::SeqCst);
+        // The builds have stopped: pages a failed release left in a build
+        // record are released now. If that fails too, the shutdown is not
+        // clean, so the next open releases them, and migration, which needs
+        // a clean shutdown, never reads their unwritten pages
+        // (`storage::btree::bulk`).
+        match self.release_builds() {
+            Ok(()) => {}
+            Err(_) if !self.core.health.is_unusable() => clean = false,
+            Err(e) => return Err(e),
+        }
         // No transaction is left, so the last pass removes every queued
         // delete stamp and dropped tree; its group is made durable before
         // the final checkpoint (TS-14; `tx::gc`).
@@ -837,7 +938,9 @@ impl Drop for Engine {
     /// checkpoint, the clean-shutdown flag stays clear, and the next open
     /// recovers.
     fn drop(&mut self) {
-        self.stop_threads();
+        if self.owner {
+            self.stop_threads();
+        }
     }
 }
 

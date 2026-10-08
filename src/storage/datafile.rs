@@ -308,9 +308,20 @@ impl Datafile {
 
     /// Sets the page count back to `pages`, the value before a batch that
     /// is being undone: the pages it took from the reserve return to it
-    /// (TS-16 step 6). Called under the commit latch, the only place pages
-    /// are taken.
+    /// (TS-16 step 6), and pages it returned to the reserve
+    /// ([`Datafile::return_to_reserve`]) are in use again. Called under the
+    /// commit latch, the only place the page count changes.
     pub(crate) fn rollback_page_count(&self, pages: u64) {
+        debug_assert!(pages <= self.reserved_pages());
+        self.used.store(pages, Ordering::Release);
+        self.report();
+    }
+
+    /// Lowers the page count to `pages`: pages `pages..page_count` return
+    /// to the reserve. Called under the commit latch, for pages that no
+    /// tree and no free-list entry refers to (a bulk build's unused pages,
+    /// [`super::btree::bulk`]).
+    pub(crate) fn return_to_reserve(&self, pages: u64) {
         debug_assert!(pages <= self.page_count());
         self.used.store(pages, Ordering::Release);
         self.report();
@@ -383,6 +394,35 @@ impl Datafile {
         };
         self.report();
         Ok(page)
+    }
+
+    /// Takes the next `n` reserved, unused pages, which are consecutive,
+    /// and returns the first: a run of a bulk build ([`super::btree::bulk`]).
+    ///
+    /// # Errors
+    ///
+    /// ENOSPC if fewer than `n` reserved pages are left; call
+    /// [`Datafile::ensure`] first.
+    pub(crate) fn allocate_run(&self, n: u64) -> Result<u64> {
+        self.health.check()?;
+        let reserved = self.reserved_pages();
+        let mut used = self.used.load(Ordering::Acquire);
+        let first = loop {
+            if used.checked_add(n).is_none_or(|end| end > reserved) {
+                return Err(Error::Io(std::io::ErrorKind::StorageFull.into()));
+            }
+            match self.used.compare_exchange_weak(
+                used,
+                used + n,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                Ok(first) => break first,
+                Err(now) => used = now,
+            }
+        };
+        self.report();
+        Ok(first)
     }
 
     /// Reads page `page_no` into `buf` and verifies its checksum (TS-12).

@@ -4,7 +4,8 @@
 //! - **Pages.** Slotted inner pages and compressed leaves ([`node`]);
 //!   values above 2 048 bytes in overflow chains.
 //! - **Directory.** Tree 0, rooted at page 1, maps each tree identifier to
-//!   its root page. A root never moves: a root split moves the root's
+//!   its root page, and holds the record of the pages each bulk build owns
+//!   ([`bulk`]). A root never moves: a root split moves the root's
 //!   entries into two new pages and leaves the root in place (SQLite
 //!   `balance_deeper`, R-SQLITE `src/btree.c`), so a [`Tree`] handle stays
 //!   valid for the tree's life.
@@ -335,6 +336,35 @@ impl<'p> PageWriter<'p> {
         };
         self.header = true;
         Ok(p)
+    }
+
+    /// Takes the next `n` reserved, unused pages of the data file, which
+    /// are consecutive, raising the page count in page 0, and returns the
+    /// first: a run of a bulk build ([`bulk`]). The pages are not read or
+    /// initialised. If the reserve is used up, the file is extended here, as
+    /// in [`PageWriter::allocate_reserved`].
+    ///
+    /// # Errors
+    ///
+    /// ENOSPC if the extension does not fit; the batch is then undone.
+    pub(crate) fn allocate_run(&mut self, n: u64) -> Result<u64> {
+        let p = match self.data.allocate_run(n) {
+            Err(e) if e.is_no_space() => {
+                self.data.ensure(n)?;
+                self.data.allocate_run(n)?
+            }
+            r => r?,
+        };
+        self.header = true;
+        Ok(p)
+    }
+
+    /// Lowers the page count in page 0 to `pages`: pages `pages..` return
+    /// to the reserve ([`Datafile::return_to_reserve`]). An undo of the
+    /// batch restores the page count.
+    pub(crate) fn return_to_reserve(&mut self, pages: u64) {
+        self.data.return_to_reserve(pages);
+        self.header = true;
     }
 }
 
@@ -669,16 +699,52 @@ impl<'e> Store<'e> {
         &self,
         tree: Tree,
         prefix: &[u8],
+        f: impl FnMut(&[u8], &[u8], Stamps) -> bool,
+    ) -> Result<()> {
+        self.scan_from(tree, prefix, prefix, f)
+    }
+
+    /// [`Store::scan_prefix_stamped`] over the keys `k` with `lo <= k`
+    /// and, if `hi` is given, `k < hi`, in key order: the scan of an index
+    /// range (TS-18).
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::get`].
+    pub(crate) fn scan_range_stamped(
+        &self,
+        tree: Tree,
+        lo: &[u8],
+        hi: Option<&[u8]>,
         mut f: impl FnMut(&[u8], &[u8], Stamps) -> bool,
     ) -> Result<()> {
+        let common = hi.map_or(0, |h| node::common_prefix(lo, h));
+        self.scan_from(tree, &lo[..common], lo, |k, v, st| {
+            if hi.is_some_and(|h| k >= h) {
+                return false;
+            }
+            f(k, v, st)
+        })
+    }
+
+    /// The scan of the keys with `prefix` at or above `start`, which starts
+    /// with `prefix`.
+    fn scan_from(
+        &self,
+        tree: Tree,
+        prefix: &[u8],
+        start: &[u8],
+        mut f: impl FnMut(&[u8], &[u8], Stamps) -> bool,
+    ) -> Result<()> {
+        debug_assert!(start.starts_with(prefix));
         let _reg = self.reader();
         let mut copied = Copied::default();
         let mut key_buf = Vec::new();
         let mut value = Vec::new();
         // The scan's position: every key below it has been passed.
-        let mut from = prefix.to_vec();
+        let mut from = start.to_vec();
         // The first leaf is found by descent; later ones by right links.
-        let mut next = self.at_leaf(tree, prefix, |p, page_no| {
+        let mut next = self.at_leaf(tree, start, |p, page_no| {
             copied
                 .take(p, &mut from, prefix, &mut key_buf)
                 .ok_or_else(|| self.corrupt(page_no, "malformed leaf"))
@@ -743,6 +809,22 @@ impl<'e> Store<'e> {
         Ok(Some((Tree { id, root }, dropped)))
     }
 
+    /// Whether `tree` is one empty leaf: its root is a leaf without
+    /// entries, so the tree has no other page.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::get`].
+    pub(crate) fn is_empty_leaf(&self, tree: Tree) -> Result<bool> {
+        let _reg = self.reader();
+        let pin = self.pool.fetch(tree.root)?;
+        let g = pin.read()?;
+        if page::tree(&g) != tree.id {
+            return Err(self.corrupt(tree.root, "root of another tree"));
+        }
+        Ok(page::page_type(&g) == Some(PageType::Leaf) && node::count(&g) == 0)
+    }
+
     /// Registers a tree read operation that starts now (TS-05 Reuse); it
     /// ends when the result is dropped.
     pub(crate) fn reader(&self) -> Registered<'e> {
@@ -759,6 +841,12 @@ impl<'e> Store<'e> {
     /// Takes the write latch: the single writer (TS-16 commit latch).
     pub(crate) fn lock(&self) -> CommitLatch<'e> {
         self.trees.lock(self.health)
+    }
+
+    /// Tests only: whether no thread holds the commit latch now.
+    #[cfg(test)]
+    pub(crate) fn latch_is_free(&self) -> bool {
+        self.trees.write.try_lock().is_ok()
     }
 
     /// The lowest value registered by a running reader, `u64::MAX` if none.

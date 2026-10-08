@@ -1,50 +1,90 @@
 //! Bottom-up bulk build of a B+tree from sorted entries (TS-06 Fill,
-//! TS-18 step 4, TS-26 fast-load steps 3, 5 and 6; task #17).
+//! TS-18 step 4, TS-26 fast-load steps 3, 5 and 6; tasks #17, #33, #34).
 //!
-//! 1. **Pages.** Under the commit latch, the entries are written in order
-//!    into leaves filled to 90 % of their usable bytes (TS-06), then the
-//!    inner levels are built bottom-up, each page also filled to 90 %. Pages
-//!    come only from the reserve of unused pages beyond the page count
-//!    ("newly reserved pages", TS-26), in allocation order, and are written
-//!    straight to the data file, sealed, with page LSN 0: they bypass the
-//!    pool and the WAL, as PostgreSQL's `nbtsort.c` writes a new index
-//!    (R-PG `src/backend/access/nbtree/nbtsort.c:4-6, 44-56`).
-//!    As in `_bt_buildadd` (`nbtsort.c`), one page per level is open at a
-//!    time: when a page is full, the next page's number is taken first, so
-//!    the full page is written with its right link and high key, and its
-//!    downlink is added to the level above. Memory is therefore one page
-//!    per level, whatever the tree's size.
+//! 1. **Pages.** The entries are written in order into leaves filled to
+//!    90 % of their usable bytes (TS-06), then the inner levels are built
+//!    bottom-up, each page also filled to 90 %. The pages are written
+//!    straight to the data file, sealed, with page LSN 0, with no latch
+//!    held: they bypass the pool and the WAL, as PostgreSQL's `nbtsort.c`
+//!    writes a new index (R-PG `src/backend/access/nbtree/nbtsort.c:4-6,
+//!    44-56`). As in `_bt_buildadd` (`nbtsort.c`), one page per level is
+//!    open at a time: when a page is full, the next page's number is taken
+//!    first, so the full page is written with its right link and high key,
+//!    and its downlink is added to the level above. Memory is therefore one
+//!    page per level, whatever the tree's size.
 //! 2. **`sync_data`** of the data file (TS-26 step 5).
 //! 3. **Install.** One page-level commit ([`Engine::commit_latched`]) adds
-//!    the root to the directory and writes the next tree identifier and the
-//!    page count, which now covers the built pages, to page 0 (TS-26 step
-//!    6). Until it is durable, page 0 on disk keeps the earlier page count,
-//!    so after a crash the built pages are in the reserve again and no tree
-//!    refers to them. InnoDB's bulk loader likewise builds an index's pages
-//!    bottom-up, page by page, before the index becomes visible (R-INNO
-//!    `storage/innobase/btr/btr0bulk.cc`, `PageBulk::insert` and
-//!    `BtrBulk::finish`).
+//!    the root to the directory, or copies it into the root of the tree it
+//!    replaces ([`Built::install_replacing`]), and leaves in the build's
+//!    record only the pages the tree does not use. InnoDB's bulk loader
+//!    likewise builds an index's pages bottom-up, page by page, before the
+//!    index becomes visible (R-INNO `storage/innobase/btr/btr0load.cc`,
+//!    `Page_load`).
 //!
-//! The commit latch is held from the first page to the install, so no
-//! commit can take a reserved page the build uses or write a page count
-//! that covers its pages before the install. Commits wait for the build.
-//! TS-18 requires that writes never wait for an index build (Sprint 2); how
-//! a build shares the reserve with concurrent commits is not specified
-//! (reported as a gap of task #17).
+//! **Page ownership.** A build takes its pages from the reserve in runs of
+//! consecutive pages. Each run is one short page-level commit
+//! ([`Store::take_build_run`]): under the commit latch it raises the page
+//! count past the run, after the reuse fence of an undone batch (TS-16 step
+//! 6 undo, item 3), and records the run in the build's **record**, a
+//! directory entry whose key is the tree identifier, 8 bytes big-endian,
+//! followed by the byte 1, and whose value is the build's ranges of pages,
+//! each its first page and its length, 8 bytes little-endian each. The
+//! pages of a run are then written with no latch held: no commit can take
+//! them, and a commit's undo, which restores the page count under the
+//! latch, cannot give them back to the reserve. Commits therefore wait for
+//! a build only during these short commits, whose work does not depend on
+//! the tree's size. A run has 64 pages, or an eighth of the pages the build
+//! has taken if that is more: a build of `n` pages takes O(log n) runs and
+//! leaves at most an eighth of its pages, plus 63, unused. This is
+//! InnoDB's split: the bulk loader allocates each page in a mini-
+//! transaction of its own that is redo-logged, while the page contents are
+//! not (R-INNO `storage/innobase/btr/btr0load.cc:310-345`,
+//! `Page_load::init`).
+//!
+//! **Release** ([`Engine::release_build`]). The pages of a record that no
+//! tree uses are given back in short page-level commits: a range that ends
+//! at the page count returns to the reserve by lowering the page count;
+//! otherwise up to [`RELEASE_PAGES`] pages at its end get a valid image (an
+//! empty leaf), written and synced, and then enter the free list, so every
+//! page below the page count keeps a valid image (TS-28 migration reads
+//! them all). The record shrinks with each commit and is removed with the
+//! last. A release runs after an install, for the unused pages; when a
+//! build fails or its result is dropped, for all of them; at open, for
+//! every record left by a crash (a crash at any point leaves the pages of
+//! a build owned by its record, never leaked); and at close. InnoDB drops
+//! an index whose creation a crash interrupted when it recovers (R-INNO
+//! `storage/innobase/dict/dict0load.cc:1883-1887`), and frees a segment
+//! step by step, one mini-transaction each (`fsp/fsp0fsp.cc:3594-3599`,
+//! `fseg_free_step`).
 //!
 //! A page the build takes may still have a frame in the pool, left by an
-//! undone batch (TS-16 step 6 undo, item 3): the build first waits at the
-//! reuse fence, as every batch does, and then writes the page with that
-//! frame's exclusive latch held, replacing the frame with the new image,
-//! clean ([`super::Pool::write_new_page`]). No eviction or checkpoint can
-//! write the frame's older image over the new page meanwhile.
+//! undone batch (TS-16 step 6 undo, item 3): the run's commit first waits
+//! at the reuse fence, as every batch does, and the build then writes the
+//! page with that frame's exclusive latch held, replacing the frame with
+//! the new image, clean ([`super::Pool::write_new_page`]). No eviction or
+//! checkpoint can write the frame's older image over the new page
+//! meanwhile.
 //!
-//! A bulk build and a backup exclude each other
-//! ([`crate::storage::engine::Core::backup_or_load`]): the built pages
-//! bypass the WAL, so a backup could not restore them. A build requested
-//! while a backup runs waits until the backup ends (TS-26); a backup
-//! requested while a build runs fails (FR-OPS-001). The build takes that
-//! latch before the commit latch and holds it until the install.
+//! **Backups.** The built pages, and the images a release writes, bypass
+//! the WAL, so a backup's WAL copy cannot restore them
+//! ([`crate::ops::backup`]).
+//!
+//! - The bulk build of a fast initial load ([`Engine::bulk_build_pages`])
+//!   and a backup exclude each other for their whole run
+//!   ([`crate::storage::engine::Core::backup_or_load`]): a load requested
+//!   while a backup runs waits until the backup ends (TS-26); a backup
+//!   requested while a load runs fails (FR-OPS-001). The load takes that
+//!   latch before its first run and holds it until it is installed or
+//!   dropped.
+//! - Every other build (an index or a constraint's owned index,
+//!   [`Engine::bulk_build_pages_as`]) runs during a backup. Its install
+//!   commit and each release step, which writes its images, syncs and
+//!   commits, hold the backup-or-install latch shared
+//!   ([`crate::storage::engine::Core::backup_or_install`]), which a backup
+//!   holds exclusively for its whole run: neither commit falls in a
+//!   backup's WAL range, so a restored database holds either the installed
+//!   tree, its pages copied after their sync, or the build record, which
+//!   its open releases. The runs' commits are logged like any other.
 
 use std::time::Instant;
 
@@ -52,14 +92,169 @@ use super::node::{
     self, Encoder, Entries, MAX_INLINE, MAX_KEY, NONE, OVERFLOW_CAP, Pivots, Place,
     RESTART_INTERVAL, RIGHTMOST_FILL, USABLE, Value,
 };
-use super::{CommitLatch, Store, Tree, WriteState};
+use super::{DIRECTORY, Keys, Store, Tree, Write};
 use crate::storage::engine::Engine;
 use crate::storage::error::{Error, Result};
+use crate::storage::freelist::TRUNK_CAP;
 use crate::storage::page::{self, PAGE_SIZE};
 use crate::tx::commit::Ids;
 
 /// Bytes of the usable page area a built page may fill: 90 % (TS-06).
 pub(crate) const FILL_BYTES: usize = (USABLE as f64 * RIGHTMOST_FILL) as usize;
+
+/// Pages of a build's first run, and its smallest run.
+pub(crate) const MIN_RUN: u64 = 64;
+
+/// Pages a release commit frees at most: one free-list trunk's worth.
+pub(crate) const RELEASE_PAGES: u64 = TRUNK_CAP as u64;
+
+/// The ranges of pages of a build record: first page and length of each.
+pub(crate) type Ranges = Vec<(u64, u64)>;
+
+/// The byte after the tree identifier in the key of a build record.
+const RECORD_TAG: u8 = 1;
+
+/// The directory key of the build record of tree `owner`.
+pub(crate) fn build_key(owner: u64) -> [u8; 9] {
+    let mut k = [RECORD_TAG; 9];
+    k[..8].copy_from_slice(&owner.to_be_bytes());
+    k
+}
+
+/// The tree whose build record has directory key `key`; `None` for any
+/// other key.
+pub(crate) fn decode_build_key(key: &[u8]) -> Option<u64> {
+    match key {
+        [id @ .., RECORD_TAG] if id.len() == 8 => {
+            Some(u64::from_be_bytes(id.try_into().expect("8 bytes")))
+        }
+        _ => None,
+    }
+}
+
+/// The value of a build record holding `ranges`.
+pub(crate) fn encode_ranges(ranges: &[(u64, u64)]) -> Vec<u8> {
+    let mut v = Vec::with_capacity(16 * ranges.len());
+    for &(first, len) in ranges {
+        v.extend_from_slice(&first.to_le_bytes());
+        v.extend_from_slice(&len.to_le_bytes());
+    }
+    v
+}
+
+/// The ranges of a build record's value; `None` if it is malformed.
+pub(crate) fn decode_ranges(v: &[u8]) -> Option<Vec<(u64, u64)>> {
+    if v.is_empty() || !v.len().is_multiple_of(16) {
+        return None;
+    }
+    let u = |b: &[u8]| u64::from_le_bytes(b.try_into().expect("8 bytes"));
+    let ranges: Vec<(u64, u64)> = v.chunks(16).map(|c| (u(&c[..8]), u(&c[8..]))).collect();
+    ranges
+        .iter()
+        .all(|&(f, l)| l > 0 && f > 0 && f.checked_add(l).is_some())
+        .then_some(ranges)
+}
+
+/// The information the install commit of a bulk build needs: the tree,
+/// its built root, and the build's pages the tree does not use, which its
+/// record keeps until they are released.
+#[derive(Debug, Clone)]
+pub(crate) struct Install {
+    /// The tree identifier.
+    pub(crate) id: u64,
+    /// The built root.
+    pub(crate) root: u64,
+    /// The unused pages, as ranges.
+    pub(crate) tail: Vec<(u64, u64)>,
+}
+
+/// The pages a build owns: its record's ranges and the run in use. Dropping
+/// it releases whatever the record still holds ([`Engine::release_build`]).
+struct Lease<'e> {
+    engine: &'e Engine,
+    owner: u64,
+    /// The record's ranges, as committed.
+    ranges: Vec<(u64, u64)>,
+    /// The next unused page of the current run, and the run's end.
+    next: u64,
+    end: u64,
+    /// Pages handed out so far.
+    used: u64,
+}
+
+impl<'e> Lease<'e> {
+    fn new(engine: &'e Engine, owner: u64) -> Lease<'e> {
+        Lease {
+            engine,
+            owner,
+            ranges: Vec::new(),
+            next: 0,
+            end: 0,
+            used: 0,
+        }
+    }
+
+    /// The next page the build owns, taking a new run when the current one
+    /// is used up.
+    fn allocate(&mut self) -> Result<u64> {
+        if self.next == self.end {
+            self.take_run()?;
+        }
+        let p = self.next;
+        self.next += 1;
+        self.used += 1;
+        Ok(p)
+    }
+
+    /// Takes a run of reserved pages with one page-level commit (module
+    /// documentation). The reserve is made to cover it before the commit
+    /// latch is taken; an overrun extends the file under it.
+    fn take_run(&mut self) -> Result<()> {
+        let n = MIN_RUN.max(self.used / 8);
+        let engine = self.engine;
+        let core = engine.core();
+        let store = core.store();
+        let key = build_key(self.owner);
+        let value = vec![0u8; 16 * (self.ranges.len() + 1)];
+        let w = Write {
+            tree: DIRECTORY,
+            key: &key,
+            value: Some(&value),
+            stamp: 0,
+        };
+        core.data.ensure(n + store.estimate(&[w], 0)?)?;
+        let started = Instant::now();
+        let mut ranges = self.ranges.clone();
+        let mut first = 0;
+        let r = engine.commit_latched(store.lock(), Ids::default(), |store, st, wal, _| {
+            first = store.take_build_run(st, wal, self.owner, n, &mut ranges)?;
+            Ok(Vec::new())
+        });
+        engine.note_commit_result(started, &r);
+        r?;
+        self.ranges = ranges;
+        self.next = first;
+        self.end = first + n;
+        Ok(())
+    }
+
+    /// The pages of the record that the build has not handed out: the rest
+    /// of the current run.
+    fn tail(&self) -> Vec<(u64, u64)> {
+        if self.next < self.end {
+            vec![(self.next, self.end - self.next)]
+        } else {
+            Vec::new()
+        }
+    }
+}
+
+impl Drop for Lease<'_> {
+    fn drop(&mut self) {
+        // A failure leaves the record, whose pages the next open releases.
+        let _ = self.engine.release_build(self.owner);
+    }
+}
 
 /// A source of entries in strictly increasing key order.
 pub(crate) trait SortedEntries {
@@ -109,9 +304,9 @@ struct Level {
 }
 
 /// The pages of a build in progress.
-struct Builder<'s, 'l> {
+struct Builder<'s, 'l, 'e> {
     store: &'s Store<'s>,
-    st: &'l mut WriteState,
+    lease: &'l mut Lease<'e>,
     id: u64,
     buf: Vec<u8>,
     enc: Encoder,
@@ -120,43 +315,23 @@ struct Builder<'s, 'l> {
     entries: u64,
 }
 
-impl Builder<'_, '_> {
-    /// Takes the next reserved page, extending the file if the reserve is
-    /// used up (TS-05), after the reuse fence of an undone batch.
+impl Builder<'_, '_, '_> {
+    /// Takes the next page the build owns ([`Lease::allocate`]).
     fn allocate(&mut self) -> Result<u64> {
-        let data = self.store.data;
-        let p = match data.allocate() {
-            Err(e) if e.is_no_space() => {
-                data.ensure(1)?;
-                data.allocate()?
-            }
-            r => r?,
-        };
-        if let Some((batch, fenced)) = self.st.fence.as_ref()
-            && fenced.contains(&p)
-        {
-            let batch = *batch;
-            let mut spins = 0u32;
-            while self.store.trees.readers.horizon() < batch {
-                spins += 1;
-                if spins < 64 {
-                    crate::sync::thread::yield_now();
-                } else {
-                    crate::sync::thread::pause(std::time::Duration::from_micros(50));
-                }
-            }
-            self.st.fence = None;
-        }
         self.pages += 1;
-        Ok(p)
+        self.lease.allocate()
     }
 
-    /// Seals and writes the page image in `buf` at `p`, and replaces a
-    /// frame of `p` left in the pool ([`super::Pool::write_new_page`]).
+    /// Seals and writes the page image in `buf` at `p`, with no latch held,
+    /// and replaces a frame of `p` left in the pool
+    /// ([`super::Pool::write_new_page`]).
     fn write(&mut self, p: u64) -> Result<()> {
         page::set_lsn(&mut self.buf, 0);
         page::seal(&mut self.buf, p);
-        self.store.pool.write_new_page(p, &self.buf)
+        self.store.pool.write_new_page(p, &self.buf)?;
+        #[cfg(test)]
+        crate::storage::wal::TestPoints::run(&self.lease.engine.core().wal.points.bulk_page);
+        Ok(())
     }
 
     /// Writes `value` to a new overflow chain and returns its first page.
@@ -325,17 +500,17 @@ impl Builder<'_, '_> {
     }
 }
 
-/// Builds tree `id` from `source` into reserved pages under the commit
-/// latch `st` and returns its root and the number of entries.
+/// Builds tree `id` from `source` into pages of `lease` and returns its
+/// root, the number of entries and the number of pages.
 fn build_pages(
     store: &Store<'_>,
-    st: &mut WriteState,
+    lease: &mut Lease<'_>,
     id: u64,
     source: &mut dyn SortedEntries,
-) -> Result<(u64, u64)> {
+) -> Result<(u64, u64, u64)> {
     let mut b = Builder {
         store,
-        st,
+        lease,
         id,
         buf: vec![0u8; PAGE_SIZE],
         enc: Encoder::default(),
@@ -393,64 +568,93 @@ fn build_pages(
     }
     b.write_leaf(page, &es, sep, None, NONE)?;
     let root = b.finish(page)?;
-    Ok((root, b.entries))
+    Ok((root, b.entries, b.pages))
 }
 
 /// Pages of a bulk build written and synced, not yet installed. Dropping it
-/// without [`Built::install`] releases the commit latch and gives the pages
-/// back to the reserve, as a crash before the install does.
+/// without [`Built::install`] releases its pages, as the open after a crash
+/// before the install does.
 pub(crate) struct Built<'e> {
-    engine: &'e Engine,
-    st: Option<CommitLatch<'e>>,
-    /// The backup-or-load latch, held until the install ends.
-    _load: crate::sync::MutexGuard<'e, ()>,
+    /// Dropped first, while the backup-or-load latch is still held.
+    lease: Lease<'e>,
+    /// The backup-or-load latch of a fast initial load, held until the
+    /// build is installed or dropped; `None` for an online build.
+    _load: Option<crate::sync::MutexGuard<'e, ()>>,
     id: u64,
     root: u64,
-    /// The page count before the build.
-    before: u64,
     /// Entries in the tree.
     pub(crate) entries: u64,
-    /// Pages the build wrote.
+    /// Pages of the tree.
     pub(crate) pages: u64,
 }
 
 impl Built<'_> {
-    /// Installs the tree with one page-level commit (TS-26 step 6) and
-    /// returns it once that commit is durable.
+    /// What the install commit needs ([`Install`]).
+    pub(crate) fn install_args(&self) -> Install {
+        Install {
+            id: self.id,
+            root: self.root,
+            tail: self.lease.tail(),
+        }
+    }
+
+    /// Installs the tree with one page-level commit (TS-26 step 6), then
+    /// releases the build's unused pages, and returns the tree once the
+    /// install is durable.
     ///
     /// # Errors
     ///
-    /// As [`Engine::commit`]; on failure the pages return to the reserve.
-    pub(crate) fn install(mut self) -> Result<Tree> {
-        let started = Instant::now();
-        let st = self.st.take().expect("held until install");
-        let (id, root, before) = (self.id, self.root, self.before);
-        let engine = self.engine;
-        let core = engine.core();
-        let r = engine.commit_latched(st, Ids::default(), |store, st, wal, _ts| {
-            let r = core
-                .data
-                .ensure(store.estimate(&[], 1)?)
-                .and_then(|()| store.install_tree(st, wal, id, root));
-            match r {
-                Ok(t) => Ok(vec![t]),
-                Err(e) => {
-                    // The undo restored the count after the build.
-                    store.data.rollback_page_count(before);
-                    Err(e)
-                }
-            }
-        });
-        engine.note_commit_result(started, &r);
-        Ok(r?.trees[0])
+    /// As [`Engine::commit`]; on failure the build's pages are released.
+    pub(crate) fn install(self) -> Result<Tree> {
+        Ok(self
+            .install_with(None, || true)?
+            .expect("an unconditional install installs"))
     }
-}
 
-impl Drop for Built<'_> {
-    fn drop(&mut self) {
-        if self.st.is_some() {
-            self.engine.core().data.rollback_page_count(self.before);
+    /// [`Built::install`] into `old`, the existing tree of the same
+    /// identifier, in one page-level commit, if `still` holds under the
+    /// commit latch; returns `None`, and releases the build's pages,
+    /// otherwise. `old` keeps its root page, which gets the built root's
+    /// contents; its other pages and the built root's page are freed
+    /// (TS-05: a root never moves). An index's tree when its online build
+    /// ends (TS-18 step 4, [`crate::index`]); nothing reads `old`
+    /// meanwhile.
+    ///
+    /// # Errors
+    ///
+    /// As [`Built::install`].
+    pub(crate) fn install_replacing(
+        self,
+        old: Tree,
+        still: impl FnOnce() -> bool,
+    ) -> Result<Option<Tree>> {
+        debug_assert_eq!(old.id(), self.id);
+        self.install_with(Some(old), still)
+    }
+
+    fn install_with(self, old: Option<Tree>, still: impl FnOnce() -> bool) -> Result<Option<Tree>> {
+        let started = Instant::now();
+        let engine = self.lease.engine;
+        let core = engine.core();
+        let store = core.store();
+        let install = self.install_args();
+        core.data.ensure(store.estimate(&[], 1)?)?;
+        let mut gone = false;
+        // Not in a backup's WAL range (module documentation); released
+        // before the lease's release steps take it again.
+        let installs = core.install_step();
+        let r = engine.commit_latched(store.lock(), Ids::default(), |store, st, wal, _ts| {
+            if !still() {
+                gone = true;
+                return Ok(Vec::new());
+            }
+            Ok(vec![store.install_tree(st, wal, &install, old)?])
+        });
+        drop(installs);
+        if !gone {
+            engine.note_commit_result(started, &r);
         }
+        Ok(r?.trees.first().copied())
     }
 }
 
@@ -466,44 +670,158 @@ impl Engine {
         self.bulk_build_pages(source)?.install()
     }
 
-    /// Steps 1 and 2 of a bulk build: the pages, written and synced, under
-    /// the backup-or-load latch and the commit latch, which the result holds
-    /// until it is installed or dropped. Waits while a backup runs.
+    /// Steps 1 and 2 of the bulk build of a fast initial load, a tree with
+    /// a new identifier: the pages, written and synced, under the
+    /// backup-or-load latch, which the result holds until it is installed
+    /// or dropped. Waits while a backup runs.
     ///
     /// # Errors
     ///
     /// [`Error::InvalidArgument`] for keys out of order or longer than
     /// 1 024 bytes; ENOSPC; errors of the source; [`Error::Io`] for a
     /// failed write or sync of the data file, which sets the unusable
-    /// latch. On any failure the pages return to the reserve.
+    /// latch. On any failure the build's pages are released.
     pub(crate) fn bulk_build_pages(&self, source: &mut dyn SortedEntries) -> Result<Built<'_>> {
+        let load = self.core().backup_or_load();
+        let id = self.store().draw_tree_id();
+        self.bulk_build_pages_with(source, id, Some(load))
+    }
+
+    /// Steps 1 and 2 of the online bulk build of tree `id`, an index's
+    /// tree that [`Built::install_replacing`] replaces or a constraint's
+    /// new owned-index tree: as [`Engine::bulk_build_pages`], without the
+    /// backup-or-load latch, so a backup runs meanwhile (module
+    /// documentation).
+    ///
+    /// # Errors
+    ///
+    /// As [`Engine::bulk_build_pages`].
+    pub(crate) fn bulk_build_pages_as(
+        &self,
+        source: &mut dyn SortedEntries,
+        id: u64,
+    ) -> Result<Built<'_>> {
+        self.bulk_build_pages_with(source, id, None)
+    }
+
+    fn bulk_build_pages_with<'e>(
+        &'e self,
+        source: &mut dyn SortedEntries,
+        id: u64,
+        load: Option<crate::sync::MutexGuard<'e, ()>>,
+    ) -> Result<Built<'e>> {
         let core = self.core();
         core.health.check()?;
-        let load = core.backup_or_load();
         let store = core.store();
-        let mut st = store.lock();
-        let before = core.data.page_count();
-        let id = store.draw_tree_id();
-        let r = build_pages(&store, &mut st, id, source).and_then(|(root, entries)| {
-            core.data.sync()?;
-            Ok((root, entries))
-        });
-        match r {
-            Ok((root, entries)) => Ok(Built {
-                engine: self,
-                st: Some(st),
-                _load: load,
-                id,
-                root,
-                before,
-                entries,
-                pages: core.data.page_count() - before,
-            }),
-            Err(e) => {
-                core.data.rollback_page_count(before);
-                Err(e)
+        let mut lease = Lease::new(self, id);
+        let (root, entries, pages) = build_pages(&store, &mut lease, id, source)?;
+        core.data.sync()?;
+        Ok(Built {
+            lease,
+            _load: load,
+            id,
+            root,
+            entries,
+            pages,
+        })
+    }
+
+    /// Releases the pages of the build record of tree `owner`, if there is
+    /// one, in page-level commits of at most [`RELEASE_PAGES`] freed pages
+    /// each, each step waiting while a backup runs (module documentation).
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Corruption`] for a malformed record; errors of the page
+    /// writes, the sync and the commits. The record then keeps the pages
+    /// not yet released.
+    pub(crate) fn release_build(&self, owner: u64) -> Result<()> {
+        let core = self.core();
+        let store = core.store();
+        let key = build_key(owner);
+        let mut v = Vec::new();
+        let mut buf = vec![0u8; PAGE_SIZE];
+        loop {
+            // Not in a backup's WAL range (module documentation): the
+            // images written below and the commit that frees their pages.
+            let _installs = core.install_step();
+            if !store.get(DIRECTORY, &key, &mut v)? {
+                return Ok(());
             }
+            let ranges = decode_ranges(&v)
+                .ok_or_else(|| Error::Corruption(format!("build record of tree {owner}")))?;
+            let &(f, l) = ranges.last().expect("a decoded record holds a range");
+            // Only the latch decides whether the range ends at the page
+            // count; this guess saves the writes when it does.
+            let freed = if f + l == core.data.page_count() {
+                None
+            } else {
+                let k = l.min(RELEASE_PAGES);
+                for p in f + l - k..f + l {
+                    buf.fill(0);
+                    node::init_empty_leaf(&mut buf, owner, Keys::Prefix);
+                    page::set_lsn(&mut buf, 0);
+                    page::seal(&mut buf, p);
+                    store.pool.write_new_page(p, &buf)?;
+                }
+                core.data.sync()?;
+                Some(k)
+            };
+            let w = Write {
+                tree: DIRECTORY,
+                key: &key,
+                value: Some(&v),
+                stamp: 0,
+            };
+            // The freed pages fill at most one new free-list trunk.
+            core.data.ensure(store.estimate(&[w], 0)? + 1)?;
+            let started = Instant::now();
+            let r = self.commit_latched(store.lock(), Ids::default(), |store, st, wal, _| {
+                store.release_build_step(st, wal, owner, &ranges, freed)?;
+                Ok(Vec::new())
+            });
+            self.note_commit_result(started, &r);
+            r?;
         }
+    }
+
+    /// Releases the pages of every build record (at open and close;
+    /// [`Engine::release_build`]).
+    ///
+    /// # Errors
+    ///
+    /// As [`Engine::release_build`].
+    pub(crate) fn release_builds(&self) -> Result<()> {
+        for (owner, _) in self.store().build_records()? {
+            self.release_build(owner)?;
+        }
+        Ok(())
+    }
+}
+
+impl Store<'_> {
+    /// Every build record of the directory: the tree and its ranges.
+    ///
+    /// # Errors
+    ///
+    /// As [`Store::scan_prefix`]; [`Error::Corruption`] for a malformed
+    /// record.
+    pub(crate) fn build_records(&self) -> Result<Vec<(u64, Ranges)>> {
+        let mut out = Vec::new();
+        let mut bad = false;
+        self.scan_prefix(DIRECTORY, b"", |k, v| {
+            if let Some(owner) = decode_build_key(k) {
+                match decode_ranges(v) {
+                    Some(r) => out.push((owner, r)),
+                    None => bad = true,
+                }
+            }
+            !bad
+        })?;
+        if bad {
+            return Err(Error::Corruption("malformed build record".into()));
+        }
+        Ok(out)
     }
 }
 

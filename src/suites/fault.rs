@@ -556,8 +556,13 @@ fn verify(w: Workload, r: &Run, s: &State, arm: Arm, what: &str) {
                 }
                 None => assert!(!s.loaded, "{what}: a returned bulk load is lost"),
             }
-            // The space of a build that did not install is free again
-            // (integrity check in `assert_prefix`), and a new load works.
+            // The open released the pages of a build that did not finish:
+            // no build record is left, and they are free again (integrity
+            // check in `assert_prefix`); a new load works.
+            assert!(
+                e.store().build_records().unwrap().is_empty(),
+                "{what}: a build record survives the open"
+            );
             let mut sorter = e.sorter(MIN_MEMORY).unwrap();
             sorter.push(b"x", b"1").unwrap();
             drop(sorter.finish().unwrap());

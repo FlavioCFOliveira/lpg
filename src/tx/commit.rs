@@ -41,7 +41,9 @@ use super::conflict::WriteKeys;
 use super::versions::version_bytes;
 use super::{Isolation, Transaction};
 use crate::catalog::Effects;
+use crate::index::Derived;
 use crate::obs::names::transactions::{COMMIT_LATENCY, COMMITTED, FAILED_COMMITS};
+use crate::storage::btree::bulk::{Built, Install};
 use crate::storage::btree::{
     CommitLatch, DIRECTORY, Store, Tree, Write, WriteState, dropped_directory_entry,
 };
@@ -294,8 +296,22 @@ impl Engine {
     /// with nothing applied and the database usable; any other error with
     /// the database unusable, as [`Engine::commit`].
     pub(crate) fn commit_transaction(&self, tx: &mut Transaction<'_>) -> Result<Option<u64>> {
+        self.commit_transaction_installing(tx, None)
+    }
+
+    /// [`Engine::commit_transaction`] that, with `built`, also installs its
+    /// bulk-built tree in step 6 ([`Transaction::commit_installing`]).
+    ///
+    /// # Errors
+    ///
+    /// As [`Engine::commit_transaction`].
+    pub(crate) fn commit_transaction_installing(
+        &self,
+        tx: &mut Transaction<'_>,
+        built: Option<&Built<'_>>,
+    ) -> Result<Option<u64>> {
         // Step 1.
-        if tx.writes.is_empty() && tx.drops.is_empty() && tx.created.is_empty() {
+        if tx.writes.is_empty() && tx.drops.is_empty() && tx.created.is_empty() && built.is_none() {
             return Ok(None);
         }
         let started = Instant::now();
@@ -303,7 +319,7 @@ impl Engine {
             .charge
             .take()
             .expect("an active transaction holds its charge");
-        let r = self.commit_transaction_steps(tx, &mut charge);
+        let r = self.commit_transaction_steps(tx, &mut charge, built);
         tx.charge = Some(charge);
         self.note_commit_result(started, &r);
         r.map(Some)
@@ -313,6 +329,7 @@ impl Engine {
         &self,
         tx: &Transaction<'_>,
         charge: &mut Reservation,
+        built: Option<&Built<'_>>,
     ) -> Result<u64> {
         let core = self.core();
         core.health.check()?;
@@ -321,14 +338,22 @@ impl Engine {
         // Step 2, with placeholder stamps and drop entries: the estimate
         // counts key and value bytes only, and is not a bound (TS-05).
         let placeholder = vec![[0u8; 16]; tx.drops.len()];
+        let estimate = batch_of(tx, 1, &dir_keys, &placeholder);
+        // Step 3. The identifier counters are read under the latch: they
+        // cover every identifier this transaction drew (TS-07). A bulk
+        // build's pages stay owned by its record until this commit installs
+        // the tree; if it fails, they are released when `built` is dropped.
+        let install = built.map(|b| b.install_args());
         self.reserve_space(
             &store,
-            &batch_of(tx, 1, &dir_keys, &placeholder),
-            tx.created.len(),
+            &estimate,
+            tx.created.len() + usize::from(install.is_some()),
         )?;
-        // Step 3. The identifier counters are read under the latch: they
-        // cover every identifier this transaction drew (TS-07).
+        // A commit that installs a bulk-built tree is not in a backup's WAL
+        // range (`storage::btree::bulk`): it waits while a backup runs.
+        let _installs = install.is_some().then(|| core.install_step());
         let st = store.lock();
+        drop(estimate);
         let ids = core.ids.current();
         let mvcc = &core.mvcc;
         let committed = self.commit_latched(st, ids, |store, st, wal, ts| {
@@ -336,6 +361,25 @@ impl Engine {
             if tx.isolation == Isolation::Serializable {
                 mvcc.committed.validate(tx.snapshot, &tx.reads)?;
             }
+            // The index and constraint changes of this commit, from the
+            // latest committed definitions (TS-18 step 2).
+            let derived = crate::index::derive(core, store, tx, ts)?;
+            // TS-16 Batch: the derived entries join the batch, so their bytes
+            // are reserved now, as a write-set entry's are when it is added
+            // (`Transaction::prepare_write`), and released when step 6 ends.
+            let batch_bytes: u64 = derived
+                .writes
+                .iter()
+                .map(|w| {
+                    (w.key.len() + w.value.as_ref().map_or(0, Vec::len)) as u64
+                        + super::WRITE_OVERHEAD
+                })
+                .sum();
+            let _batch_charge = if batch_bytes > 0 {
+                Some(core.pool.reserve(batch_bytes)?)
+            } else {
+                None
+            };
             // Step 5.
             let mut keys: Vec<(u64, Box<[u8]>)> = tx
                 .writes
@@ -343,11 +387,35 @@ impl Engine {
                 .map(|(t, k)| (*t, k.as_slice().into()))
                 .collect();
             keys.extend(dir_keys.iter().map(|k| (DIRECTORY.id(), k[..].into())));
-            let key_bytes: u64 = keys.iter().map(|(_, k)| WriteKeys::charge_of(k)).sum();
+            let own: u64 = keys.iter().map(|(_, k)| WriteKeys::charge_of(k)).sum();
+            let more: u64 = derived
+                .keys
+                .iter()
+                .map(|(_, k)| WriteKeys::charge_of(k))
+                .sum();
+            let mut key_charge = charge.split(own);
+            if more > 0 {
+                // Reserved now: the write set did not hold these keys. The
+                // pool evicts before it refuses (TS-08), as for
+                // `batch_bytes` above.
+                let extra = core.pool.reserve(more)?;
+                key_charge.absorb(extra);
+            }
+            keys.extend(derived.keys.iter().cloned());
             mvcc.committed
-                .register(ts, WriteKeys::new(keys), charge.split(key_bytes));
+                .register(ts, WriteKeys::new(keys), key_charge);
             // Step 6.
-            let r = self.apply_transaction(store, st, wal, tx, charge, ts, &dir_keys);
+            let r = self.apply_transaction(
+                store,
+                st,
+                wal,
+                tx,
+                charge,
+                ts,
+                &dir_keys,
+                &derived,
+                install.as_ref(),
+            );
             if r.is_err() {
                 mvcc.committed.withdraw(ts);
             }
@@ -374,6 +442,8 @@ impl Engine {
         charge: &mut Reservation,
         ts: u64,
         dir_keys: &[[u8; 8]],
+        derived: &Derived,
+        install: Option<&Install>,
     ) -> Result<()> {
         let core = self.core();
         let mvcc = &core.mvcc;
@@ -404,10 +474,10 @@ impl Engine {
                 // locks keep it unchanged, so this is not expected, but a
                 // shortfall is reserved, never ignored.
                 let more = bytes - c.bytes();
-                match core.accountant.try_reserve(more) {
-                    Some(extra) => c.absorb(extra),
-                    None => {
-                        r = Err(Error::MemoryLimit { requested: more });
+                match core.pool.reserve(more) {
+                    Ok(extra) => c.absorb(extra),
+                    Err(e) => {
+                        r = Err(e);
                         break;
                     }
                 }
@@ -416,6 +486,42 @@ impl Engine {
                 .push(*tree, key, std::mem::take(&mut value), stamps, ts, c);
             pushed.push((*tree, key));
         }
+        // The before-images of the index entries this commit puts again
+        // over a delete-stamped entry (TS-14); their memory is reserved
+        // now, since the write set did not hold them.
+        if r.is_ok() {
+            for w in &derived.writes {
+                if w.value.is_none() || w.stamp == 0 {
+                    continue;
+                }
+                let stamps = match store.get_stamped(w.tree, &w.key, &mut value) {
+                    Ok(Some(stamps)) => stamps,
+                    Ok(None) => continue,
+                    Err(e) => {
+                        r = Err(e);
+                        break;
+                    }
+                };
+                let bytes = version_bytes(&w.key, value.len());
+                // The pool evicts before it refuses (TS-08).
+                let c = match core.pool.reserve(bytes) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        r = Err(e);
+                        break;
+                    }
+                };
+                mvcc.versions.push(
+                    w.tree.id(),
+                    &w.key,
+                    std::mem::take(&mut value),
+                    stamps,
+                    ts,
+                    c,
+                );
+                pushed.push((w.tree.id(), &w.key));
+            }
+        }
         let dir_values: Vec<[u8; 16]> = tx
             .drops
             .iter()
@@ -423,15 +529,21 @@ impl Engine {
             .collect();
         // The catalog-cache and statistics changes of this commit, read from
         // the committed state before any page changes (TS-17).
-        let r = r.and_then(|()| Effects::of(core, store, tx));
+        let r = r.and_then(|()| Effects::of(core, store, tx, &derived.stats));
         let r = r.and_then(|effects| {
             // Leaves this batch rewrites drop the stamps every snapshot
             // sees (TS-14).
             let horizon = super::mvcc::horizon(&mvcc.snapshots, core.wal.progress.published_ts());
             st.set_freeze_horizon(horizon);
-            let batch = batch_of(tx, ts, dir_keys, &dir_values);
+            let mut batch = batch_of(tx, ts, dir_keys, &dir_values);
+            batch.extend(derived.writes.iter().map(|w| Write {
+                tree: w.tree,
+                key: &w.key,
+                value: w.value.as_deref(),
+                stamp: w.stamp,
+            }));
             let r = store
-                .apply_batch_new(st, Some(wal), &batch, &tx.created)
+                .apply_batch_installing(st, Some(wal), &batch, &tx.created, install)
                 .map(drop);
             st.set_freeze_horizon(0);
             r.map(|()| effects)
@@ -443,6 +555,11 @@ impl Engine {
                 for ((_, key), p) in &tx.writes {
                     if p.value.is_none() {
                         q.deleted.push_back((ts, p.tree, key.as_slice().into()));
+                    }
+                }
+                for w in &derived.writes {
+                    if w.value.is_none() && w.stamp != 0 {
+                        q.deleted.push_back((ts, w.tree, w.key.as_slice().into()));
                     }
                 }
                 for t in &tx.drops {

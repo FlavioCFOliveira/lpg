@@ -7,12 +7,11 @@ fn key(k: &str) -> Resource {
     }
 }
 
-/// Waits, without timing, until `n` requests wait in `lt`.
+/// Waits, without timing, until `n` requests wait in `lt`; a missing wait
+/// fails the test after [`crate::test_support::WAIT_BOUND`].
 #[cfg(not(any(loom, shuttle)))]
 fn until_waiting(lt: &LockTable, n: usize) {
-    while lt.waiting() < n {
-        std::thread::yield_now();
-    }
+    crate::test_support::wait_until("lock requests wait", || lt.waiting() >= n);
 }
 
 #[cfg(not(any(loom, shuttle)))]

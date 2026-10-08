@@ -412,3 +412,135 @@ pub(crate) fn box_ranges(lo: &Point, hi: &Point) -> Option<Vec<(u64, u64)>> {
     let h: Vec<u32> = a.iter().zip(&b).map(|(x, y)| *x.max(y)).collect();
     Some(ranges(&l, &h, lo.srid.bits(), MAX_RANGES))
 }
+
+/// The point of the sphere that geographic point `p` names, with its
+/// longitude in −180 to 180 and its latitude in −90 to 90, height kept:
+/// the haversine distance depends only on the two unit vectors, so
+/// `p` and its canonical point are at distance 0 from each other. A
+/// Cartesian point, or one with a non-finite coordinate, is unchanged.
+/// The point index keys a geographic point by its canonical point, so a
+/// longitude outside its extent is found near its true position instead
+/// of at the edge cell (TS-18 Hilbert keys).
+pub(crate) fn canonical(p: &Point) -> Point {
+    let s = p.srid;
+    if !s.geographic() || !p.coords[0].is_finite() || !p.coords[1].is_finite() {
+        return *p;
+    }
+    let (mut lon, mut lat) = (p.coords[0], p.coords[1]);
+    // Latitude in (−180, 180].
+    lat = lat.rem_euclid(360.0);
+    if lat > 180.0 {
+        lat -= 360.0;
+    }
+    // Over a pole: the same point is on the meridian opposite.
+    if lat > 90.0 {
+        lat = 180.0 - lat;
+        lon += 180.0;
+    } else if lat < -90.0 {
+        lat = -180.0 - lat;
+        lon += 180.0;
+    }
+    lon = (lon + 180.0).rem_euclid(360.0) - 180.0;
+    let mut c = p.coords;
+    c[0] = lon;
+    c[1] = lat;
+    Point { srid: s, coords: c }
+}
+
+/// Boxes, as `(lowest corner, highest corner)` pairs of points in the
+/// system of `center`, whose union holds every point `q` of that system
+/// with `distance(center, q) <= radius` ([`distance`]), when `q` is
+/// compared through [`canonical`]. Empty for a radius that no distance can
+/// meet (negative or NaN).
+///
+/// - **Cartesian:** the cube of half side `radius` around `center`.
+/// - **WGS-84:** the bounding coordinates of J. P. Matuschek, "Finding
+///   Points Within a Distance of a Latitude/Longitude Using Bounding
+///   Coordinates" (2010, §3.1-3.4), written here from the published
+///   method: the angular radius `δ` bounds the latitude to `lat ± δ`; the
+///   longitude to `lon ± asin(sin δ / cos lat)` unless a pole lies within
+///   `δ`, then to every longitude; a box crossing the 180th meridian is
+///   split in two. Neo4j's `CRSCalculator` (GPL) was studied only. In 3D,
+///   the height is bounded to `h ± radius`, and `δ` uses the sphere at the
+///   lowest mean height a point within `radius` can have, `h − radius / 2`
+///   (the distance multiplies the angle by the radius plus the mean
+///   height, TS-21), so negative heights widen the box; when that sphere
+///   has no positive radius, the box is the whole globe.
+///
+/// The bounds are widened by a relative 10⁻⁹ against rounding; the exact
+/// distance post-filter removes the extra candidates.
+pub(crate) fn distance_boxes(center: &Point, radius: f64) -> Vec<(Point, Point)> {
+    // Rejects a negative radius and NaN.
+    if radius.partial_cmp(&0.0).is_none_or(|o| o == Ordering::Less) {
+        return Vec::new();
+    }
+    let pad = |r: f64, scale: f64| r * (1.0 + 1e-9) + scale.abs() * 1e-9 + 1e-9;
+    let s = center.srid;
+    if !s.geographic() {
+        let c = center.coords();
+        let lo: Vec<f64> = c.iter().map(|&x| x - pad(radius, x)).collect();
+        let hi: Vec<f64> = c.iter().map(|&x| x + pad(radius, x)).collect();
+        return vec![(
+            Point::new(s, &lo).expect("same dimensions"),
+            Point::new(s, &hi).expect("same dimensions"),
+        )];
+    }
+    let c = canonical(center);
+    let (lon, lat) = (c.coords[0].to_radians(), c.coords[1].to_radians());
+    let height = (s.dims() == 3).then(|| {
+        let h = c.coords[2];
+        (h - pad(radius, h), h + pad(radius, h))
+    });
+    let sphere = match height {
+        None => EARTH_RADIUS,
+        Some(_) => EARTH_RADIUS + c.coords[2] - radius / 2.0,
+    };
+    let delta = if sphere > 0.0 {
+        pad(radius / sphere, 0.0)
+    } else {
+        f64::INFINITY
+    };
+    let half_pi = std::f64::consts::FRAC_PI_2;
+    let pi = std::f64::consts::PI;
+    let mut boxes: Vec<(f64, f64, f64, f64)> = Vec::new();
+    let (lat_lo, lat_hi) = (lat - delta, lat + delta);
+    if delta >= pi || delta.is_nan() || !lon.is_finite() || !lat.is_finite() {
+        boxes.push((-pi, -half_pi, pi, half_pi));
+    } else if lat_lo > -half_pi && lat_hi < half_pi {
+        let ratio = delta.sin() / lat.cos();
+        if ratio >= 1.0 {
+            boxes.push((-pi, lat_lo, pi, lat_hi));
+        } else {
+            let d = ratio.asin();
+            let (lon_lo, lon_hi) = (lon - d, lon + d);
+            if lon_lo < -pi {
+                boxes.push((lon_lo + 2.0 * pi, lat_lo, pi, lat_hi));
+                boxes.push((-pi, lat_lo, lon_hi, lat_hi));
+            } else if lon_hi > pi {
+                boxes.push((lon_lo, lat_lo, pi, lat_hi));
+                boxes.push((-pi, lat_lo, lon_hi - 2.0 * pi, lat_hi));
+            } else {
+                boxes.push((lon_lo, lat_lo, lon_hi, lat_hi));
+            }
+        }
+    } else {
+        boxes.push((-pi, lat_lo.max(-half_pi), pi, lat_hi.min(half_pi)));
+    }
+    boxes
+        .into_iter()
+        .map(|(a, b, x, y)| {
+            let (mut lo, mut hi) = (
+                vec![a.to_degrees(), b.to_degrees()],
+                vec![x.to_degrees(), y.to_degrees()],
+            );
+            if let Some((h_lo, h_hi)) = height {
+                lo.push(h_lo);
+                hi.push(h_hi);
+            }
+            (
+                Point::new(s, &lo).expect("same dimensions"),
+                Point::new(s, &hi).expect("same dimensions"),
+            )
+        })
+        .collect()
+}

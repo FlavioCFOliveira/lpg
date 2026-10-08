@@ -98,6 +98,10 @@ pub(crate) enum Error {
     /// A node to delete still has edges: GQLSTATUS G1001, "edges still
     /// exist" (ISO/IEC 39075 conditions insert).
     EdgesStillExist,
+    /// A write, a commit or a constraint creation met data that violates
+    /// a constraint (TS-18, FR-IDX-002, FR-IDX-004); the text names the
+    /// rule. Its GQLSTATUS code is Sprint 3's.
+    ConstraintViolation(&'static str),
 }
 
 /// Result of the storage kernel.
@@ -178,6 +182,7 @@ impl fmt::Display for Error {
             Error::NotEmpty => f.write_str("the directory or schema still holds an object"),
             Error::GraphTypeInUse => f.write_str("a graph still uses the graph type"),
             Error::EdgesStillExist => f.write_str("the node still has edges"),
+            Error::ConstraintViolation(what) => write!(f, "constraint violation: {what}"),
         }
     }
 }

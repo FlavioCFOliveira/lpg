@@ -247,3 +247,57 @@ impl StorageFile for NoFlushFile {
         reserve(&*self.0, &self.1, offset, len)
     }
 }
+
+/// A pause inside the next logged write batch of `e`
+/// ([`crate::storage::wal::TestPoints`] `batch_body`): with its pages
+/// changed and the commit latch held, the batch signals `reached` and
+/// waits on `fail`; `true` fails it with ENOSPC, so it is undone (TS-16
+/// step 6). A dropped `fail` lets it go on, so a failing test does not
+/// hang.
+pub(crate) struct MidBatch {
+    pub(crate) reached: std::sync::mpsc::Receiver<()>,
+    pub(crate) fail: std::sync::mpsc::Sender<bool>,
+}
+
+/// Arms [`MidBatch`] on the next logged write batch of `e`.
+pub(crate) fn mid_batch(e: &crate::storage::engine::Engine) -> MidBatch {
+    let (rt, rr) = std::sync::mpsc::channel();
+    let (ft, fr) = std::sync::mpsc::channel::<bool>();
+    let fr = std::sync::Mutex::new(fr);
+    let armed = std::sync::atomic::AtomicBool::new(true);
+    *e.core()
+        .wal
+        .points
+        .batch_body
+        .lock()
+        .unwrap_or_else(crate::sync::PoisonError::into_inner) = Some(Box::new(move |_| {
+        if !armed.swap(false, std::sync::atomic::Ordering::SeqCst) {
+            return Ok(());
+        }
+        let _ = rt.send(());
+        if fr
+            .lock()
+            .unwrap_or_else(crate::sync::PoisonError::into_inner)
+            .recv()
+            .unwrap_or(false)
+        {
+            return Err(crate::storage::error::Error::Io(io::Error::from(
+                io::ErrorKind::StorageFull,
+            )));
+        }
+        Ok(())
+    }));
+    MidBatch {
+        reached: rr,
+        fail: ft,
+    }
+}
+
+impl MidBatch {
+    /// Waits until the batch is paused.
+    pub(crate) fn wait(&self) {
+        self.reached
+            .recv_timeout(WAIT_BOUND)
+            .expect("the commit reaches its batch");
+    }
+}

@@ -47,6 +47,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use crate::catalog::stats::{Delta, StatKey};
 use crate::catalog::{Definition, Kind, TokenKind};
+use crate::index::{Element, Entity};
 use crate::storage::btree::node::ADJ_KEY_LEN;
 use crate::storage::btree::{Store, Tree};
 use crate::storage::engine::{Core, Engine};
@@ -115,7 +116,8 @@ pub(crate) fn element_key(id: u64) -> [u8; 8] {
     id.to_be_bytes()
 }
 
-fn element_of(k: &[u8]) -> Option<u64> {
+/// The element identifier of a node- or edge-tree key.
+pub(crate) fn element_of(k: &[u8]) -> Option<u64> {
     Some(u64::from_be_bytes(k.try_into().ok()?))
 }
 
@@ -182,7 +184,8 @@ fn edge_ends(v: &[u8]) -> Option<(u64, u64, u64)> {
     Some((be(0)?, be(8)?, be(16)?))
 }
 
-fn decode_edge(v: &[u8]) -> Option<EdgeRecord> {
+/// The edge record of an edge-tree value; `None` if malformed.
+pub(crate) fn decode_edge(v: &[u8]) -> Option<EdgeRecord> {
     let (src, dst, ty) = edge_ends(v)?;
     let (labels, props) = record::decode(&v[24..])?;
     labels.is_empty().then_some(EdgeRecord {
@@ -191,6 +194,22 @@ fn decode_edge(v: &[u8]) -> Option<EdgeRecord> {
         ty,
         props,
     })
+}
+
+/// The element a node write gives the constraint checks ([`crate::index`]).
+fn node_element(labels: &[u64], props: &[(u64, Value)]) -> Element {
+    Element {
+        tokens: labels.to_vec(),
+        props: props.to_vec(),
+    }
+}
+
+/// The element an edge write gives the constraint checks.
+fn edge_element(ty: u64, props: &[(u64, Value)]) -> Element {
+    Element {
+        tokens: vec![ty],
+        props: props.to_vec(),
+    }
 }
 
 fn corrupt(what: &str) -> Error {
@@ -300,6 +319,7 @@ impl Transaction<'_> {
             Ok(id) => id,
             Err(e) => return Err(self.abort_with(e)),
         };
+        self.unique_values(g, Entity::Node, id, &node_element(labels, props))?;
         self.put(g.nodes, &element_key(id), &v)?;
         Ok(id)
     }
@@ -343,6 +363,7 @@ impl Transaction<'_> {
         };
         let both: BTreeSet<u64> = old.iter().chain(labels).copied().collect();
         self.schema(g, &both.into_iter().collect::<Vec<_>>())?;
+        self.unique_values(g, Entity::Node, id, &node_element(labels, props))?;
         self.put(g.nodes, &element_key(id), &v)
     }
 
@@ -495,6 +516,7 @@ impl Transaction<'_> {
             Ok(id) => id,
             Err(e) => return Err(self.abort_with(e)),
         };
+        self.unique_values(g, Entity::Edge, id, &edge_element(ty, props))?;
         self.put(g.edges, &element_key(id), &v)?;
         for (node, dir, nbr) in [(src, OUT, dst), (dst, IN, src)] {
             let k = adj_key(Adj {
@@ -538,6 +560,7 @@ impl Transaction<'_> {
         };
         let v = encode_edge(e.src, e.dst, e.ty, props)?;
         self.schema(g, &[e.ty])?;
+        self.unique_values(g, Entity::Edge, id, &edge_element(e.ty, props))?;
         self.put(g.edges, &element_key(id), &v)
     }
 
@@ -734,7 +757,7 @@ pub(crate) fn stats_delta(_core: &Core, store: &Store<'_>, tx: &Transaction<'_>)
 
 /// The exact statistics of the latest committed state: one scan of each
 /// live graph's node tree and of the adjacency prefix of each labelled
-/// node (TS-17 After a crash). Runs at open, before any transaction, so it
+/// node, and one of each ONLINE index (TS-17 After a crash). Runs at open, before any transaction, so it
 /// needs no snapshot.
 ///
 /// # Errors
@@ -803,6 +826,7 @@ pub(crate) fn recount(core: &Core) -> Result<BTreeMap<StatKey, u64>> {
             return Err(e);
         }
     }
+    crate::index::recount(core, &mut counts)?;
     Ok(counts)
 }
 
@@ -930,6 +954,8 @@ impl Engine {
     /// - each adjacency entry belongs to an edge record that it matches;
     /// - a live edge's endpoints are live nodes of the graph; a deleted
     ///   edge's endpoint, if present, was not deleted before it;
+    /// - each ONLINE index matches the data in both directions
+    ///   ([`crate::index::check`]);
     /// - the statistics equal an exact recount ([`recount`]): a count that
     ///   a commit would take below zero is clamped
     ///   ([`crate::catalog::stats::Stats::apply`]) and reported here, as
@@ -989,6 +1015,7 @@ impl Engine {
             };
             check_graph(&store, gid, &g, &mut p)?;
         }
+        crate::index::check(core, &mut |m| p.push(m))?;
         match recount(core) {
             Ok(want) => {
                 let st = core.catalog.stats();

@@ -125,6 +125,12 @@ pub(crate) struct Transaction<'e> {
     pub(crate) dropped_graphs: Vec<u64>,
     /// The read set (serializable transactions).
     pub(crate) reads: ReadSet,
+    /// The ONLINE switch of an index build this transaction commits
+    /// (TS-18 step 6, [`crate::index`]).
+    pub(crate) online: Option<crate::index::Online>,
+    /// Statistics this transaction's commit adds: the counts of an index
+    /// it makes ONLINE or creates built (TS-17).
+    pub(crate) schema_stats: crate::catalog::stats::Delta,
     /// The memory of the write set, before-images, write keys and lock
     /// entries (TS-14).
     pub(crate) charge: Option<Reservation>,
@@ -177,6 +183,8 @@ impl Engine {
             graphs: Vec::new(),
             dropped_graphs: Vec::new(),
             reads: ReadSet::default(),
+            online: None,
+            schema_stats: crate::catalog::stats::Delta::default(),
             charge: Some(
                 core.accountant
                     .try_reserve(0)
@@ -241,6 +249,8 @@ impl<'e> Transaction<'e> {
         self.graphs.clear();
         self.dropped_graphs.clear();
         self.reads = ReadSet::default();
+        self.online = None;
+        self.schema_stats = crate::catalog::stats::Delta::default();
         self.charge = None;
         self.regs = None;
     }
@@ -419,8 +429,9 @@ impl<'e> Transaction<'e> {
         }
     }
 
-    /// The committed version of `key` in `tree` that the snapshot sees.
-    fn read_committed(&mut self, tree: Tree, key: &[u8]) -> Result<Option<Vec<u8>>> {
+    /// The committed version of `key` in `tree` that the snapshot sees,
+    /// without this transaction's writes and without recording a read.
+    pub(crate) fn read_committed(&mut self, tree: Tree, key: &[u8]) -> Result<Option<Vec<u8>>> {
         if tree.is_pending() {
             return Ok(None);
         }
@@ -495,11 +506,35 @@ impl<'e> Transaction<'e> {
         &mut self,
         tree: Tree,
         prefix: &[u8],
+        f: impl FnMut(&[u8], &[u8]) -> bool,
+    ) -> Result<()> {
+        let iv = Interval::prefix(prefix);
+        self.scan_range(tree, &iv.lo, iv.hi.as_deref(), f)
+    }
+
+    /// [`Transaction::scan_prefix`] over the keys `k` with `lo <= k` and,
+    /// if `hi` is given, `k < hi`: the read of the interval `[lo, hi)`
+    /// (TS-15 Read sets), an index range among them (TS-18).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::get`].
+    pub(crate) fn scan_range(
+        &mut self,
+        tree: Tree,
+        lo: &[u8],
+        hi: Option<&[u8]>,
         mut f: impl FnMut(&[u8], &[u8]) -> bool,
     ) -> Result<()> {
         self.active()?;
         self.use_tree(tree, false)?;
-        self.record(tree, Interval::prefix(prefix))?;
+        self.record(
+            tree,
+            Interval {
+                lo: lo.to_vec(),
+                hi: hi.map(<[u8]>::to_vec),
+            },
+        )?;
         // Committed entries visible at the snapshot, copied first: the scan
         // calls back without page latches, and the old-version store is
         // read for entries newer than the snapshot.
@@ -511,7 +546,7 @@ impl<'e> Transaction<'e> {
         } else {
             self.engine
                 .store()
-                .scan_prefix_stamped(tree, prefix, |k, v, st| {
+                .scan_range_stamped(tree, lo, hi, |k, v, st| {
                     let value = match visible(st, s) {
                         Some(true) => Some(v.to_vec()),
                         Some(false) => None,
@@ -529,12 +564,11 @@ impl<'e> Transaction<'e> {
         if let Err(e) = r {
             return Err(self.fail(e));
         }
-        // Merge the write set's entries of the prefix over them.
-        let lo = (tree.id(), prefix.to_vec());
+        // Merge the write set's entries of the range over them.
         let own: Vec<(&Vec<u8>, &Pending)> = self
             .writes
-            .range(lo..)
-            .take_while(|((t, k), _)| *t == tree.id() && k.starts_with(prefix))
+            .range((tree.id(), lo.to_vec())..)
+            .take_while(|((t, k), _)| *t == tree.id() && hi.is_none_or(|h| k.as_slice() < h))
             .map(|((_, k), p)| (k, p))
             .collect();
         let (mut i, mut j) = (0, 0);
@@ -722,6 +756,29 @@ impl<'e> Transaction<'e> {
         let engine = self.engine;
         let r = engine.commit_transaction(&mut self);
         // Step 10: the locks are released after publication.
+        self.end();
+        self.state = State::Aborted;
+        engine.core().mvcc.notify_gc();
+        r
+    }
+
+    /// Commits the transaction, as [`Transaction::commit`], with the tree
+    /// that `built` holds installed by the same commit: a constraint and its
+    /// owned index commit together (TS-18 Constraints). Then, or on failure,
+    /// the build's pages that the tree does not use are released
+    /// ([`crate::storage::btree::bulk`]).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::commit`].
+    pub(crate) fn commit_installing(
+        mut self,
+        built: crate::storage::btree::bulk::Built<'_>,
+    ) -> Result<Option<u64>> {
+        self.active()?;
+        let engine = self.engine;
+        let r = engine.commit_transaction_installing(&mut self, Some(&built));
+        drop(built);
         self.end();
         self.state = State::Aborted;
         engine.core().mvcc.notify_gc();

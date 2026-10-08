@@ -450,3 +450,225 @@ fn audit_a_stale_frame_never_overwrites_a_bulk_built_page() {
         "the first tree differs after a reopen"
     );
 }
+
+/// Installs a hook that, at the first page the next bulk build writes,
+/// commits a 1 000 000-byte value to `tree`: its overflow chain uses up
+/// the free list of these tests and takes pages above the build's run.
+fn commit_above_the_run(e: &Engine, tree: Tree) {
+    let core = Arc::downgrade(&e.core_arc());
+    let first = crate::sync::atomic::AtomicBool::new(true);
+    *e.core().wal.points.bulk_page.lock().unwrap() = Some(Box::new(move || {
+        if !first.swap(false, crate::sync::atomic::Ordering::SeqCst) {
+            return;
+        }
+        let Some(core) = core.upgrade() else { return };
+        let big = vec![3u8; 1_000_000];
+        Engine::handle(core)
+            .commit(
+                &[Write {
+                    tree,
+                    key: b"big",
+                    value: Some(&big),
+                    stamp: 0,
+                }],
+                Ids::default(),
+            )
+            .unwrap();
+    }));
+}
+
+/// Every page below the page count holds a valid image on disk once a
+/// checkpoint has written the pool's frames (TS-28 migration reads them
+/// all).
+fn assert_every_page_valid(e: &Engine, what: &str) {
+    e.checkpoint().unwrap();
+    let mut buf = vec![0u8; PAGE_SIZE];
+    for p in 0..e.data().page_count() {
+        assert!(
+            e.data().read_page_unverified(p, &mut buf).unwrap(),
+            "{what}: page {p} holds no valid image"
+        );
+    }
+}
+
+/// Sprint 2 DECISION 65 (TS-18 step 4, TS-26): a build owns its pages
+/// through its record from the commit that takes them, and the integrity
+/// check counts them. A commit takes pages above the build's first run
+/// while the build writes, and another above its last run after it; then:
+/// - the build is dropped: its pages, written or not, enter the free list
+///   with valid images, and the record is gone;
+/// - a second build is lost in a crash before its install: the reopen
+///   releases its record's pages the same way, and its tree does not exist.
+#[test]
+fn a_builds_pages_are_owned_by_its_record_and_released_after_a_drop_or_a_crash() {
+    let dir = test_dirs().remove(0);
+    let fault = Arc::new(FaultStorage::new(Box::new(FsStorage)));
+    fault.skip_device_sync();
+    let e = Engine::create(
+        dir.path(),
+        fault.clone(),
+        CAP,
+        crate::test_support::OWNER,
+        Arc::new(RecordingSink::default()),
+    )
+    .unwrap();
+    let small = e.create_trees(1).unwrap()[0];
+    let m = model(12_000, seed());
+    let owned = |e: &Engine| e.store().build_records().unwrap();
+    for crash in [false, true] {
+        commit_above_the_run(&e, small);
+        let built = e.bulk_build_pages(&mut source(&m)).unwrap();
+        let id = built.install_args().id;
+        // After the build, a commit takes pages above its last run, whose
+        // unused, unwritten pages then also go through the free list.
+        let above = vec![4u8; 2_000_000];
+        e.commit(
+            &[Write {
+                tree: small,
+                key: b"above",
+                value: Some(&above),
+                stamp: 0,
+            }],
+            Ids::default(),
+        )
+        .unwrap();
+        let records = owned(&e);
+        assert_eq!(records.len(), 1);
+        let (owner, ranges) = &records[0];
+        assert_eq!(*owner, id);
+        let held: u64 = ranges.iter().map(|r| r.1).sum();
+        assert!(held >= built.pages && built.pages > 10);
+        // The first build: the commit during the build took pages between
+        // its first run and the next (in the second, the free list left by
+        // the first serves that commit).
+        assert!(
+            crash || ranges.len() >= 2,
+            "precondition: a commit took pages between two runs: {ranges:?}"
+        );
+        let (f, l) = *ranges.last().unwrap();
+        assert!(
+            f + l < e.data().page_count() && built.install_args().tail[0].1 > 0,
+            "precondition: unused pages below pages of a later commit"
+        );
+        let r = e.store().check().unwrap();
+        assert!(r.is_ok(), "a record's pages are counted: {:?}", r.problems);
+        if !crash {
+            let free = r.free_pages;
+            drop(built);
+            assert!(owned(&e).is_empty(), "the drop released the record");
+            // Every page below the page count is in a tree or free: none
+            // of the build's pages is leaked.
+            let r = e.store().check().unwrap();
+            assert!(r.is_ok(), "{:?}", r.problems);
+            assert!(r.free_pages > free, "the pages are free");
+            assert_every_page_valid(&e, "after the drop");
+            continue;
+        }
+        // A crash before the install: nothing releases the record.
+        std::mem::forget(built);
+        drop(e);
+        fault.crash(Crash::Tear { seed: seed() }).unwrap();
+        let e = open(dir.path(), fault.clone());
+        assert!(owned(&e).is_empty(), "the open released the record");
+        assert!(e.store().tree(id).unwrap().is_none());
+        let r = e.store().check().unwrap();
+        assert!(r.is_ok(), "{:?}", r.problems);
+        assert_every_page_valid(&e, "after the reopen");
+        assert!(e.store().get(small, b"big", &mut Vec::new()).unwrap());
+        return;
+    }
+}
+
+/// `loom` model of a build's page ownership (module documentation; sprint
+/// Sprint 2 DECISION 65), over the real [`Datafile`]: a builder takes a run
+/// of two pages under the commit latch, recording it as owned, and later
+/// releases it under the latch, returning it to the reserve if it ends the
+/// page count ([`Store::take_build_run`], [`Store::release_build_step`]);
+/// a committer runs a batch that takes a page and is undone, which restores
+/// the page count, then a batch that takes two pages. Whatever the
+/// interleaving, no page the committer takes is owned by the build at that
+/// moment, and every page it took stays below the page count.
+#[cfg(loom)]
+#[test]
+fn loom_a_build_run_and_an_undone_batch_never_share_a_page() {
+    use std::collections::BTreeSet;
+
+    use crate::obs::MetricsSink;
+    use crate::storage::StorageFile;
+    use crate::storage::datafile::Datafile;
+    use crate::storage::page::PAGE_BYTES;
+    use crate::sync::Mutex;
+
+    /// A file of eight pages that is never read or written.
+    struct Eight;
+    impl StorageFile for Eight {
+        fn read_at(&self, _: &mut [u8], _: u64) -> std::io::Result<usize> {
+            unreachable!()
+        }
+        fn write_at(&self, _: &[u8], _: u64) -> std::io::Result<()> {
+            unreachable!()
+        }
+        fn sync_data(&self) -> std::io::Result<()> {
+            unreachable!()
+        }
+        fn set_len(&self, _: u64) -> std::io::Result<()> {
+            unreachable!()
+        }
+        fn len(&self) -> std::io::Result<u64> {
+            Ok(8 * PAGE_BYTES)
+        }
+        fn reserve(&self, _: u64, _: u64) -> std::io::Result<()> {
+            unreachable!()
+        }
+    }
+    struct Null;
+    impl MetricsSink for Null {
+        fn counter(&self, _: &'static str, _: u64) {}
+        fn gauge(&self, _: &'static str, _: u64) {}
+        fn histogram(&self, _: &'static str, _: u64) {}
+    }
+
+    loom::model(|| {
+        let data =
+            Arc::new(Datafile::attach(Box::new(Eight), Arc::default(), Arc::new(Null)).unwrap());
+        // The commit latch, guarding the pages the build's record owns.
+        let latch = Arc::new(Mutex::new(BTreeSet::<u64>::new()));
+        let committer = {
+            let (data, latch) = (data.clone(), latch.clone());
+            loom::thread::spawn(move || {
+                {
+                    let owned = latch.lock().unwrap();
+                    let saved = data.page_count();
+                    let p = data.allocate().unwrap();
+                    assert!(!owned.contains(&p), "page {p} is the build's");
+                    // The undo.
+                    data.rollback_page_count(saved);
+                }
+                let owned = latch.lock().unwrap();
+                let mine = [data.allocate().unwrap(), data.allocate().unwrap()];
+                for p in mine {
+                    assert!(!owned.contains(&p), "page {p} is the build's");
+                }
+                mine
+            })
+        };
+        let run = {
+            let mut owned = latch.lock().unwrap();
+            let first = data.allocate_run(2).unwrap();
+            owned.extend(first..first + 2);
+            first..first + 2
+        };
+        // The build writes its pages here, with no latch held.
+        {
+            let mut owned = latch.lock().unwrap();
+            if run.end == data.page_count() {
+                data.return_to_reserve(run.start);
+            }
+            owned.clear();
+        }
+        let mine = committer.join().unwrap();
+        for p in mine {
+            assert!(p < data.page_count(), "page {p} lies beyond the page count");
+        }
+    });
+}

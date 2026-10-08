@@ -98,7 +98,9 @@ pub(crate) fn pass(core: &Core) -> Result<Pass> {
         });
         let mut dropped = Vec::new();
         q.dropped.retain(|(ts, t)| {
-            let ready = *ts <= horizon;
+            // A tree an index build reads stays until the build ends
+            // (`crate::index::build`).
+            let ready = *ts <= horizon && !core.builds.uses(t.id());
             if ready {
                 dropped.push(*t);
             }

@@ -430,18 +430,23 @@ fn after_a_crash_the_collector_finds_the_garbage_again() {
 /// While a database is open, its threads include `lpg-gc` (TS-02). A
 /// spawned thread sets its own name when it starts, so the test polls for
 /// it (as `the_wal_writer_and_checkpointer_threads_are_named`); after close
-/// the thread is gone.
+/// the thread is gone. Close joins it, but `pthread_join` returns when the
+/// kernel clears the thread's `clear_child_tid` word, in `exit_mm`, before
+/// `exit_notify` removes its `/proc/self/task` entry (Linux v7.0
+/// `kernel/exit.c:964, 988`, `kernel/fork.c:1472-1479`; `set_tid_address(2)`).
+/// So the test polls for the entry to go too (Round C audit N1: listed
+/// after close in 30 of 3 200 runs at 32 at once).
 #[test]
 fn the_collector_thread_runs_while_the_database_is_open() {
-    let (_d, e) = db();
-    crate::test_support::wait_until("the lpg-gc thread is named", || {
+    let gc_named = || {
         crate::test_support::thread_names()
             .iter()
             .any(|n| n == "lpg-gc")
-    });
+    };
+    let (_d, e) = db();
+    crate::test_support::wait_until("the lpg-gc thread is named", gc_named);
     e.close().unwrap();
-    let names = crate::test_support::thread_names();
-    assert!(!names.iter().any(|n| n == "lpg-gc"), "{names:?}");
+    crate::test_support::wait_until("the lpg-gc thread is gone", || !gc_named());
 }
 
 /// Commits 400 entries into `t` (several leaves), then drops `t`, with

@@ -12,7 +12,7 @@
 //! | `0x02`, object id (8, big-endian) | parent id (8, LE), name | stamped |
 //! | `0x03`, token kind (1), name | token id (8, LE) | none |
 //! | `0x04`, token id (8, big-endian) | token kind (1), name | none |
-//! | `0x05`, graph id (8, big-endian), object id (8, big-endian) | index or constraint definition (rmp #33, #34) | stamped |
+//! | `0x05`, graph id (8, big-endian), object id (8, big-endian) | index or constraint definition ([`crate::index::SchemaDef`]) | stamped |
 //!
 //! The name entry is `(parent_id, name) → (object_id, kind, owner,
 //! definition)` and the reverse entry `object_id → (parent_id, name)`
@@ -40,9 +40,12 @@
 //! fails with 25N11 if the first committed, under snapshot isolation too.
 //! Creating an object in a directory or schema also takes the S lock on the
 //! parent's name key, and dropping a directory or schema takes X there and
-//! then checks the latest committed children: a child committed after the
-//! dropper's snapshot fails it with 25N11 (as PostgreSQL's referential
-//! check reads the latest committed rows and fails a transaction-snapshot
+//! then checks the latest committed children: a child created after the
+//! dropper's snapshot fails it with 25N11 unless the child's drop has
+//! committed, which the dropper learns by taking the S lock on the child's
+//! name, so waiting for its dropper to end, and reading it again (a drop
+//! the check sees may still be undone, TS-16 step 6; as PostgreSQL's
+//! referential check reads the latest committed rows and fails a transaction-snapshot
 //! transaction that finds one its snapshot does not see, R-PG @ `1f22453`
 //! `src/backend/utils/adt/ri_triggers.c:2683-2699`). Without the parent
 //! locks, under snapshot isolation a schema could be dropped while a graph
@@ -58,8 +61,8 @@
 //! foreign-key creation locks the referenced table against concurrent
 //! changes (R-PG `src/backend/commands/tablecmds.c:10188-10190`). The
 //! dropper then checks the latest committed graphs as for children above:
-//! one that uses the type and committed after its snapshot fails it with
-//! 25N11; the creator that waited finds the type's name entry
+//! one that uses the type and was created after its snapshot fails it
+//! with 25N11 unless its drop has committed; the creator that waited finds the type's name entry
 //! delete-stamped after its snapshot and fails with 25N11 (the write-write
 //! rule of [`Transaction::lock_key`]).
 //!
@@ -72,8 +75,9 @@
 //!
 //! **Cache** ([`Catalog::objects`]). The latest committed objects, loaded at
 //! open and changed by each commit when it is applied, under the commit
-//! latch ([`Effects`]); the committers of rmp #33 read index definitions
-//! there.
+//! latch ([`Effects`]), and the latest committed index and constraint
+//! definitions ([`Catalog::schema`]), which committers read under the
+//! commit latch (TS-18 step 2, [`crate::index`]).
 
 pub(crate) mod stats;
 
@@ -82,6 +86,7 @@ mod tests;
 
 use std::collections::{BTreeMap, HashMap};
 
+use crate::index::{SCHEMA, SchemaDef};
 use crate::storage::btree::node::put_varint;
 use crate::storage::btree::{Keys, Store, Tree, Write};
 use crate::storage::datafile::Bootstrap;
@@ -91,7 +96,7 @@ use crate::storage::graph::Graph;
 use crate::sync::{Mutex, MutexGuard, PoisonError, RwLock};
 use crate::tx::Transaction;
 use crate::tx::commit::Ids;
-use crate::tx::lock::Mode;
+use crate::tx::lock::{Mode, Resource};
 
 /// The catalog tree's identifier, created by `create`.
 pub(crate) const CATALOG_TREE: u64 = 1;
@@ -524,6 +529,9 @@ pub(crate) struct Catalog {
     objects: Mutex<BTreeMap<u64, Object>>,
     /// The statistics (TS-17), changed under the commit latch.
     pub(crate) stats: Mutex<stats::Stats>,
+    /// The latest committed index and constraint definitions by
+    /// identifier (TS-18 step 2 reads them under the commit latch).
+    schema: Mutex<BTreeMap<u64, SchemaDef>>,
 }
 
 impl Catalog {
@@ -531,6 +539,11 @@ impl Catalog {
     /// it under the commit latch).
     pub(crate) fn objects(&self) -> MutexGuard<'_, BTreeMap<u64, Object>> {
         self.objects.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// The latest committed index and constraint definitions, locked.
+    pub(crate) fn schema(&self) -> MutexGuard<'_, BTreeMap<u64, SchemaDef>> {
+        self.schema.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// The statistics, locked.
@@ -590,12 +603,25 @@ pub(crate) fn open(core: &Core, recovered_ts: u64) -> Result<()> {
         }
         true
     })?;
+    let mut schema = BTreeMap::new();
+    store.scan_prefix_stamped(tree, &[SCHEMA], |k, v, st| {
+        if st.deleted == 0 {
+            match SchemaDef::decode(k, v) {
+                Some(d) => {
+                    schema.insert(d.id, d);
+                }
+                None => bad = true,
+            }
+        }
+        true
+    })?;
     if bad {
         return Err(core
             .health
             .fail(Error::Corruption("malformed catalog entry".into())));
     }
     *core.catalog.objects() = objects;
+    *core.catalog.schema() = schema;
     let st = stats::load(core)?;
     *core.catalog.stats() = st;
     if core.catalog.stats().saved_ts() < recovered_ts {
@@ -623,6 +649,10 @@ pub(crate) struct Effects {
     stats: stats::Delta,
     /// Graphs dropped: their statistics go.
     dropped_graphs: Vec<u64>,
+    /// Index and constraint definitions created or changed.
+    schema_put: Vec<SchemaDef>,
+    /// Index and constraint definitions dropped: an index's statistics go.
+    schema_dropped: Vec<u64>,
 }
 
 impl Effects {
@@ -631,7 +661,12 @@ impl Effects {
     /// # Errors
     ///
     /// Storage errors reading the committed state.
-    pub(crate) fn of(core: &Core, store: &Store<'_>, tx: &Transaction<'_>) -> Result<Effects> {
+    pub(crate) fn of(
+        core: &Core,
+        store: &Store<'_>,
+        tx: &Transaction<'_>,
+        index_stats: &stats::Delta,
+    ) -> Result<Effects> {
         let mut e = Effects::default();
         for ((tree, key), p) in tx.writes.range((CATALOG_TREE, Vec::new())..) {
             if *tree != CATALOG_TREE {
@@ -649,10 +684,23 @@ impl Effects {
                         e.dropped.push(u64::from_be_bytes(id));
                     }
                 }
+                (Some(&SCHEMA), Some(v)) => {
+                    let d = SchemaDef::decode(key, v).ok_or(Error::InvalidArgument(
+                        "a malformed index definition in a write set",
+                    ))?;
+                    e.schema_put.push(d);
+                }
+                (Some(&SCHEMA), None) => {
+                    if let Some(id) = key.get(9..17).and_then(|b| b.try_into().ok()) {
+                        e.schema_dropped.push(u64::from_be_bytes(id));
+                    }
+                }
                 _ => {}
             }
         }
         e.stats = crate::storage::graph::stats_delta(core, store, tx)?;
+        e.stats.merge(index_stats);
+        e.stats.merge(&tx.schema_stats);
         e.dropped_graphs.clone_from(&tx.dropped_graphs);
         Ok(e)
     }
@@ -668,10 +716,22 @@ impl Effects {
                 objects.insert(o.id, o);
             }
         }
+        {
+            let mut schema = core.catalog.schema();
+            for id in &self.schema_dropped {
+                schema.remove(id);
+            }
+            for d in self.schema_put {
+                schema.insert(d.id, d);
+            }
+        }
         let mut st = core.catalog.stats();
         st.apply(&self.stats);
         for g in &self.dropped_graphs {
             st.remove_graph(*g);
+        }
+        for i in &self.schema_dropped {
+            st.remove_index(*i);
         }
     }
 }
@@ -1020,9 +1080,10 @@ impl Transaction<'_> {
     /// [`Error::NotEmpty`] for a directory or schema with a child;
     /// [`Error::GraphTypeInUse`] for a graph type that a graph uses;
     /// [`Error::Serialization`] when a concurrent transaction committed a
-    /// change of the name, a child of the object or a graph of the graph
-    /// type, after the snapshot;
-    /// the errors of [`Transaction::delete`] and
+    /// change of the name, or a child of the object or a graph of the
+    /// graph type that is not dropped, after the snapshot;
+    /// the errors of [`Transaction::lock_resource`],
+    /// [`Transaction::delete`] and
     /// [`Transaction::drop_tree`].
     pub(crate) fn drop_object(&mut self, parent: u64, name: &str) -> Result<bool> {
         self.check_active()?;
@@ -1038,26 +1099,14 @@ impl Transaction<'_> {
                     return Err(Error::NotEmpty);
                 }
                 // Creators of children hold the S lock on this name until
-                // they end, so the latest committed children are final: one
-                // committed after the snapshot fails this transaction.
-                let mut later = false;
-                let snapshot = self.snapshot();
-                let r = self.engine().store().scan_prefix_stamped(
-                    t,
-                    &children_prefix(o.id),
-                    |_, _, st| {
-                        later = st.deleted == 0 && st.created > snapshot;
-                        !later
-                    },
-                );
-                if let Err(e) = r {
-                    return Err(self.abort_with(e));
-                }
-                if later {
-                    return Err(self.abort_with(Error::Serialization));
-                }
+                // they end, so the children created are final; a child
+                // created after the snapshot fails this transaction unless
+                // its drop committed (`none_created_later`).
+                self.none_created_later(t, &children_prefix(o.id), |_, _| true)?;
             }
             Kind::Graph => {
+                // Its indexes and constraints go with it (FR-IDX-003).
+                self.drop_graph_schema(o.id)?;
                 if let Definition::Graph(g) = o.definition {
                     for id in [g.nodes, g.edges, g.adj] {
                         let tree = self.tree(id)?;
@@ -1094,20 +1143,58 @@ impl Transaction<'_> {
         if used {
             return Err(Error::GraphTypeInUse);
         }
+        self.none_created_later(t, &[NAME], uses)
+    }
+
+    /// Fails the transaction with [`Error::Serialization`] if the latest
+    /// committed state holds an entry under `prefix` that `matches`
+    /// selects and that was created after the snapshot, unless its drop
+    /// has committed. The scan reads without the commit latch and can see
+    /// a drop half applied, which may still be undone (TS-16 step 6). So
+    /// for each such entry it takes the S lock on its key, which waits for
+    /// any dropper of that name to end, and reads the entry again: still
+    /// delete-stamped (or gone), its creation and drop both follow the
+    /// snapshot and a serial order exists. The caller holds a lock that
+    /// excludes new matching creations (module documentation), so no
+    /// matching entry appears meanwhile.
+    fn none_created_later(
+        &mut self,
+        t: Tree,
+        prefix: &[u8],
+        matches: impl Fn(&[u8], &[u8]) -> bool,
+    ) -> Result<()> {
         let snapshot = self.snapshot();
-        let mut later = false;
+        let mut later = Vec::new();
         let r = self
             .engine()
             .store()
-            .scan_prefix_stamped(t, &[NAME], |k, v, st| {
-                later = st.deleted == 0 && st.created > snapshot && uses(k, v);
-                !later
+            .scan_prefix_stamped(t, prefix, |k, v, st| {
+                if st.created > snapshot && matches(k, v) {
+                    later.push(k.to_vec());
+                }
+                true
             });
         if let Err(e) = r {
             return Err(self.abort_with(e));
         }
-        if later {
-            return Err(self.abort_with(Error::Serialization));
+        for key in later {
+            self.lock_resource(
+                Resource::Key {
+                    tree: t.id(),
+                    key: key.as_slice().into(),
+                },
+                Mode::S,
+            )?;
+            let mut v = Vec::new();
+            let st = match self.engine().store().get_stamped(t, &key, &mut v) {
+                Ok(st) => st,
+                Err(e) => return Err(self.abort_with(e)),
+            };
+            // A name dropped and created again after the snapshot is a new
+            // entry: it fails only if it matches too.
+            if st.is_some_and(|st| st.deleted == 0) && matches(&key, &v) {
+                return Err(self.abort_with(Error::Serialization));
+            }
         }
         Ok(())
     }

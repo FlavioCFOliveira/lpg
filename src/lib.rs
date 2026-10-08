@@ -19,6 +19,14 @@
     )
 )]
 pub(crate) mod catalog;
+#[cfg_attr(
+    not(test),
+    allow(
+        dead_code,
+        reason = "the index API's first non-test callers come with Sprint 3"
+    )
+)]
+pub(crate) mod index;
 pub mod obs;
 pub mod ops;
 pub mod storage;

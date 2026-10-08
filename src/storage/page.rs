@@ -33,6 +33,9 @@ const CRC: std::ops::Range<usize> = 0..4;
 const LSN: std::ops::Range<usize> = 4..12;
 const TREE: std::ops::Range<usize> = 12..20;
 const TYPE: usize = 20;
+/// Where the tree identifier, and after it everything a page copy keeps,
+/// starts.
+pub(crate) const TREE_START: usize = TREE.start;
 
 /// The kind of a page (TS-05). The value 0 is not a type, so a page of
 /// zeros never passes as a typed page.

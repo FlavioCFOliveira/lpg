@@ -97,6 +97,14 @@ pub(crate) enum Resource {
         /// The node's element identifier.
         node: u64,
     },
+    /// A value of a uniqueness or node-key constraint: X for every writer
+    /// of an element with that value (TS-15 unique value, TS-18).
+    Unique {
+        /// The constraint's catalog object identifier.
+        constraint: u64,
+        /// The key encoding of the constrained values ([`crate::types::key`]).
+        value: Box<[u8]>,
+    },
 }
 
 impl Resource {
@@ -106,6 +114,7 @@ impl Resource {
     pub(crate) fn charge(&self) -> u64 {
         let key = match self {
             Resource::Key { key, .. } => key.len() as u64,
+            Resource::Unique { value, .. } => value.len() as u64,
             Resource::Tree(_)
             | Resource::Graph(_)
             | Resource::Schema { .. }
