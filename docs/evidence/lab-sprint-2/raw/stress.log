@@ -1,0 +1,265 @@
+info: experimental features enabled: wrapper-scripts
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.02s
+────────────
+ Nextest run ID 876ab8e7-b1a4-4dbf-acb1-1b5119af73eb with nextest profile: stress
+    Starting 63 tests across 1 binary (334 tests skipped, including 310 tests via profile.stress.default-filter)
+        PASS [   0.166s] ( 1/63) lpg catalog::tests::catalog::a_drop_that_saw_an_undone_drop_of_a_newer_graph_fails
+  stdout ───
+    stress: 16 copies, LPG_SEED 3777346956 to 3777346971, 0 failed
+
+        PASS [   0.167s] ( 2/63) lpg catalog::tests::catalog::a_graph_type_dropped_while_a_graph_of_it_is_created_leaves_no_dangling_type
+  stdout ───
+    stress: 16 copies, LPG_SEED 2230003013 to 2230003028, 0 failed
+
+        PASS [   0.162s] ( 3/63) lpg catalog::tests::catalog::a_schema_dropped_while_a_graph_is_created_in_it_leaves_no_orphan
+  stdout ───
+    stress: 16 copies, LPG_SEED 1821315222 to 1821315237, 0 failed
+
+        PASS [   0.164s] ( 4/63) lpg catalog::tests::catalog::two_concurrent_creators_of_one_graph_name_exactly_one_commits_at_both_levels
+  stdout ───
+    stress: 16 copies, LPG_SEED 1615886777 to 1615886792, 0 failed
+
+        PASS [   0.087s] ( 5/63) lpg catalog::tests::catalog::two_concurrent_creators_of_one_label_get_one_token_that_survives_reopen
+  stdout ───
+    stress: 16 copies, LPG_SEED 2333517596 to 2333517611, 0 failed
+
+        PASS [   1.427s] ( 6/63) lpg index::tests::index::a_backup_taken_while_a_build_is_paused_restores_and_the_rebuilt_index_matches_the_data
+  stdout ───
+    stress: 16 copies, LPG_SEED 4293464219 to 4293464234, 0 failed
+
+        PASS [   0.842s] ( 7/63) lpg index::tests::index::a_backup_under_four_committers_and_an_index_build_restores_to_one_commit_point
+  stdout ───
+    stress: 16 copies, LPG_SEED 1572066890 to 1572066905, 0 failed
+
+        PASS [   0.540s] ( 8/63) lpg index::tests::index::a_build_release_during_a_backup_waits_and_the_backup_restores_intact
+  stdout ───
+    stress: 16 copies, LPG_SEED 393286027 to 393286042, 0 failed
+
+        PASS [   0.137s] ( 9/63) lpg index::tests::index::a_build_restarted_after_its_install_resumes_at_its_replay
+  stdout ───
+    stress: 16 copies, LPG_SEED 3208039828 to 3208039843, 0 failed
+
+        PASS [   0.245s] (10/63) lpg index::tests::index::a_build_whose_index_or_graph_is_dropped_while_paused_reads_and_writes_no_freed_tree
+  stdout ───
+    stress: 16 copies, LPG_SEED 3130485622 to 3130485637, 0 failed
+
+        PASS [   0.061s] (11/63) lpg index::tests::index::a_build_whose_scan_saw_an_undone_commit_scans_again
+  stdout ───
+    stress: 16 copies, LPG_SEED 4161307877 to 4161307892, 0 failed
+
+        PASS [   0.507s] (12/63) lpg index::tests::index::a_constraint_commit_during_a_backup_waits_and_the_backup_restores_intact
+  stdout ───
+    stress: 16 copies, LPG_SEED 3572575159 to 3572575174, 0 failed
+
+        PASS [   0.096s] (13/63) lpg index::tests::index::a_constraint_creation_blocks_only_the_writers_of_its_label
+  stdout ───
+    stress: 16 copies, LPG_SEED 3443656731 to 3443656746, 0 failed
+
+        PASS [   0.059s] (14/63) lpg index::tests::index::a_constraint_paused_in_its_page_writes_blocks_only_the_writers_of_its_label
+  stdout ───
+    stress: 16 copies, LPG_SEED 3966789286 to 3966789301, 0 failed
+
+        PASS [   0.062s] (15/63) lpg index::tests::index::a_replay_chunk_read_during_an_undone_commit_is_read_again
+  stdout ───
+    stress: 16 copies, LPG_SEED 720800460 to 720800475, 0 failed
+
+        PASS [   0.060s] (16/63) lpg index::tests::index::a_second_writer_of_a_unique_value_waits_for_the_first_to_end
+  stdout ───
+    stress: 16 copies, LPG_SEED 1999967444 to 1999967459, 0 failed
+
+        PASS [   0.064s] (17/63) lpg index::tests::index::an_index_range_read_conflicts_with_a_later_insert_into_it
+  stdout ───
+    stress: 16 copies, LPG_SEED 88210736 to 88210751, 0 failed
+
+        PASS [   0.256s] (18/63) lpg index::tests::index::eight_writers_commit_while_a_build_is_paused_and_the_online_index_matches_the_data
+  stdout ───
+    stress: 16 copies, LPG_SEED 373860820 to 373860835, 0 failed
+
+        PASS [   0.105s] (19/63) lpg index::tests::index::sixteen_threads_inserting_one_unique_value_exactly_one_commits_at_both_levels
+  stdout ───
+    stress: 16 copies, LPG_SEED 1424905423 to 1424905438, 0 failed
+
+        PASS [   0.100s] (20/63) lpg index::tests::index::writers_commit_while_an_index_build_is_paused_in_its_page_writes
+  stdout ───
+    stress: 16 copies, LPG_SEED 1731688816 to 1731688831, 0 failed
+
+        PASS [   0.023s] (21/63) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+  stdout ───
+    stress: 16 copies, LPG_SEED 2253027780 to 2253027795, 0 failed
+
+        PASS [   1.597s] (22/63) lpg ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point
+  stdout ───
+    stress: 16 copies, LPG_SEED 979662726 to 979662741, 0 failed
+
+        PASS [   4.561s] (23/63) lpg storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once
+  stdout ───
+    stress: 16 copies, LPG_SEED 1404608894 to 1404608909, 0 failed
+
+        PASS [   0.924s] (24/63) lpg storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing
+  stdout ───
+    stress: 16 copies, LPG_SEED 1309546379 to 1309546394, 0 failed
+
+        PASS [   0.046s] (25/63) lpg storage::freelist::tests::registry_horizon_is_the_lowest_registered_value
+  stdout ───
+    stress: 16 copies, LPG_SEED 3912824430 to 3912824445, 0 failed
+
+        PASS [   0.292s] (26/63) lpg storage::graph::tests::graph::an_edge_to_a_node_deleted_concurrently_fails_or_waits_and_leaves_no_dangling_entry
+  stdout ───
+    stress: 16 copies, LPG_SEED 753227236 to 753227251, 0 failed
+
+        PASS [   0.087s] (27/63) lpg storage::graph::tests::graph::an_expansion_at_a_snapshot_returns_exactly_the_live_edges_of_its_direction_and_type
+  stdout ───
+    stress: 16 copies, LPG_SEED 2266522652 to 2266522667, 0 failed
+
+        PASS [   0.162s] (28/63) lpg storage::graph::tests::graph::sixteen_threads_creating_disjoint_nodes_and_edges_all_commit_and_survive_reopen
+  stdout ───
+    stress: 16 copies, LPG_SEED 294670235 to 294670250, 0 failed
+
+        PASS [   1.800s] (29/63) lpg storage::graph::tests::graph::the_integrity_check_reports_nothing_while_edges_change_and_are_collected
+  stdout ───
+    stress: 16 copies, LPG_SEED 1691653818 to 1691653833, 0 failed
+
+        PASS [   0.074s] (30/63) lpg storage::memory::tests::concurrent_reservations_never_exceed_the_cap
+  stdout ───
+    stress: 16 copies, LPG_SEED 1998861871 to 1998861886, 0 failed
+
+        PASS [   0.025s] (31/63) lpg storage::memory::tests::the_gauge_follows_every_change
+  stdout ───
+    stress: 16 copies, LPG_SEED 2596664301 to 2596664316, 0 failed
+
+        PASS [   0.524s] (32/63) lpg storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap
+  stdout ───
+    stress: 16 copies, LPG_SEED 654987154 to 654987169, 0 failed
+
+        PASS [   0.104s] (33/63) lpg tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit
+  stdout ───
+    stress: 16 copies, LPG_SEED 2603833659 to 2603833674, 0 failed
+
+        PASS [   0.123s] (34/63) lpg tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window
+  stdout ───
+    stress: 16 copies, LPG_SEED 4033393057 to 4033393072, 0 failed
+
+        PASS [   1.103s] (35/63) lpg tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers
+  stdout ───
+    stress: 16 copies, LPG_SEED 351066310 to 351066325, 0 failed
+
+        PASS [   0.113s] (36/63) lpg tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable
+  stdout ───
+    stress: 16 copies, LPG_SEED 1345810405 to 1345810420, 0 failed
+
+        PASS [   0.188s] (37/63) lpg tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal
+  stdout ───
+    stress: 16 copies, LPG_SEED 1103376006 to 1103376021, 0 failed
+
+        PASS [   0.272s] (38/63) lpg tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use
+  stdout ───
+    stress: 16 copies, LPG_SEED 1933882045 to 1933882060, 0 failed
+
+        PASS [   1.415s] (39/63) lpg tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds
+  stdout ───
+    stress: 16 copies, LPG_SEED 1629712921 to 1629712936, 0 failed
+
+        PASS [   0.189s] (40/63) lpg tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame
+  stdout ───
+    stress: 16 copies, LPG_SEED 2574334005 to 2574334020, 0 failed
+
+        PASS [   0.142s] (41/63) lpg tx::commit::tests::four_closed_loop_committers_share_one_flush
+  stdout ───
+    stress: 16 copies, LPG_SEED 4256303830 to 4256303845, 0 failed
+
+        PASS [   2.013s] (42/63) lpg tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable
+  stdout ───
+    stress: 16 copies, LPG_SEED 1010723287 to 1010723302, 0 failed
+
+        PASS [   0.307s] (43/63) lpg tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once
+  stdout ───
+    stress: 16 copies, LPG_SEED 3714883839 to 3714883854, 0 failed
+
+        PASS [   0.022s] (44/63) lpg tx::lock::tests::threads::a_cycle_through_a_waiting_request_is_found
+  stdout ───
+    stress: 16 copies, LPG_SEED 4067451020 to 4067451035, 0 failed
+
+        PASS [   0.022s] (45/63) lpg tx::lock::tests::threads::a_shared_request_waits_behind_a_waiting_exclusive_one
+  stdout ───
+    stress: 16 copies, LPG_SEED 460446942 to 460446957, 0 failed
+
+        PASS [   0.022s] (46/63) lpg tx::lock::tests::threads::shared_locks_coexist_and_exclusive_waits_for_them
+  stdout ───
+    stress: 16 copies, LPG_SEED 2221712455 to 2221712470, 0 failed
+
+        PASS [   0.021s] (47/63) lpg tx::lock::tests::threads::the_request_that_closes_a_three_transaction_cycle_fails
+  stdout ───
+    stress: 16 copies, LPG_SEED 2464751165 to 2464751180, 0 failed
+
+        PASS [   0.022s] (48/63) lpg tx::lock::tests::threads::the_request_that_closes_a_two_transaction_cycle_fails
+  stdout ───
+    stress: 16 copies, LPG_SEED 2572798141 to 2572798156, 0 failed
+
+        PASS [   0.022s] (49/63) lpg tx::lock::tests::threads::upgrades_go_first_and_two_upgraders_deadlock
+  stdout ───
+    stress: 16 copies, LPG_SEED 3638200919 to 3638200934, 0 failed
+
+        PASS [  43.636s] (50/63) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_graph_histories
+  stdout ───
+    stress: 16 copies, LPG_SEED 2599432859 to 2599432874, 0 failed
+
+        PASS [  22.393s] (51/63) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_list_append_histories
+  stdout ───
+    stress: 16 copies, LPG_SEED 344536065 to 344536080, 0 failed
+
+        PASS [  21.134s] (52/63) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_rw_register_histories
+  stdout ───
+    stress: 16 copies, LPG_SEED 3573394894 to 3573394909, 0 failed
+
+        PASS [   0.074s] (53/63) lpg tx::tests::gc::after_a_crash_the_collector_finds_the_garbage_again
+  stdout ───
+    stress: 16 copies, LPG_SEED 663879010 to 663879025, 0 failed
+
+        PASS [   0.061s] (54/63) lpg tx::tests::gc::the_collector_frees_old_versions_after_commits
+  stdout ───
+    stress: 16 copies, LPG_SEED 3112854244 to 3112854259, 0 failed
+
+        PASS [   0.151s] (55/63) lpg tx::tests::hermitage::g0_write_cycles_are_prevented
+  stdout ───
+    stress: 16 copies, LPG_SEED 883928342 to 883928357, 0 failed
+
+        PASS [   0.162s] (56/63) lpg tx::tests::hermitage::otv_observed_transaction_vanishes_is_prevented
+  stdout ───
+    stress: 16 copies, LPG_SEED 28935933 to 28935948, 0 failed
+
+        PASS [   0.159s] (57/63) lpg tx::tests::hermitage::p4_lost_update_is_prevented
+  stdout ───
+    stress: 16 copies, LPG_SEED 2980230452 to 2980230467, 0 failed
+
+        PASS [   0.284s] (58/63) lpg tx::tests::hermitage::pmp_predicate_many_preceders_is_prevented
+  stdout ───
+    stress: 16 copies, LPG_SEED 4040850695 to 4040850710, 0 failed
+
+        PASS [   0.058s] (59/63) lpg tx::tests::isolation::a_closed_wait_cycle_aborts_the_requester_with_deadlock
+  stdout ───
+    stress: 16 copies, LPG_SEED 2894340921 to 2894340936, 0 failed
+
+        PASS [   0.123s] (60/63) lpg tx::tests::isolation::a_writer_waits_for_a_held_lock_and_continues_when_its_holder_ends
+  stdout ───
+    stress: 16 copies, LPG_SEED 4248502673 to 4248502688, 0 failed
+
+        PASS [   0.058s] (61/63) lpg tx::tests::isolation::reads_never_wait_for_writers_or_the_commit_latch
+  stdout ───
+    stress: 16 copies, LPG_SEED 3581569893 to 3581569908, 0 failed
+
+        PASS [   0.106s] (62/63) lpg tx::tests::isolation::sixteen_threads_with_disjoint_writes_all_commit_and_survive_reopen
+  stdout ───
+    stress: 16 copies, LPG_SEED 2049178874 to 2049178889, 0 failed
+
+        PASS [   0.060s] (63/63) lpg tx::tests::mvcc::a_paused_commit_is_invisible_until_published_then_wholly_visible
+  stdout ───
+    stress: 16 copies, LPG_SEED 3669645908 to 3669645923, 0 failed
+
+────────────
+     Summary [ 109.993s] 63 tests run: 63 passed, 334 skipped
+exit 0
+/data/tmp/lpg-lab:
+
+/mnt/lpg-xfs:
+
+/tmp/lpgram:

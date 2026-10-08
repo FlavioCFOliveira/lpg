@@ -1,0 +1,3584 @@
+$ LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg --no-fail-fast --success-output immediate
+2026-10-08T18:13:45+01:00
+info: experimental features enabled: wrapper-scripts
+   Compiling lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.65s
+────────────
+ Nextest run ID a830d2f0-9b9e-4f96-ac83-c8effea2850f with nextest profile: default
+    Starting 373 tests across 1 binary (24 tests skipped)
+        PASS [   0.032s] (  1/373) lpg catalog::tests::catalog::a_graph_type_in_use_by_a_graph_cannot_be_dropped
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_graph_type_in_use_by_a_graph_cannot_be_dropped ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.037s] (  2/373) lpg catalog::tests::catalog::a_dropped_graphs_trees_are_freed_after_every_older_snapshot_ends
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_dropped_graphs_trees_are_freed_after_every_older_snapshot_ends ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.051s] (  3/373) lpg catalog::tests::catalog::after_a_crash_the_catalog_and_token_counters_cover_every_committed_value
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::after_a_crash_the_catalog_and_token_counters_cover_every_committed_value ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.053s] (  4/373) lpg catalog::tests::catalog::an_aborted_transaction_leaves_none_of_its_catalog_objects
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::an_aborted_transaction_leaves_none_of_its_catalog_objects ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.055s] (  5/373) lpg catalog::tests::catalog::only_an_empty_directory_or_schema_is_dropped
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::only_an_empty_directory_or_schema_is_dropped ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.058s] (  6/373) lpg catalog::tests::catalog::two_schemas_and_three_graphs_belong_to_the_catalog_and_resolve_to_their_paths
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::two_schemas_and_three_graphs_belong_to_the_catalog_and_resolve_to_their_paths ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.061s] (  7/373) lpg catalog::tests::catalog::a_new_database_holds_the_default_schema_and_graph_also_after_reopen
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_new_database_holds_the_default_schema_and_graph_also_after_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.065s] (  8/373) lpg catalog::tests::catalog::a_committed_catalog_change_survives_close_and_reopen_and_a_drop_without_close
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_committed_catalog_change_survives_close_and_reopen_and_a_drop_without_close ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.06s
+
+
+        PASS [   0.071s] (  9/373) lpg catalog::tests::catalog::names_are_bounded_by_the_key_size_and_directories_nest_deeply
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::names_are_bounded_by_the_key_size_and_directories_nest_deeply ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.074s] ( 10/373) lpg catalog::tests::catalog::two_concurrent_creators_of_one_label_get_one_token_that_survives_reopen
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::two_concurrent_creators_of_one_label_get_one_token_that_survives_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.067s] ( 11/373) lpg catalog::tests::catalog::every_object_kind_returns_the_owner_recorded_at_creation
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::every_object_kind_returns_the_owner_recorded_at_creation ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.115s] ( 12/373) lpg catalog::tests::catalog::a_graph_type_dropped_while_a_graph_of_it_is_created_leaves_no_dangling_type
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_graph_type_dropped_while_a_graph_of_it_is_created_leaves_no_dangling_type ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.116s] ( 13/373) lpg catalog::tests::catalog::a_child_created_and_dropped_after_the_snapshot_fails_only_a_serializable_drop
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_child_created_and_dropped_after_the_snapshot_fails_only_a_serializable_drop ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.054s] ( 14/373) lpg index::tests::index::a_build_whose_scan_saw_an_undone_commit_scans_again
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_build_whose_scan_saw_an_undone_commit_scans_again ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.121s] ( 15/373) lpg catalog::tests::catalog::a_drop_that_saw_an_undone_drop_of_a_newer_graph_fails
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_drop_that_saw_an_undone_drop_of_a_newer_graph_fails ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.124s] ( 16/373) lpg catalog::tests::catalog::a_schema_dropped_while_a_graph_is_created_in_it_leaves_no_orphan
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::a_schema_dropped_while_a_graph_is_created_in_it_leaves_no_orphan ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+
+        PASS [   0.133s] ( 17/373) lpg catalog::tests::catalog::two_concurrent_creators_of_one_graph_name_exactly_one_commits_at_both_levels
+  stdout ───
+
+    running 1 test
+    test catalog::tests::catalog::two_concurrent_creators_of_one_graph_name_exactly_one_commits_at_both_levels ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.063s] ( 18/373) lpg index::tests::index::a_commit_whose_index_records_exceed_the_cap_fails_and_applies_nothing
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_commit_whose_index_records_exceed_the_cap_fails_and_applies_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.037s] ( 19/373) lpg index::tests::index::a_constraint_paused_in_its_page_writes_blocks_only_the_writers_of_its_label
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_constraint_paused_in_its_page_writes_blocks_only_the_writers_of_its_label ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.040s] ( 20/373) lpg index::tests::index::a_constraint_over_violating_data_fails_and_leaves_nothing
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_constraint_over_violating_data_fails_and_leaves_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.089s] ( 21/373) lpg index::tests::index::a_constraint_creation_blocks_only_the_writers_of_its_label
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_constraint_creation_blocks_only_the_writers_of_its_label ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.046s] ( 22/373) lpg index::tests::index::a_second_writer_of_a_unique_value_waits_for_the_first_to_end
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_second_writer_of_a_unique_value_waits_for_the_first_to_end ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.054s] ( 23/373) lpg index::tests::index::a_node_key_rejects_a_node_without_its_property_or_with_a_used_value
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_node_key_rejects_a_node_without_its_property_or_with_a_used_value ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.052s] ( 24/373) lpg index::tests::index::a_replay_chunk_read_during_an_undone_commit_is_read_again
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_replay_chunk_read_during_an_undone_commit_is_read_again ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.045s] ( 25/373) lpg index::tests::index::a_uniqueness_constraint_on_one_graph_lets_duplicates_commit_in_another
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_uniqueness_constraint_on_one_graph_lets_duplicates_commit_in_another ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.128s] ( 26/373) lpg index::tests::index::a_build_restarted_after_its_install_resumes_at_its_replay
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_build_restarted_after_its_install_resumes_at_its_replay ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+  stderr ───
+    LPG_SEED=7931287424308212623
+    LPG_SEED=14655143282576303980
+    LPG_SEED=5328985215208704302
+    LPG_SEED=7449243464388807569
+    LPG_SEED=13019772949967062172
+    LPG_SEED=7284307081868099678
+    LPG_SEED=5798856499687648142
+    LPG_SEED=17060507445485827104
+
+        PASS [   0.059s] ( 27/373) lpg index::tests::index::an_index_on_one_graph_holds_no_entry_of_another
+  stdout ───
+
+    running 1 test
+    test index::tests::index::an_index_on_one_graph_holds_no_entry_of_another ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.048s] ( 28/373) lpg index::tests::index::an_index_range_read_conflicts_with_a_later_insert_into_it
+  stdout ───
+
+    running 1 test
+    test index::tests::index::an_index_range_read_conflicts_with_a_later_insert_into_it ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.044s] ( 29/373) lpg index::tests::index::existence_and_type_constraints_reject_violating_commits_and_accept_others
+  stdout ───
+
+    running 1 test
+    test index::tests::index::existence_and_type_constraints_reject_violating_commits_and_accept_others ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.051s] ( 30/373) lpg index::tests::index::index_statistics_equal_a_recount
+  stdout ───
+
+    running 1 test
+    test index::tests::index::index_statistics_equal_a_recount ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.034s] ( 31/373) lpg index::tests::index::the_index_check_reports_entries_and_records_that_do_not_match
+  stdout ───
+
+    running 1 test
+    test index::tests::index::the_index_check_reports_entries_and_records_that_do_not_match ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.198s] ( 32/373) lpg index::tests::index::a_build_whose_index_or_graph_is_dropped_while_paused_reads_and_writes_no_freed_tree
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_build_whose_index_or_graph_is_dropped_while_paused_reads_and_writes_no_freed_tree ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.18s
+
+
+        PASS [   0.099s] ( 33/373) lpg index::tests::index::constraints_survive_reopen_and_a_drop_without_close
+  stdout ───
+
+    running 1 test
+    test index::tests::index::constraints_survive_reopen_and_a_drop_without_close ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.075s] ( 34/373) lpg index::tests::index::sixteen_threads_inserting_one_unique_value_exactly_one_commits_at_both_levels
+  stdout ───
+
+    running 1 test
+    test index::tests::index::sixteen_threads_inserting_one_unique_value_exactly_one_commits_at_both_levels ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.06s
+
+
+        PASS [   0.012s] ( 35/373) lpg lab::generator::tests::memory_cap_for_cache_shares
+  stdout ───
+
+    running 1 test
+    test lab::generator::tests::memory_cap_for_cache_shares ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.115s] ( 36/373) lpg index::tests::index::distance_queries_return_the_same_set_with_and_without_the_point_index
+  stdout ───
+
+    running 1 test
+    test index::tests::index::distance_queries_return_the_same_set_with_and_without_the_point_index ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+  stderr ───
+    LPG_SEED=9306949221965063341
+
+        PASS [   0.011s] ( 37/373) lpg lab::generator::tests::samplers_are_deterministic_and_in_range
+  stdout ───
+
+    running 1 test
+    test lab::generator::tests::samplers_are_deterministic_and_in_range ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.050s] ( 38/373) lpg index::tests::index::the_integrity_check_reconciles_the_directory_with_the_catalog
+  stdout ───
+
+    running 1 test
+    test index::tests::index::the_integrity_check_reconciles_the_directory_with_the_catalog ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.011s] ( 39/373) lpg lab::tests::median_range_of_three
+  stdout ───
+
+    running 1 test
+    test lab::tests::median_range_of_three ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.011s] ( 40/373) lpg lab::tests::percentile_by_nearest_rank
+  stdout ───
+
+    running 1 test
+    test lab::tests::percentile_by_nearest_rank ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.011s] ( 41/373) lpg lab::tests::probe_reads_proc
+  stdout ───
+
+    running 1 test
+    test lab::tests::probe_reads_proc ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.017s] ( 42/373) lpg lab::generator::tests::zipf_is_skewed_and_uniform_is_not
+  stdout ───
+
+    running 1 test
+    test lab::generator::tests::zipf_is_skewed_and_uniform_is_not ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.050s] ( 43/373) lpg index::tests::index::type_constraints_accept_closed_unions_and_typed_lists
+  stdout ───
+
+    running 1 test
+    test index::tests::index::type_constraints_accept_closed_unions_and_typed_lists ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.011s] ( 44/373) lpg lab::tests::text_round_trip
+  stdout ───
+
+    running 1 test
+    test lab::tests::text_round_trip ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.011s] ( 45/373) lpg obs::tests::every_call_kind_through_dyn_sink
+  stdout ───
+
+    running 1 test
+    test obs::tests::every_call_kind_through_dyn_sink ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.012s] ( 46/373) lpg obs::recording::tests::difference_and_display
+  stdout ───
+
+    running 1 test
+    test obs::recording::tests::difference_and_display ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.014s] ( 47/373) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+  stdout ───
+
+    running 1 test
+    test obs::recording::tests::concurrent_calls_are_all_recorded ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.122s] ( 48/373) lpg index::tests::index::one_index_of_each_kind_returns_what_a_full_scan_returns
+  stdout ───
+
+    running 1 test
+    test index::tests::index::one_index_of_each_kind_returns_what_a_full_scan_returns ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+  stderr ───
+    LPG_SEED=1083903060072990955
+
+        PASS [   0.012s] ( 49/373) lpg obs::tests::names_are_unique
+  stdout ───
+
+    running 1 test
+    test obs::tests::names_are_unique ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.067s] ( 50/373) lpg index::tests::index::writers_commit_while_an_index_build_is_paused_in_its_page_writes
+  stdout ───
+
+    running 1 test
+    test index::tests::index::writers_commit_while_an_index_build_is_paused_in_its_page_writes ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+  stderr ───
+    LPG_SEED=6186622962837444056
+    LPG_SEED=3698631835532146962
+    LPG_SEED=667385662926736123
+    LPG_SEED=14845490832645744862
+    LPG_SEED=14952484332314842735
+    LPG_SEED=463651393009153949
+    LPG_SEED=15234529872758875075
+    LPG_SEED=9579923704969846059
+    LPG_SEED=8914327652790600125
+
+        PASS [   0.016s] ( 51/373) lpg storage::btree::node::tests::an_entry_header_whose_lengths_overflow_decodes_as_malformed
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::an_entry_header_whose_lengths_overflow_decodes_as_malformed ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+  stderr ───
+    LPG_SEED=6258566114271710064
+
+        PASS [   0.015s] ( 52/373) lpg storage::btree::node::tests::apply_keeps_every_16th_entry_a_restart_point
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::apply_keeps_every_16th_entry_a_restart_point ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.013s] ( 53/373) lpg storage::btree::node::tests::common_prefix_matches_the_bytewise_definition
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::common_prefix_matches_the_bytewise_definition ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.013s] ( 54/373) lpg storage::btree::node::tests::deletes_that_grow_the_leaf_match_the_full_reencode
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::deletes_that_grow_the_leaf_match_the_full_reencode ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.024s] ( 55/373) lpg storage::btree::node::tests::full_leaf_is_left_unchanged
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::full_leaf_is_left_unchanged ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.017s] ( 56/373) lpg storage::btree::node::tests::inner_pages_route_keys
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::inner_pages_route_keys ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.018s] ( 57/373) lpg storage::btree::node::tests::restart_points_hold_full_keys_every_16_entries
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::restart_points_hold_full_keys_every_16_entries ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.019s] ( 58/373) lpg storage::btree::node::tests::separator_is_shortest_between
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::separator_is_shortest_between ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.390s] ( 59/373) lpg index::tests::index::a_build_release_during_a_backup_waits_and_the_backup_restores_intact
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_build_release_during_a_backup_waits_and_the_backup_restores_intact ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.37s
+
+
+        PASS [   0.023s] ( 60/373) lpg storage::btree::node::tests::varints_round_trip
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::varints_round_trip ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.288s] ( 61/373) lpg index::tests::index::eight_writers_commit_while_a_build_is_paused_and_the_online_index_matches_the_data
+  stdout ───
+
+    running 1 test
+    test index::tests::index::eight_writers_commit_while_a_build_is_paused_and_the_online_index_matches_the_data ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.27s
+
+  stderr ───
+    LPG_SEED=7540737080949029959
+    LPG_SEED=91055286297661320
+    LPG_SEED=15635374736801071107
+    LPG_SEED=1232055502814726240
+    LPG_SEED=1534252756347494163
+    LPG_SEED=12629205620877540195
+    LPG_SEED=4818639050359739932
+    LPG_SEED=16325267056496949828
+    LPG_SEED=13889166070849572991
+    LPG_SEED=11848837218748564245
+    LPG_SEED=13503863718164860144
+    LPG_SEED=16970935081541990446
+    LPG_SEED=12634664700283582350
+    LPG_SEED=3343933905511733246
+    LPG_SEED=4494477036951026877
+    LPG_SEED=7979618289050835642
+    LPG_SEED=8797348142545119173
+    LPG_SEED=15181547263632327049
+    LPG_SEED=17686565113216693842
+    LPG_SEED=12415405232527062412
+    LPG_SEED=12207445794252359546
+    LPG_SEED=11498120588885422937
+    LPG_SEED=10790074414344097742
+    LPG_SEED=9747360628781329628
+    LPG_SEED=2663656003655197035
+    LPG_SEED=6475452352703716356
+    LPG_SEED=4660181227620206228
+    LPG_SEED=16291324361454395687
+    LPG_SEED=17853207046464051877
+    LPG_SEED=14865097696440634165
+    LPG_SEED=9683320702418680207
+    LPG_SEED=8598043821908454103
+    LPG_SEED=14370075069336387954
+    LPG_SEED=9468089984642268340
+    LPG_SEED=12121065202752339461
+    LPG_SEED=6136552954091922816
+    LPG_SEED=8147820303594402054
+    LPG_SEED=6089413488764223235
+    LPG_SEED=8786906151027661292
+    LPG_SEED=302880722503284573
+    LPG_SEED=5729274567012925261
+    LPG_SEED=6940641350283868191
+    LPG_SEED=5745498174467480800
+    LPG_SEED=7588874325623551858
+    LPG_SEED=16964232209913670384
+    LPG_SEED=12537603198453980642
+    LPG_SEED=9703791460403586780
+    LPG_SEED=9012096713763093225
+    LPG_SEED=11978000574699899618
+
+        PASS [   0.388s] ( 62/373) lpg index::tests::index::a_constraint_commit_during_a_backup_waits_and_the_backup_restores_intact
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_constraint_commit_during_a_backup_waits_and_the_backup_restores_intact ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.37s
+
+
+        PASS [   0.047s] ( 63/373) lpg storage::btree::tests::a_failure_after_the_first_change_makes_the_database_unusable
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::a_failure_after_the_first_change_makes_the_database_unusable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.355s] ( 64/373) lpg index::tests::index::an_indexed_commit_on_a_full_cache_evicts_for_its_write_keys
+  stdout ───
+
+    running 1 test
+    test index::tests::index::an_indexed_commit_on_a_full_cache_evicts_for_its_write_keys ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.33s
+
+
+        PASS [   0.017s] ( 65/373) lpg storage::btree::tests::a_second_undo_extends_the_reuse_fence
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::a_second_undo_extends_the_reuse_fence ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.208s] ( 66/373) lpg storage::btree::node::tests::apply_matches_the_full_reencode_in_field_delta_leaves
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::apply_matches_the_full_reencode_in_field_delta_leaves ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.19s
+
+  stderr ───
+    LPG_SEED=9738399209967879115
+
+        PASS [   0.045s] ( 67/373) lpg storage::btree::tests::a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.514s] ( 68/373) lpg index::tests::index::a_backup_under_four_committers_and_an_index_build_restores_to_one_commit_point
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_backup_under_four_committers_and_an_index_build_restores_to_one_commit_point ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.50s
+
+  stderr ───
+    LPG_SEED=9258333323090204269
+    LPG_SEED=11354471982797806493
+    LPG_SEED=15102862452603406662
+    LPG_SEED=5544799299906709624
+
+        PASS [   0.258s] ( 69/373) lpg ops::backup::tests::a_backup_requested_during_a_bulk_build_fails_at_once
+  stdout ───
+
+    running 1 test
+    test ops::backup::tests::a_backup_requested_during_a_bulk_build_fails_at_once ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.25s
+
+
+        PASS [   0.281s] ( 70/373) lpg ops::backup::tests::audit_a_bulk_build_waits_for_a_running_backup
+  stdout ───
+
+    running 1 test
+    test ops::backup::tests::audit_a_bulk_build_waits_for_a_running_backup ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.27s
+
+
+        PASS [   0.152s] ( 71/373) lpg storage::btree::tests::a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.13s
+
+
+        PASS [   0.296s] ( 72/373) lpg storage::btree::node::tests::field_delta_leaves_decode_to_the_keys_encoded
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::field_delta_leaves_decode_to_the_keys_encoded ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.27s
+
+  stderr ───
+    LPG_SEED=11002351032905321252
+
+        PASS [   0.051s] ( 73/373) lpg ops::backup::tests::the_backup_target_must_be_empty
+  stdout ───
+
+    running 1 test
+    test ops::backup::tests::the_backup_target_must_be_empty ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.085s] ( 74/373) lpg ops::backup::tests::the_backup_hold_keeps_segments_from_its_start
+  stdout ───
+
+    running 1 test
+    test ops::backup::tests::the_backup_hold_keeps_segments_from_its_start ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.013s] ( 75/373) lpg ops::backup::tests::the_manifest_round_trips_and_any_change_is_refused
+  stdout ───
+
+    running 1 test
+    test ops::backup::tests::the_manifest_round_trips_and_any_change_is_refused ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.092s] ( 76/373) lpg storage::btree::tests::directory_maps_tree_ids_to_roots_and_survives_reopen
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::directory_maps_tree_ids_to_roots_and_survives_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.134s] ( 77/373) lpg storage::btree::tests::audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.066s] ( 78/373) lpg storage::btree::tests::keys_at_the_limit_work_and_longer_keys_are_refused
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::keys_at_the_limit_work_and_longer_keys_are_refused ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.054s] ( 79/373) lpg storage::btree::tests::overflow_values_round_trip
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::overflow_values_round_trip ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.095s] ( 80/373) lpg ops::migrate::tests::a_cleanly_closed_older_database_migrates_and_opens_unchanged
+  stdout ───
+
+    running 1 test
+    test ops::migrate::tests::a_cleanly_closed_older_database_migrates_and_opens_unchanged ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.09s
+
+
+        PASS [   0.046s] ( 81/373) lpg storage::btree::tests::stale_descents_recover_by_moving_right
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::stale_descents_recover_by_moving_right ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.470s] ( 82/373) lpg ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point
+  stdout ───
+
+    running 1 test
+    test ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.46s
+
+
+        PASS [   0.029s] ( 83/373) lpg ops::migrate::tests::an_open_database_is_not_migrated
+  stdout ───
+
+    running 1 test
+    test ops::migrate::tests::an_open_database_is_not_migrated ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.371s] ( 84/373) lpg storage::btree::tests::a_field_delta_tree_answers_like_a_prefix_tree
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::a_field_delta_tree_answers_like_a_prefix_tree ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.36s
+
+  stderr ───
+    LPG_SEED=5395861694273655593
+
+        PASS [   0.046s] ( 85/373) lpg storage::check::tests::a_flipped_bit_in_a_free_page_is_reported
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::a_flipped_bit_in_a_free_page_is_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.265s] ( 86/373) lpg storage::btree::tests::emptying_a_subtree_frees_its_inner_pages
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::emptying_a_subtree_frees_its_inner_pages ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.25s
+
+
+        PASS [   0.717s] ( 87/373) lpg index::tests::index::an_indexed_commit_over_the_cap_still_fails_at_both_steps
+  stdout ───
+
+    running 1 test
+    test index::tests::index::an_indexed_commit_over_the_cap_still_fails_at_both_steps ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.70s
+
+
+        PASS [   0.099s] ( 88/373) lpg ops::migrate::tests::audit_the_leftovers_of_an_interrupted_migration_are_removed_before_the_space_check
+  stdout ───
+
+    running 1 test
+    test ops::migrate::tests::audit_the_leftovers_of_an_interrupted_migration_are_removed_before_the_space_check ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.865s] ( 89/373) lpg index::tests::index::a_commit_that_puts_index_entries_again_on_a_full_cache_evicts_for_their_before_images
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_commit_that_puts_index_entries_again_on_a_full_cache_evicts_for_their_before_images ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.85s
+
+
+        PASS [   0.286s] ( 90/373) lpg storage::check::tests::a_broken_sibling_link_is_reported
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::a_broken_sibling_link_is_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.28s
+
+
+        PASS [   0.345s] ( 91/373) lpg storage::btree::tests::rightmost_split_fills_left_page_to_90_percent_and_others_to_half
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::rightmost_split_fills_left_page_to_90_percent_and_others_to_half ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.33s
+
+
+        PASS [   0.993s] ( 92/373) lpg index::tests::index::a_backup_taken_while_a_build_is_paused_restores_and_the_rebuilt_index_matches_the_data
+  stdout ───
+
+    running 1 test
+    test index::tests::index::a_backup_taken_while_a_build_is_paused_restores_and_the_rebuilt_index_matches_the_data ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.97s
+
+
+        PASS [   0.016s] ( 93/373) lpg storage::control::tests::both_slots_invalid_is_corruption
+  stdout ───
+
+    running 1 test
+    test storage::control::tests::both_slots_invalid_is_corruption ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.385s] ( 94/373) lpg ops::migrate::tests::a_database_without_a_clean_shutdown_names_the_previous_crate_version
+  stdout ───
+
+    running 1 test
+    test ops::migrate::tests::a_database_without_a_clean_shutdown_names_the_previous_crate_version ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.37s
+
+
+        PASS [   0.019s] ( 95/373) lpg storage::control::tests::failed_sync_sets_the_latch
+  stdout ───
+
+    running 1 test
+    test storage::control::tests::failed_sync_sets_the_latch ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.172s] ( 96/373) lpg storage::check::tests::a_high_key_that_differs_from_the_parent_is_reported
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::a_high_key_that_differs_from_the_parent_is_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.15s
+
+
+        PASS [   0.020s] ( 97/373) lpg storage::control::tests::one_invalid_slot_opens_from_the_other_counts_and_is_rewritten
+  stdout ───
+
+    running 1 test
+    test storage::control::tests::one_invalid_slot_opens_from_the_other_counts_and_is_rewritten ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.180s] ( 98/373) lpg storage::check::tests::a_leaked_page_and_a_stale_header_are_reported
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::a_leaked_page_and_a_stale_header_are_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.15s
+
+
+        PASS [   0.323s] ( 99/373) lpg storage::check::tests::a_clean_database_passes_with_its_figures
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::a_clean_database_passes_with_its_figures ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.31s
+
+
+        PASS [   0.026s] (100/373) lpg storage::control::tests::slot_round_trip_and_flag_check
+  stdout ───
+
+    running 1 test
+    test storage::control::tests::slot_round_trip_and_flag_check ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.027s] (101/373) lpg storage::control::tests::writes_alternate_and_higher_sequence_wins
+  stdout ───
+
+    running 1 test
+    test storage::control::tests::writes_alternate_and_higher_sequence_wins ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.029s] (102/373) lpg storage::datafile::tests::a_valid_image_of_another_page_fails_the_read_as_corruption
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::a_valid_image_of_another_page_fails_the_read_as_corruption ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.025s] (103/373) lpg storage::datafile::tests::allocate_without_reserve_is_enospc
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::allocate_without_reserve_is_enospc ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.026s] (104/373) lpg storage::datafile::tests::checksum_and_io_failures_set_the_latch
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::checksum_and_io_failures_set_the_latch ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.023s] (105/373) lpg storage::datafile::tests::create_writes_header_and_reserves_first_extent
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::create_writes_header_and_reserves_first_extent ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.019s] (106/373) lpg storage::datafile::tests::ensure_enospc_has_no_side_effects_and_reads_continue
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::ensure_enospc_has_no_side_effects_and_reads_continue ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.027s] (107/373) lpg storage::datafile::tests::ensure_grows_by_whole_extents_in_one_reserve
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::ensure_grows_by_whole_extents_in_one_reserve ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.025s] (108/373) lpg storage::datafile::tests::extent_rule
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::extent_rule ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.020s] (109/373) lpg storage::datafile::tests::open_rejects_bad_page_count
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::open_rejects_bad_page_count ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.026s] (110/373) lpg storage::datafile::tests::misdirected_and_lost_writes_are_detected_by_the_page_checksum
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::misdirected_and_lost_writes_are_detected_by_the_page_checksum ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.025s] (111/373) lpg storage::datafile::tests::writes_outside_reserved_space_are_refused
+  stdout ───
+
+    running 1 test
+    test storage::datafile::tests::writes_outside_reserved_space_are_refused ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.407s] (112/373) lpg ops::migrate::tests::a_format_two_versions_older_names_the_intermediate_crate_version
+  stdout ───
+
+    running 1 test
+    test ops::migrate::tests::a_format_two_versions_older_names_the_intermediate_crate_version ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.39s
+
+
+        PASS [   0.330s] (113/373) lpg storage::check::tests::a_flipped_bit_is_reported
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::a_flipped_bit_is_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.31s
+
+
+        PASS [   0.101s] (114/373) lpg storage::engine::tests::create_then_open_round_trip
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::create_then_open_round_trip ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.105s] (115/373) lpg storage::engine::tests::create_replaces_what_an_interrupted_create_left
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::create_replaces_what_an_interrupted_create_left ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.09s
+
+
+        PASS [   0.117s] (116/373) lpg storage::engine::tests::both_control_slots_invalid_is_corruption
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::both_control_slots_invalid_is_corruption ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.298s] (117/373) lpg storage::check::tests::swapped_keys_are_reported
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::swapped_keys_are_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.28s
+
+
+        PASS [   0.441s] (118/373) lpg ops::migrate::tests::too_little_space_fails_before_any_write
+  stdout ───
+
+    running 1 test
+    test ops::migrate::tests::too_little_space_fails_before_any_write ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.41s
+
+
+        PASS [   0.286s] (119/373) lpg storage::engine::tests::enospc_on_ensure_keeps_reads_working
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::enospc_on_ensure_keeps_reads_working ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.24s
+
+
+        PASS [   0.552s] (120/373) lpg storage::check::tests::a_page_in_a_tree_and_the_free_list_is_reported
+  stdout ───
+
+    running 1 test
+    test storage::check::tests::a_page_in_a_tree_and_the_free_list_is_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.52s
+
+
+        PASS [   0.457s] (121/373) lpg ops::restore::tests::a_restore_overwrites_what_an_interrupted_restore_left
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::a_restore_overwrites_what_an_interrupted_restore_left ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.43s
+
+
+        PASS [   0.306s] (122/373) lpg ops::restore::tests::an_artefact_does_not_open_as_a_database
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::an_artefact_does_not_open_as_a_database ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.28s
+
+
+        PASS [   0.205s] (123/373) lpg storage::engine::tests::open_removes_other_generations_data_and_wal_segment_files
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::open_removes_other_generations_data_and_wal_segment_files ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.15s
+
+
+        PASS [   0.231s] (124/373) lpg storage::engine::tests::one_invalid_control_slot_opens_from_the_other_and_is_counted
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::one_invalid_control_slot_opens_from_the_other_and_is_counted ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.19s
+
+
+        PASS [   0.713s] (125/373) lpg ops::restore::tests::a_restore_into_a_database_fails_and_changes_nothing
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::a_restore_into_a_database_fails_and_changes_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.70s
+
+
+        PASS [   0.298s] (126/373) lpg ops::restore::tests::an_incomplete_or_damaged_artefact_is_refused_before_any_write
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::an_incomplete_or_damaged_artefact_is_refused_before_any_write ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.27s
+
+
+        PASS [   1.008s] (127/373) lpg storage::engine::tests::audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.99s
+
+
+        PASS [   0.039s] (128/373) lpg storage::engine::tests::open_without_a_database_fails_and_creates_nothing
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::open_without_a_database_fails_and_creates_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.477s] (129/373) lpg storage::engine::tests::open_with_data_file_missing_is_corruption_and_creates_nothing
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::open_with_data_file_missing_is_corruption_and_creates_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.41s
+
+
+        PASS [   1.211s] (130/373) lpg storage::engine::tests::create_over_an_existing_database_fails_and_changes_nothing
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::create_over_an_existing_database_fails_and_changes_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.20s
+
+
+        PASS [   0.218s] (131/373) lpg storage::engine::tests::page_zero_version_differing_from_control_is_corruption
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::page_zero_version_differing_from_control_is_corruption ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.17s
+
+
+        PASS [   0.224s] (132/373) lpg storage::engine::tests::page_zero_checksum_failure_is_corruption
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::page_zero_checksum_failure_is_corruption ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.17s
+
+
+        PASS [   1.157s] (133/373) lpg storage::engine::tests::memory_cap_too_small_is_refused_before_any_file
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::memory_cap_too_small_is_refused_before_any_file ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.12s
+
+
+        PASS [   1.098s] (134/373) lpg storage::engine::tests::older_format_requires_migration
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::older_format_requires_migration ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.07s
+
+
+        PASS [   0.028s] (135/373) lpg storage::error::tests::latch_fails_every_later_check
+  stdout ───
+
+    running 1 test
+    test storage::error::tests::latch_fails_every_later_check ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   1.184s] (136/373) lpg storage::engine::tests::newer_format_fails_and_changes_nothing
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::newer_format_fails_and_changes_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.16s
+
+
+        PASS [   0.040s] (137/373) lpg storage::error::tests::only_storage_full_is_no_space
+  stdout ───
+
+    running 1 test
+    test storage::error::tests::only_storage_full_is_no_space ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.065s] (138/373) lpg storage::fault::tests::after_the_crash_point_every_call_fails_until_the_crash
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::after_the_crash_point_every_call_fails_until_the_crash ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.140s] (139/373) lpg storage::engine::tests::second_open_from_a_child_process_fails
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::second_open_from_a_child_process_fails ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+
+        PASS [   0.107s] (140/373) lpg storage::engine::tests::second_open_in_the_same_process_fails_and_the_first_keeps_working
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::second_open_in_the_same_process_fails_and_the_first_keeps_working ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.073s] (141/373) lpg storage::fault::tests::crash_drops_unsynced_writes
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::crash_drops_unsynced_writes ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.073s] (142/373) lpg storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+  stderr ───
+    LPG_SEED=6202269952132067415
+    LPG_SEED=16304714638610915227
+
+        PASS [   0.041s] (143/373) lpg storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.093s] (144/373) lpg storage::fault::tests::calls_are_logged_in_order
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::calls_are_logged_in_order ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   1.332s] (145/373) lpg storage::engine::tests::lock_deleted_under_an_open_handle_refuses_a_second_open
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::lock_deleted_under_an_open_handle_refuses_a_second_open ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.31s
+
+
+        PASS [   0.070s] (146/373) lpg storage::fault::tests::failed_sync_data_forgets_the_unsynced_writes
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::failed_sync_data_forgets_the_unsynced_writes ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.072s] (147/373) lpg storage::fault::tests::crash_tears_writes_at_sector_boundaries
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::crash_tears_writes_at_sector_boundaries ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+  stderr ───
+    LPG_SEED=17138146932848855675
+    LPG_SEED=4988253732661055674
+
+        PASS [   0.058s] (148/373) lpg storage::fault::tests::space_budget_returns_enospc
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::space_budget_returns_enospc ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.072s] (149/373) lpg storage::fault::tests::failed_write_is_not_applied
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::failed_write_is_not_applied ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.923s] (150/373) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_from_lsn_0_replays_nothing
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::audit_a_create_after_an_interrupted_restore_from_lsn_0_replays_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.90s
+
+
+        PASS [   0.123s] (151/373) lpg storage::fault::tests::crash_loses_unsynced_rename_create_and_remove
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::crash_loses_unsynced_rename_create_and_remove ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.09s
+
+
+        PASS [   0.026s] (152/373) lpg storage::freelist::tests::registry_horizon_is_the_lowest_registered_value
+  stdout ───
+
+    running 1 test
+    test storage::freelist::tests::registry_horizon_is_the_lowest_registered_value ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.104s] (153/373) lpg storage::fault::tests::same_contract_through_both_impls
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::same_contract_through_both_impls ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.854s] (154/373) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_ignores_its_segments
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::audit_a_create_after_an_interrupted_restore_ignores_its_segments ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.83s
+
+
+        PASS [   0.044s] (155/373) lpg storage::freelist::tests::a_cyclic_chain_fails_the_open
+  stdout ───
+
+    running 1 test
+    test storage::freelist::tests::a_cyclic_chain_fails_the_open ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.015s] (156/373) lpg storage::fs::tests::create_and_open_errors
+  stdout ───
+
+    running 1 test
+    test storage::fs::tests::create_and_open_errors ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.016s] (157/373) lpg storage::fs::tests::file_round_trip
+  stdout ───
+
+    running 1 test
+    test storage::fs::tests::file_round_trip ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.012s] (158/373) lpg storage::fs::tests::namespace_operations
+  stdout ───
+
+    running 1 test
+    test storage::fs::tests::namespace_operations ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.036s] (159/373) lpg storage::fs::tests::try_lock_is_exclusive_within_the_process
+  stdout ───
+
+    running 1 test
+    test storage::fs::tests::try_lock_is_exclusive_within_the_process ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.089s] (160/373) lpg storage::fault::tests::the_nth_call_of_each_kind_fails_without_effect
+  stdout ───
+
+    running 1 test
+    test storage::fault::tests::the_nth_call_of_each_kind_fails_without_effect ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.084s] (161/373) lpg storage::freelist::tests::freed_pages_wait_for_older_readers
+  stdout ───
+
+    running 1 test
+    test storage::freelist::tests::freed_pages_wait_for_older_readers ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.06s
+
+
+        PASS [   0.059s] (162/373) lpg storage::graph::tests::graph::an_aborted_graph_creation_with_nodes_leaves_neither
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::an_aborted_graph_creation_with_nodes_leaves_neither ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.100s] (163/373) lpg storage::graph::tests::graph::a_checkpoints_statistics_batch_lies_below_its_redo_point
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::a_checkpoints_statistics_batch_lies_below_its_redo_point ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.129s] (164/373) lpg storage::graph::tests::graph::a_node_changed_in_fifty_commits_keeps_its_identifier_also_after_reopen
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::a_node_changed_in_fifty_commits_keeps_its_identifier_also_after_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.099s] (165/373) lpg storage::graph::tests::graph::a_statistic_taken_below_zero_is_clamped_and_the_drift_reported
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::a_statistic_taken_below_zero_is_clamped_and_the_drift_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.143s] (166/373) lpg storage::graph::tests::graph::a_label_change_and_a_concurrent_edge_at_its_node_both_commit_with_exact_statistics
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::a_label_change_and_a_concurrent_edge_at_its_node_both_commit_with_exact_statistics ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.13s
+
+
+        PASS [   0.061s] (167/373) lpg storage::graph::tests::graph::graph_writes_refuse_label_and_edge_type_identifiers_that_are_not_such_tokens
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::graph_writes_refuse_label_and_edge_type_identifiers_that_are_not_such_tokens ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   1.073s] (168/373) lpg storage::engine::tests::open_with_lock_missing_fails_and_creates_nothing
+  stdout ───
+
+    running 1 test
+    test storage::engine::tests::open_with_lock_missing_fails_and_creates_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.01s
+
+
+        PASS [   2.262s] (169/373) lpg storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 2.25s
+
+
+        PASS [   0.100s] (170/373) lpg storage::graph::tests::graph::an_expansion_at_a_snapshot_returns_exactly_the_live_edges_of_its_direction_and_type
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::an_expansion_at_a_snapshot_returns_exactly_the_live_edges_of_its_direction_and_type ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+  stderr ───
+    LPG_SEED=380246127773501776
+
+        PASS [   0.211s] (171/373) lpg ops::restore::tests::audit_a_restore_never_replaces_a_database_created_after_its_first_check
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::audit_a_restore_never_replaces_a_database_created_after_its_first_check ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.20s
+
+
+        PASS [   0.245s] (172/373) lpg ops::restore::tests::audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.23s
+
+
+        PASS [   0.039s] (173/373) lpg storage::graph::tests::graph::the_integrity_check_compares_every_delete_stamp_of_an_edge_and_its_entries
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::the_integrity_check_compares_every_delete_stamp_of_an_edge_and_its_entries ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.050s] (174/373) lpg storage::graph::tests::graph::the_integrity_check_reports_an_adjacency_entry_without_edge_and_an_edge_without_adjacency
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::the_integrity_check_reports_an_adjacency_entry_without_edge_and_an_edge_without_adjacency ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.037s] (175/373) lpg storage::graph::tests::graph::the_integrity_check_reports_an_edge_whose_endpoint_was_deleted_first
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::the_integrity_check_reports_an_edge_whose_endpoint_was_deleted_first ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.008s] (176/373) lpg storage::memory::tests::reservations_stop_at_the_cap_and_release_on_drop
+  stdout ───
+
+    running 1 test
+    test storage::memory::tests::reservations_stop_at_the_cap_and_release_on_drop ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.953s] (177/373) lpg ops::restore::tests::audit_a_failed_control_write_in_step_5_leaves_a_restorable_target
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::audit_a_failed_control_write_in_step_5_leaves_a_restorable_target ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.93s
+
+
+        PASS [   0.301s] (178/373) lpg storage::freelist::tests::trunk_chain_grows_persists_and_is_consumed
+  stdout ───
+
+    running 1 test
+    test storage::freelist::tests::trunk_chain_grows_persists_and_is_consumed ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.29s
+
+
+        PASS [   0.018s] (179/373) lpg storage::memory::tests::the_gauge_follows_every_change
+  stdout ───
+
+    running 1 test
+    test storage::memory::tests::the_gauge_follows_every_change ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.010s] (180/373) lpg storage::page::tests::changes_after_seal_need_a_new_seal
+  stdout ───
+
+    running 1 test
+    test storage::page::tests::changes_after_seal_need_a_new_seal ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.134s] (181/373) lpg storage::graph::tests::graph::statistics_equal_a_recount_after_a_seeded_workload_a_clean_reopen_and_a_crash_reopen
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::statistics_equal_a_recount_after_a_seeded_workload_a_clean_reopen_and_a_crash_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+  stderr ───
+    LPG_SEED=15090789430328090110
+
+        PASS [   0.148s] (182/373) lpg storage::graph::tests::graph::sixteen_threads_creating_disjoint_nodes_and_edges_all_commit_and_survive_reopen
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::sixteen_threads_creating_disjoint_nodes_and_edges_all_commit_and_survive_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.13s
+
+
+        PASS [   0.048s] (183/373) lpg storage::memory::tests::concurrent_reservations_never_exceed_the_cap
+  stdout ───
+
+    running 1 test
+    test storage::memory::tests::concurrent_reservations_never_exceed_the_cap ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.011s] (184/373) lpg storage::page::tests::header_round_trip
+  stdout ───
+
+    running 1 test
+    test storage::page::tests::header_round_trip ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.019s] (185/373) lpg storage::page::tests::every_single_bit_flip_is_detected
+  stdout ───
+
+    running 1 test
+    test storage::page::tests::every_single_bit_flip_is_detected ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.255s] (186/373) lpg storage::graph::tests::graph::an_edge_to_a_node_deleted_concurrently_fails_or_waits_and_leaves_no_dangling_entry
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::an_edge_to_a_node_deleted_concurrently_fails_or_waits_and_leaves_no_dangling_entry ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.23s
+
+
+        PASS [   0.010s] (187/373) lpg storage::page::tests::zero_page_fails_verification_and_has_no_type
+  stdout ───
+
+    running 1 test
+    test storage::page::tests::zero_page_fails_verification_and_has_no_type ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.011s] (188/373) lpg storage::page::tests::init_keeps_the_page_lsn_and_clears_the_rest
+  stdout ───
+
+    running 1 test
+    test storage::page::tests::init_keeps_the_page_lsn_and_clears_the_rest ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.090s] (189/373) lpg storage::graph::tests::graph::the_integrity_check_reports_nothing_while_edges_change_and_are_collected
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::the_integrity_check_reports_nothing_while_edges_change_and_are_collected ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.045s] (190/373) lpg storage::page::tests::a_valid_image_fails_at_any_other_page_number
+  stdout ───
+
+    running 1 test
+    test storage::page::tests::a_valid_image_fails_at_any_other_page_number ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.038s] (191/373) lpg storage::pool::tests::pinned_frames_stay_and_all_pinned_is_a_memory_limit
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::pinned_frames_stay_and_all_pinned_is_a_memory_limit ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.045s] (192/373) lpg storage::pool::tests::hits_and_misses_are_counted_and_published
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::hits_and_misses_are_counted_and_published ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.145s] (193/373) lpg ops::restore::tests::audit_an_out_of_bounds_segment_or_an_oversized_manifest_is_refused_before_any_write
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::audit_an_out_of_bounds_segment_or_an_oversized_manifest_is_refused_before_any_write ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.13s
+
+
+        PASS [   0.080s] (194/373) lpg storage::pool::tests::flipped_bit_fails_the_read_and_every_later_operation_until_reopen
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::flipped_bit_fails_the_read_and_every_later_operation_until_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.122s] (195/373) lpg storage::pool::tests::a_page_copy_reservation_takes_the_first_victim_dirty_or_clean
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::a_page_copy_reservation_takes_the_first_victim_dirty_or_clean ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.114s] (196/373) lpg storage::pool::tests::reserve_shrinks_the_pool_down_to_its_floor
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::reserve_shrinks_the_pool_down_to_its_floor ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.048s] (197/373) lpg storage::pool::tests::waiter_on_a_failed_load_fails
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::waiter_on_a_failed_load_fails ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.024s] (198/373) lpg storage::sort::tests::a_reservation_beyond_the_cap_fails
+  stdout ───
+
+    running 1 test
+    test storage::sort::tests::a_reservation_beyond_the_cap_fails ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.110s] (199/373) lpg storage::pool::tests::reserve_takes_clean_frames_before_dirty_ones
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::reserve_takes_clean_frames_before_dirty_ones ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.052s] (200/373) lpg storage::sort::tests::a_failed_sort_removes_its_files_and_releases_its_memory
+  stdout ───
+
+    running 1 test
+    test storage::sort::tests::a_failed_sort_removes_its_files_and_releases_its_memory ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+  stderr ───
+    LPG_SEED=8694040104445324291
+
+        PASS [   0.015s] (201/373) lpg storage::wal::tests::counters_max_is_per_field
+  stdout ───
+
+    running 1 test
+    test storage::wal::tests::counters_max_is_per_field ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.064s] (202/373) lpg storage::sort::tests::a_sort_that_fits_in_memory_writes_no_file
+  stdout ───
+
+    running 1 test
+    test storage::sort::tests::a_sort_that_fits_in_memory_writes_no_file ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+  stderr ───
+    LPG_SEED=17781352380341334593
+
+        PASS [   0.238s] (203/373) lpg storage::btree::bulk::tests::a_builds_pages_are_owned_by_its_record_and_released_after_a_drop_or_a_crash
+  stdout ───
+
+    running 1 test
+    test storage::btree::bulk::tests::a_builds_pages_are_owned_by_its_record_and_released_after_a_drop_or_a_crash ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.22s
+
+  stderr ───
+    LPG_SEED=14655682453322119856
+    LPG_SEED=13064303550674240976
+
+        PASS [   0.019s] (204/373) lpg storage::wal::tests::frame_geometry
+  stdout ───
+
+    running 1 test
+    test storage::wal::tests::frame_geometry ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.024s] (205/373) lpg storage::wal::tests::frames_round_trip_and_every_bit_flip_or_wrong_position_is_rejected
+  stdout ───
+
+    running 1 test
+    test storage::wal::tests::frames_round_trip_and_every_bit_flip_or_wrong_position_is_rejected ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.354s] (206/373) lpg storage::graph::tests::graph::the_graph_check_stays_within_the_memory_cap
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::the_graph_check_stays_within_the_memory_cap ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.34s
+
+
+        PASS [   0.019s] (207/373) lpg storage::wal::tests::segment_names_round_trip_and_reject_near_misses
+  stdout ───
+
+    running 1 test
+    test storage::wal::tests::segment_names_round_trip_and_reject_near_misses ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.082s] (208/373) lpg storage::sort::tests::audit_a_run_file_left_by_a_crashed_sort_does_not_fail_the_next_sort
+  stdout ───
+
+    running 1 test
+    test storage::sort::tests::audit_a_run_file_left_by_a_crashed_sort_does_not_fail_the_next_sort ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+  stderr ───
+    LPG_SEED=17988531172012394421
+
+        PASS [   0.036s] (209/373) lpg storage::wal::tests::open_group_positions_rollback_and_close
+  stdout ───
+
+    running 1 test
+    test storage::wal::tests::open_group_positions_rollback_and_close ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.181s] (210/373) lpg storage::btree::bulk::tests::a_bulk_built_tree_answers_like_a_tree_built_by_puts
+  stdout ───
+
+    running 1 test
+    test storage::btree::bulk::tests::a_bulk_built_tree_answers_like_a_tree_built_by_puts ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.16s
+
+  stderr ───
+    LPG_SEED=5948725002172421078
+
+        PASS [   0.020s] (211/373) lpg test_support::child::tests::child_failure_is_reported
+  stdout ───
+
+    running 1 test
+    test test_support::child::tests::child_failure_is_reported ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.252s] (212/373) lpg storage::pool::tests::pages_worth_ten_times_the_cap_are_returned_intact
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::pages_worth_ten_times_the_cap_are_returned_intact ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.24s
+
+
+        PASS [   0.019s] (213/373) lpg test_support::child::tests::child_runs_the_named_test_with_its_role
+  stdout ───
+
+    running 1 test
+    test test_support::child::tests::child_runs_the_named_test_with_its_role ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.014s] (214/373) lpg test_support::history::tests::events_render_as_elle_edn
+  stdout ───
+
+    running 1 test
+    test test_support::history::tests::events_render_as_elle_edn ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.016s] (215/373) lpg tx::conflict::tests::intervals_are_half_open
+  stdout ───
+
+    running 1 test
+    test tx::conflict::tests::intervals_are_half_open ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.345s] (216/373) lpg ops::restore::tests::audit_a_wal_ending_before_stop_is_refused_by_the_restore_and_every_later_open
+  stdout ───
+
+    running 1 test
+    test ops::restore::tests::audit_a_wal_ending_before_stop_is_refused_by_the_restore_and_every_later_open ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.33s
+
+
+        PASS [   0.262s] (217/373) lpg storage::pool::tests::frame_with_lsn_above_durable_is_never_written
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::frame_with_lsn_above_durable_is_never_written ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.25s
+
+
+        PASS [   0.113s] (218/373) lpg storage::sort::tests::an_input_twenty_times_the_reservation_spills_runs_and_comes_back_sorted
+  stdout ───
+
+    running 1 test
+    test storage::sort::tests::an_input_twenty_times_the_reservation_spills_runs_and_comes_back_sorted ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+  stderr ───
+    LPG_SEED=13619549825331056209
+
+        PASS [   0.011s] (219/373) lpg tx::conflict::tests::refused_reservations_merge_then_fail
+  stdout ───
+
+    running 1 test
+    test tx::conflict::tests::refused_reservations_merge_then_fail ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.011s] (220/373) lpg tx::conflict::tests::validation_checks_only_commits_after_the_snapshot
+  stdout ───
+
+    running 1 test
+    test tx::conflict::tests::validation_checks_only_commits_after_the_snapshot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   2.858s] (221/373) lpg storage::btree::node::tests::apply_matches_the_full_reencode
+  stdout ───
+
+    running 1 test
+    test storage::btree::node::tests::apply_matches_the_full_reencode ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 2.84s
+
+
+        PASS [   0.010s] (222/373) lpg tx::lock::tests::threads::the_request_that_closes_a_two_transaction_cycle_fails
+  stdout ───
+
+    running 1 test
+    test tx::lock::tests::threads::the_request_that_closes_a_two_transaction_cycle_fails ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.017s] (223/373) lpg tx::lock::tests::threads::a_shared_request_waits_behind_a_waiting_exclusive_one
+  stdout ───
+
+    running 1 test
+    test tx::lock::tests::threads::a_shared_request_waits_behind_a_waiting_exclusive_one ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.018s] (224/373) lpg tx::lock::tests::threads::a_cycle_through_a_waiting_request_is_found
+  stdout ───
+
+    running 1 test
+    test tx::lock::tests::threads::a_cycle_through_a_waiting_request_is_found ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.011s] (225/373) lpg tx::lock::tests::threads::the_request_that_closes_a_three_transaction_cycle_fails
+  stdout ───
+
+    running 1 test
+    test tx::lock::tests::threads::the_request_that_closes_a_three_transaction_cycle_fails ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.014s] (226/373) lpg tx::lock::tests::threads::shared_locks_coexist_and_exclusive_waits_for_them
+  stdout ───
+
+    running 1 test
+    test tx::lock::tests::threads::shared_locks_coexist_and_exclusive_waits_for_them ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.013s] (227/373) lpg tx::lock::tests::threads::upgrades_go_first_and_two_upgraders_deadlock
+  stdout ───
+
+    running 1 test
+    test tx::lock::tests::threads::upgrades_go_first_and_two_upgraders_deadlock ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.013s] (228/373) lpg tx::mvcc::tests::a_registered_snapshot_bounds_the_horizon_until_it_ends
+  stdout ───
+
+    running 1 test
+    test tx::mvcc::tests::a_registered_snapshot_bounds_the_horizon_until_it_ends ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.242s] (229/373) lpg storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap
+  stdout ───
+
+    running 1 test
+    test storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.23s
+
+  stderr ───
+    reservations: 2532 granted, 3053 refused; peak 4194304 of 4194304
+
+        PASS [   0.100s] (230/373) lpg storage::btree::bulk::tests::a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free
+  stdout ───
+
+    running 1 test
+    test storage::btree::bulk::tests::a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.09s
+
+  stderr ───
+    LPG_SEED=16464177930494767095
+    LPG_SEED=6922592349679467049
+
+        PASS [   0.041s] (231/373) lpg tx::tests::gc::a_deleted_entry_is_removed_only_after_older_snapshots_end
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_deleted_entry_is_removed_only_after_older_snapshots_end ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.087s] (232/373) lpg storage::btree::bulk::tests::a_sorted_spill_feeds_the_build
+  stdout ───
+
+    running 1 test
+    test storage::btree::bulk::tests::a_sorted_spill_feeds_the_build ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+  stderr ───
+    LPG_SEED=233980985850347796
+
+        PASS [   0.054s] (233/373) lpg tx::tests::gc::a_clean_close_leaves_no_garbage_behind
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_clean_close_leaves_no_garbage_behind ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.061s] (234/373) lpg tx::tests::gc::a_failed_last_pass_still_closes_with_the_clean_flag_clear
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_failed_last_pass_still_closes_with_the_clean_flag_clear ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.036s] (235/373) lpg storage::btree::bulk::tests::unsorted_input_fails_the_build_and_empty_input_builds_an_empty_tree
+  stdout ───
+
+    running 1 test
+    test storage::btree::bulk::tests::unsorted_input_fails_the_build_and_empty_input_builds_an_empty_tree ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.075s] (236/373) lpg storage::btree::bulk::tests::bulk_built_leaves_are_filled_to_ninety_percent
+  stdout ───
+
+    running 1 test
+    test storage::btree::bulk::tests::bulk_built_leaves_are_filled_to_ninety_percent ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.06s
+
+  stderr ───
+    LPG_SEED=17732295296122816642
+
+        PASS [   0.035s] (237/373) lpg tx::tests::gc::a_key_put_again_after_its_delete_survives_the_pass
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_key_put_again_after_its_delete_survives_the_pass ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.100s] (238/373) lpg tx::tests::gc::a_failed_seed_scan_keeps_the_clean_flag_clear
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_failed_seed_scan_keeps_the_clean_flag_clear ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.09s
+
+
+        PASS [   0.046s] (239/373) lpg tx::tests::gc::a_pass_that_fails_after_taking_its_work_puts_it_back
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_pass_that_fails_after_taking_its_work_puts_it_back ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.129s] (240/373) lpg tx::tests::gc::a_group_of_only_collector_changes_is_durable_and_replayed
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_group_of_only_collector_changes_is_durable_and_replayed ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.038s] (241/373) lpg tx::tests::gc::a_tree_and_an_entry_queued_twice_are_collected_once
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_tree_and_an_entry_queued_twice_are_collected_once ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.113s] (242/373) lpg storage::checkpoint::tests::a_checkpoint_publishes_the_page_cache_hits_and_faults
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::a_checkpoint_publishes_the_page_cache_hits_and_faults ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.09s
+
+
+        PASS [   0.060s] (243/373) lpg tx::tests::gc::a_rewritten_leaf_holds_no_created_stamp_at_or_below_the_horizon
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::a_rewritten_leaf_holds_no_created_stamp_at_or_below_the_horizon ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.663s] (244/373) lpg storage::graph::tests::graph::no_identifier_is_reused_after_a_delete_and_ten_thousand_creations_across_a_crash
+  stdout ───
+
+    running 1 test
+    test storage::graph::tests::graph::no_identifier_is_reused_after_a_delete_and_ten_thousand_creations_across_a_crash ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.65s
+
+
+        PASS [   0.043s] (245/373) lpg tx::tests::gc::after_a_crash_the_collector_finds_the_garbage_again
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::after_a_crash_the_collector_finds_the_garbage_again ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.047s] (246/373) lpg tx::tests::gc::an_old_version_is_kept_while_a_snapshot_needs_it_and_freed_after
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::an_old_version_is_kept_while_a_snapshot_needs_it_and_freed_after ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.033s] (247/373) lpg tx::tests::gc::the_collector_thread_runs_while_the_database_is_open
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::the_collector_thread_runs_while_the_database_is_open ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.044s] (248/373) lpg tx::tests::gc::the_collector_frees_old_versions_after_commits
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::the_collector_frees_old_versions_after_commits ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.071s] (249/373) lpg tx::tests::gc::freeing_a_dropped_tree_twice_in_one_batch_frees_its_pages_once
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::freeing_a_dropped_tree_twice_in_one_batch_frees_its_pages_once ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.063s] (250/373) lpg tx::tests::gc::pages_are_freed_and_reused_only_after_older_snapshots_end
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::pages_are_freed_and_reused_only_after_older_snapshots_end ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.046s] (251/373) lpg tx::tests::gc::the_pages_of_a_dropped_tree_are_freed_after_the_horizon_passes
+  stdout ───
+
+    running 1 test
+    test tx::tests::gc::the_pages_of_a_dropped_tree_are_freed_after_the_horizon_passes ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.123s] (252/373) lpg tx::tests::hermitage::g1a_aborted_reads_are_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::g1a_aborted_reads_are_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.137s] (253/373) lpg tx::tests::hermitage::g0_write_cycles_are_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::g0_write_cycles_are_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+
+        PASS [   0.159s] (254/373) lpg tx::tests::hermitage::g1b_intermediate_reads_are_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::g1b_intermediate_reads_are_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.13s
+
+
+        PASS [   0.132s] (255/373) lpg tx::tests::hermitage::g1c_circular_information_flow_is_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::g1c_circular_information_flow_is_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.11s
+
+
+        PASS [   0.121s] (256/373) lpg tx::tests::hermitage::g2_anti_dependency_cycles_fail_only_under_serializable
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::g2_anti_dependency_cycles_fail_only_under_serializable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.146s] (257/373) lpg tx::tests::hermitage::g2_item_write_skew_fails_only_under_serializable
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::g2_item_write_skew_fails_only_under_serializable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.13s
+
+
+        PASS [   0.111s] (258/373) lpg tx::tests::hermitage::otv_observed_transaction_vanishes_is_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::otv_observed_transaction_vanishes_is_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.120s] (259/373) lpg tx::tests::hermitage::g_single_read_skew_is_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::g_single_read_skew_is_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.037s] (260/373) lpg tx::tests::isolation::a_commit_whose_read_was_overwritten_fails_validation
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::a_commit_whose_read_was_overwritten_fails_validation ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.054s] (261/373) lpg tx::tests::isolation::a_closed_wait_cycle_aborts_the_requester_with_deadlock
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::a_closed_wait_cycle_aborts_the_requester_with_deadlock ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.039s] (262/373) lpg tx::tests::isolation::a_drop_committed_after_a_read_of_the_tree_fails_the_readers_commit
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::a_drop_committed_after_a_read_of_the_tree_fails_the_readers_commit ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.040s] (263/373) lpg tx::tests::isolation::a_failed_transaction_ran_its_operations_once
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::a_failed_transaction_ran_its_operations_once ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.144s] (264/373) lpg tx::tests::hermitage::p4_lost_update_is_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::p4_lost_update_is_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+
+        PASS [   0.059s] (265/373) lpg tx::tests::isolation::a_lock_upgrade_charges_no_second_lock_entry
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::a_lock_upgrade_charges_no_second_lock_entry ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.060s] (266/373) lpg tx::tests::isolation::a_read_only_transaction_reads_its_start_state_and_commits
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::a_read_only_transaction_reads_its_start_state_and_commits ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.044s] (267/373) lpg tx::tests::isolation::deleting_an_absent_key_conflicts_with_its_concurrent_insert
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::deleting_an_absent_key_conflicts_with_its_concurrent_insert ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.046s] (268/373) lpg tx::tests::isolation::reads_never_wait_for_writers_or_the_commit_latch
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::reads_never_wait_for_writers_or_the_commit_latch ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.112s] (269/373) lpg tx::tests::isolation::a_writer_waits_for_a_held_lock_and_continues_when_its_holder_ends
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::a_writer_waits_for_a_held_lock_and_continues_when_its_holder_ends ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        PASS [   0.247s] (270/373) lpg tx::tests::hermitage::pmp_predicate_many_preceders_is_prevented
+  stdout ───
+
+    running 1 test
+    test tx::tests::hermitage::pmp_predicate_many_preceders_is_prevented ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.23s
+
+
+        PASS [   0.049s] (271/373) lpg tx::tests::isolation::three_hundred_transactions_on_one_thread_all_begin
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::three_hundred_transactions_on_one_thread_all_begin ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.847s] (272/373) lpg storage::btree::bulk::tests::audit_a_stale_frame_never_overwrites_a_bulk_built_page
+  stdout ───
+
+    running 1 test
+    test storage::btree::bulk::tests::audit_a_stale_frame_never_overwrites_a_bulk_built_page ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.84s
+
+
+        PASS [   0.048s] (273/373) lpg tx::tests::mvcc::a_failed_page_copy_leaves_no_stamp_and_no_old_version
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::a_failed_page_copy_leaves_no_stamp_and_no_old_version ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.107s] (274/373) lpg tx::tests::isolation::sixteen_threads_with_disjoint_writes_all_commit_and_survive_reopen
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::sixteen_threads_with_disjoint_writes_all_commit_and_survive_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.09s
+
+
+        PASS [   0.080s] (275/373) lpg tx::tests::isolation::write_skew_fails_one_transaction_under_serializable_and_none_under_snapshot
+  stdout ───
+
+    running 1 test
+    test tx::tests::isolation::write_skew_fails_one_transaction_under_serializable_and_none_under_snapshot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.056s] (276/373) lpg tx::tests::mvcc::a_key_updated_three_times_reads_each_version_at_its_snapshot
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::a_key_updated_three_times_reads_each_version_at_its_snapshot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.050s] (277/373) lpg tx::tests::mvcc::a_read_only_transaction_draws_no_commit_timestamp
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::a_read_only_transaction_draws_no_commit_timestamp ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+
+        PASS [   0.064s] (278/373) lpg tx::tests::mvcc::a_paused_commit_is_invisible_until_published_then_wholly_visible
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::a_paused_commit_is_invisible_until_published_then_wholly_visible ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.061s] (279/373) lpg tx::tests::mvcc::a_transaction_beyond_the_cap_fails_and_changes_nothing
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::a_transaction_beyond_the_cap_fails_and_changes_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.018s] (280/373) lpg tx::versions::tests::a_chain_returns_the_version_each_snapshot_sees
+  stdout ───
+
+    running 1 test
+    test tx::versions::tests::a_chain_returns_the_version_each_snapshot_sees ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.021s] (281/373) lpg tx::versions::tests::visibility_compares_both_stamps_with_the_snapshot
+  stdout ───
+
+    running 1 test
+    test tx::versions::tests::visibility_compares_both_stamps_with_the_snapshot ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.057s] (282/373) lpg tx::tests::mvcc::own_writes_are_private_and_an_abort_leaves_no_trace
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::own_writes_are_private_and_an_abort_leaves_no_trace ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.021s] (283/373) lpg types::tests::a_fractional_instant_before_1970_round_trips_through_the_record_encoding
+  stdout ───
+
+    running 1 test
+    test types::tests::a_fractional_instant_before_1970_round_trips_through_the_record_encoding ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.070s] (284/373) lpg tx::tests::mvcc::reopen_after_a_drop_shows_the_committed_stamped_entries_and_no_old_version
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::reopen_after_a_drop_shows_the_committed_stamped_entries_and_no_old_version ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.06s
+
+
+        PASS [   0.025s] (285/373) lpg types::tests::a_stored_zone_the_host_cannot_apply_keeps_its_name_and_offset
+  stdout ───
+
+    running 1 test
+    test types::tests::a_stored_zone_the_host_cannot_apply_keeps_its_name_and_offset ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.171s] (286/373) lpg storage::checkpoint::tests::close_records_a_clean_shutdown_and_the_next_open_clears_it
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::close_records_a_clean_shutdown_and_the_next_open_clears_it ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.16s
+
+
+        PASS [   0.137s] (287/373) lpg tx::tests::mvcc::old_versions_at_the_cap_fail_only_the_writer
+  stdout ───
+
+    running 1 test
+    test tx::tests::mvcc::old_versions_at_the_cap_fail_only_the_writer ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+
+        PASS [   0.025s] (288/373) lpg types::tests::a_value_is_24_bytes
+  stdout ───
+
+    running 1 test
+    test types::tests::a_value_is_24_bytes ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.023s] (289/373) lpg types::tests::an_out_of_range_parsed_offset_is_rejected
+  stdout ───
+
+    running 1 test
+    test types::tests::an_out_of_range_parsed_offset_is_rejected ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.020s] (290/373) lpg types::tests::every_type_round_trips_through_the_record_encoding
+  stdout ───
+
+    running 1 test
+    test types::tests::every_type_round_trips_through_the_record_encoding ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.026s] (291/373) lpg types::tests::duration_overflow_is_rejected
+  stdout ───
+
+    running 1 test
+    test types::tests::duration_overflow_is_rejected ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.040s] (292/373) lpg types::tests::distances_follow_the_ts21_formulas
+  stdout ───
+
+    running 1 test
+    test types::tests::distances_follow_the_ts21_formulas ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.023s] (293/373) lpg types::tests::lexical_forms_round_trip
+  stdout ───
+
+    running 1 test
+    test types::tests::lexical_forms_round_trip ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.081s] (294/373) lpg storage::checkpoint::tests::every_kernel_metric_category_reports
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::every_kernel_metric_category_reports ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.012s] (295/373) lpg types::tests::payloads_take_their_minimum_width
+  stdout ───
+
+    running 1 test
+    test types::tests::payloads_take_their_minimum_width ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.053s] (296/373) lpg types::tests::hilbert_keys_are_a_bijection_along_a_continuous_curve
+  stdout ───
+
+    running 1 test
+    test types::tests::hilbert_keys_are_a_bijection_along_a_continuous_curve ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+  stderr ───
+    LPG_SEED=5260475162436081598
+
+        PASS [   0.053s] (297/373) lpg types::tests::random_values_round_trip_through_the_record_encoding
+  stdout ───
+
+    running 1 test
+    test types::tests::random_values_round_trip_through_the_record_encoding ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+  stderr ───
+    LPG_SEED=15248347924274488239
+
+        PASS [   0.037s] (298/373) lpg types::tests::reserved_tags_and_malformed_records_are_rejected
+  stdout ───
+
+    running 1 test
+    test types::tests::reserved_tags_and_malformed_records_are_rejected ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+  stderr ───
+    LPG_SEED=16401514278669614242
+
+        PASS [   0.103s] (299/373) lpg types::tests::records_round_trip_after_commit_and_reopen
+  stdout ───
+
+    running 1 test
+    test types::tests::records_round_trip_after_commit_and_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.020s] (300/373) lpg types::tests::the_current_time_is_the_system_clock
+  stdout ───
+
+    running 1 test
+    test types::tests::the_current_time_is_the_system_clock ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.021s] (301/373) lpg types::tests::the_order_has_the_approved_fixed_points
+  stdout ───
+
+    running 1 test
+    test types::tests::the_order_has_the_approved_fixed_points ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.01s
+
+
+        PASS [   0.023s] (302/373) lpg types::tests::zone_links_are_the_formats_fixed_table_not_the_hosts
+  stdout ───
+
+    running 1 test
+    test types::tests::zone_links_are_the_formats_fixed_table_not_the_hosts ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.012s] (303/373) lpg types::tests::zone_names_are_normalised_through_iana_links
+  stdout ───
+
+    running 1 test
+    test types::tests::zone_names_are_normalised_through_iana_links ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.00s
+
+
+        PASS [   0.073s] (304/373) lpg types::tests::the_record_encoder_accepts_exactly_what_the_decoder_accepts
+  stdout ───
+
+    running 1 test
+    test types::tests::the_record_encoder_accepts_exactly_what_the_decoder_accepts ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+  stderr ───
+    LPG_SEED=8887979732580714396
+
+        PASS [   0.292s] (305/373) lpg types::tests::box_ranges_cover_every_cell_of_the_box
+  stdout ───
+
+    running 1 test
+    test types::tests::box_ranges_cover_every_cell_of_the_box ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.27s
+
+  stderr ───
+    LPG_SEED=13301283485516529897
+
+        PASS [   0.318s] (306/373) lpg types::tests::zone_offsets_equal_the_operating_systems
+  stdout ───
+
+    running 1 test
+    test types::tests::zone_offsets_equal_the_operating_systems ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.30s
+
+
+        PASS [   0.636s] (307/373) lpg types::tests::key_bytes_sort_in_the_approved_order
+  stdout ───
+
+    running 1 test
+    test types::tests::key_bytes_sort_in_the_approved_order ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.62s
+
+  stderr ───
+    LPG_SEED=3880922721802889514
+
+        PASS [   0.637s] (308/373) lpg storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.61s
+
+
+        PASS [   1.868s] (309/373) lpg storage::checkpoint::tests::a_hundred_thousand_commits_trigger_exactly_one_checkpoint
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::a_hundred_thousand_commits_trigger_exactly_one_checkpoint ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.86s
+
+
+        PASS [   0.538s] (310/373) lpg storage::checkpoint::tests::recycling_makes_each_rename_and_removal_durable_before_the_next
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::recycling_makes_each_rename_and_removal_durable_before_the_next ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.53s
+
+
+        PASS [   0.062s] (311/373) lpg storage::checkpoint::tests::the_wal_writer_and_checkpointer_threads_are_named
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::the_wal_writer_and_checkpointer_threads_are_named ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.384s] (312/373) lpg storage::checkpoint::tests::the_interval_triggers_checkpoints
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::the_interval_triggers_checkpoints ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.37s
+
+
+        PASS [   0.249s] (313/373) lpg storage::recovery::tests::a_corrupt_frame_followed_by_a_valid_group_fails_the_open
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::a_corrupt_frame_followed_by_a_valid_group_fails_the_open ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.21s
+
+
+        PASS [   2.925s] (314/373) lpg storage::checkpoint::tests::checkpoints_recycle_segments_and_their_old_frames_are_never_replayed
+  stdout ───
+
+    running 1 test
+    test storage::checkpoint::tests::checkpoints_recycle_segments_and_their_old_frames_are_never_replayed ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 2.90s
+
+
+        PASS [   0.641s] (315/373) lpg storage::recovery::tests::a_segment_gets_its_name_only_once_complete_and_synced
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::a_segment_gets_its_name_only_once_complete_and_synced ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.61s
+
+
+        PASS [   0.102s] (316/373) lpg storage::recovery::tests::a_torn_data_page_is_repaired_from_the_wal
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::a_torn_data_page_is_repaired_from_the_wal ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.133s] (317/373) lpg storage::recovery::tests::audit_a_crc_valid_frame_with_a_hostile_page_number_fails_the_open_as_corruption
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::audit_a_crc_valid_frame_with_a_hostile_page_number_fails_the_open_as_corruption ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.12s
+
+
+        PASS [   0.061s] (318/373) lpg storage::recovery::tests::counters_are_the_maximum_of_control_and_the_commit_frames
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::counters_are_the_maximum_of_control_and_the_commit_frames ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [   0.422s] (319/373) lpg storage::recovery::tests::a_torn_last_group_is_discarded
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::a_torn_last_group_is_discarded ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.40s
+
+
+        PASS [   0.813s] (320/373) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commit
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commit ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.79s
+
+
+        PASS [   1.930s] (321/373) lpg storage::recovery::tests::a_missing_segment_at_or_after_the_redo_point_fails_the_open
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::a_missing_segment_at_or_after_the_redo_point_fails_the_open ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.90s
+
+
+        PASS [   0.715s] (322/373) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_some_writes_keeps_every_returned_commit
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_some_writes_keeps_every_returned_commit ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.70s
+
+  stderr ───
+    LPG_SEED=1986565020751242033
+
+        PASS [   0.082s] (323/373) lpg storage::recovery::tests::open_removes_a_partial_segment_left_by_a_crash
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::open_removes_a_partial_segment_left_by_a_crash ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   0.341s] (324/373) lpg storage::recovery::tests::leftover_frames_at_reused_positions_are_never_replayed
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::leftover_frames_at_reused_positions_are_never_replayed ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.33s
+
+
+        PASS [   0.208s] (325/373) lpg suites::fault::a_backup_with_only_manifest_tmp_is_refused
+  stdout ───
+
+    running 1 test
+    test suites::fault::a_backup_with_only_manifest_tmp_is_refused ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.19s
+
+
+        PASS [   0.088s] (326/373) lpg suites::fault::a_corrupt_data_page_read_makes_the_database_unusable_until_reopened
+  stdout ───
+
+    running 1 test
+    test suites::fault::a_corrupt_data_page_read_makes_the_database_unusable_until_reopened ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.07s
+
+
+        PASS [   1.825s] (327/373) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit
+  stdout ───
+
+    running 1 test
+    test storage::recovery::tests::drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.81s
+
+  stderr ───
+    LPG_SEED=423869164801534156
+
+        PASS [   9.096s] (328/373) lpg storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 9.08s
+
+
+        PASS [   6.504s] (329/373) lpg test_support::history::tests::elle_reports_a_hand_written_g1c_cycle_invalid
+  stdout ───
+
+    running 1 test
+    test test_support::history::tests::elle_reports_a_hand_written_g1c_cycle_invalid ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 6.49s
+
+
+        PASS [   6.653s] (330/373) lpg tx::tests::elle::elle_accepts_a_two_thread_rw_register_history
+  stdout ───
+
+    running 1 test
+    test tx::tests::elle::elle_accepts_a_two_thread_rw_register_history ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 6.64s
+
+  stderr ───
+    LPG_SEED=15462087169240887476
+
+        PASS [  11.931s] (331/373) lpg index::tests::crash::a_crash_at_every_point_of_a_build_reopens_populating_and_the_restarted_build_ends_online
+  stdout ───
+
+    running 1 test
+    test index::tests::crash::a_crash_at_every_point_of_a_build_reopens_populating_and_the_restarted_build_ends_online ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 11.91s
+
+
+        PASS [  11.015s] (332/373) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_rw_register_histories
+  stdout ───
+
+    running 1 test
+    test tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_rw_register_histories ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 11.01s
+
+  stderr ───
+    LPG_SEED=6380755513369634554
+    LPG_SEED=13660557701593141762
+
+        PASS [  11.309s] (333/373) lpg tx::tests::elle::elle_reports_g2_item_for_a_snapshot_isolation_write_skew
+  stdout ───
+
+    running 1 test
+    test tx::tests::elle::elle_reports_g2_item_for_a_snapshot_isolation_write_skew ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 11.29s
+
+
+        PASS [  11.424s] (334/373) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_list_append_histories
+  stdout ───
+
+    running 1 test
+    test tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_list_append_histories ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 11.42s
+
+  stderr ───
+    LPG_SEED=2622611100278969537
+    LPG_SEED=15369028724840754644
+
+        PASS [  18.040s] (335/373) lpg storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+  stdout ───
+
+    running 1 test
+    test storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 18.02s
+
+
+        PASS [  16.941s] (336/373) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_graph_histories
+  stdout ───
+
+    running 1 test
+    test tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_graph_histories ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 16.93s
+
+  stderr ───
+    LPG_SEED=12724708229091965354
+    LPG_SEED=13178096013246720567
+    LPG_SEED=3886885341922915
+    LPG_SEED=4379259786927194779
+
+        PASS [  18.555s] (337/373) lpg suites::fault::checkpoint
+  stdout ───
+
+    running 1 test
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=Checkpoint crash_points=34 runs: drop-all 34, keep-random 34, tear-512 34 failure_runs=32 copy_failure_runs=0 seconds=11.2
+    SUITE fault fs=xfs source=/dev/loop0 workload=Checkpoint crash_points=34 runs: drop-all 34, keep-random 34, tear-512 34 failure_runs=32 copy_failure_runs=0 seconds=7.3
+    test suites::fault::checkpoint ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 18.53s
+
+  stderr ───
+    LPG_SEED=7408059206420078199
+    LPG_SEED=10871962406915167683
+
+        PASS [   0.061s] (338/373) lpg suites::fault::checkpoint_call_order
+  stdout ───
+
+    running 1 test
+    test suites::fault::checkpoint_call_order ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.05s
+
+
+        PASS [  30.314s] (339/373) lpg suites::fault::bulk_load
+  stdout ───
+
+    running 1 test
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, tear-512 108 failure_runs=191 copy_failure_runs=0 seconds=17.5
+    SUITE fault fs=xfs source=/dev/loop0 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, tear-512 108 failure_runs=191 copy_failure_runs=0 seconds=12.8
+    test suites::fault::bulk_load ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 30.28s
+
+  stderr ───
+    LPG_SEED=7865258666268401869
+    LPG_SEED=714446927755721584
+
+        PASS [   0.084s] (340/373) lpg suites::fault::corruption_fails_the_open_or_is_handled_as_recorded
+  stdout ───
+
+    running 1 test
+    test suites::fault::corruption_fails_the_open_or_is_handled_as_recorded ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   2.686s] (341/373) lpg suites::fault::migration
+  stdout ───
+
+    running 1 test
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, tear-512 9 failure_runs=6 copy_failure_runs=0 seconds=1.3
+    SUITE fault fs=xfs source=/dev/loop0 workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, tear-512 9 failure_runs=6 copy_failure_runs=0 seconds=1.3
+    test suites::fault::migration ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 2.68s
+
+  stderr ───
+    LPG_SEED=13681091823964860357
+    LPG_SEED=16255477245382457156
+
+        PASS [  43.203s] (342/373) lpg suites::fault::backup
+  stdout ───
+
+    running 1 test
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=Backup crash_points=109 runs: drop-all 109, keep-random 109, tear-512 109 failure_runs=164 copy_failure_runs=0 seconds=24.1
+    SUITE fault fs=xfs source=/dev/loop0 workload=Backup crash_points=109 runs: drop-all 109, keep-random 109, tear-512 109 failure_runs=164 copy_failure_runs=0 seconds=19.1
+    test suites::fault::backup ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 43.19s
+
+  stderr ───
+    LPG_SEED=4358844846889864951
+    LPG_SEED=10556757717253361227
+
+        PASS [  21.728s] (343/373) lpg suites::fault::recovery_checkpoint
+  stdout ───
+
+    running 1 test
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=2 copy_failure_runs=0 seconds=11.1
+    SUITE fault fs=xfs source=/dev/loop0 workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=2 copy_failure_runs=0 seconds=10.6
+    test suites::fault::recovery_checkpoint ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 21.72s
+
+  stderr ───
+    LPG_SEED=17113157546300323275
+    LPG_SEED=15412141642463382810
+
+        PASS [   0.032s] (344/373) lpg suites::fault::the_oracle_sees_an_undone_batch_that_came_back
+  stdout ───
+
+    running 1 test
+    test suites::fault::the_oracle_sees_an_undone_batch_that_came_back ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.03s
+
+  stderr ───
+
+    thread 'suites::fault::the_oracle_sees_an_undone_batch_that_came_back' (1326592) panicked at src/suites/fault.rs:498:5:
+    batch 2 came back: the state is not a prefix with every returned commit
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        SLOW [> 60.000s] (───────) lpg suites::fault::commits
+        SLOW [> 60.000s] (───────) lpg suites::fault::restore_
+        PASS [  56.393s] (345/373) lpg suites::fault::transactions
+  stdout ───
+
+    running 1 test
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=Transactions crash_points=168 runs: drop-all 168, keep-random 168, tear-512 168 failure_runs=308 copy_failure_runs=185 seconds=29.0
+    SUITE fault fs=xfs source=/dev/loop0 workload=Transactions crash_points=168 runs: drop-all 168, keep-random 168, tear-512 168 failure_runs=308 copy_failure_runs=185 seconds=27.3
+    test suites::fault::transactions ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 56.39s
+
+  stderr ───
+    LPG_SEED=16096534597210996828
+    LPG_SEED=13242036320812511706
+
+        SLOW [>120.000s] (───────) lpg suites::fault::commits
+        PASS [ 130.374s] (346/373) lpg suites::fault::commits
+  stdout ───
+
+    running 1 test
+    test suites::fault::commits has been running for over 60 seconds
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=Commits crash_points=152 runs: drop-all 152, keep-random 152, tear-512 152 failure_runs=241 copy_failure_runs=1381 seconds=71.7
+    SUITE fault fs=xfs source=/dev/loop0 workload=Commits crash_points=152 runs: drop-all 152, keep-random 152, tear-512 152 failure_runs=241 copy_failure_runs=1381 seconds=58.6
+    test suites::fault::commits ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 130.37s
+
+  stderr ───
+    LPG_SEED=17246004030137585463
+    LPG_SEED=8866832173772979784
+
+        PASS [   0.027s] (347/373) lpg tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.409s] (348/373) lpg tx::commit::tests::a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.40s
+
+
+        PASS [   0.069s] (349/373) lpg tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.06s
+
+
+        PASS [   0.206s] (350/373) lpg tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.20s
+
+
+        PASS [   0.022s] (351/373) lpg tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+  stderr ───
+
+    thread '<unnamed>' (1368896) panicked at src/tx/commit/tests.rs:999:13:
+    a committer panics under the commit latch
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        PASS [   0.068s] (352/373) lpg tx::commit::tests::a_refused_memory_reservation_in_the_apply_step_is_undone
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::a_refused_memory_reservation_in_the_apply_step_is_undone ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.06s
+
+
+        PASS [   0.603s] (353/373) lpg tx::commit::tests::an_overrun_extends_the_file_under_the_latch
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::an_overrun_extends_the_file_under_the_latch ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.59s
+
+
+        PASS [   0.338s] (354/373) lpg tx::commit::tests::an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.33s
+
+
+        PASS [   0.027s] (355/373) lpg tx::commit::tests::an_undone_batch_that_took_a_page_it_freed_restores_that_page
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::an_undone_batch_that_took_a_page_it_freed_restores_that_page ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.684s] (356/373) lpg tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.68s
+
+
+        PASS [   0.047s] (357/373) lpg tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.277s] (358/373) lpg tx::commit::tests::audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.27s
+
+
+        PASS [   0.023s] (359/373) lpg tx::commit::tests::audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.367s] (360/373) lpg tx::commit::tests::audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.36s
+
+
+        PASS [   0.215s] (361/373) lpg tx::commit::tests::audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.21s
+
+
+        PASS [   0.050s] (362/373) lpg tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.022s] (363/373) lpg tx::commit::tests::commits_raise_counters_and_failed_commits_do_not
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::commits_raise_counters_and_failed_commits_do_not ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.022s] (364/373) lpg tx::commit::tests::create_sets_the_page_lsn_in_the_write_that_zeroes_the_frame
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::create_sets_the_page_lsn_in_the_write_that_zeroes_the_frame ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.02s
+
+
+        PASS [   0.273s] (365/373) lpg tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.27s
+
+
+        PASS [   1.477s] (366/373) lpg tx::commit::tests::enospc_in_the_apply_step_is_undone_and_the_database_stays_usable
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::enospc_in_the_apply_step_is_undone_and_the_database_stays_usable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 1.47s
+
+
+        PASS [   0.047s] (367/373) lpg tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.047s] (368/373) lpg tx::commit::tests::failed_wal_sync_fails_the_commit_and_every_later_operation_until_reopen
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::failed_wal_sync_fails_the_commit_and_every_later_operation_until_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.04s
+
+
+        PASS [   0.082s] (369/373) lpg tx::commit::tests::four_closed_loop_committers_share_one_flush
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::four_closed_loop_committers_share_one_flush ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.08s
+
+
+        PASS [   0.445s] (370/373) lpg tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.44s
+
+
+        PASS [   0.101s] (371/373) lpg tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once
+  stdout ───
+
+    running 1 test
+    test tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 0.10s
+
+
+        SLOW [>120.000s] (───────) lpg suites::fault::restore_
+        SLOW [> 60.000s] (───────) lpg suites::kill::kill_and_reopen
+        PASS [  94.326s] (372/373) lpg suites::kill::kill_and_reopen
+  stdout ───
+
+    running 1 test
+    SUITE kill fs=ext4 source=/dev/nvme1n1p1 dir=/data/tmp/lpg-lab iterations=200 printed_commits=28727 recovery_ms_p50=15.8 recovery_ms_p99=26.1 replayed_bytes_p50=402976 replayed_bytes_p99=756608 child_commits_per_s_p50=2051 kills_in_checkpoint=200 kills_in_backup=197 recycling_checkpoints=36 printed_drops=1446 kills_in_index_build=200 index_builds=3 restarted_index_builds=199 kept_indexes_checked=359 seconds=43.2
+    test suites::kill::kill_and_reopen has been running for over 60 seconds
+    SUITE kill fs=xfs source=/dev/loop0 dir=/mnt/lpg-xfs iterations=200 printed_commits=6817 recovery_ms_p50=28.0 recovery_ms_p99=41.8 replayed_bytes_p50=304288 replayed_bytes_p99=575680 child_commits_per_s_p50=414 kills_in_checkpoint=200 kills_in_backup=200 recycling_checkpoints=3 printed_drops=528 kills_in_index_build=200 index_builds=0 restarted_index_builds=200 kept_indexes_checked=199 seconds=51.0
+    test suites::kill::kill_and_reopen ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 94.32s
+
+  stderr ───
+    LPG_SEED=8678362072868237446
+    LPG_SEED=17130086831913923905
+
+        SLOW [>180.000s] (───────) lpg suites::fault::restore_
+        PASS [ 214.860s] (373/373) lpg suites::fault::restore_
+  stdout ───
+
+    running 1 test
+    test suites::fault::restore_ has been running for over 60 seconds
+    SUITE fault fs=ext4 source=/dev/nvme1n1p1 workload=Restore crash_points=169 runs: drop-all 169, keep-random 169, tear-512 169 failure_runs=159 copy_failure_runs=0 seconds=120.2
+    SUITE fault fs=xfs source=/dev/loop0 workload=Restore crash_points=169 runs: drop-all 169, keep-random 169, tear-512 169 failure_runs=159 copy_failure_runs=0 seconds=94.7
+    test suites::fault::restore_ ... ok
+
+    test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 396 filtered out; finished in 214.85s
+
+  stderr ───
+    LPG_SEED=15715824230358852979
+    LPG_SEED=11769051857484614938
+
+────────────
+     Summary [ 265.893s] 373 tests run: 373 passed (3 slow), 24 skipped
+
+real	4m26,635s
+user	6m40,017s
+sys	6m28,663s
+exit=0
+lab dirs after: /data/tmp/lpg-lab:  /mnt/lpg-xfs:  /tmp/lpgram: 
