@@ -1,7 +1,7 @@
 ---
 title: Open questions
 status: draft
-last-reviewed: 2026-10-07
+last-reviewed: 2026-10-08
 related:
   - functional-requirements.md
   - non-functional-requirements.md
@@ -47,7 +47,7 @@ Clock abstraction. Closed 2026-09-24: no clock abstraction; the crate reads the 
 
 ### OQ-008
 
-Time-zone data source. Closed 2026-09-24: the crate reads the operating system's IANA time-zone data ([FR-TYPE-007](functional-requirements.md#types)).
+Time-zone data source. Closed 2026-09-24: the crate reads the operating system's IANA time-zone data ([FR-TYPE-007](functional-requirements.md#types)). Updated 2026-10-08 (user decision): the crate still reads the time-zone rules from the operating system, but the zone-name links come from a fixed table built into the crate and tied to the format version, so that index keys keep matching after a `tzdata` upgrade or a restore on another host ([FR-TYPE-007](functional-requirements.md#types)).
 
 ### OQ-009
 

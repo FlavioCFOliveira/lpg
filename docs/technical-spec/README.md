@@ -1,7 +1,7 @@
 ---
 title: Technical specification
 status: draft
-last-reviewed: 2026-10-07
+last-reviewed: 2026-10-08
 related:
   - ../../README.md
   - ../functional-spec/README.md
@@ -58,7 +58,7 @@ Functional terms are in the [functional glossary](../functional-spec/glossary.md
 
 ## Sources
 
-Checked between 2026-09-24 and 2026-10-07. Citations added on 2026-10-07 that use a later commit than the table below name it, as `R-PG @ 1f22453` (2026-10-07), `R-FJALL @ 17ae672` (2026-10-05) and `R-MG @ 847e224` (2026-10-07).
+Checked between 2026-09-24 and 2026-10-08. Citations added on or after 2026-10-07 that use a later commit than the table below name it, as `R-PG @ 1f22453` (2026-10-07), `R-FJALL @ 17ae672` (2026-10-05), `R-MG @ 847e224` (2026-10-07) and `R-TURSO @ 8cc059b` (2026-10-07). Crate sources are cited by crate version, as `crossbeam-epoch 0.9.18`.
 
 ### Reference source code (shallow clones, read for study only)
 
