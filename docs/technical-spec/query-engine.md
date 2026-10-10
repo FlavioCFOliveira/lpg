@@ -1,7 +1,7 @@
 ---
 title: Query engine
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-09
 related:
   - architecture.md
   - catalog-and-indexes.md
@@ -39,7 +39,27 @@ related:
     | `result` | 1 `resultExpression`, 2 `nullLiteral` | an expression | `CASE … THEN NULL …` | 1 |
     | `castOperand` | 1 `valueExpression`, 2 `nullLiteral` | an expression | `CAST(NULL AS …)` | 1 |
 
-    Any other ambiguous decision is resolved the same way and added to this table.
+    Decisions also found ambiguous on 600 000 generated texts, 306 093 of them accepted (rmp #41, 2026-10-09: `GqlProbe.java` of round-s in `LL_EXACT_AMBIG_DETECTION` mode over the 100 000 sentences and 100 000 mutants of each seed 20261008, 1 and 12648430 of the `tools/gql-oracle` generator). For each, lpg's AST of the example equals the ANTLR parse tree of the same text, and `src/query/parser/tests.rs` pins it:
+
+    | Rule (decision) | Alternatives | Resolution | Example | Texts |
+    |---|---|---|---|---|
+    | `graphExpression` | 1 `graphReference`, 2 `objectExpressionPrimary` | a delimited graph name, not a string literal | `USE "" FINISH` | 3 359 |
+    | `bindingTableExpression` | 2 `bindingTableReference`, 3 `objectExpressionPrimary` | a delimited binding table name | `SESSION SET TABLE $m = ""` | 2 254 |
+    | `simpleDataAccessingStatement` | 1 `simpleQueryStatement`, 2 `simpleDataModifyingStatement` | `CALL` as a query statement | `USE g CALL p()` | 2 094 |
+    | `valueType` (inner `\|` loop) | 1, 2 | inside `ANY < … >`, a member may be a union: `ANY < A \| B >` has one member, `A \| B` | `VALUE v ANY < NULL \| VERTEX > = 1 FINISH` | 1 401 |
+    | `absoluteCatalogSchemaReference` | 1 `/`, 2 directory path and schema name | the root `/`; a following non-reserved word starts the next clause | `AT / PROPERTY GRAPH g = x FINISH` | 849 |
+    | `caseOperand` | 1 `nonParenthesizedValueExpressionPrimary`, 2 `elementVariableReference` | a value primary (both give the variable) | `CASE w WHEN 1 THEN 2 END` | 471 |
+    | `nodeTypePhrase`, `edgeTypePhrase` (`TYPE?`) | 1 take, 2 skip | `TYPE` is the keyword, not a type name | `NODE TYPE { }` | 416, 360 |
+    | `primitiveCatalogModifyingStatement` | 3 `createGraphStatement`, 5 `createGraphTypeStatement`; 4 `dropGraphStatement`, 6 `dropGraphTypeStatement` | a graph statement: `TYPE` is a parent object name | `DROP GRAPH TYPE . x` | 215, 16 |
+    | `bindingTableReference`, `graphReference` | 1 parent and name, 3 and 4 `referenceParameterSpecification` | a parameter is the parent schema of the following name | `TABLE s = $$IB BINDING TABLE t = x FINISH` | 188, 111 |
+    | `valueExpression` | 4 `GRAPH graphExpression`, 5 `TABLE bindingTableExpression`, 7 a predicate or property of a variable | the graph or binding table expression | `CALL p ( GRAPH . groups )` | 33, 55 |
+    | `orderByAndPageStatement` (optional `OFFSET`, `LIMIT`) | 1 take, 2 skip | taken by the same statement | `ORDER BY x SKIP 2 FINISH` | 47 |
+    | `relativeDirectoryPath`, `simpleDirectoryPath`, `absoluteDirectoryPath` (repetitions) | 1 continue, 2 stop | the directories end where a schema name and the parent separator still follow | `TABLE .. / d / e / f` | 16, 16, 7 |
+    | `valueType` | 3 `listValueTypeAlt1`, 4 `listValueTypeAlt2` | `LIST < … > NOT NULL`: `NOT NULL` belongs to the list | `IS TYPED LIST < { } > NOT NULL` | 2 |
+    | `catalogGraphParentAndName`, `catalogObjectParentReference` (repetitions) | 1, 2 | the longest parent | `CREATE GRAPH TYPE . a . b . c AS COPY OF $$ys` | 2, 2 |
+    | `nodeTypeFiller` (inner) | 1, 2 | an empty key label set `=>`, then the implied content | `VERTEX => IS NORMALIZED` | 1 |
+
+    The probe also reported every decision of the first table on the generated texts except `graphPattern`. Any other ambiguous decision is resolved the same way and added to these tables.
   - **Feature classification** (provisional, OQ-005). Every parser rule is classified as mandatory or as needing feature codes of the ISO features insert, by gql-compat's placement rule (a construct that a code covers is optional; everything else is mandatory; gql-compat README @ `9de1991`, not ISO text). Method, anchors and evidence: [round-s](../evidence/planning/round-s/README.md). Result: [Rule-to-feature table](#rule-to-feature-table).
     - **Supported codes** (user decisions 2026-10-08, rmp task #37: "Seis + as exigidas", then "Só GG03"): the mandatory surface and GC01, GC04, GD01, GG01, GG02, GG03, GP04, GP18, GQ01, GT01, GT03, GV39, GV40, GV41. The graph-type creation construct the user approved is `createGraphTypeStatement`, which gql-compat's cases place under GC01; its body, `nestedGraphTypeSpecification`, is GG03, which FR-GQL-004 needs to make a closed graph type.
     - **Not supported:** the other 214 codes of the insert. Each fails with the "feature not supported" condition ([interfaces.md](interfaces.md#gqlstatus-codes)).
@@ -62,6 +82,7 @@ related:
   - **Narrowing.** `GQL.g4` states that it is "more permissive than a GQL implementation would be" and leaves invalid type and function combinations to the implementation. The binder therefore rejects those combinations ([TS-20](#ts-20-binder-planner-and-execution)).
   - **Test oracle.** The ANTLR-generated parser from the same `GQL.g4` ([TS-30](quality-and-testing.md#ts-30-testing-and-conformance)).
   - **Syntax errors.** Input that `GQL.g4` does not accept fails with GQLSTATUS 42001 "syntax error or access rule violation – invalid syntax" (ISO conditions insert, class 42 subclass 001), reported with the position and the expected tokens.
+  - **Nesting limit** (rmp #41). Each recursive rule entered, and each operator of a left-deep chain (`a + b + c`, `a.b.c`, label and type unions, query conjunctions), takes one level; more than 256 levels, or more than 1 MiB of stack used by the parse (measured from the address of a local variable, as PostgreSQL's `stack_is_too_deep` does, `src/backend/utils/misc/stack_depth.c` @ `1b5dd3a`), fails with 42001. The AST is therefore at most 256 levels deep, and recursive walks of it cannot overflow the stack. Texts that `GQL.g4` accepts but nest deeper fail. Measured on a 2 MiB stack (`docs/evidence/lab-sprint-3/raw/nesting-depth.txt`): chains admit 251 to 254 operators in any build; the costliest recursive shape, nested `EXISTS { MATCH … }`, admits 50 levels at opt-level 1 (the test profile) and 23 at opt-level 0; nested parentheses 126 and 61. The reference parsers count nesting only (datafusion-sqlparser-rs 50, zu 64, Grafeo 128) and bound no chain.
   - **Provisional rules.** Rules that need the ISO text are provisional (OQ-005), for example every Syntax Rule and the feature classification below.
   - **Parameters** are never inlined into the text.
 - **Satisfies**: FR-GQL-001, FR-GQL-002, BR-GQL-001, BR-GQL-002, FR-API-004, NFR-VER-002, NFR-SAFE-001, NFR-DEP-001, NFR-PERF-003.

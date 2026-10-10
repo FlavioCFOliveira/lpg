@@ -72,7 +72,7 @@ use crate::catalog::stats::{Delta, StatKey};
 use crate::catalog::{CATALOG_TREE, Kind, name_key};
 use crate::storage::btree::{MAX_KEY, Store, Tree};
 use crate::storage::engine::{Core, Engine};
-use crate::storage::error::{Error, Result};
+use crate::storage::error::{Error, Missing, Result, Violation};
 use crate::storage::graph::{EdgeRecord, Graph, decode_edge, element_key, element_of};
 use crate::tx::Transaction;
 use crate::tx::lock::{Mode, Resource};
@@ -638,18 +638,14 @@ pub(crate) fn check_constraint(def: &SchemaDef, el: &Element) -> Result<()> {
     match def.kind {
         SchemaKind::Exists | SchemaKind::NodeKey => {
             if def.props.iter().any(|&p| prop(&el.props, p).is_none()) {
-                return Err(Error::ConstraintViolation(
-                    "an element lacks a property its constraint requires",
-                ));
+                return Err(Error::ConstraintViolation(Violation::MissingProperty));
             }
         }
         SchemaKind::Type(t) => {
             if let Some(v) = prop(&el.props, def.props[0])
                 && !t.accepts(v)
             {
-                return Err(Error::ConstraintViolation(
-                    "a property has another type than its constraint requires",
-                ));
+                return Err(Error::ConstraintViolation(Violation::PropertyType));
             }
         }
         _ => {}
@@ -778,9 +774,7 @@ pub(crate) fn derive(
             && !change.added.is_empty()
             && unique_violation(store, tree_of(store, ix.tree)?, change)?
         {
-            return Err(Error::ConstraintViolation(
-                "a value of a uniqueness or node-key constraint is in use",
-            ));
+            return Err(Error::ConstraintViolation(Violation::ValueInUse));
         }
     }
     let mut seq = 0u32;
@@ -952,7 +946,7 @@ pub(crate) fn read_side(
 fn switch(core: &Core, store: &Store<'_>, on: &Online, d: &mut Derived) -> Result<()> {
     let def = core.catalog.schema().get(&on.index).cloned();
     let Some(def) = def.filter(|s| s.state == State::Populating) else {
-        return Err(Error::NotFound("a POPULATING index"));
+        return Err(Error::NotFound(Missing::PopulatingIndex));
     };
     let t = tree_of(store, def.tree)?;
     let records = read_side(store, tree_of(store, def.side)?, &on.from, usize::MAX)?;
@@ -1161,7 +1155,7 @@ impl Transaction<'_> {
                 let t = self.tree(def.tree)?;
                 Ok((def, t))
             }
-            _ => Err(Error::NotFound("an ONLINE index")),
+            _ => Err(Error::NotFound(Missing::OnlineIndex)),
         }
     }
 
@@ -1354,9 +1348,7 @@ impl Transaction<'_> {
                 return Err(self.abort_with(e));
             }
             if other {
-                return Err(Error::ConstraintViolation(
-                    "a value of a uniqueness or node-key constraint is in use",
-                ));
+                return Err(Error::ConstraintViolation(Violation::ValueInUse));
             }
         }
         Ok(())
@@ -1425,10 +1417,10 @@ impl Transaction<'_> {
     /// transaction ends ([`crate::catalog`] Graph types in use).
     pub(crate) fn lock_graph(&mut self, graph: u64) -> Result<Graph> {
         let Some(o) = self.object(graph)? else {
-            return Err(Error::NotFound("the graph"));
+            return Err(Error::NotFound(Missing::Graph));
         };
         if o.kind != Kind::Graph {
-            return Err(Error::NotFound("the graph"));
+            return Err(Error::NotFound(Missing::Graph));
         }
         let t = self.tree(CATALOG_TREE)?;
         self.lock_key(t, &name_key(o.parent, &o.name), Mode::S)?;

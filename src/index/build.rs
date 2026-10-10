@@ -65,7 +65,7 @@ use crate::catalog::CATALOG_TREE;
 use crate::storage::btree::bulk::SortedEntries;
 use crate::storage::btree::{Keys, Write};
 use crate::storage::engine::{Core, Engine};
-use crate::storage::error::{Error, Result};
+use crate::storage::error::{Error, Result, Violation};
 use crate::storage::graph::element_of;
 use crate::storage::sort::{MIN_MEMORY, Sorted};
 use crate::sync::atomic::{AtomicBool, Ordering};
@@ -562,9 +562,7 @@ impl SortedEntries for UniqueSorted<'_> {
         };
         let p = prefix_of(k);
         if !self.first && p == self.last.as_slice() {
-            return Err(Error::ConstraintViolation(
-                "two elements hold one value of the new constraint",
-            ));
+            return Err(Error::ConstraintViolation(Violation::DuplicateValues));
         }
         self.first = false;
         self.last.clear();

@@ -1,0 +1,7 @@
+
+            OPTIONAL CALL PROC(1, 2, 3)
+            YIELD a, b
+            RETURN a.id, count(b)
+            ORDER BY a.id DESC NULLS LAST
+            OFFSET 10
+            LIMIT 10

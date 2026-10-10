@@ -1,0 +1,1 @@
+SELECT p FROM g MATCH (p) WHERE p.x = 1

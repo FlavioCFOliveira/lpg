@@ -1,0 +1,148 @@
+$ cargo +nightly fuzz run lexer -- -runs=10000000   (in fuzz/, 2026-10-09T03:40:53Z)
+   Compiling lpg v0.1.0 (/data/dev/xumiga/lpg)
+   Compiling lpg-fuzz v0.0.0 (/data/dev/xumiga/lpg/fuzz)
+    Finished `release` profile [optimized + debuginfo] target(s) in 24.06s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.02s
+     Running `target/x86_64-unknown-linux-gnu/release/lexer -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/lexer/ -runs=10000000 /data/dev/xumiga/lpg/fuzz/corpus/lexer`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3308986445
+INFO: Loaded 1 modules   (1720 inline 8-bit counters): 1720 [0x646e7f67f670, 0x646e7f67fd28), 
+INFO: Loaded 1 PC tables (1720 PCs): 1720 [0x646e7f67fd28,0x646e7f6868a8), 
+INFO:     2245 files found in /data/dev/xumiga/lpg/fuzz/corpus/lexer
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 2245 min: 1b max: 3970b total: 501602b rss: 35Mb
+#2246	INITED cov: 757 ft: 4547 corp: 1549/425Kb exec/s: 0 rss: 82Mb
+#10000000	DONE   cov: 757 ft: 4568 corp: 1566/386Kb lim: 4096 exec/s: 14204 rss: 432Mb
+###### Recommended dictionary. ######
+"=>" # Uses: 26130
+"4\000\000\000" # Uses: 18453
+"\005\000\000\000\000\000\000\000" # Uses: 16119
+"\000 " # Uses: 17668
+"\377\377\377\377" # Uses: 17046
+"~/" # Uses: 17210
+"\\\000" # Uses: 16469
+"->" # Uses: 16480
+"LIS" # Uses: 15728
+"X11_X" # Uses: 15092
+"\\\\" # Uses: 15288
+"3\377\377\377" # Uses: 14789
+"]~" # Uses: 14004
+"\001\000\000\000\000\000\000\015" # Uses: 12232
+"APH" # Uses: 13144
+"/~>" # Uses: 12125
+"TYPE" # Uses: 11659
+"%1" # Uses: 11926
+"\211\000\000\000\000\000\000\000" # Uses: 10620
+"NNNN" # Uses: 10955
+"\\ " # Uses: 10810
+"\001\000" # Uses: 10686
+"FI" # Uses: 10894
+"\000\000\000\000" # Uses: 10408
+"O\000\000\000" # Uses: 10226
+"\020\000\000\000\000\000\000\000" # Uses: 9191
+"\177\000" # Uses: 10251
+"\022\000\000\000\000\000\000\000" # Uses: 9302
+"\000\000\000\000\000\000\011/" # Uses: 9368
+"BIT" # Uses: 10090
+"\\0" # Uses: 10004
+"\377\377\377\377\377\377\377\001" # Uses: 9069
+"\374\377\000\000" # Uses: 9727
+"\\bu" # Uses: 9804
+"\\X" # Uses: 9750
+"o\001\000\000\000\000\000\000" # Uses: 8522
+"\017\000$" # Uses: 9162
+"\376\377\377@" # Uses: 8595
+"TRI" # Uses: 8918
+"]~>" # Uses: 8686
+"/~" # Uses: 8795
+"<>" # Uses: 8753
+"\\92" # Uses: 8462
+"`\"" # Uses: 8693
+"\377\377\377-" # Uses: 8251
+"\336\006" # Uses: 8476
+"|+|" # Uses: 8234
+"/d" # Uses: 8549
+"::" # Uses: 8146
+"!\337\235" # Uses: 7945
+"(4" # Uses: 7943
+"TIMEST" # Uses: 7359
+"A\001\000\000\000\000\000\000" # Uses: 7183
+"-2" # Uses: 7696
+"UESS" # Uses: 7340
+"\000\000\000\000\000\000\000j" # Uses: 6682
+":TR" # Uses: 7148
+"--" # Uses: 7140
+"MAX" # Uses: 7181
+"TRIM" # Uses: 6692
+"\221$I\222$I\222\004" # Uses: 6202
+"*m" # Uses: 6688
+"TA" # Uses: 6361
+"//" # Uses: 6068
+"m\000\000\000" # Uses: 5985
+"STRD" # Uses: 5927
+"\000\000\000\000\000\000\000\015" # Uses: 5251
+"[.E" # Uses: 5823
+",0" # Uses: 5637
+"OCTE" # Uses: 5388
+"\377\377\377\377\377\377\377\377" # Uses: 4803
+"\000\000\000\000\000\000\000\000" # Uses: 4944
+"JOIN" # Uses: 5189
+"\001\000\000\000\000\000\000\000" # Uses: 4524
+"#2" # Uses: 4888
+"%\001\000\000\000\000\000\000" # Uses: 4366
+"\377\270" # Uses: 4792
+"K\377\377\377" # Uses: 4640
+"||" # Uses: 4666
+"\001\000\000\000" # Uses: 4681
+"z\000\000\000\000\000\000\000" # Uses: 4292
+"TYPTTT" # Uses: 4296
+"<~/" # Uses: 4324
+"(HN" # Uses: 4466
+"GRAPH" # Uses: 4242
+"GROUPS" # Uses: 4063
+"ONLY" # Uses: 4469
+"LLTTT" # Uses: 4196
+"\001\000\000\000\000\000\000\002" # Uses: 3666
+"BIG" # Uses: 4006
+"WI" # Uses: 4091
+"\037\000\000\000" # Uses: 3734
+"UNKNO" # Uses: 3683
+"\377\377\377\377\377\377\377\000" # Uses: 3496
+"ARRAY" # Uses: 3359
+"N\000" # Uses: 3435
+"DIFFE" # Uses: 3196
+"Q\377\377\377" # Uses: 3181
+"\351\004" # Uses: 3210
+"UINNOWS" # Uses: 2695
+"q\000\000\000\000\000\000\000" # Uses: 2667
+"\244\000\000\000\000\000\000\000" # Uses: 2205
+"* " # Uses: 2429
+"'`" # Uses: 2388
+"/-" # Uses: 2427
+"\377\377\377\377\377\377\377\374" # Uses: 2062
+"'\\" # Uses: 1997
+"+\"1" # Uses: 1933
+"^\"" # Uses: 1962
+"\001\000\000\000\000\000\002\255" # Uses: 1674
+"KE" # Uses: 1741
+"\000\000" # Uses: 1691
+"-u" # Uses: 1613
+"9\377\377\377" # Uses: 1543
+"KE0F" # Uses: 1530
+"\3772" # Uses: 1443
+"\007\000\000\000\000\000\000\000" # Uses: 1008
+"\031\000" # Uses: 867
+"PE" # Uses: 787
+"RI" # Uses: 407
+"EM11" # Uses: 353
+"\000\000\000\000\000\000\000\003" # Uses: 223
+"\001\000\000\000\000\000\000/" # Uses: 216
+"\\f" # Uses: 105
+"'@" # Uses: 65
+###### End of recommended dictionary. ######
+Done 10000000 runs in 704 second(s)
+
+real	12m9,133s
+user	11m46,513s
+sys	0m10,964s
+exit=0

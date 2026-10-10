@@ -91,7 +91,7 @@ use crate::storage::btree::node::put_varint;
 use crate::storage::btree::{Keys, Store, Tree, Write};
 use crate::storage::datafile::Bootstrap;
 use crate::storage::engine::{Core, Engine};
-use crate::storage::error::{Error, Result};
+use crate::storage::error::{Error, Missing, Result};
 use crate::storage::graph::Graph;
 use crate::sync::{Mutex, MutexGuard, PoisonError, RwLock};
 use crate::tx::Transaction;
@@ -1072,7 +1072,7 @@ impl Transaction<'_> {
             None
         } else {
             let Some(p) = self.object(parent)? else {
-                return Err(Error::NotFound("the parent catalog object"));
+                return Err(Error::NotFound(Missing::ParentObject));
             };
             self.lock_key(t, &name_key(p.parent, &p.name), Mode::S)?;
             Some(p.kind)
@@ -1177,7 +1177,7 @@ impl Transaction<'_> {
                         let t = tx.catalog_tree()?;
                         tx.lock_key(t, &name_key(o.parent, &o.name), Mode::S)?;
                     }
-                    _ => return Err(Error::NotFound("the graph type")),
+                    _ => return Err(Error::NotFound(Missing::GraphType)),
                 }
             }
             let nodes = tx.create_tree(Keys::Prefix)?.id();

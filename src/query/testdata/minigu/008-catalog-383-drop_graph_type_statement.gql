@@ -1,0 +1,1 @@
+drop property graph type if exists /a/b/c

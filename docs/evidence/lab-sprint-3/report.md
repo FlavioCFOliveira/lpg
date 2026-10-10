@@ -119,3 +119,20 @@ Exercised on the 21 `types::tests::` tests ([raw](raw/heaptrack-types-tests.tsv)
 * **gql-compat states no copyright notice and has no NOTICE file**; its Apache-2.0 licence is kept as `tools/gql-oracle/LICENSE-gql-compat`.
 * **A random walk alone does not cover the grammar** (see Sentence generator); the directed phase does.
 * **No item is missing:** every tool of the task is installed at its latest version, and no root access was needed.
+
+## Front end: errors, lexer and parser (rmp #40, #41)
+
+Measured on 2026-10-09 on the working tree of round A (commit `25cae08` plus the uncommitted #40 and #41 changes). Correctness only.
+
+| Check | Command | Result |
+|---|---|---|
+| Differential, generated | `cargo nextest run -p lpg --run-ignored all -E 'test(/differential::/)' --no-capture` | seeds 20261008, 1, 12648430: 100 000 sentences and 100 000 mutants each, **0 differences** ([raw](raw/differential-100k.txt)); `LPG_SEED=42` overrides the seeds ([raw](raw/differential-seed-override.txt)) |
+| Differential, stored | same run | 21 samples, 142 miniGU inputs, 70 test texts: **0 differences** |
+| Coverage per grammar rule | `cargo llvm-cov nextest … -E 'test(/differential::(stored_corpora\|differential_generated\|test_texts)/)'`, [`cov-rules.py`](cov-rules.py) | 155 rule functions, **0 never executed** ([table](parser-rule-coverage.md)) |
+| Fuzz, lexer | `cargo +nightly fuzz run lexer -- -runs=10000000` | **exit 0**, "Done 10000000 runs in 704 second(s)", no crash, no artifact ([raw](raw/fuzz-lexer.txt)) |
+| Fuzz, parser | `cargo +nightly fuzz run parser -- -runs=10000000` | **exit 0**, "Done 10000000 runs in 5438 second(s)", no crash, no artifact ([raw](raw/fuzz-parser.txt)) |
+| Nesting | `deep_texts_fail_with_42001_on_a_2_mib_stack` | 28 shapes at 100 000 levels fail with 42001 on a 2 MiB stack; deepest accepted text per shape in [raw](raw/nesting-depth.txt) |
+| Ambiguities | `GqlProbe.java` (round-s) on 600 000 generated texts | 34 ambiguous decisions ([raw](raw/ambiguities-generated.txt)); each compared with the ANTLR tree printed by [`TreeDump.java`](TreeDump.java); recorded in TS-19 |
+| Error module coverage | `cargo llvm-cov nextest -p lpg -E 'test(/^(error\|gqlstatus\|storage::error)::/)' --summary-only` | [raw](raw/coverage-error-module.txt) |
+
+The fuzz logs keep the libFuzzer header, the final status and the recommended dictionary; the `NEW` and `REDUCE` progress lines were dropped. The fuzz corpora under `fuzz/corpus/` were seeded with the three stored corpora and are not checked in.

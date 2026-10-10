@@ -1,0 +1,1 @@
+RETURN EXISTS { MATCH (a) MATCH (b) }

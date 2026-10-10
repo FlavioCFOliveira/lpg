@@ -1,0 +1,2 @@
+MATCH p = ANY SHORTEST (a:Person WHERE a.id = $a)-[:KNOWS]-{1,}(b:Person WHERE b.id = $b)
+RETURN path_length(p) AS len

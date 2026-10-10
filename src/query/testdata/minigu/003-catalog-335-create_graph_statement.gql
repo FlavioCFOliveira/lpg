@@ -1,0 +1,1 @@
+create graph if not exists myGraph ::any as copy of /a/b

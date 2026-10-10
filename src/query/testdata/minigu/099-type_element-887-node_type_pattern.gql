@@ -1,0 +1,1 @@
+(:Person1 => :Person2 {id int, name string not null})

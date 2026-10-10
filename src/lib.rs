@@ -19,8 +19,10 @@
     )
 )]
 pub(crate) mod catalog;
+mod error;
 #[cfg(fuzzing)]
 pub mod fuzz;
+pub mod gqlstatus;
 #[cfg_attr(
     not(test),
     allow(
@@ -31,6 +33,14 @@ pub mod fuzz;
 pub(crate) mod index;
 pub mod obs;
 pub mod ops;
+#[cfg_attr(
+    not(test),
+    allow(
+        dead_code,
+        reason = "the query module's first non-test callers come with rmp #43-#47"
+    )
+)]
+pub(crate) mod query;
 pub mod storage;
 mod sync;
 #[cfg_attr(
@@ -49,6 +59,8 @@ pub mod tx;
     )
 )]
 pub(crate) mod types;
+
+pub use error::{Error, Position};
 
 #[cfg(test)]
 mod lab;

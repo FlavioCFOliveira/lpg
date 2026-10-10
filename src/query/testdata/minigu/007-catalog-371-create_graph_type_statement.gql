@@ -1,0 +1,4 @@
+create graph type /a/b {
+                (a:Person {id int, name string}),
+                (a) ~[:knows {since int}]~ (a)
+            }

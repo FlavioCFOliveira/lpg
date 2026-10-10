@@ -1,0 +1,8 @@
+$ cargo llvm-cov nextest -p lpg -E 'test(/^(error|gqlstatus|storage::error)::/)' --summary-only
+     Summary [   0.023s] 10 tests run: 10 passed, 426 skipped
+Filename                         Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+error.rs                             157                 2    98.73%          16                 0   100.00%          95                 0   100.00%           0                 0         -
+gqlstatus/mod.rs                      80                 0   100.00%          13                 0   100.00%          51                 0   100.00%           0                 0         -
+storage/error.rs                     283                15    94.70%          15                 2    86.67%         179                12    93.30%           0                 0         -
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

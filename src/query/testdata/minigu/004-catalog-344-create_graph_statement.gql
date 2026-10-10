@@ -1,0 +1,4 @@
+create graph if not exists myGraph { 
+                (a:Person {id int, name string}),
+                (a) ~[:knows {since int}]~ (a)
+            }
