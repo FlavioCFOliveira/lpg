@@ -326,18 +326,63 @@ impl<'e> Load<'e, '_, '_> {
     }
 
     /// The uniqueness check of TS-26 step 2 with the semantics of the
-    /// transactional import (rmp #58 DECISION 461): the candidates of
-    /// `sorter`, keyed by input ordinal, are taken in input order; a
-    /// record whose value of any uniqueness or node-key constraint an
-    /// earlier accepted record holds is rejected, and a rejected record
-    /// takes no value. This is the greedy fixpoint that repeated adjacent
-    /// checks converge to, computed in one ordered pass; its set of taken
-    /// values is charged to the cap, as the transactional import's is.
-    fn check_unique(&mut self, sorter: Sorter<'_>) -> Result<(), Error> {
-        let mut sorted = sorter.finish()?;
+    /// transactional import (rmp #58 DECISION 461): records are taken in
+    /// input order; a record whose value of any uniqueness or node-key
+    /// constraint an earlier accepted record holds is rejected, and a
+    /// rejected record takes no value.
+    ///
+    /// Memory stays with the sorts (TS-26 Memory; rmp #58 FINDING 471): a
+    /// record whose value is unique in every constraint never conflicts,
+    /// so the adjacent pass over the values sorted by (value, ordinal),
+    /// the `UniqueSorted` rule, first finds the records in an equal-value
+    /// group of two or more; their ordinals are sorted, and the
+    /// input-order resolution runs, merged with the candidates by ordinal,
+    /// over those records only, its set of taken values charged to the
+    /// cap. It grows with the conflicting records, not with the input.
+    fn check_unique(&mut self, u: UniqueSorts<'_>) -> Result<(), Error> {
+        // Pass 1: the ordinals of the records in a group of two or more.
+        let mut conflicting = self.sorter()?;
+        {
+            let mut values = u.values.finish()?;
+            let mut group: Option<Vec<u8>> = None;
+            let mut first: Option<[u8; 8]> = None;
+            while let Some((k, _)) = values.next_record()? {
+                let (prefix, ord) = k.split_at(k.len() - 8);
+                let ord: [u8; 8] = ord.try_into().expect("8 bytes");
+                if group.as_deref() == Some(prefix) {
+                    if let Some(f) = first.take() {
+                        conflicting.push(&f, &[])?;
+                    }
+                    conflicting.push(&ord, &[])?;
+                } else {
+                    group = Some(prefix.to_vec());
+                    first = Some(ord);
+                }
+            }
+        }
+        // Pass 2: the input-order resolution over those records.
+        let mut conflicting = conflicting.finish()?;
+        let mut candidates = u.candidates.finish()?;
         let mut taken: HashSet<Vec<u8>> = HashSet::new();
-        while let Some((_, v)) = sorted.next_record()? {
-            let mut f = Fields::new(v);
+        let mut last: Option<[u8; 8]> = None;
+        while let Some((ord, _)) = conflicting.next_record()? {
+            let ord: [u8; 8] = ord.try_into().expect("8 bytes");
+            if last == Some(ord) {
+                // In a group of two constraints: one record.
+                continue;
+            }
+            last = Some(ord);
+            let v = loop {
+                let Some((k, v)) = candidates.next_record()? else {
+                    return Err(crate::api::internal(
+                        "a conflicting record without candidate",
+                    ));
+                };
+                if k == ord {
+                    break v.to_vec();
+                }
+            };
+            let mut f = Fields::new(&v);
             let id = f.u64();
             let m = f.meta();
             let mut keys = Vec::new();
@@ -362,16 +407,29 @@ impl<'e> Load<'e, '_, '_> {
     }
 }
 
-/// The candidate record of [`Load::check_unique`]: its element, report
-/// fields and the value prefixes of its owned-index keys.
-fn unique_candidate(id: u64, m: &Meta, keys: &[(u64, Vec<u8>)]) -> Vec<u8> {
-    let mut v = id.to_be_bytes().to_vec();
-    put_meta(&mut v, m);
-    put_varint(&mut v, keys.len() as u64);
-    for (_, k) in keys {
-        put_bytes(&mut v, prefix_of(k));
+/// The sorts of [`Load::check_unique`]: the candidates by input ordinal,
+/// and their owned-index values by (value, ordinal).
+struct UniqueSorts<'e> {
+    candidates: Sorter<'e>,
+    values: Sorter<'e>,
+}
+
+impl UniqueSorts<'_> {
+    /// Adds the record of element `id` with owned-index keys `keys`.
+    fn add(&mut self, id: u64, m: &Meta, keys: &[(u64, Vec<u8>)]) -> Result<(), Error> {
+        let ord = m.ord.to_be_bytes();
+        let mut v = id.to_be_bytes().to_vec();
+        put_meta(&mut v, m);
+        put_varint(&mut v, keys.len() as u64);
+        for (_, k) in keys {
+            put_bytes(&mut v, prefix_of(k));
+        }
+        self.candidates.push(&ord, &v)?;
+        for (_, k) in keys {
+            self.values.push(&[prefix_of(k), &ord[..]].concat(), &[])?;
+        }
+        Ok(())
     }
-    v
 }
 
 /// Loads `source` into the empty graph `graph` (module documentation),
@@ -484,7 +542,10 @@ pub(crate) fn load(
     let mut starts = l.sorter()?;
     let mut ends = l.sorter()?;
     let mut unique = if l.constraints.has_unique(Entity::Node) {
-        Some(l.sorter()?)
+        Some(UniqueSorts {
+            candidates: l.sorter()?,
+            values: l.sorter()?,
+        })
     } else {
         None
     };
@@ -527,7 +588,7 @@ pub(crate) fn load(
             if let Some(u) = unique.as_mut() {
                 let keys = l.constraints.unique_keys(Entity::Node, id, &el);
                 if !keys.is_empty() {
-                    u.push(&m.ord.to_be_bytes(), &unique_candidate(id, &m, &keys))?;
+                    u.add(id, &m, &keys)?;
                 }
             }
             nodes_by_id.push(&id.to_be_bytes(), rec)?;
@@ -612,7 +673,10 @@ pub(crate) fn load(
     // Then by end: edge identifiers and per-record constraints.
     let mut edges_by_id = l.sorter()?;
     let mut unique = if l.constraints.has_unique(Entity::Edge) {
-        Some(l.sorter()?)
+        Some(UniqueSorts {
+            candidates: l.sorter()?,
+            values: l.sorter()?,
+        })
     } else {
         None
     };
@@ -645,7 +709,7 @@ pub(crate) fn load(
             if let Some(u) = unique.as_mut() {
                 let keys = l.constraints.unique_keys(Entity::Edge, id, &el);
                 if !keys.is_empty() {
-                    u.push(&m.ord.to_be_bytes(), &unique_candidate(id, &m, &keys))?;
+                    u.add(id, &m, &keys)?;
                 }
             }
             let mut tv = Vec::with_capacity(24 + rec.len());

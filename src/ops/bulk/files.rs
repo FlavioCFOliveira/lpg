@@ -136,8 +136,8 @@ pub(crate) fn io_error(e: io::Error) -> Error {
 pub(crate) struct Outputs<'s> {
     storage: &'s dyn Storage,
     location: PathBuf,
-    /// Each file's name and writer, in creation order.
-    files: Vec<(String, Writer)>,
+    /// Each file's name, temporary path and writer, in creation order.
+    files: Vec<(String, PathBuf, Writer)>,
     /// Names already renamed by a commit in progress.
     renamed: Vec<String>,
     committed: bool,
@@ -170,34 +170,40 @@ impl<'s> Outputs<'s> {
         })
     }
 
-    /// Creates `<name>.tmp` exclusively and returns its index for
-    /// [`Outputs::writer`]. A `.tmp` of that name, left by an interrupted
-    /// export or written by a concurrent export of the same name, fails
-    /// this export: replacing it would corrupt the other export's file
-    /// (rmp #57 FINDING 457).
+    /// Creates the temporary file of `name` and returns its index for
+    /// [`Outputs::writer`]. Each export has temporary names of its own,
+    /// `<name>.<16 random hexadecimal digits>.tmp`, created exclusively: a
+    /// concurrent export of the same name writes another file, and a file
+    /// left by a crash never blocks a later export (rmp #57 FINDINGs 457,
+    /// 473). The `tempfile` crate builds its names the same way, a random
+    /// suffix created with `O_EXCL` and retried on a collision (3.27.0
+    /// `src/util.rs` `create_helper`, `NUM_RETRIES`), and commits with a
+    /// no-replace persist (`persist_noclobber`: `renameat2` with
+    /// `RENAME_NOREPLACE`, else `link` and `unlink`, `src/file/imp/unix.rs:111-127`),
+    /// as [`Outputs::commit`] does.
     ///
     /// # Errors
     ///
-    /// 22N11 if `<name>.tmp` exists; 50N00.
+    /// 50N00.
     pub(crate) fn create(&mut self, name: &str) -> Result<usize, Error> {
-        let path = self.location.join(format!("{name}{TMP}"));
-        let file = match self.storage.create(&path) {
-            Ok(f) => f,
-            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {
-                return Err(invalid_argument(
-                    "a temporary output file exists: another export of that name runs, \
-                     or an interrupted one left it",
-                ));
+        let mut tries = 0;
+        let (path, file) = loop {
+            let path = self
+                .location
+                .join(format!("{name}.{:016x}{TMP}", rand::random::<u64>()));
+            match self.storage.create(&path) {
+                Ok(f) => break (path, f),
+                Err(e) if e.kind() == io::ErrorKind::AlreadyExists && tries < 8 => tries += 1,
+                Err(e) => return Err(io_error(e)),
             }
-            Err(e) => return Err(io_error(e)),
         };
-        self.files.push((name.to_owned(), Writer::new(file)));
+        self.files.push((name.to_owned(), path, Writer::new(file)));
         Ok(self.files.len() - 1)
     }
 
     /// The writer of file `i`.
     pub(crate) fn writer(&mut self, i: usize) -> &mut Writer {
-        &mut self.files[i].1
+        &mut self.files[i].2
     }
 
     /// Syncs every file, renames each to its name without replacing an
@@ -209,14 +215,13 @@ impl<'s> Outputs<'s> {
     ///
     /// 22N11 if a target was created during the export; 50N00.
     pub(crate) fn commit(mut self) -> Result<(), Error> {
-        for (_, w) in &mut self.files {
+        for (_, _, w) in &mut self.files {
             w.finish().map_err(io_error)?;
         }
-        for (name, _) in &self.files {
-            let tmp = self.location.join(format!("{name}{TMP}"));
+        for (name, tmp, _) in &self.files {
             match self
                 .storage
-                .rename_noreplace(&tmp, &self.location.join(name))
+                .rename_noreplace(tmp, &self.location.join(name))
             {
                 Ok(()) => {}
                 Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {
@@ -235,17 +240,17 @@ impl<'s> Outputs<'s> {
 impl Drop for Outputs<'_> {
     /// Removes every file of an export that did not commit: the renamed
     /// targets and the temporary files (UC-OPS-004 A1). A removal that
-    /// fails leaves a file the next export of that name refuses or, for a
-    /// `.tmp` file, replaces.
+    /// fails leaves a target the next export of that name refuses, or a
+    /// temporary file that blocks nothing.
     fn drop(&mut self) {
         if self.committed {
             return;
         }
-        for (name, _) in &self.files {
+        for (name, tmp, _) in &self.files {
             let path = if self.renamed.contains(name) {
                 self.location.join(name)
             } else {
-                self.location.join(format!("{name}{TMP}"))
+                tmp.clone()
             };
             let _ = self.storage.remove(&path);
         }

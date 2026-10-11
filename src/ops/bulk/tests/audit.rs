@@ -364,9 +364,9 @@ fn a_target_created_during_an_export_is_not_replaced() {
     assert!(!d.path().join("a.tmp").exists());
 }
 
-/// FINDING 457 (b): of two exports of one name, the second fails with
-/// 22N11 when it creates its temporary file, and the first commits its
-/// own content.
+/// FINDING 457 (b): two exports of one name write different temporary
+/// files; the first to commit wins and the other fails with 22N11; the
+/// file holds the winner's content.
 #[test]
 fn two_exports_of_one_name_never_mix() {
     let d = crate::test_support::graph_dir();
@@ -375,10 +375,110 @@ fn two_exports_of_one_name_never_mix() {
     let i = o1.create("a").unwrap();
     std::io::Write::write_all(o1.writer(i), b"AAAAAAAAAA").unwrap();
     let mut o2 = files::Outputs::new(&s, d.path(), &["a"]).unwrap();
-    assert_eq!(o2.create("a").unwrap_err().code(), "22N11");
-    drop(o2);
+    let j = o2.create("a").unwrap();
+    std::io::Write::write_all(o2.writer(j), b"BB").unwrap();
     o1.commit().unwrap();
+    assert_eq!(o2.commit().unwrap_err().code(), "22N11");
     assert_eq!(std::fs::read(d.path().join("a")).unwrap(), b"AAAAAAAAAA");
+    let left: Vec<_> = std::fs::read_dir(d.path()).unwrap().collect();
+    assert_eq!(left.len(), 1, "only the target");
+}
+
+/// FINDING 473: temporary files left by a crash (`d.tmp`, and an
+/// export's own `d.<random>.tmp`) do not block a new export of `d`.
+#[test]
+fn a_stale_temporary_file_does_not_block_an_export() {
+    let d = crate::test_support::graph_dir();
+    std::fs::write(d.path().join("d.tmp"), b"old").unwrap();
+    std::fs::write(d.path().join("d.0123456789abcdef.tmp"), b"old").unwrap();
+    let s = crate::storage::FsStorage;
+    let mut o = files::Outputs::new(&s, d.path(), &["d"]).unwrap();
+    let i = o.create("d").unwrap();
+    std::io::Write::write_all(o.writer(i), b"new").unwrap();
+    o.commit().unwrap();
+    assert_eq!(std::fs::read(d.path().join("d")).unwrap(), b"new");
+}
+
+/// Audit TEST 474 (mutation MR): a writer of the graph whose transaction
+/// began before an install that was undone commits: the undone install's
+/// marks are restored, so the writer is not refused as if a load had
+/// committed after its snapshot.
+#[test]
+fn a_writer_begun_before_an_undone_install_commits() {
+    let (d, e) = crate::tx::tests::db();
+    let dir = files_dir(&d, "x");
+    generated_jsonl(&e, &dir, "in", 48, 20, 10);
+    let mut writer = e.begin(Isolation::Serializable).unwrap();
+    let (reached, go) = pause_load(&e);
+    let e2 = Engine::handle(e.core_arc());
+    let dir2 = dir.clone();
+    let loader =
+        std::thread::spawn(move || import(&e2, &fast("/public/lpg", &dir2, "in.jsonl", "r")));
+    reached
+        .recv_timeout(crate::test_support::WAIT_BOUND)
+        .unwrap();
+    let mid = crate::test_support::mid_batch(&e);
+    go.send(()).unwrap();
+    mid.wait();
+    mid.fail.send(true).unwrap();
+    assert_eq!(loader.join().unwrap().unwrap_err().code(), "50N00");
+    *e.core().builds.hook.lock().unwrap() = None;
+    let g = writer.graph(DEFAULT_GRAPH_ID).unwrap();
+    writer.create_node(&g, &[], &[]).unwrap();
+    writer.commit().unwrap();
+}
+
+/// FINDING 471: a fast load of 200 000 nodes into a graph with a
+/// uniqueness constraint fits an 8 MiB cap: only records in an
+/// equal-value group take memory beyond the sorts. Two duplicate values
+/// are rejected as the transactional import would.
+#[test]
+fn a_large_fast_load_with_a_uniqueness_constraint_fits_a_small_cap() {
+    const N: usize = 200_000;
+    let (d, e) = crate::tx::tests::db_with_cap(8 << 20);
+    let dir = files_dir(&d, "x");
+    let a = e.token(TokenKind::Label, "A").unwrap();
+    let uid = e.token(TokenKind::PropertyKey, "uid").unwrap();
+    e.create_constraint(
+        DEFAULT_GRAPH_ID,
+        SchemaKind::Unique,
+        Entity::Node,
+        a,
+        &[uid],
+    )
+    .unwrap();
+    let mut text = String::with_capacity(N * 16);
+    text.push_str(":ID,:LABEL,uid:long\n");
+    for i in 0..N {
+        // Rows 10 and 20 repeat earlier values.
+        let u = match i {
+            10 => 3,
+            20 => 7,
+            _ => i,
+        };
+        text.push_str(&format!("{i},A,{u}\n"));
+    }
+    std::fs::write(dir.join("n.csv"), text).unwrap();
+    let s = import(
+        &e,
+        &nodes_req(
+            &dir,
+            "/public/lpg",
+            "r",
+            ImportMode::FastLoad,
+            OnInvalid::Skip,
+        ),
+    )
+    .unwrap();
+    assert_eq!((s.nodes, s.invalid), (N as u64 - 2, 2));
+    let lines = report_lines(&dir, "r");
+    let mut rec: Vec<u64> = lines
+        .iter()
+        .map(|l| l["record"].as_u64().unwrap())
+        .collect();
+    rec.sort_unstable();
+    assert_eq!(rec, vec![12, 22]);
+    assert!(e.accountant().peak() <= 8 << 20);
 }
 
 /// FINDING 458: a dump block is charged to the memory cap before its
