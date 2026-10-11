@@ -471,3 +471,126 @@ fn readers_during_a_load_of_a_three_level_graph_see_it_empty_then_whole() {
     *e.core().builds.hook.lock().unwrap() = None;
     assert_intact(&e, "three-level load");
 }
+
+/// A GraphML `<default>` (NetworkX `readwrite/graphml.py`): in both
+/// import modes a node without the key's data gets the default, and a
+/// node with it keeps its value.
+#[test]
+fn a_graphml_default_applies_to_nodes_without_the_data_in_both_modes() {
+    for mode in MODES {
+        let (d, e) = crate::tx::tests::db();
+        let dir = files_dir(&d, "x");
+        std::fs::write(
+            dir.join("g.graphml"),
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+<key id="d0" for="node" attr.name="w" attr.type="double"><default>1.5</default></key>
+<key id="d1" for="node" attr.name="uid" attr.type="long"/>
+<graph id="G" edgedefault="directed">
+<node id="n0"><data key="d1">0</data></node>
+<node id="n1"><data key="d1">1</data><data key="d0">2.5</data></node>
+</graph></graphml>
+"#,
+        )
+        .unwrap();
+        let mut req = request(
+            Format::GraphMl,
+            "/public/lpg",
+            &dir,
+            &["g.graphml".into()],
+            "r",
+        );
+        req.mode = mode;
+        let s = import(&e, &req).unwrap();
+        assert_eq!((s.nodes, s.edges, s.invalid), (2, 0, 0), "{mode:?}");
+        let w: Vec<(i64, Value)> = content(&e, DEFAULT_GRAPH_ID)
+            .nodes
+            .iter()
+            .map(|n| (n.0, prop(&n.2, "w").clone()))
+            .collect();
+        assert_eq!(
+            w,
+            [(0, Value::Float(1.5)), (1, Value::Float(2.5))],
+            "{mode:?}"
+        );
+    }
+}
+
+/// The Neo4j CSV probe of the Sprint 4 plan, Appendix A, which
+/// `neo4j-admin database import` accepts: point header options
+/// (`point{srid:7203}`, `point{srid:4979}`), Cartesian point maps with and
+/// without `srid`, a geographic map (`longitude`, `latitude`, `height`) and
+/// the doubles `NaN` and `Infinity`. Both import modes read the points
+/// Neo4j returns for it and the two doubles.
+#[test]
+fn the_neo4j_point_probe_imports_in_both_modes() {
+    use crate::types::Srid::{Cartesian2D, Wgs84_3D};
+    let p = |srid, c: &[f64]| Value::Point(Box::new(crate::types::Point::new(srid, c).unwrap()));
+    for mode in MODES {
+        let (d, e) = crate::tx::tests::db();
+        let dir = files_dir(&d, "x");
+        std::fs::write(
+            dir.join("nodes.csv"),
+            ":ID,:LABEL,loc:point{srid:7203},loc3:point{srid:4979},d:double\n\
+             n1,A;B,\"{x:1.5,y:2.0}\",\"{longitude:1.0,latitude:2.0,height:3.0}\",NaN\n\
+             n2,A,\"{x:-1.0,y:0.25,srid:7203}\",\"{longitude:1.0,latitude:2.0,height:3.0}\",Infinity\n",
+        )
+        .unwrap();
+        std::fs::write(dir.join("edges.csv"), ":START_ID,:END_ID,:TYPE\nn1,n2,R\n").unwrap();
+        let mut req = request(
+            Format::Csv,
+            "/public/lpg",
+            &dir,
+            &["nodes.csv".into(), "edges.csv".into()],
+            "r",
+        );
+        req.mode = mode;
+        let s = import(&e, &req).unwrap();
+        assert_eq!((s.nodes, s.edges, s.invalid), (2, 1, 0), "{mode:?}");
+        let mut tx = e.begin(Isolation::Snapshot).unwrap();
+        let g = tx.graph(DEFAULT_GRAPH_ID).unwrap();
+        let mut nodes = Vec::new();
+        each_node(&e, &mut tx, &g, &mut |n| {
+            let mut labels = n.labels;
+            labels.sort();
+            nodes.push((n.id, labels, n.props));
+            Ok(())
+        })
+        .unwrap();
+        let mut edges = Vec::new();
+        each_edge(&e, &mut tx, &g, &mut |ed| {
+            edges.push((ed.src, ed.dst, ed.ty));
+            Ok(())
+        })
+        .unwrap();
+        tx.abort();
+        // The node with two labels is n1.
+        nodes.sort_by_key(|n| std::cmp::Reverse(n.1.len()));
+        let geo = p(Wgs84_3D, &[1.0, 2.0, 3.0]);
+        let want = [
+            (
+                vec!["A", "B"],
+                p(Cartesian2D, &[1.5, 2.0]),
+                Value::Float(f64::NAN),
+            ),
+            (
+                vec!["A"],
+                p(Cartesian2D, &[-1.0, 0.25]),
+                Value::Float(f64::INFINITY),
+            ),
+        ];
+        assert_eq!(nodes.len(), 2, "{mode:?}");
+        for ((_, labels, props), (l, loc, dv)) in nodes.iter().zip(&want) {
+            assert_eq!(labels, l, "{mode:?}");
+            assert!(bit_eq(prop(props, "loc"), loc), "{mode:?}: {props:?}");
+            assert!(bit_eq(prop(props, "loc3"), &geo), "{mode:?}: {props:?}");
+            assert!(bit_eq(prop(props, "d"), dv), "{mode:?}: {props:?}");
+        }
+        assert_eq!(
+            edges,
+            [(nodes[0].0, nodes[1].0, "R".to_owned())],
+            "{mode:?}"
+        );
+        assert_intact(&e, "neo4j probe");
+    }
+}

@@ -5,9 +5,10 @@
 //!   [`StorageFile`], each with a fixed buffer outside the memory cap, as
 //!   the 1 MiB copy buffer is (TS-26 Memory, TS-08).
 //! - [`Outputs`]: the files of one export or one report. Each is written
-//!   as `<name>.tmp`; [`Outputs::commit`] syncs each, renames it to
-//!   `<name>` and syncs the location, as the backup's `MANIFEST` is written
-//!   (TS-26; `pg_basebackup`'s durable rename, R-PG
+//!   as `<name>.<16 random hex>.tmp`, created exclusively;
+//!   [`Outputs::commit`] syncs each, renames it to `<name>` with
+//!   `rename_noreplace` and syncs the location, as the backup's `MANIFEST`
+//!   is written (TS-26; `pg_basebackup`'s durable rename, R-PG
 //!   `src/bin/pg_basebackup/pg_basebackup.c:2298-2321`, studied only).
 //!   Creation fails if a target exists; a failure, or dropping the outputs
 //!   before the commit, removes every file they wrote (UC-OPS-004 A1).

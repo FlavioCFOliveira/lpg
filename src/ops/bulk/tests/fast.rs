@@ -148,52 +148,7 @@ fn a_fast_load_with_constraints_and_indexes_equals_the_input() {
 fn the_invalid_records_of_a_fast_load_are_reported() {
     let (d, e) = crate::tx::tests::db();
     let dir = files_dir(&d, "x");
-    let t = |k, n: &str| e.token(k, n).unwrap();
-    let (a, b) = (t(TokenKind::Label, "A"), t(TokenKind::Label, "B"));
-    let (uid, p1) = (
-        t(TokenKind::PropertyKey, "uid"),
-        t(TokenKind::PropertyKey, "p1"),
-    );
-    e.create_constraint(
-        DEFAULT_GRAPH_ID,
-        SchemaKind::Unique,
-        Entity::Node,
-        a,
-        &[uid],
-    )
-    .unwrap();
-    e.create_constraint(
-        DEFAULT_GRAPH_ID,
-        SchemaKind::Exists,
-        Entity::Node,
-        b,
-        &[uid],
-    )
-    .unwrap();
-    e.create_constraint(
-        DEFAULT_GRAPH_ID,
-        SchemaKind::Type(TypeSet::of(PropertyType::Integer)),
-        Entity::Node,
-        a,
-        &[p1],
-    )
-    .unwrap();
-    std::fs::write(
-        dir.join("n.csv"),
-        ":ID,:LABEL,uid:long,p1:lpg:annotated\n\
-         n1,A,1,INTEGER:5\n\
-         n1,A,2,\n\
-         n3,B,,\n\
-         n4,A,1,\n\
-         n5,A,7,STRING:'x'\n\
-         n6,,6,\n",
-    )
-    .unwrap();
-    std::fs::write(
-        dir.join("e.csv"),
-        ":START_ID,:END_ID,:TYPE\nn1,n9,R\nn1,n3,R\nn1,n4,R\nn1,n5,R\nn1,n6,R\n",
-    )
-    .unwrap();
+    invalid_records_input(&e, &dir);
     let req = |report: &str, on: OnInvalid| {
         let mut r = ImportRequest::csv(
             "/public/lpg",
@@ -247,6 +202,207 @@ fn the_invalid_records_of_a_fast_load_are_reported() {
             == 3
     );
     assert_intact(&e, "skip");
+}
+
+/// The input of the invalid-record tests: a uniqueness, an existence and
+/// a property type constraint on the default graph, and `n.csv` and
+/// `e.csv` in `dir`. Every record is invalid except the first `n1` row,
+/// the `n6` row and the edge between them.
+fn invalid_records_input(e: &Engine, dir: &Path) {
+    let t = |k, n: &str| e.token(k, n).unwrap();
+    let (a, b) = (t(TokenKind::Label, "A"), t(TokenKind::Label, "B"));
+    let (uid, p1) = (
+        t(TokenKind::PropertyKey, "uid"),
+        t(TokenKind::PropertyKey, "p1"),
+    );
+    e.create_constraint(
+        DEFAULT_GRAPH_ID,
+        SchemaKind::Unique,
+        Entity::Node,
+        a,
+        &[uid],
+    )
+    .unwrap();
+    e.create_constraint(
+        DEFAULT_GRAPH_ID,
+        SchemaKind::Exists,
+        Entity::Node,
+        b,
+        &[uid],
+    )
+    .unwrap();
+    e.create_constraint(
+        DEFAULT_GRAPH_ID,
+        SchemaKind::Type(TypeSet::of(PropertyType::Integer)),
+        Entity::Node,
+        a,
+        &[p1],
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("n.csv"),
+        ":ID,:LABEL,uid:long,p1:lpg:annotated\n\
+         n1,A,1,INTEGER:5\n\
+         n1,A,2,\n\
+         n3,B,,\n\
+         n4,A,1,\n\
+         n5,A,7,STRING:'x'\n\
+         n6,,6,\n",
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("e.csv"),
+        ":START_ID,:END_ID,:TYPE\nn1,n9,R\nn1,n3,R\nn1,n4,R\nn1,n5,R\nn1,n6,R\n",
+    )
+    .unwrap();
+}
+
+/// The report lines of report `name` in `dir` as sorted (file, record,
+/// GQLSTATUS) triples.
+fn report_set(dir: &Path, name: &str) -> Vec<(String, u64, String)> {
+    let mut v: Vec<(String, u64, String)> = report_lines(dir, name)
+        .iter()
+        .map(|l| {
+            (
+                l["file"].as_str().unwrap().to_owned(),
+                l["record"].as_u64().unwrap(),
+                l["gqlstatus"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect();
+    v.sort();
+    v
+}
+
+/// The (file, record, GQLSTATUS) triples `want` as owned values.
+fn triples(want: &[(&str, u64, &str)]) -> Vec<(String, u64, String)> {
+    want.iter()
+        .map(|(f, r, c)| ((*f).to_owned(), *r, (*c).to_owned()))
+        .collect()
+}
+
+/// The input of `the_invalid_records_of_a_fast_load_are_reported`, under
+/// abort and skip, gives the same error, counts and report lines with a
+/// transactional import as with a fast load.
+#[test]
+fn both_import_modes_report_the_same_invalid_records() {
+    for mode in [ImportMode::Transactional, ImportMode::FastLoad] {
+        let (d, e) = crate::tx::tests::db();
+        let dir = files_dir(&d, "x");
+        invalid_records_input(&e, &dir);
+        let req = |report: &str, on: OnInvalid| {
+            let mut r = ImportRequest::csv(
+                "/public/lpg",
+                &dir,
+                vec![InputFile::new("n.csv")],
+                vec![InputFile::new("e.csv")],
+                report,
+            );
+            r.mode = mode;
+            r.on_invalid = on;
+            r
+        };
+        let err = import(&e, &req("abort", OnInvalid::Abort)).unwrap_err();
+        assert_eq!(err.code(), "22N05", "{mode:?}");
+        assert_eq!(
+            report_set(&dir, "abort"),
+            triples(&[("n.csv", 3, "22N05")]),
+            "{mode:?}"
+        );
+        assert!(content(&e, DEFAULT_GRAPH_ID).nodes.is_empty(), "{mode:?}");
+        let s = import(&e, &req("skip", OnInvalid::Skip)).unwrap();
+        assert_eq!((s.nodes, s.edges, s.invalid), (2, 1, 8), "{mode:?}");
+        assert_eq!(
+            report_set(&dir, "skip"),
+            triples(&[
+                ("e.csv", 2, "22N05"),
+                ("e.csv", 3, "22N05"),
+                ("e.csv", 4, "22N05"),
+                ("e.csv", 5, "22N05"),
+                ("n.csv", 3, "22N05"),
+                ("n.csv", 4, "22N77"),
+                ("n.csv", 5, "22N79"),
+                ("n.csv", 6, "22N78"),
+            ]),
+            "{mode:?}"
+        );
+        assert_intact(&e, "skip");
+    }
+}
+
+/// A uniqueness constraint on an edge type, under skip and abort, rejects
+/// the same edges with 22N79 in both import modes: skip loads the rest,
+/// abort leaves the graph empty. An edge of another type is not checked.
+#[test]
+fn both_import_modes_enforce_edge_uniqueness() {
+    for mode in [ImportMode::Transactional, ImportMode::FastLoad] {
+        for on in [OnInvalid::Skip, OnInvalid::Abort] {
+            let what = format!("{mode:?} {on:?}");
+            let (d, e) = crate::tx::tests::db();
+            let dir = files_dir(&d, "x");
+            let r = e.token(TokenKind::EdgeType, "R").unwrap();
+            let k = e.token(TokenKind::PropertyKey, "k").unwrap();
+            e.create_constraint(DEFAULT_GRAPH_ID, SchemaKind::Unique, Entity::Edge, r, &[k])
+                .unwrap();
+            std::fs::write(dir.join("n.csv"), ":ID\nn1\nn2\n").unwrap();
+            std::fs::write(
+                dir.join("e.csv"),
+                ":START_ID,:END_ID,:TYPE,k:long\n\
+                 n1,n2,R,1\n\
+                 n2,n1,R,1\n\
+                 n1,n1,R,2\n\
+                 n2,n2,R,2\n\
+                 n1,n2,S,1\n",
+            )
+            .unwrap();
+            let mut req = ImportRequest::csv(
+                "/public/lpg",
+                &dir,
+                vec![InputFile::new("n.csv")],
+                vec![InputFile::new("e.csv")],
+                "rep",
+            );
+            req.mode = mode;
+            req.on_invalid = on;
+            let res = import(&e, &req);
+            let (mut nodes, mut edges) = (0, 0);
+            let mut tx = e.begin(Isolation::Snapshot).unwrap();
+            let g = tx.graph(DEFAULT_GRAPH_ID).unwrap();
+            each_node(&e, &mut tx, &g, &mut |_| {
+                nodes += 1;
+                Ok(())
+            })
+            .unwrap();
+            each_edge(&e, &mut tx, &g, &mut |_| {
+                edges += 1;
+                Ok(())
+            })
+            .unwrap();
+            tx.abort();
+            match on {
+                OnInvalid::Skip => {
+                    let s = res.unwrap();
+                    assert_eq!((s.nodes, s.edges, s.invalid), (2, 3, 2), "{what}");
+                    assert_eq!(
+                        report_set(&dir, "rep"),
+                        triples(&[("e.csv", 3, "22N79"), ("e.csv", 5, "22N79")]),
+                        "{what}"
+                    );
+                    assert_eq!((nodes, edges), (2, 3), "{what}");
+                }
+                OnInvalid::Abort => {
+                    assert_eq!(res.unwrap_err().code(), "22N79", "{what}");
+                    assert_eq!(
+                        report_set(&dir, "rep"),
+                        triples(&[("e.csv", 3, "22N79")]),
+                        "{what}"
+                    );
+                    assert_eq!((nodes, edges), (0, 0), "{what}");
+                }
+            }
+            assert_intact(&e, &what);
+        }
+    }
 }
 
 /// A hook that pauses a fast load at [`Phase::LoadBuilt`] until `go`

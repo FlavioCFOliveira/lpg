@@ -9,7 +9,8 @@ use jiff::civil::{Date, DateTime, Time};
 
 /// Node 12 with label `A` and property `name`, edge 7 of type `R` from 12
 /// to 13, and edge 5 of type `R` from 1 to 2: the contents of the TS-21
-/// node, edge and path examples.
+/// node, edge and path examples. Edge 9 of type `R` from 12 to 13 has the
+/// properties `s` and `w`.
 struct Example;
 
 impl Contents for Example {
@@ -25,6 +26,15 @@ impl Contents for Example {
         match id {
             7 => ("R".into(), 12, 13, Vec::new()),
             5 => ("R".into(), 1, 2, Vec::new()),
+            9 => (
+                "R".into(),
+                12,
+                13,
+                vec![
+                    ("s".into(), Value::string("a")),
+                    ("w".into(), Value::Float(1.5)),
+                ],
+            ),
             _ => (String::new(), 0, 0, Vec::new()),
         }
     }
@@ -258,6 +268,17 @@ fn ts21_edge() {
         &Value::Edge(7),
         "RELATIONSHIP",
         "RECORD {id: 7, type: 'R', start: 12, end: 13, properties: RECORD {}}",
+    );
+}
+
+/// rmp #56: the edge record form holds the edge's properties, and the
+/// text reads back to the edge, bit-equal.
+#[test]
+fn an_edge_record_form_holds_its_properties() {
+    row(
+        &Value::Edge(9),
+        "RELATIONSHIP",
+        "RECORD {id: 9, type: 'R', start: 12, end: 13, properties: RECORD {s: 'a', w: 1.5}}",
     );
 }
 

@@ -55,13 +55,16 @@ impl Storage for FsStorage {
 
     /// `renameat2(RENAME_NOREPLACE)` (Linux 3.15; rustix
     /// `renameat_with`); on a file system that does not support the flag
-    /// (`EINVAL`), `link(2)`, which fails with `EEXIST` if `to` exists, then
-    /// `unlink(2)` of `from`.
+    /// (`EINVAL`) or a kernel without the call (`ENOSYS`), `link(2)`, which
+    /// fails with `EEXIST` if `to` exists, then `unlink(2)` of `from`, as
+    /// tempfile 3.27.0 `src/file/imp/unix.rs` `persist` does (MIT/Apache-2.0).
     fn rename_noreplace(&self, from: &Path, to: &Path) -> io::Result<()> {
         use rustix::fs::{CWD, RenameFlags, renameat_with};
         match renameat_with(CWD, from, CWD, to, RenameFlags::NOREPLACE) {
             Ok(()) => Ok(()),
-            Err(rustix::io::Errno::INVAL) => link_then_unlink(from, to, &|p| fs::remove_file(p)),
+            Err(rustix::io::Errno::INVAL | rustix::io::Errno::NOSYS) => {
+                link_then_unlink(from, to, &|p| fs::remove_file(p))
+            }
             Err(e) => Err(e.into()),
         }
     }
