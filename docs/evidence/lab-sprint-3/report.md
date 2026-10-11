@@ -203,7 +203,7 @@ The full GQL texts of IS1–IS7 are in `src/lab/micro.rs` and in the raw file. L
 |---|---|---|---|
 | Gates after the dispute decisions (DECISION 386 on rmp #52) | `LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs .config/gates.sh` (XFS mounted: `/dev/loop59`) | exit 0, 0 failed: fmt, clippy, `--cfg fuzzing` clippy clean; nextest 510 passed, 28 skipped; loom 13; shuttle 4; stress 69 passed | [raw](raw/gates-disputes.txt) |
 | Full suite, ext4 lab directory | `LPG_LAB_EXT4=/data/tmp/lpg-lab cargo nextest run -p lpg --no-fail-fast` | exit 0; 508 passed (2 slow), 28 skipped | [log](raw/nextest-full-round-d.log) |
-| XFS lab directory | `LPG_LAB_XFS=/mnt/lpg-xfs` | **not run**: `/mnt/lpg-xfs` is not mounted (root needed) | – |
+| XFS lab directory | `LPG_LAB_XFS=/mnt/lpg-xfs` | **run after round D**: not mounted during round D; the full runs of the test speed-up (`test-speed.md`, 508 passed) and of the dispute gates (row above, 510 passed) both ran on XFS (`/dev/loop59`) | [raw](raw/nextest-full-after-test-speed.log), [raw](raw/gates-disputes.txt) |
 | Stress profile | `LPG_LAB_EXT4=/data/tmp/lpg-lab cargo nextest run -p lpg --profile stress --no-fail-fast` | exit 0; 69 passed, 16 copies each | [log](raw/stress-round-d.log) |
 | loom | `RUSTFLAGS="--cfg loom" cargo test -p lpg --lib --release --target-dir /dev/shm/lpg-target/loom loom_` | exit 0; 13 passed | [log](raw/loom-round-d.log) |
 | shuttle | `RUSTFLAGS="--cfg shuttle" cargo test -p lpg --lib --target-dir /dev/shm/lpg-target/shuttle shuttle_` | exit 0; 4 passed | [log](raw/shuttle-round-d.log) |
