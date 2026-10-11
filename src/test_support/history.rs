@@ -8,10 +8,10 @@
 //! read an integer or nil). [`History::to_edn`] renders the events as EDN,
 //! one map per line, the format `elle-cli` reads.
 //!
-//! [`elle`] writes a history under `target/lpg-histories/` (evidence, not
-//! graph data, so never in `/tmp/lpgram`) and checks it with `elle-cli`, an
-//! external tool run as `java -jar "$LPG_ELLE_CLI"` (TS-30: Elle runs
-//! outside the crate).
+//! [`elle`] writes a history under `/tmp/lpg-histories/` (a tool
+//! intermediate, not graph data, so never in `/tmp/lpgram`) and checks it
+//! with `elle-cli`, an external tool run as `java -jar "$LPG_ELLE_CLI"`
+//! (TS-30: Elle runs outside the crate).
 //!
 //! **Origin.** The event and operation types and their EDN rendering follow
 //! Turso's `testing/concurrent-simulator/elle.rs` (R-TURSO @ `8cc059b`, MIT
@@ -189,7 +189,7 @@ fn elle_jar() -> PathBuf {
     p
 }
 
-/// Writes `edn` to `target/lpg-histories/<name>-<pid>.edn` and checks it
+/// Writes `edn` to `/tmp/lpg-histories/<name>-<pid>.edn` and checks it
 /// with `elle-cli` under `model` (`list-append` or `rw-register`) and
 /// `consistency` (such as `serializable`): the history is valid when it
 /// has none of the anomalies that model prohibits. The process
@@ -203,11 +203,18 @@ fn elle_jar() -> PathBuf {
 /// If the file cannot be written, Java cannot run, or the checker reports
 /// neither valid nor invalid (for instance `unknown`).
 pub(crate) fn elle(name: &str, edn: &str, model: &str, consistency: &str) -> Verdict {
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("target/lpg-histories");
-    std::fs::create_dir_all(&dir).expect("create target/lpg-histories");
+    // A tool intermediate: on the RAM-backed `/tmp` (CLAUDE.md, "Build
+    // output in RAM"), never in the repository on disk.
+    let dir = std::env::temp_dir().join("lpg-histories");
+    std::fs::create_dir_all(&dir).expect("create /tmp/lpg-histories");
     let path = dir.join(format!("{name}-{}.edn", std::process::id()));
     std::fs::write(&path, edn).expect("write the history");
     let out = Command::new("java")
+        // The C1 compiler only: the checker's output is byte-identical to a
+        // run with the default tiered compilation (11 histories compared,
+        // docs/evidence/lab-sprint-3/test-speed.md), and the JVM spends
+        // 2.5 times less CPU, which the concurrent tests of a run need.
+        .arg("-XX:TieredStopAtLevel=1")
         .arg("-jar")
         .arg(elle_jar())
         // The anomalies searched for are those `consistency` prohibits;

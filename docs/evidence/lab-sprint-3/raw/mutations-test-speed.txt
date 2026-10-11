@@ -1,0 +1,41 @@
+# Round D fix-mutations M1-M7 re-applied together on the test-speed tree (same set as raw/mutations-round-d.txt), then restored (cmp identical)
+# Command: cargo nextest run -p lpg -E 'test(/^query::(binder::tests::(undefined_variables|each_approved)|exec::tests::conformance)/) | test(/^tck::/)' --no-fail-fast
+        PASS [   0.025s] ( 1/13) lpg tck::the_selection_manifest_matches_the_vendored_files
+        PASS [   0.026s] ( 2/13) lpg query::binder::tests::each_approved_construct_binds
+        FAIL [   0.027s] ( 3/13) lpg query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail
+        FAIL [   0.027s] ( 4/13) lpg query::exec::tests::conformance::iso_8601_date_forms_are_dates
+        FAIL [   0.028s] ( 5/13) lpg query::exec::tests::conformance::a_non_boolean_search_condition_raises_22g03
+        FAIL [   0.027s] ( 6/13) lpg query::exec::tests::conformance::a_set_on_a_null_element_counts_no_property
+        PASS [   0.042s] ( 7/13) lpg tck::every_scenario_names_its_clause_or_feature_code
+        FAIL [   0.047s] ( 8/13) lpg query::exec::tests::conformance::incompatible_temporal_units_raise_22g14
+        FAIL [   0.052s] ( 9/13) lpg query::exec::tests::conformance::two_assignments_to_one_property_raise_22g0m
+        PASS [   0.365s] (10/13) lpg tck::a_wrong_expected_row_fails_the_runner
+        PASS [   0.528s] (11/13) lpg tck::opengql_tck_selected_scenarios_pass
+        FAIL [   0.663s] (12/13) lpg tck::lpg_scenarios_pass
+    FAIL lpg/gql-compat/30-conditions.feature: Scenario: [condition/22g03/non-boolean-search-condition] A search condition that is not a boolean raises invalid value type
+    FAIL lpg/gql-compat/30-conditions.feature: Scenario: [condition/22g0m/multiple-assignments-to-one-property] Assigning the same property twice in one statement is a multiple assignment
+    FAIL lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22014/incompatible-temporal-units] Adding hours to a date raises incompatible temporal instant unit groups
+        FAIL [   0.942s] (13/13) lpg tck::opencypher_tck_selected_scenarios_pass
+    FAIL opencypher/clauses/match/Match3.feature: Scenario: [29] Fail when re-using a relationship in the same pattern
+    FAIL opencypher/clauses/set/Set1.feature: Scenario: [8] Ignore null when setting property
+    FAIL opencypher/clauses/set/Set4.feature: Scenario: [5] Ignore null when setting properties using an overriding map
+    FAIL opencypher/expressions/pattern/Pattern1.feature: Scenario: [11] Fail on checking self pattern
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-07' | '2015-07-01']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['201507' | '2015-07-01']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-W30-2' | '2015-07-21']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015W302' | '2015-07-21']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-W30' | '2015-07-20']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015W30' | '2015-07-20']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-202' | '2015-07-21']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015202' | '2015-07-21']
+    FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015' | '2015-01-01']
+     Summary [   0.943s] 13 tests run: 5 passed, 8 failed, 523 skipped
+        FAIL [   0.027s] ( 3/13) lpg query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail
+        FAIL [   0.027s] ( 4/13) lpg query::exec::tests::conformance::iso_8601_date_forms_are_dates
+        FAIL [   0.028s] ( 5/13) lpg query::exec::tests::conformance::a_non_boolean_search_condition_raises_22g03
+        FAIL [   0.027s] ( 6/13) lpg query::exec::tests::conformance::a_set_on_a_null_element_counts_no_property
+        FAIL [   0.047s] ( 8/13) lpg query::exec::tests::conformance::incompatible_temporal_units_raise_22g14
+        FAIL [   0.052s] ( 9/13) lpg query::exec::tests::conformance::two_assignments_to_one_property_raise_22g0m
+        FAIL [   0.663s] (12/13) lpg tck::lpg_scenarios_pass
+        FAIL [   0.942s] (13/13) lpg tck::opencypher_tck_selected_scenarios_pass
+# Restored: git diff --quiet -- src/query src/types → exit 0 (identical to HEAD)

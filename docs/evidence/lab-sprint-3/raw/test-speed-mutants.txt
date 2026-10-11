@@ -1,0 +1,42 @@
+# Hand mutants of the parallelised suites (test-speed), each applied, run and reverted (git status clean after each)
+
+# MF: src/storage/wal.rs group write path, the sync_data loop over the touched segments removed (applied, run, reverted)
+# Command: LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg -E 'test(=suites::fault::commits)' --no-fail-fast
+        FAIL [   0.065s] (1/1) lpg suites::fault::commits
+    thread '<unnamed>' (2209436) panicked at src/suites/fault.rs:146:10:
+    called `Result::unwrap()` on an `Err` value: Corruption("page 7 fails its checksum")
+    thread '<unnamed>' (2209437) panicked at src/suites/fault.rs:146:10:
+    thread '<unnamed>' (2209438) panicked at src/suites/fault.rs:146:10:
+    thread '<unnamed>' (2209439) panicked at src/suites/fault.rs:146:10:
+     Summary [   0.067s] 1 test run: 0 passed, 1 failed, 535 skipped
+exit 0
+
+# MF2: src/storage/checkpoint.rs:220, the checkpoint's data-file sync before the CONTROL write removed (applied, run, reverted)
+# Command: LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg -E 'test(=suites::fault::checkpoint)' --no-fail-fast --no-capture
+thread '<unnamed>' (2210305) panicked at src/suites/fault.rs:146:10:
+called `Result::unwrap()` on an `Err` value: Corruption("page 7 fails its checksum")
+thread '<unnamed>' (2210306) panicked at src/suites/fault.rs:146:10:
+thread '<unnamed>' (2210307) panicked at src/suites/fault.rs:146:10:
+thread '<unnamed>' (2210308) panicked at src/suites/fault.rs:146:10:
+        FAIL [   1.099s] (1/1) lpg suites::fault::checkpoint
+     Summary [   1.100s] 1 test run: 0 passed, 1 failed, 535 skipped
+exit 100
+
+# MD: src/suites/fault.rs run_all, an assertion that fails only the last planned run of each directory (applied, run, reverted)
+# Command: LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg -E 'test(=suites::fault::commits)' --no-fail-fast --no-capture
+thread '<unnamed>' (2211575) panicked at src/suites/fault.rs:757:29:
+MUTANT MD: run 2077 of 2078 (FailCopy(1381)) fails
+thread '<unnamed>' (2211578) panicked at src/suites/fault.rs:757:29:
+        FAIL [  31.295s] (1/1) lpg suites::fault::commits
+     Summary [  31.296s] 1 test run: 0 passed, 1 failed, 535 skipped
+exit 100
+
+# MK: src/storage/recovery.rs replay loop, the pages of the last valid WAL group are never written (applied, run, reverted)
+# Command: LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg -E 'test(=suites::kill::kill_and_reopen)' --no-fail-fast --no-capture
+thread '<unnamed>' (2238386) panicked at src/suites/kill.rs:658:9:
+iteration 0: thread 0 of iteration 0: 17 commits present, last printed 17
+thread '<unnamed>' (2238385) panicked at src/suites/kill.rs:658:9:
+iteration 9: thread 0 of iteration 9: 33 commits present, last printed 33
+        FAIL [   2.032s] (1/1) lpg suites::kill::kill_and_reopen
+     Summary [   2.033s] 1 test run: 0 passed, 1 failed, 535 skipped
+exit 100

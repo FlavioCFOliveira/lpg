@@ -2,8 +2,8 @@
 //! rmp #20) and the `kill -9` suite ([`kill`], rmp #21).
 //!
 //! Both run in full in the directories named by `LPG_LAB_EXT4` and
-//! `LPG_LAB_XFS` (NFR-PLAT-004), one directory after the other, and print
-//! their counts. When neither variable is set, as in the default
+//! `LPG_LAB_XFS` (NFR-PLAT-004), both directories at once ([`each_dir`]),
+//! and print their counts. When neither variable is set, as in the default
 //! `cargo nextest run -p lpg`, they run a sample in `/tmp/lpgram`
 //! ([`crate::test_support::graph_base`], a `tmpfs`), so that the default
 //! run stays fast. The acceptance runs are the ones on ext4 and XFS: a
@@ -50,6 +50,24 @@ pub(crate) fn suite_dirs() -> (Vec<(String, PathBuf)>, bool) {
     } else {
         (dirs, true)
     }
+}
+
+/// Runs `f` for each suite directory of [`suite_dirs`], all at once, each
+/// on its own thread, and raises again the first panic once every
+/// directory has ended. A suite's runs in one directory share nothing with
+/// its runs in another, which is on another file system.
+pub(crate) fn each_dir(dirs: &[(String, PathBuf)], f: impl Fn(&str, &std::path::Path) + Sync) {
+    let f = &f;
+    std::thread::scope(|sc| {
+        let runs: Vec<_> = dirs
+            .iter()
+            .map(|(fs, base)| sc.spawn(move || f(fs, base)))
+            .collect();
+        let panics: Vec<_> = runs.into_iter().filter_map(|h| h.join().err()).collect();
+        if let Some(p) = panics.into_iter().next() {
+            std::panic::resume_unwind(p);
+        }
+    });
 }
 
 /// The file-system type and source of the mount that holds `dir`, as

@@ -130,6 +130,9 @@ Checked between 2026-09-24 and 2026-10-08. Citations added on or after 2026-10-0
 | D-JAVA | Java SE API, `Double.valueOf(String)` (round to nearest under IEEE 754); The Java Language Specification, §5.1.2 "Widening Primitive Conversion" |
 | D-UCD | Unicode Character Database, `DerivedCoreProperties.txt` of versions 13.0.0 to 16.0.0: <https://www.unicode.org/Public/> (downloaded 2026-10-08) |
 | D-SHUTTLE | shuttle 0.9.5: <https://docs.rs/shuttle/0.9.5/shuttle/> ("randomized testing, rather than the exhaustive testing that Loom offers"; `shuttle::sync` provides `Mutex`, `RwLock`, `Condvar`, `Arc`, `atomic`) |
+| D-RUST190 | Rust blog, "Announcing Rust 1.90.0" (2025-09-18): "The `x86_64-unknown-linux-gnu` target will now use the LLD linker for linking Rust crates by default." <https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/> (checked 2026-10-11) |
+| D-FORK | LLVM libFuzzer, `compiler-rt/lib/fuzzer/FuzzerFlags.def:63-71` (`fork`; `ignore_timeouts` and `ignore_ooms` default 1, `ignore_crashes` 0) and `FuzzerFork.cpp:457-475` (a timeout or OOM exit is counted and fuzzing continues when ignored; any other non-zero exit stops every job), llvm-project @ `f3653503` (checked 2026-10-11) |
+| D-CARGOFUZZ | cargo-fuzz 0.13.2, `src/project.rs:354-371`: without `--target-dir`, cargo chooses the target directory, except for coverage builds, which use `<current directory>/target/<triple>/coverage` (tag `0.13.2`, commit `984c861`, checked 2026-10-11) |
 
 ### Measurements and research notes
 

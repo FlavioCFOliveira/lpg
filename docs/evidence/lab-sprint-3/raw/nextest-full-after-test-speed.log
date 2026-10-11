@@ -1,0 +1,540 @@
+# After (test-speed working tree), 2026-10-11, 16 cores; /mnt/lpg-xfs on /dev/loop59 (xfs), backing file /data/tmp/lpg-xfs.img on ext4
+# Command: /usr/bin/time env LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg --success-output final --no-fail-fast
+# Condensed as the before log. Peak space (du -sk every 0.2 s): ext4 5970612 KiB, xfs 4943272 KiB, /tmp/lpgram 542932 KiB
+ Nextest run ID 95604a24-88a2-42bc-ad62-3863cdbd34c5 with nextest profile: default
+    Starting 508 tests across 1 binary (28 tests skipped)
+        PASS [   0.030s] (  1/508) lpg api::tests::api::every_io_operation_is_async
+        PASS [   0.072s] (  2/508) lpg api::tests::api::a_committed_graph_is_listed_by_a_new_session
+        PASS [   0.081s] (  3/508) lpg api::tests::api::a_failed_transaction_runs_once
+        PASS [   0.092s] (  4/508) lpg api::tests::api::explain_plans_without_running_and_profile_measures
+        PASS [   0.106s] (  5/508) lpg api::tests::api::text_and_api_act_on_one_transaction
+        PASS [   0.122s] (  6/508) lpg api::tests::api::sessions_trust_their_principal_and_refuse_a_concurrent_request
+        PASS [   0.109s] (  7/508) lpg api::tests::api::write_skew_commits_under_snapshot_isolation_only
+        PASS [   0.127s] (  8/508) lpg api::tests::auth::a_directory_is_created_through_the_api_and_listed
+        PASS [   0.108s] (  9/508) lpg api::tests::auth::a_refused_create_fails_the_insert_and_creates_nothing
+        PASS [   0.200s] ( 10/508) lpg api::tests::api::two_databases_are_independent_handles
+        PASS [   0.124s] ( 11/508) lpg api::tests::auth::each_pair_is_asked_once_per_statement
+        PASS [   0.125s] ( 12/508) lpg api::tests::auth::grant_and_revoke_are_syntax_errors
+        PASS [   0.253s] ( 13/508) lpg api::tests::api::a_dropped_stream_returns_its_memory
+        PASS [   0.162s] ( 14/508) lpg api::tests::auth::create_asks_nothing_and_every_request_names_the_owner
+        PASS [   0.185s] ( 15/508) lpg api::tests::auth::every_index_and_constraint_kind_is_managed_through_the_api
+        PASS [   0.139s] ( 16/508) lpg api::tests::limits::a_cancelled_statement_fails_and_its_write_is_never_visible
+        PASS [   0.135s] ( 17/508) lpg api::tests::limits::a_principal_sees_its_own_transactions_and_others_with_consent
+        PASS [   0.067s] ( 18/508) lpg api::tests::obs::a_subscriber_receives_events_for_a_query
+        PASS [   0.136s] ( 19/508) lpg api::tests::limits::row_and_byte_limits_fail_the_statement_that_crosses_them
+        PASS [   0.154s] ( 20/508) lpg api::tests::limits::a_terminated_transactions_statement_fails_and_its_writes_vanish
+        PASS [   0.116s] ( 21/508) lpg api::tests::obs::every_category_but_bolt_reports_a_metric
+        PASS [   0.064s] ( 22/508) lpg api::tests::obs::no_event_or_error_holds_a_parameter_value
+        PASS [   0.055s] ( 23/508) lpg api::tests::procs::no_built_in_backs_up_restores_or_creates_a_directory
+        PASS [   0.075s] ( 24/508) lpg api::tests::procs::point_and_distance_follow_their_specification
+        PASS [   0.144s] ( 25/508) lpg api::tests::procs::a_routines_own_memory_is_not_charged_and_its_rows_are
+        PASS [   0.538s] ( 26/508) lpg api::tests::api::close_waits_for_the_timeout_then_aborts_the_transaction
+        PASS [   0.118s] ( 27/508) lpg api::tests::procs::read_write_procedures_run_in_the_callers_transaction_and_read_only_ones_cannot_write
+        PASS [   0.136s] ( 28/508) lpg api::tests::procs::registered_procedures_and_functions_are_called_with_call
+        PASS [   0.101s] ( 29/508) lpg catalog::tests::catalog::a_committed_catalog_change_survives_close_and_reopen_and_a_drop_without_close
+        PASS [   0.184s] ( 30/508) lpg api::tests::procs::registrations_are_lost_at_reopen
+        PASS [   0.195s] ( 31/508) lpg api::tests::procs::the_show_procedures_list_their_objects_with_the_specified_columns
+        PASS [   0.080s] ( 32/508) lpg catalog::tests::catalog::a_dropped_graphs_trees_are_freed_after_every_older_snapshot_ends
+        PASS [   0.268s] ( 33/508) lpg api::tests::procs::the_point_searches_return_the_same_rows_with_and_without_the_index
+        PASS [   0.568s] ( 34/508) lpg api::tests::limits::the_second_statement_fails_after_the_transaction_time_limit
+        PASS [   0.255s] ( 35/508) lpg catalog::tests::catalog::a_child_created_and_dropped_after_the_snapshot_fails_only_a_serializable_drop
+        PASS [   0.117s] ( 36/508) lpg catalog::tests::catalog::a_graph_type_in_use_by_a_graph_cannot_be_dropped
+        PASS [   0.245s] ( 37/508) lpg catalog::tests::catalog::a_drop_that_saw_an_undone_drop_of_a_newer_graph_fails
+        PASS [   0.123s] ( 38/508) lpg catalog::tests::catalog::after_a_crash_the_catalog_and_token_counters_cover_every_committed_value
+        PASS [   0.150s] ( 39/508) lpg catalog::tests::catalog::a_new_database_holds_the_default_schema_and_graph_also_after_reopen
+        PASS [   0.102s] ( 40/508) lpg catalog::tests::catalog::an_aborted_transaction_leaves_none_of_its_catalog_objects
+        PASS [   0.287s] ( 41/508) lpg catalog::tests::catalog::a_graph_type_dropped_while_a_graph_of_it_is_created_leaves_no_dangling_type
+        PASS [   0.078s] ( 42/508) lpg catalog::tests::catalog::only_an_empty_directory_or_schema_is_dropped
+        PASS [   0.092s] ( 43/508) lpg catalog::tests::catalog::names_are_bounded_by_the_key_size_and_directories_nest_deeply
+        PASS [   0.111s] ( 44/508) lpg catalog::tests::catalog::every_object_kind_returns_the_owner_recorded_at_creation
+        PASS [   0.754s] ( 45/508) lpg api::tests::limits::writes_and_old_versions_at_the_cap_fail_with_51n72
+        PASS [   0.029s] ( 46/508) lpg error::tests::a_storage_error_keeps_its_code_and_message
+        PASS [   0.022s] ( 47/508) lpg error::tests::error_exposes_code_message_position_and_cause
+        PASS [   0.021s] ( 48/508) lpg error::tests::position_counts_lines_at_line_feed_only_and_columns_in_characters
+        PASS [   0.020s] ( 49/508) lpg gqlstatus::tests::every_iso_class_and_subclass_is_present_once_with_its_category
+        PASS [   0.026s] ( 50/508) lpg gqlstatus::tests::a_status_shows_its_code_class_and_description
+        PASS [   0.287s] ( 51/508) lpg catalog::tests::catalog::a_schema_dropped_while_a_graph_is_created_in_it_leaves_no_orphan
+        PASS [   0.034s] ( 52/508) lpg gqlstatus::tests::neo4j_codes_are_distinct_from_iso_and_well_formed
+        PASS [   0.100s] ( 53/508) lpg catalog::tests::catalog::two_schemas_and_three_graphs_belong_to_the_catalog_and_resolve_to_their_paths
+        PASS [   0.139s] ( 54/508) lpg catalog::tests::catalog::two_concurrent_creators_of_one_label_get_one_token_that_survives_reopen
+        PASS [   1.118s] ( 55/508) lpg api::tests::auth::a_restored_backup_holds_graphs_index_and_constraint
+        PASS [   0.135s] ( 56/508) lpg gqlstatus::tests::generated_table_matches_the_insert
+        PASS [   1.247s] ( 57/508) lpg api::tests::api::backup_restore_integrity_check_and_migration_through_the_api
+        PASS [   0.283s] ( 58/508) lpg catalog::tests::catalog::two_concurrent_creators_of_one_graph_name_exactly_one_commits_at_both_levels
+        PASS [   0.128s] ( 59/508) lpg index::tests::index::a_build_whose_scan_saw_an_undone_commit_scans_again
+        PASS [   0.185s] ( 60/508) lpg index::tests::index::a_commit_whose_index_records_exceed_the_cap_fails_and_applies_nothing
+        PASS [   0.333s] ( 61/508) lpg index::tests::index::a_build_restarted_after_its_install_resumes_at_its_replay
+        PASS [   0.071s] ( 62/508) lpg index::tests::index::a_constraint_over_violating_data_fails_and_leaves_nothing
+        PASS [   0.441s] ( 63/508) lpg index::tests::index::a_build_whose_index_or_graph_is_dropped_while_paused_reads_and_writes_no_freed_tree
+        PASS [   0.170s] ( 64/508) lpg index::tests::index::a_constraint_creation_blocks_only_the_writers_of_its_label
+        PASS [   0.139s] ( 65/508) lpg index::tests::index::a_constraint_paused_in_its_page_writes_blocks_only_the_writers_of_its_label
+        PASS [   0.100s] ( 66/508) lpg index::tests::index::a_replay_chunk_read_during_an_undone_commit_is_read_again
+        PASS [   0.120s] ( 67/508) lpg index::tests::index::a_node_key_rejects_a_node_without_its_property_or_with_a_used_value
+        PASS [   0.646s] ( 68/508) lpg index::tests::index::a_build_release_during_a_backup_waits_and_the_backup_restores_intact
+        PASS [   0.081s] ( 69/508) lpg index::tests::index::a_second_writer_of_a_unique_value_waits_for_the_first_to_end
+        PASS [   0.085s] ( 70/508) lpg index::tests::index::a_uniqueness_constraint_on_one_graph_lets_duplicates_commit_in_another
+        PASS [   0.109s] ( 71/508) lpg index::tests::index::an_index_on_one_graph_holds_no_entry_of_another
+        PASS [   0.137s] ( 72/508) lpg index::tests::index::an_index_range_read_conflicts_with_a_later_insert_into_it
+        PASS [   0.645s] ( 73/508) lpg index::tests::index::a_constraint_commit_during_a_backup_waits_and_the_backup_restores_intact
+        PASS [   1.755s] ( 74/508) lpg api::tests::limits::a_statement_over_the_memory_limit_fails_and_earlier_writes_vanish
+        PASS [   0.174s] ( 75/508) lpg index::tests::index::constraints_survive_reopen_and_a_drop_without_close
+        PASS [   0.108s] ( 76/508) lpg index::tests::index::existence_and_type_constraints_reject_violating_commits_and_accept_others
+        PASS [   0.093s] ( 77/508) lpg index::tests::index::index_statistics_equal_a_recount
+        PASS [   0.254s] ( 78/508) lpg index::tests::index::distance_queries_return_the_same_set_with_and_without_the_point_index
+        PASS [   0.132s] ( 79/508) lpg index::tests::index::sixteen_threads_inserting_one_unique_value_exactly_one_commits_at_both_levels
+        PASS [   1.145s] ( 80/508) lpg index::tests::index::a_backup_under_four_committers_and_an_index_build_restores_to_one_commit_point
+        PASS [   0.121s] ( 81/508) lpg index::tests::index::the_index_check_reports_entries_and_records_that_do_not_match
+        PASS [   0.212s] ( 82/508) lpg index::tests::index::one_index_of_each_kind_returns_what_a_full_scan_returns
+        PASS [   0.025s] ( 83/508) lpg lab::generator::tests::memory_cap_for_cache_shares
+        PASS [   0.055s] ( 84/508) lpg lab::generator::tests::samplers_are_deterministic_and_in_range
+        PASS [   0.418s] ( 85/508) lpg index::tests::index::eight_writers_commit_while_a_build_is_paused_and_the_online_index_matches_the_data
+        PASS [   0.148s] ( 86/508) lpg index::tests::index::the_integrity_check_reconciles_the_directory_with_the_catalog
+        PASS [   0.130s] ( 87/508) lpg index::tests::index::writers_commit_while_an_index_build_is_paused_in_its_page_writes
+        PASS [   0.166s] ( 88/508) lpg index::tests::index::type_constraints_accept_closed_unions_and_typed_lists
+        PASS [   0.036s] ( 89/508) lpg lab::generator::tests::zipf_is_skewed_and_uniform_is_not
+        PASS [   0.029s] ( 90/508) lpg lab::tests::median_range_of_three
+        PASS [   1.211s] ( 91/508) lpg index::tests::index::a_commit_that_puts_index_entries_again_on_a_full_cache_evicts_for_their_before_images
+        PASS [   0.032s] ( 92/508) lpg lab::tests::probe_reads_proc
+        PASS [   0.041s] ( 93/508) lpg lab::tests::percentile_by_nearest_rank
+        PASS [   0.041s] ( 94/508) lpg lab::tests::text_round_trip
+        PASS [   0.050s] ( 95/508) lpg obs::recording::tests::concurrent_calls_are_all_recorded
+        PASS [   0.041s] ( 96/508) lpg obs::recording::tests::difference_and_display
+        PASS [   0.738s] ( 97/508) lpg index::tests::index::an_indexed_commit_on_a_full_cache_evicts_for_its_write_keys
+        PASS [   0.048s] ( 98/508) lpg obs::tests::every_call_kind_through_dyn_sink
+        PASS [   0.046s] ( 99/508) lpg obs::tests::names_are_unique
+        PASS [   0.146s] (100/508) lpg lab::micro::snb_short_reads_return_their_expected_results
+        PASS [   0.084s] (101/508) lpg query::binder::tests::each_approved_construct_binds
+        PASS [   0.095s] (102/508) lpg query::binder::tests::a_parameter_stays_a_parameter_in_the_bound_form
+        PASS [   0.085s] (103/508) lpg query::binder::tests::no_statement_creates_a_directory
+        PASS [   0.089s] (104/508) lpg query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail
+        PASS [   2.477s] (105/508) lpg api::tests::limits::a_cancel_stops_expansion_sort_and_aggregation_within_k_iterations
+        PASS [   0.121s] (106/508) lpg query::binder::tests::each_unsupported_construct_class_fails_with_feature_not_supported
+        PASS [   0.081s] (107/508) lpg query::exec::tests::catalog::a_closed_graph_type_rejects_what_it_does_not_describe
+        PASS [   0.079s] (108/508) lpg query::exec::tests::catalog::one_query_reads_two_graphs
+        PASS [   0.117s] (109/508) lpg query::exec::tests::catalog::a_failed_closed_type_check_leaves_none_of_the_statement_writes
+        PASS [   0.119s] (110/508) lpg query::exec::tests::catalog::a_rolled_back_transaction_leaves_neither_the_graph_nor_its_nodes
+        PASS [   0.087s] (111/508) lpg query::exec::tests::conformance::a_non_boolean_search_condition_raises_22g03
+        PASS [   0.115s] (112/508) lpg query::exec::tests::catalog::drop_statements_and_their_errors
+        PASS [   0.143s] (113/508) lpg query::exec::tests::catalog::catalog_objects_created_in_one_transaction_survive_reopen
+        PASS [   0.109s] (114/508) lpg query::exec::tests::conformance::a_set_on_a_null_element_counts_no_property
+        PASS [   0.042s] (115/508) lpg query::exec::tests::conformance::iso_8601_date_forms_are_dates
+        PASS [   0.055s] (116/508) lpg query::exec::tests::conformance::incompatible_temporal_units_raise_22g14
+        PASS [   0.052s] (117/508) lpg query::exec::tests::cursor::the_cursor_is_send_and_reports_columns_kind_control_and_counters
+        PASS [   1.690s] (118/508) lpg index::tests::index::a_backup_taken_while_a_build_is_paused_restores_and_the_rebuilt_index_matches_the_data
+        PASS [   0.078s] (119/508) lpg query::exec::tests::cursor::a_failing_status_check_fails_the_statement_and_aborts_the_transaction
+        PASS [   0.096s] (120/508) lpg query::exec::tests::conformance::two_assignments_to_one_property_raise_22g0m
+        PASS [   0.073s] (121/508) lpg query::exec::tests::execution::profile_reports_rows_and_entries_read_per_operator
+        PASS [   0.488s] (122/508) lpg lab::micro::layout_micro_workloads_return_their_expected_results
+        PASS [   0.124s] (123/508) lpg query::exec::tests::memory::blocking_distinct_peak
+        PASS [   0.160s] (124/508) lpg query::exec::tests::memory::blocking_sort_peak
+        PASS [   0.092s] (125/508) lpg query::exec::tests::smoke_insert_match_return
+        PASS [   0.067s] (126/508) lpg query::exec::tests::statements::set_remove_session_user_clock_and_select_run_end_to_end
+        PASS [   0.199s] (127/508) lpg query::exec::tests::memory::blocking_aggregate_peak
+        PASS [   0.026s] (128/508) lpg query::expr::tests::accumulators_ignore_nulls_widen_sums_and_deduplicate
+        PASS [   0.020s] (129/508) lpg query::expr::tests::integer_overflow_and_division_by_zero_fail_with_class_22_codes
+        PASS [   1.188s] (130/508) lpg index::tests::index::an_indexed_commit_over_the_cap_still_fails_at_both_steps
+        PASS [   0.033s] (131/508) lpg query::expr::tests::constant_folding_replaces_constant_calls_and_keeps_failing_ones
+        PASS [   0.036s] (132/508) lpg query::expr::tests::integer_equals_float_cross_group_order_is_null_and_null_sorts_last
+        PASS [   0.040s] (133/508) lpg query::expr::tests::each_operator_and_function_returns_null_for_a_null_argument
+        PASS [   0.025s] (134/508) lpg query::expr::tests::truth_tables_hold_for_every_combination_of_true_false_and_unknown
+        PASS [   0.031s] (135/508) lpg query::expr::tests::temporal_functions_return_what_jiff_computes
+        PASS [   0.045s] (136/508) lpg query::expr::tests::string_functions_follow_the_approved_choices
+        PASS [   0.023s] (137/508) lpg query::features::tests::published_feature_list_matches_the_gate_table
+        PASS [   0.044s] (138/508) lpg query::features::tests::every_code_is_supported_or_a_gate_and_the_supported_codes_exist
+        PASS [   0.037s] (139/508) lpg query::lexer::tests::an_unknown_character_is_an_error_at_its_position
+        PASS [   0.056s] (140/508) lpg query::lexer::tests::identifier_sets_have_the_measured_sizes
+        PASS [   0.040s] (141/508) lpg query::lexer::tests::longest_match_and_rule_order
+        PASS [   0.039s] (142/508) lpg query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records
+        PASS [   0.159s] (143/508) lpg query::features::tests::generated_table_matches_the_insert
+        PASS [   0.128s] (144/508) lpg query::lexer::tests::identifier_tables_match_the_ucd
+        PASS [   0.467s] (145/508) lpg query::exec::tests::execution::a_sort_and_an_aggregation_beyond_the_cap_fail_and_abort
+        PASS [   0.023s] (146/508) lpg query::parser::tests::a_misspelt_keyword_fails_with_42001_its_position_and_the_expected_tokens
+        PASS [   0.100s] (147/508) lpg query::parser::differential::scenario_texts_match_the_oracle_labels
+        PASS [   0.171s] (148/508) lpg query::lexer::tests::keyword_table_matches_the_grammar
+        PASS [   0.061s] (149/508) lpg query::parser::differential::test_texts_match_the_oracle_labels
+        PASS [   0.051s] (150/508) lpg query::parser::tests::a_pattern_keeps_its_labels_directions_and_variables
+        PASS [   0.051s] (151/508) lpg query::parser::tests::ambiguous_decisions_found_by_generation_take_the_lowest_alternative
+        PASS [   0.032s] (152/508) lpg query::parser::tests::columns_count_characters_and_offsets_count_bytes
+        PASS [   0.047s] (153/508) lpg query::parser::tests::an_unknown_character_fails_with_42001_at_its_position
+        PASS [   0.016s] (154/508) lpg query::parser::tests::graph_pattern_takes_the_where_clause
+        PASS [   0.018s] (155/508) lpg query::parser::tests::exists_a_match_block_in_braces_is_the_match_block
+        PASS [   0.023s] (156/508) lpg query::parser::tests::endpoint_pair_to_is_directed
+        PASS [   0.496s] (157/508) lpg query::exec::tests::memory::blocking_insert_peak
+        PASS [   0.143s] (158/508) lpg query::parser::differential::stored_corpora_match_the_oracle_labels
+        PASS [   0.043s] (159/508) lpg query::parser::tests::every_node_keeps_the_span_of_its_text
+        PASS [   0.025s] (160/508) lpg query::parser::tests::label_and_property_set_and_insert_filler_keep_every_part
+        PASS [   0.026s] (161/508) lpg query::parser::tests::operators_bind_by_precedence_and_associate_left
+        PASS [   0.036s] (162/508) lpg query::parser::tests::literals_keep_their_kind_and_text
+        PASS [   0.039s] (163/508) lpg query::parser::tests::index_management_and_permission_statements_fail_with_42001
+        PASS [   0.028s] (164/508) lpg query::parser::tests::parameters_are_never_inlined
+        PASS [   0.018s] (165/508) lpg query::parser::tests::result_and_cast_operand_null_is_an_expression
+        PASS [   0.019s] (166/508) lpg query::parser::tests::statement_a_catalog_call_is_catalog_modifying
+        PASS [   0.019s] (167/508) lpg query::parser::tests::statement_a_query_that_is_also_data_modifying_is_a_query
+        PASS [   0.026s] (168/508) lpg query::parser::tests::value_function_abs_is_the_numeric_function
+        PASS [   0.076s] (169/508) lpg query::plan::tests::explain_of_an_insert_returns_a_plan_and_inserts_nothing
+        PASS [   0.092s] (170/508) lpg query::plan::tests::join_order_is_exact_up_to_seven_expansions_and_greedy_at_eight
+        PASS [   0.106s] (171/508) lpg query::plan::tests::equality_and_range_use_an_online_index_and_not_a_populating_one
+        PASS [   0.037s] (172/508) lpg query::unicode::tests::a_blocked_mark_does_not_reach_the_starter
+        PASS [   0.092s] (173/508) lpg query::plan::tests::the_label_scan_estimate_reads_the_statistics
+        PASS [   0.025s] (174/508) lpg query::unicode::tests::a_letter_and_its_accent_are_one_character_composed_and_two_decomposed
+        PASS [   0.035s] (175/508) lpg query::unicode::tests::a_hangul_syllable_is_arithmetic_in_both_directions
+        PASS [   0.020s] (176/508) lpg query::unicode::tests::an_excluded_composition_stays_apart
+        PASS [   0.021s] (177/508) lpg query::unicode::tests::ascii_is_already_in_every_form
+        PASS [   0.013s] (178/508) lpg query::unicode::tests::compatibility_is_the_only_form_that_loses_the_formatting
+        PASS [   0.018s] (179/508) lpg query::unicode::tests::marks_sort_by_combining_class_and_keep_their_order_inside_a_class
+        PASS [   0.020s] (180/508) lpg storage::btree::node::tests::an_entry_header_whose_lengths_overflow_decodes_as_malformed
+        PASS [   0.015s] (181/508) lpg storage::btree::node::tests::apply_keeps_every_16th_entry_a_restart_point
+        PASS [   0.021s] (182/508) lpg storage::btree::node::tests::deletes_that_grow_the_leaf_match_the_full_reencode
+        PASS [   0.021s] (183/508) lpg storage::btree::node::tests::common_prefix_matches_the_bytewise_definition
+        PASS [   0.019s] (184/508) lpg storage::btree::node::tests::full_leaf_is_left_unchanged
+        PASS [   0.015s] (185/508) lpg storage::btree::node::tests::inner_pages_route_keys
+        PASS [   0.016s] (186/508) lpg storage::btree::node::tests::restart_points_hold_full_keys_every_16_entries
+        PASS [   0.264s] (187/508) lpg query::parser::tests::texts_within_the_limits_parse
+        PASS [   0.038s] (188/508) lpg storage::btree::node::tests::separator_is_shortest_between
+        PASS [   0.029s] (189/508) lpg storage::btree::node::tests::varints_round_trip
+        PASS [   0.340s] (190/508) lpg query::plan::tests::results_are_equal_with_and_without_each_index_kind
+        PASS [   0.110s] (191/508) lpg storage::btree::tests::a_failure_after_the_first_change_makes_the_database_unusable
+        PASS [   0.268s] (192/508) lpg storage::btree::node::tests::apply_matches_the_full_reencode_in_field_delta_leaves
+        PASS [   0.049s] (193/508) lpg storage::btree::tests::a_scan_skips_keys_inserted_behind_it_into_a_range_freed_pages_gave_away
+        PASS [   0.023s] (194/508) lpg storage::btree::tests::a_second_undo_extends_the_reuse_fence
+        PASS [   0.337s] (195/508) lpg storage::btree::node::tests::field_delta_leaves_decode_to_the_keys_encoded
+        PASS [   0.294s] (196/508) lpg storage::btree::tests::a_reader_moving_right_into_a_split_page_of_an_undone_batch_misses_no_key
+        PASS [   1.256s] (197/508) lpg query::exec::tests::execution::across_a_thousand_batches_at_most_one_operator_runs_at_once
+        PASS [   0.247s] (198/508) lpg storage::btree::tests::audit_a_resident_free_page_taken_by_an_undone_batch_stays_readable
+        PASS [   1.268s] (199/508) lpg query::exec::tests::execution::the_first_batch_comes_after_at_most_one_batch_of_scanned_rows
+        PASS [   0.481s] (200/508) lpg storage::btree::tests::a_field_delta_tree_answers_like_a_prefix_tree
+        PASS [   0.184s] (201/508) lpg storage::btree::tests::directory_maps_tree_ids_to_roots_and_survives_reopen
+        PASS [   0.165s] (202/508) lpg storage::btree::tests::keys_at_the_limit_work_and_longer_keys_are_refused
+        PASS [   0.200s] (203/508) lpg storage::btree::tests::overflow_values_round_trip
+        PASS [   0.105s] (204/508) lpg storage::btree::tests::stale_descents_recover_by_moving_right
+        PASS [   0.074s] (205/508) lpg storage::check::tests::a_flipped_bit_in_a_free_page_is_reported
+        PASS [   0.366s] (206/508) lpg storage::btree::tests::emptying_a_subtree_frees_its_inner_pages
+        PASS [   1.699s] (207/508) lpg query::exec::tests::reference::five_thousand_seeded_queries_equal_the_reference_evaluator
+        PASS [   0.459s] (208/508) lpg storage::btree::tests::rightmost_split_fills_left_page_to_90_percent_and_others_to_half
+        PASS [   0.381s] (209/508) lpg storage::check::tests::a_broken_sibling_link_is_reported
+        PASS [   0.381s] (210/508) lpg storage::check::tests::a_clean_database_passes_with_its_figures
+        PASS [   0.017s] (211/508) lpg storage::control::tests::both_slots_invalid_is_corruption
+        PASS [   0.037s] (212/508) lpg storage::control::tests::failed_sync_sets_the_latch
+        PASS [   0.309s] (213/508) lpg storage::check::tests::a_high_key_that_differs_from_the_parent_is_reported
+        PASS [   0.015s] (214/508) lpg storage::control::tests::one_invalid_slot_opens_from_the_other_counts_and_is_rewritten
+        PASS [   0.013s] (215/508) lpg storage::control::tests::slot_round_trip_and_flag_check
+        PASS [   0.364s] (216/508) lpg storage::check::tests::a_flipped_bit_is_reported
+        PASS [   0.032s] (217/508) lpg storage::control::tests::writes_alternate_and_higher_sequence_wins
+        PASS [   0.026s] (218/508) lpg storage::datafile::tests::a_valid_image_of_another_page_fails_the_read_as_corruption
+        PASS [   0.022s] (219/508) lpg storage::datafile::tests::allocate_without_reserve_is_enospc
+        PASS [   0.210s] (220/508) lpg storage::check::tests::a_leaked_page_and_a_stale_header_are_reported
+        PASS [   0.024s] (221/508) lpg storage::datafile::tests::create_writes_header_and_reserves_first_extent
+        PASS [   0.034s] (222/508) lpg storage::datafile::tests::checksum_and_io_failures_set_the_latch
+        PASS [   0.026s] (223/508) lpg storage::datafile::tests::ensure_enospc_has_no_side_effects_and_reads_continue
+        PASS [   0.034s] (224/508) lpg storage::datafile::tests::ensure_grows_by_whole_extents_in_one_reserve
+        PASS [   0.035s] (225/508) lpg storage::datafile::tests::extent_rule
+        PASS [   0.042s] (226/508) lpg storage::datafile::tests::misdirected_and_lost_writes_are_detected_by_the_page_checksum
+        PASS [   0.039s] (227/508) lpg storage::datafile::tests::open_rejects_bad_page_count
+        PASS [   0.065s] (228/508) lpg storage::datafile::tests::writes_outside_reserved_space_are_refused
+        PASS [   0.314s] (229/508) lpg storage::check::tests::swapped_keys_are_reported
+        PASS [   0.124s] (230/508) lpg storage::engine::tests::create_replaces_what_an_interrupted_create_left
+        PASS [   0.396s] (231/508) lpg storage::check::tests::a_page_in_a_tree_and_the_free_list_is_reported
+        PASS [   0.175s] (232/508) lpg storage::engine::tests::both_control_slots_invalid_is_corruption
+        PASS [   0.216s] (233/508) lpg storage::engine::tests::create_then_open_round_trip
+        PASS [   0.490s] (234/508) lpg storage::engine::tests::enospc_on_ensure_keeps_reads_working
+        PASS [   2.338s] (235/508) lpg query::parser::tests::deep_texts_fail_with_42001_on_a_2_mib_stack
+        PASS [   0.265s] (236/508) lpg storage::engine::tests::one_invalid_control_slot_opens_from_the_other_and_is_counted
+        PASS [   0.303s] (237/508) lpg storage::engine::tests::open_removes_other_generations_data_and_wal_segment_files
+        PASS [   1.362s] (238/508) lpg storage::engine::tests::create_over_an_existing_database_fails_and_changes_nothing
+        PASS [   1.232s] (239/508) lpg storage::engine::tests::newer_format_fails_and_changes_nothing
+        PASS [   0.035s] (240/508) lpg storage::engine::tests::open_without_a_database_fails_and_creates_nothing
+        PASS [   1.686s] (241/508) lpg storage::engine::tests::audit_a_failed_or_crashed_control_write_at_create_leaves_a_usable_location
+        PASS [   0.337s] (242/508) lpg storage::engine::tests::open_with_data_file_missing_is_corruption_and_creates_nothing
+        PASS [   1.577s] (243/508) lpg storage::engine::tests::memory_cap_too_small_is_refused_before_any_file
+        PASS [   0.224s] (244/508) lpg storage::engine::tests::page_zero_checksum_failure_is_corruption
+        PASS [   0.038s] (245/508) lpg storage::error::tests::every_kind_maps_to_its_code
+        PASS [   0.164s] (246/508) lpg storage::engine::tests::page_zero_version_differing_from_control_is_corruption
+        PASS [   1.701s] (247/508) lpg storage::engine::tests::lock_deleted_under_an_open_handle_refuses_a_second_open
+        PASS [   0.041s] (248/508) lpg storage::error::tests::latch_fails_every_later_check
+        PASS [   0.145s] (249/508) lpg storage::engine::tests::second_open_in_the_same_process_fails_and_the_first_keeps_working
+        PASS [   0.068s] (250/508) lpg storage::error::tests::only_storage_full_is_no_space
+        PASS [   0.050s] (251/508) lpg storage::fault::tests::crash_drops_unsynced_writes
+        PASS [   0.253s] (252/508) lpg storage::engine::tests::second_open_from_a_child_process_fails
+        PASS [   0.076s] (253/508) lpg storage::fault::tests::calls_are_logged_in_order
+        PASS [   0.093s] (254/508) lpg storage::fault::tests::after_the_crash_point_every_call_fails_until_the_crash
+        PASS [   0.040s] (255/508) lpg storage::fault::tests::crash_keeps_or_loses_an_unsynced_create_and_rename_in_order
+        PASS [   0.110s] (256/508) lpg storage::fault::tests::crash_keeps_a_seeded_subset_of_unsynced_writes
+        PASS [   0.078s] (257/508) lpg storage::fault::tests::crash_tears_writes_at_sector_boundaries
+        PASS [   0.087s] (258/508) lpg storage::fault::tests::failed_sync_data_forgets_the_unsynced_writes
+        PASS [   0.082s] (259/508) lpg storage::fault::tests::failed_write_is_not_applied
+        PASS [   0.058s] (260/508) lpg storage::fault::tests::space_budget_returns_enospc
+        PASS [   0.150s] (261/508) lpg storage::fault::tests::crash_loses_unsynced_rename_create_and_remove
+        PASS [   0.125s] (262/508) lpg storage::fault::tests::same_contract_through_both_impls
+        PASS [   0.042s] (263/508) lpg storage::freelist::tests::registry_horizon_is_the_lowest_registered_value
+        PASS [   0.019s] (264/508) lpg storage::fs::tests::create_and_open_errors
+        PASS [   0.122s] (265/508) lpg storage::fault::tests::the_nth_call_of_each_kind_fails_without_effect
+        PASS [   0.104s] (266/508) lpg storage::freelist::tests::a_cyclic_chain_fails_the_open
+        PASS [   0.064s] (267/508) lpg storage::fs::tests::file_round_trip
+        PASS [   0.062s] (268/508) lpg storage::fs::tests::namespace_operations
+        PASS [   0.067s] (269/508) lpg storage::fs::tests::try_lock_is_exclusive_within_the_process
+        PASS [   1.648s] (270/508) lpg storage::engine::tests::older_format_requires_migration
+        PASS [   0.220s] (271/508) lpg storage::freelist::tests::freed_pages_wait_for_older_readers
+        PASS [   0.081s] (272/508) lpg storage::graph::tests::graph::a_statistic_taken_below_zero_is_clamped_and_the_drift_reported
+        PASS [   0.180s] (273/508) lpg storage::graph::tests::graph::a_checkpoints_statistics_batch_lies_below_its_redo_point
+        PASS [   0.183s] (274/508) lpg storage::graph::tests::graph::a_node_changed_in_fifty_commits_keeps_its_identifier_also_after_reopen
+        PASS [   0.126s] (275/508) lpg storage::graph::tests::graph::an_aborted_graph_creation_with_nodes_leaves_neither
+        PASS [   0.092s] (276/508) lpg storage::graph::tests::graph::graph_writes_refuse_label_and_edge_type_identifiers_that_are_not_such_tokens
+        PASS [   0.119s] (277/508) lpg storage::graph::tests::graph::an_expansion_at_a_snapshot_returns_exactly_the_live_edges_of_its_direction_and_type
+        PASS [   3.871s] (278/508) lpg storage::btree::node::tests::apply_matches_the_full_reencode
+        PASS [   0.348s] (279/508) lpg storage::graph::tests::graph::a_label_change_and_a_concurrent_edge_at_its_node_both_commit_with_exact_statistics
+        PASS [   0.087s] (280/508) lpg storage::graph::tests::graph::the_integrity_check_compares_every_delete_stamp_of_an_edge_and_its_entries
+        PASS [   1.338s] (281/508) lpg storage::engine::tests::open_with_lock_missing_fails_and_creates_nothing
+        PASS [   0.112s] (282/508) lpg storage::graph::tests::graph::the_integrity_check_reports_an_adjacency_entry_without_edge_and_an_edge_without_adjacency
+        PASS [   0.267s] (283/508) lpg storage::graph::tests::graph::statistics_equal_a_recount_after_a_seeded_workload_a_clean_reopen_and_a_crash_reopen
+        PASS [   0.089s] (284/508) lpg storage::graph::tests::graph::the_integrity_check_reports_an_edge_whose_endpoint_was_deleted_first
+        PASS [   0.279s] (285/508) lpg storage::graph::tests::graph::sixteen_threads_creating_disjoint_nodes_and_edges_all_commit_and_survive_reopen
+        PASS [   0.024s] (286/508) lpg storage::memory::tests::reservations_stop_at_the_cap_and_release_on_drop
+        PASS [   0.026s] (287/508) lpg storage::memory::tests::the_gauge_follows_every_change
+        PASS [   0.717s] (288/508) lpg storage::freelist::tests::trunk_chain_grows_persists_and_is_consumed
+        PASS [   0.073s] (289/508) lpg storage::memory::tests::concurrent_reservations_never_exceed_the_cap
+        PASS [   0.044s] (290/508) lpg storage::page::tests::changes_after_seal_need_a_new_seal
+        PASS [   0.060s] (291/508) lpg storage::page::tests::a_valid_image_fails_at_any_other_page_number
+        PASS [   0.100s] (292/508) lpg storage::graph::tests::graph::the_integrity_check_reports_nothing_while_edges_change_and_are_collected
+        PASS [   0.507s] (293/508) lpg storage::graph::tests::graph::an_edge_to_a_node_deleted_concurrently_fails_or_waits_and_leaves_no_dangling_entry
+        PASS [   0.043s] (294/508) lpg storage::page::tests::every_single_bit_flip_is_detected
+        PASS [   0.038s] (295/508) lpg storage::page::tests::header_round_trip
+        PASS [   0.040s] (296/508) lpg storage::page::tests::init_keeps_the_page_lsn_and_clears_the_rest
+        PASS [   0.037s] (297/508) lpg storage::page::tests::zero_page_fails_verification_and_has_no_type
+        PASS [   0.112s] (298/508) lpg storage::pool::tests::pinned_frames_stay_and_all_pinned_is_a_memory_limit
+        PASS [   0.163s] (299/508) lpg storage::pool::tests::a_page_copy_reservation_takes_the_first_victim_dirty_or_clean
+        PASS [   0.152s] (300/508) lpg storage::pool::tests::hits_and_misses_are_counted_and_published
+        PASS [   0.186s] (301/508) lpg storage::pool::tests::flipped_bit_fails_the_read_and_every_later_operation_until_reopen
+        PASS [   7.917s] (302/508) lpg api::tests::api::the_first_of_a_million_rows_comes_before_the_rest_is_produced
+        PASS [   0.104s] (303/508) lpg storage::pool::tests::waiter_on_a_failed_load_fails
+        PASS [   0.178s] (304/508) lpg storage::pool::tests::reserve_takes_clean_frames_before_dirty_ones
+        PASS [   0.231s] (305/508) lpg storage::pool::tests::reserve_shrinks_the_pool_down_to_its_floor
+        PASS [   0.131s] (306/508) lpg storage::sort::tests::a_failed_sort_removes_its_files_and_releases_its_memory
+        PASS [   0.080s] (307/508) lpg storage::sort::tests::a_reservation_beyond_the_cap_fails
+        PASS [   4.219s] (308/508) lpg storage::btree::tests::concurrent_readers_during_splits_see_every_committed_key_exactly_once
+        PASS [   0.022s] (309/508) lpg storage::wal::tests::counters_max_is_per_field
+        PASS [   0.741s] (310/508) lpg storage::graph::tests::graph::the_graph_check_stays_within_the_memory_cap
+        PASS [   0.031s] (311/508) lpg storage::wal::tests::frame_geometry
+        PASS [   0.106s] (312/508) lpg storage::sort::tests::a_sort_that_fits_in_memory_writes_no_file
+        PASS [   0.056s] (313/508) lpg storage::wal::tests::frames_round_trip_and_every_bit_flip_or_wrong_position_is_rejected
+        PASS [   0.052s] (314/508) lpg storage::wal::tests::segment_names_round_trip_and_reject_near_misses
+        PASS [   0.060s] (315/508) lpg storage::wal::tests::open_group_positions_rollback_and_close
+        PASS [   0.464s] (316/508) lpg storage::pool::tests::frame_with_lsn_above_durable_is_never_written
+        PASS [   0.041s] (317/508) lpg tck::every_scenario_names_its_clause_or_feature_code
+        PASS [   0.147s] (318/508) lpg storage::sort::tests::audit_a_run_file_left_by_a_crashed_sort_does_not_fail_the_next_sort
+        PASS [   0.062s] (319/508) lpg test_support::child::tests::child_failure_is_reported
+        PASS [   0.091s] (320/508) lpg tck::the_selection_manifest_matches_the_vendored_files
+        PASS [   0.515s] (321/508) lpg storage::pool::tests::sixteen_threads_fetching_and_reserving_stay_within_the_cap
+        PASS [   0.323s] (322/508) lpg storage::sort::tests::an_input_twenty_times_the_reservation_spills_runs_and_comes_back_sorted
+        PASS [   0.134s] (323/508) lpg test_support::child::tests::child_runs_the_named_test_with_its_role
+        PASS [   0.057s] (324/508) lpg tx::conflict::tests::intervals_are_half_open
+        PASS [   0.083s] (325/508) lpg test_support::history::tests::events_render_as_elle_edn
+        PASS [   0.066s] (326/508) lpg tx::conflict::tests::refused_reservations_merge_then_fail
+        PASS [   1.327s] (327/508) lpg storage::graph::tests::graph::no_identifier_is_reused_after_a_delete_and_ten_thousand_creations_across_a_crash
+        PASS [   0.122s] (328/508) lpg tx::conflict::tests::validation_checks_only_commits_after_the_snapshot
+        PASS [   0.123s] (329/508) lpg tx::lock::tests::threads::a_cycle_through_a_waiting_request_is_found
+        PASS [   0.153s] (330/508) lpg tx::lock::tests::threads::a_shared_request_waits_behind_a_waiting_exclusive_one
+        PASS [   0.939s] (331/508) lpg storage::pool::tests::pages_worth_ten_times_the_cap_are_returned_intact
+        PASS [   0.074s] (332/508) lpg tx::lock::tests::threads::the_request_that_closes_a_two_transaction_cycle_fails
+        PASS [   0.098s] (333/508) lpg tx::lock::tests::threads::shared_locks_coexist_and_exclusive_waits_for_them
+        PASS [   0.106s] (334/508) lpg tx::lock::tests::threads::the_request_that_closes_a_three_transaction_cycle_fails
+        PASS [   0.086s] (335/508) lpg tx::lock::tests::threads::upgrades_go_first_and_two_upgraders_deadlock
+        PASS [   0.067s] (336/508) lpg tx::mvcc::tests::a_registered_snapshot_bounds_the_horizon_until_it_ends
+        PASS [   0.764s] (337/508) lpg tck::a_wrong_expected_row_fails_the_runner
+        PASS [   0.353s] (338/508) lpg tx::tests::gc::a_clean_close_leaves_no_garbage_behind
+        PASS [   1.216s] (339/508) lpg tck::opengql_tck_selected_scenarios_pass
+        PASS [   1.334s] (340/508) lpg tck::lpg_scenarios_pass
+        PASS [   0.240s] (341/508) lpg tx::tests::gc::a_deleted_entry_is_removed_only_after_older_snapshots_end
+        PASS [   0.177s] (342/508) lpg tx::tests::gc::a_failed_last_pass_still_closes_with_the_clean_flag_clear
+        PASS [   0.186s] (343/508) lpg tx::tests::gc::a_group_of_only_collector_changes_is_durable_and_replayed
+        PASS [   0.189s] (344/508) lpg tx::tests::gc::a_failed_seed_scan_keeps_the_clean_flag_clear
+        PASS [   0.145s] (345/508) lpg tx::tests::gc::a_key_put_again_after_its_delete_survives_the_pass
+        PASS [   0.057s] (346/508) lpg tx::tests::gc::a_rewritten_leaf_holds_no_created_stamp_at_or_below_the_horizon
+        PASS [   0.075s] (347/508) lpg tx::tests::gc::a_pass_that_fails_after_taking_its_work_puts_it_back
+        PASS [   0.072s] (348/508) lpg tx::tests::gc::a_tree_and_an_entry_queued_twice_are_collected_once
+        PASS [   0.079s] (349/508) lpg tx::tests::gc::freeing_a_dropped_tree_twice_in_one_batch_frees_its_pages_once
+        PASS [   0.151s] (350/508) lpg tx::tests::gc::after_a_crash_the_collector_finds_the_garbage_again
+        PASS [   0.157s] (351/508) lpg tx::tests::gc::an_old_version_is_kept_while_a_snapshot_needs_it_and_freed_after
+        PASS [   0.123s] (352/508) lpg tx::tests::gc::pages_are_freed_and_reused_only_after_older_snapshots_end
+        PASS [   0.078s] (353/508) lpg tx::tests::gc::the_collector_thread_runs_while_the_database_is_open
+        PASS [   0.149s] (354/508) lpg tx::tests::gc::the_collector_frees_old_versions_after_commits
+        PASS [   0.078s] (355/508) lpg tx::tests::gc::the_pages_of_a_dropped_tree_are_freed_after_the_horizon_passes
+        PASS [   0.225s] (356/508) lpg tx::tests::hermitage::g1a_aborted_reads_are_prevented
+        PASS [   0.282s] (357/508) lpg tx::tests::hermitage::g0_write_cycles_are_prevented
+        PASS [   0.249s] (358/508) lpg tx::tests::hermitage::g1b_intermediate_reads_are_prevented
+        PASS [   0.191s] (359/508) lpg tx::tests::hermitage::g2_anti_dependency_cycles_fail_only_under_serializable
+        PASS [   0.246s] (360/508) lpg tx::tests::hermitage::g1c_circular_information_flow_is_prevented
+        PASS [   0.265s] (361/508) lpg tx::tests::hermitage::g2_item_write_skew_fails_only_under_serializable
+        PASS [   0.295s] (362/508) lpg tx::tests::hermitage::g_single_read_skew_is_prevented
+        PASS [   0.280s] (363/508) lpg tx::tests::hermitage::otv_observed_transaction_vanishes_is_prevented
+        PASS [   0.280s] (364/508) lpg tx::tests::hermitage::p4_lost_update_is_prevented
+        PASS [   0.079s] (365/508) lpg tx::tests::isolation::a_closed_wait_cycle_aborts_the_requester_with_deadlock
+        PASS [   0.137s] (366/508) lpg tx::tests::isolation::a_commit_whose_read_was_overwritten_fails_validation
+        PASS [   0.141s] (367/508) lpg tx::tests::isolation::a_drop_committed_after_a_read_of_the_tree_fails_the_readers_commit
+        PASS [   0.135s] (368/508) lpg tx::tests::isolation::a_lock_upgrade_charges_no_second_lock_entry
+        PASS [   0.161s] (369/508) lpg tx::tests::isolation::a_failed_transaction_ran_its_operations_once
+        PASS [   0.089s] (370/508) lpg tx::tests::isolation::a_read_only_transaction_reads_its_start_state_and_commits
+        PASS [   0.074s] (371/508) lpg tx::tests::isolation::deleting_an_absent_key_conflicts_with_its_concurrent_insert
+        PASS [   0.151s] (372/508) lpg tx::tests::isolation::a_writer_waits_for_a_held_lock_and_continues_when_its_holder_ends
+        PASS [   0.577s] (373/508) lpg tx::tests::hermitage::pmp_predicate_many_preceders_is_prevented
+        PASS [   0.055s] (374/508) lpg tx::tests::isolation::reads_never_wait_for_writers_or_the_commit_latch
+        PASS [   3.209s] (375/508) lpg tck::opencypher_tck_selected_scenarios_pass
+        PASS [   0.068s] (376/508) lpg tx::tests::isolation::three_hundred_transactions_on_one_thread_all_begin
+        PASS [   0.092s] (377/508) lpg tx::tests::mvcc::a_failed_page_copy_leaves_no_stamp_and_no_old_version
+        PASS [   0.164s] (378/508) lpg tx::tests::isolation::sixteen_threads_with_disjoint_writes_all_commit_and_survive_reopen
+        PASS [   0.073s] (379/508) lpg tx::tests::mvcc::a_key_updated_three_times_reads_each_version_at_its_snapshot
+        PASS [   0.154s] (380/508) lpg tx::tests::isolation::write_skew_fails_one_transaction_under_serializable_and_none_under_snapshot
+        PASS [   0.087s] (381/508) lpg tx::tests::mvcc::a_paused_commit_is_invisible_until_published_then_wholly_visible
+        PASS [   0.089s] (382/508) lpg tx::tests::mvcc::a_read_only_transaction_draws_no_commit_timestamp
+        PASS [   0.114s] (383/508) lpg tx::tests::mvcc::a_transaction_beyond_the_cap_fails_and_changes_nothing
+        PASS [   0.016s] (384/508) lpg tx::versions::tests::a_chain_returns_the_version_each_snapshot_sees
+        PASS [   0.068s] (385/508) lpg tx::tests::mvcc::reopen_after_a_drop_shows_the_committed_stamped_entries_and_no_old_version
+        PASS [   0.090s] (386/508) lpg tx::tests::mvcc::own_writes_are_private_and_an_abort_leaves_no_trace
+        PASS [   0.037s] (387/508) lpg tx::versions::tests::visibility_compares_both_stamps_with_the_snapshot
+        PASS [   0.023s] (388/508) lpg types::tests::a_value_is_24_bytes
+        PASS [   0.036s] (389/508) lpg types::tests::a_stored_zone_the_host_cannot_apply_keeps_its_name_and_offset
+        PASS [   0.057s] (390/508) lpg types::tests::a_fractional_instant_before_1970_round_trips_through_the_record_encoding
+        PASS [   0.030s] (391/508) lpg types::tests::an_out_of_range_parsed_offset_is_rejected
+        PASS [   0.031s] (392/508) lpg types::tests::distances_follow_the_ts21_formulas
+        PASS [   0.027s] (393/508) lpg types::tests::duration_overflow_is_rejected
+        PASS [   0.238s] (394/508) lpg tx::tests::mvcc::old_versions_at_the_cap_fail_only_the_writer
+        PASS [   0.038s] (395/508) lpg types::tests::every_type_round_trips_through_the_record_encoding
+        PASS [   0.056s] (396/508) lpg types::tests::hilbert_keys_are_a_bijection_along_a_continuous_curve
+        PASS [   0.030s] (397/508) lpg types::tests::lexical_forms_round_trip
+        PASS [   0.017s] (398/508) lpg types::tests::payloads_take_their_minimum_width
+        PASS [   0.075s] (399/508) lpg types::tests::random_values_round_trip_through_the_record_encoding
+        PASS [   0.090s] (400/508) lpg types::tests::records_round_trip_after_commit_and_reopen
+        PASS [   0.238s] (401/508) lpg types::tests::box_ranges_cover_every_cell_of_the_box
+        PASS [   0.047s] (402/508) lpg types::tests::reserved_tags_and_malformed_records_are_rejected
+        PASS [   0.032s] (403/508) lpg types::tests::the_current_time_is_the_system_clock
+        PASS [   0.040s] (404/508) lpg types::tests::the_order_has_the_approved_fixed_points
+        PASS [   0.038s] (405/508) lpg types::tests::zone_links_are_the_formats_fixed_table_not_the_hosts
+        PASS [   0.069s] (406/508) lpg types::tests::the_record_encoder_accepts_exactly_what_the_decoder_accepts
+        PASS [   0.037s] (407/508) lpg types::tests::zone_names_are_normalised_through_iana_links
+        PASS [   0.497s] (408/508) lpg types::tests::key_bytes_sort_in_the_approved_order
+        PASS [   0.438s] (409/508) lpg types::tests::zone_offsets_equal_the_operating_systems
+        PASS [  10.420s] (410/508) lpg test_support::history::tests::elle_reports_a_hand_written_g1c_cycle_invalid
+        PASS [  10.301s] (411/508) lpg tx::tests::elle::elle_accepts_a_two_thread_rw_register_history
+        PASS [  15.431s] (412/508) lpg storage::btree::tests::a_tree_ten_times_larger_than_the_cap_reads_back_intact
+        PASS [  20.883s] (413/508) lpg index::tests::crash::a_crash_at_every_point_of_a_build_reopens_populating_and_the_restarted_build_ends_online
+        PASS [  17.063s] (414/508) lpg tx::tests::elle::elle_reports_g2_item_for_a_snapshot_isolation_write_skew
+        PASS [  17.249s] (415/508) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_rw_register_histories
+        PASS [  18.091s] (416/508) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_list_append_histories
+        PASS [  30.964s] (417/508) lpg tx::tests::elle::elle_finds_no_anomaly_in_eight_thread_graph_histories
+        PASS [  40.586s] (418/508) lpg storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model
+        SLOW [> 60.000s] (───────) lpg suites::fault::commits
+        SLOW [> 60.000s] (───────) lpg suites::fault::restore_
+        SLOW [> 60.000s] (───────) lpg suites::kill::kill_and_reopen
+        PASS [  78.811s] (419/508) lpg suites::kill::kill_and_reopen
+        PASS [   0.142s] (420/508) lpg ops::backup::tests::a_backup_requested_during_a_bulk_build_fails_at_once
+        PASS [   0.349s] (421/508) lpg ops::backup::tests::a_backup_under_four_committers_restores_to_one_commit_point
+        PASS [   0.168s] (422/508) lpg ops::backup::tests::audit_a_bulk_build_waits_for_a_running_backup
+        PASS [   0.043s] (423/508) lpg ops::backup::tests::the_backup_hold_keeps_segments_from_its_start
+        PASS [   0.015s] (424/508) lpg ops::backup::tests::the_backup_target_must_be_empty
+        PASS [   0.007s] (425/508) lpg ops::backup::tests::the_manifest_round_trips_and_any_change_is_refused
+        PASS [   0.083s] (426/508) lpg ops::migrate::tests::a_cleanly_closed_older_database_migrates_and_opens_unchanged
+        PASS [   0.283s] (427/508) lpg ops::migrate::tests::a_database_without_a_clean_shutdown_names_the_previous_crate_version
+        PASS [   0.317s] (428/508) lpg ops::migrate::tests::a_format_two_versions_older_names_the_intermediate_crate_version
+        PASS [   0.026s] (429/508) lpg ops::migrate::tests::an_open_database_is_not_migrated
+        PASS [   0.062s] (430/508) lpg ops::migrate::tests::audit_the_leftovers_of_an_interrupted_migration_are_removed_before_the_space_check
+        PASS [   0.327s] (431/508) lpg ops::migrate::tests::too_little_space_fails_before_any_write
+        PASS [   0.387s] (432/508) lpg ops::restore::tests::a_restore_into_a_database_fails_and_changes_nothing
+        PASS [   0.206s] (433/508) lpg ops::restore::tests::a_restore_overwrites_what_an_interrupted_restore_left
+        PASS [   0.107s] (434/508) lpg ops::restore::tests::an_artefact_does_not_open_as_a_database
+        PASS [   0.150s] (435/508) lpg ops::restore::tests::an_incomplete_or_damaged_artefact_is_refused_before_any_write
+        PASS [   0.435s] (436/508) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_from_lsn_0_replays_nothing
+        PASS [   0.446s] (437/508) lpg ops::restore::tests::audit_a_create_after_an_interrupted_restore_ignores_its_segments
+        PASS [  82.434s] (438/508) lpg suites::fault::commits
+        PASS [   0.122s] (439/508) lpg ops::restore::tests::audit_a_restore_meeting_a_database_created_and_still_open_leaves_it_intact
+        PASS [   0.153s] (440/508) lpg ops::restore::tests::audit_a_restore_never_replaces_a_database_created_after_its_first_check
+        PASS [   0.457s] (441/508) lpg ops::restore::tests::audit_a_failed_control_write_in_step_5_leaves_a_restorable_target
+        PASS [   0.106s] (442/508) lpg ops::restore::tests::audit_an_out_of_bounds_segment_or_an_oversized_manifest_is_refused_before_any_write
+        PASS [   0.260s] (443/508) lpg ops::restore::tests::audit_a_wal_ending_before_stop_is_refused_by_the_restore_and_every_later_open
+        PASS [   0.144s] (444/508) lpg storage::btree::bulk::tests::a_builds_pages_are_owned_by_its_record_and_released_after_a_drop_or_a_crash
+        PASS [   0.130s] (445/508) lpg storage::btree::bulk::tests::a_bulk_built_tree_answers_like_a_tree_built_by_puts
+        PASS [   0.057s] (446/508) lpg storage::btree::bulk::tests::a_crash_before_the_install_leaves_the_tree_absent_and_its_pages_free
+        PASS [   0.052s] (447/508) lpg storage::btree::bulk::tests::a_sorted_spill_feeds_the_build
+        PASS [   0.045s] (448/508) lpg storage::btree::bulk::tests::bulk_built_leaves_are_filled_to_ninety_percent
+        PASS [   0.020s] (449/508) lpg storage::btree::bulk::tests::unsorted_input_fails_the_build_and_empty_input_builds_an_empty_tree
+        PASS [   0.052s] (450/508) lpg storage::checkpoint::tests::a_checkpoint_publishes_the_page_cache_hits_and_faults
+        PASS [   0.654s] (451/508) lpg storage::btree::bulk::tests::audit_a_stale_frame_never_overwrites_a_bulk_built_page
+        PASS [   1.006s] (452/508) lpg storage::checkpoint::tests::a_hundred_thousand_commits_trigger_exactly_one_checkpoint
+        PASS [   0.086s] (453/508) lpg storage::checkpoint::tests::close_records_a_clean_shutdown_and_the_next_open_clears_it
+        PASS [   0.033s] (454/508) lpg storage::checkpoint::tests::every_kernel_metric_category_reports
+        PASS [   0.454s] (455/508) lpg storage::checkpoint::tests::fuzzy_checkpoints_under_concurrent_commits_lose_nothing
+        PASS [   0.481s] (456/508) lpg storage::checkpoint::tests::recycling_makes_each_rename_and_removal_durable_before_the_next
+        PASS [   0.332s] (457/508) lpg storage::checkpoint::tests::the_interval_triggers_checkpoints
+        PASS [   0.036s] (458/508) lpg storage::checkpoint::tests::the_wal_writer_and_checkpointer_threads_are_named
+        PASS [   2.073s] (459/508) lpg storage::checkpoint::tests::checkpoints_recycle_segments_and_their_old_frames_are_never_replayed
+        PASS [   0.180s] (460/508) lpg storage::recovery::tests::a_corrupt_frame_followed_by_a_valid_group_fails_the_open
+        PASS [   0.257s] (461/508) lpg storage::recovery::tests::a_segment_gets_its_name_only_once_complete_and_synced
+        PASS [   0.051s] (462/508) lpg storage::recovery::tests::a_torn_data_page_is_repaired_from_the_wal
+        PASS [   0.361s] (463/508) lpg storage::recovery::tests::a_torn_last_group_is_discarded
+        PASS [   0.088s] (464/508) lpg storage::recovery::tests::audit_a_crc_valid_frame_with_a_hostile_page_number_fails_the_open_as_corruption
+        PASS [   0.049s] (465/508) lpg storage::recovery::tests::counters_are_the_maximum_of_control_and_the_commit_frames
+        PASS [   0.593s] (466/508) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_nothing_keeps_every_returned_commit
+        PASS [   1.434s] (467/508) lpg storage::recovery::tests::a_missing_segment_at_or_after_the_redo_point_fails_the_open
+        PASS [   0.629s] (468/508) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_keeps_some_writes_keeps_every_returned_commit
+        PASS [   0.292s] (469/508) lpg storage::recovery::tests::leftover_frames_at_reused_positions_are_never_replayed
+        PASS [   0.081s] (470/508) lpg storage::recovery::tests::open_removes_a_partial_segment_left_by_a_crash
+        PASS [   0.170s] (471/508) lpg suites::fault::a_backup_with_only_manifest_tmp_is_refused
+        PASS [   1.187s] (472/508) lpg storage::recovery::tests::drop_without_close_then_a_crash_that_tears_writes_keeps_every_returned_commit
+        PASS [   0.054s] (473/508) lpg suites::fault::a_corrupt_data_page_read_makes_the_database_unusable_until_reopened
+        PASS [  20.653s] (474/508) lpg suites::fault::bulk_load
+        SLOW [>120.000s] (───────) lpg suites::fault::restore_
+        PASS [  12.866s] (475/508) lpg suites::fault::checkpoint
+        PASS [   0.129s] (476/508) lpg suites::fault::checkpoint_call_order
+        PASS [   0.160s] (477/508) lpg suites::fault::corruption_fails_the_open_or_is_handled_as_recorded
+        PASS [   1.800s] (478/508) lpg suites::fault::migration
+        PASS [  36.152s] (479/508) lpg suites::fault::backup
+        PASS [   0.049s] (480/508) lpg suites::fault::the_oracle_sees_an_undone_batch_that_came_back
+        PASS [  11.200s] (481/508) lpg suites::fault::recovery_checkpoint
+        PASS [   0.046s] (482/508) lpg tx::commit::tests::a_checkpoint_skips_a_page_changed_before_its_commit_joins_and_writes_it_on_the_revisit
+        PASS [   0.717s] (483/508) lpg tx::commit::tests::a_free_list_page_taken_by_an_undone_batch_reads_back_its_undo_image
+        PASS [   0.078s] (484/508) lpg tx::commit::tests::a_lone_committer_never_waits_in_a_gather_window
+        PASS [   0.392s] (485/508) lpg tx::commit::tests::a_page_taken_by_an_undone_batch_waits_for_earlier_readers
+        PASS [   0.043s] (486/508) lpg tx::commit::tests::a_panic_under_the_commit_latch_makes_the_database_unusable
+        PASS [   0.121s] (487/508) lpg tx::commit::tests::a_refused_memory_reservation_in_the_apply_step_is_undone
+        PASS [   1.204s] (488/508) lpg tx::commit::tests::an_overrun_extends_the_file_under_the_latch
+        PASS [   0.609s] (489/508) lpg tx::commit::tests::an_undone_batch_leaves_the_frames_of_pages_it_took_from_disk_clean
+        PASS [   0.055s] (490/508) lpg tx::commit::tests::an_undone_batch_that_took_a_page_it_freed_restores_that_page
+        PASS [   1.318s] (491/508) lpg tx::commit::tests::an_undone_batch_that_took_an_emptied_trunk_leaves_the_free_list_intact
+        PASS [   0.078s] (492/508) lpg tx::commit::tests::audit_a_failed_capture_never_reaches_the_wal
+        PASS [   0.458s] (493/508) lpg tx::commit::tests::audit_a_page_taken_by_an_undone_batch_stays_readable_after_eviction
+        PASS [   0.038s] (494/508) lpg tx::commit::tests::audit_enospc_on_the_group_write_is_not_reported_as_a_usable_enospc
+        PASS [   0.661s] (495/508) lpg tx::commit::tests::audit_undo_of_a_page_freed_by_an_undurable_commit_keeps_wal_before_data
+        PASS [   0.347s] (496/508) lpg tx::commit::tests::audit_wait_lsn_reports_an_undo_even_when_the_lsn_is_already_durable
+        PASS [ 141.505s] (497/508) lpg suites::fault::restore_
+        PASS [   0.031s] (498/508) lpg tx::commit::tests::commits_raise_counters_and_failed_commits_do_not
+        PASS [   0.073s] (499/508) lpg tx::commit::tests::commits_become_durable_while_a_segment_is_created_ahead_of_use
+        PASS [   0.034s] (500/508) lpg tx::commit::tests::create_sets_the_page_lsn_in_the_write_that_zeroes_the_frame
+        PASS [   0.419s] (501/508) lpg tx::commit::tests::enospc_creating_a_segment_fails_that_commit_while_a_concurrent_read_succeeds
+        PASS [   0.064s] (502/508) lpg tx::commit::tests::every_commit_returns_after_a_sync_covering_its_commit_frame
+        PASS [   0.072s] (503/508) lpg tx::commit::tests::failed_wal_sync_fails_the_commit_and_every_later_operation_until_reopen
+        PASS [   0.090s] (504/508) lpg tx::commit::tests::four_closed_loop_committers_share_one_flush
+        PASS [   0.705s] (505/508) lpg tx::commit::tests::pages_freed_by_an_undurable_commit_keep_the_undo_image_once_it_is_durable
+        PASS [   0.142s] (506/508) lpg tx::commit::tests::sixteen_threads_committing_disjoint_batches_apply_each_exactly_once
+        PASS [   2.265s] (507/508) lpg tx::commit::tests::enospc_in_the_apply_step_is_undone_and_the_database_stays_usable
+        PASS [  22.705s] (508/508) lpg suites::fault::transactions
+     Summary [ 147.390s] 508 tests run: 508 passed (3 slow), 28 skipped
+        SLOW [  78.811s] (419/508) lpg suites::kill::kill_and_reopen
+        SLOW [  82.434s] (438/508) lpg suites::fault::commits
+        SLOW [ 141.505s] (497/508) lpg suites::fault::restore_
+wall=147.50 user=675.12 sys=872.17 cpu=1048%
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Backup crash_points=109 runs: drop-all 109, keep-random 109, tear-512 109 failure_runs=164 copy_failure_runs=0 seconds=36.1
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, tear-512 108 failure_runs=191 copy_failure_runs=0 seconds=20.6
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Checkpoint crash_points=34 runs: drop-all 34, keep-random 34, tear-512 34 failure_runs=32 copy_failure_runs=0 seconds=12.8
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Commits crash_points=152 runs: drop-all 152, keep-random 152, tear-512 152 failure_runs=241 copy_failure_runs=1381 seconds=82.4
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, tear-512 9 failure_runs=6 copy_failure_runs=0 seconds=1.8
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=2 copy_failure_runs=0 seconds=11.2
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Restore crash_points=169 runs: drop-all 169, keep-random 169, tear-512 169 failure_runs=159 copy_failure_runs=0 seconds=141.5
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Transactions crash_points=168 runs: drop-all 168, keep-random 168, tear-512 168 failure_runs=308 copy_failure_runs=185 seconds=22.7
+SUITE fault fs=xfs source=/dev/loop59 workload=Backup crash_points=109 runs: drop-all 109, keep-random 109, tear-512 109 failure_runs=164 copy_failure_runs=0 seconds=35.5
+SUITE fault fs=xfs source=/dev/loop59 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, tear-512 108 failure_runs=191 copy_failure_runs=0 seconds=18.7
+SUITE fault fs=xfs source=/dev/loop59 workload=Checkpoint crash_points=34 runs: drop-all 34, keep-random 34, tear-512 34 failure_runs=32 copy_failure_runs=0 seconds=12.2
+SUITE fault fs=xfs source=/dev/loop59 workload=Commits crash_points=152 runs: drop-all 152, keep-random 152, tear-512 152 failure_runs=241 copy_failure_runs=1381 seconds=75.4
+SUITE fault fs=xfs source=/dev/loop59 workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, tear-512 9 failure_runs=6 copy_failure_runs=0 seconds=1.3
+SUITE fault fs=xfs source=/dev/loop59 workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, keep-random 149, tear-512 149 failure_runs=2 copy_failure_runs=0 seconds=10.7
+SUITE fault fs=xfs source=/dev/loop59 workload=Restore crash_points=169 runs: drop-all 169, keep-random 169, tear-512 169 failure_runs=159 copy_failure_runs=0 seconds=119.7
+SUITE fault fs=xfs source=/dev/loop59 workload=Transactions crash_points=168 runs: drop-all 168, keep-random 168, tear-512 168 failure_runs=308 copy_failure_runs=185 seconds=21.5
+SUITE kill fs=ext4 source=/dev/nvme0n1p1 dir=/data/tmp/lpg-lab iterations=200 printed_commits=11624 recovery_ms_p50=34.5 recovery_ms_p99=161.4 replayed_bytes_p50=304288 replayed_bytes_p99=600352 child_commits_per_s_p50=624 kills_in_checkpoint=200 kills_in_backup=200 recycling_checkpoints=2 printed_drops=693 kills_in_index_build=200 index_builds=0 restarted_index_builds=200 kept_indexes_checked=199 seconds=70.3
+SUITE kill fs=xfs source=/dev/loop59 dir=/mnt/lpg-xfs iterations=200 printed_commits=6312 recovery_ms_p50=45.4 recovery_ms_p99=163.1 replayed_bytes_p50=287840 replayed_bytes_p99=567456 child_commits_per_s_p50=321 kills_in_checkpoint=200 kills_in_backup=200 recycling_checkpoints=2 printed_drops=492 kills_in_index_build=200 index_builds=0 restarted_index_builds=200 kept_indexes_checked=199 seconds=78.7

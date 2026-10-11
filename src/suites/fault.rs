@@ -712,56 +712,140 @@ fn sample(n: u64, full: bool) -> Vec<u64> {
     }
 }
 
+/// The threads of one directory's sweep. Alone, the restore sweep on ext4
+/// (`LPG_SEED=3`, 16 cores, 2026-10-11) took 99.3 s on 1 thread, 56.6 s on
+/// 2, 33.6 s on 4, 30.4 s on 8 and 37.4 s on 16, with 100, 113, 133, 241
+/// and 565 CPU seconds, most of them in the kernel. In a full run on ext4
+/// and XFS, where the kill suite and two other sweeps run beside it, 2
+/// threads took 145.4 s and 4 threads 163.8 s
+/// (docs/evidence/lab-sprint-3/test-speed.md).
+const SWEEP_THREADS: usize = 2;
+
+/// Runs [`once`] for every arm of `arms` in `base`, on at most
+/// [`SWEEP_THREADS`] threads, and returns how many runs ended. Each run
+/// has its own directories and fault storage
+/// ([`Run::new`]) and shares nothing with the others, so the order and the
+/// overlap of the runs change nothing a run sees; every arm runs exactly
+/// once. The first panic stops the remaining runs and is raised again,
+/// with its message, once every thread has stopped.
+///
+/// SQLite's test runner splits its suite into independent jobs run on as
+/// many processes as there are cores (R-LIBSQL
+/// `libsql-sqlite3/test/testrunner.tcl:165-200`).
+fn run_all(w: Workload, base: &Path, arms: &[Arm]) -> usize {
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+    let threads = std::thread::available_parallelism()
+        .map_or(1, std::num::NonZero::get)
+        .min(SWEEP_THREADS)
+        .min(arms.len());
+    let next = AtomicUsize::new(0);
+    let ended = AtomicUsize::new(0);
+    let stop = AtomicBool::new(false);
+    let panics: Vec<Box<dyn std::any::Any + Send>> = std::thread::scope(|sc| {
+        let workers: Vec<_> = (0..threads)
+            .map(|_| {
+                sc.spawn(|| {
+                    // Relaxed: the counters only hand out indexes and count
+                    // ends; the scope's join orders every effect of a run
+                    // before the counts are read.
+                    while !stop.load(Ordering::Relaxed) {
+                        let &arm = arms.get(next.fetch_add(1, Ordering::Relaxed))?;
+                        let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                            once(w, base, arm)
+                        }));
+                        match r {
+                            Ok(_) => {
+                                ended.fetch_add(1, Ordering::Relaxed);
+                            }
+                            Err(p) => {
+                                stop.store(true, Ordering::Relaxed);
+                                return Some(p);
+                            }
+                        }
+                    }
+                    None
+                })
+            })
+            .collect();
+        workers
+            .into_iter()
+            .filter_map(|h| h.join().expect("a sweep worker panicked outside a run"))
+            .collect()
+    });
+    if let Some(p) = panics.into_iter().next() {
+        std::panic::resume_unwind(p);
+    }
+    ended.into_inner()
+}
+
 /// The crash-point and failure sweeps of `w` in every suite directory;
-/// with `copies`, also the page-copy failure sweep.
+/// with `copies`, also the page-copy failure sweep. The directories run in
+/// parallel ([`super::each_dir`]), and so do the runs of one directory
+/// ([`run_all`]); the counts printed are those of the runs that ended,
+/// checked against the runs planned.
 fn sweep(w: Workload, failures: &[(Kind, Fault)], copies: bool) {
     let (dirs, full) = suite_dirs();
-    for (fs, base) in dirs {
-        let started = Instant::now();
-        let Dry {
-            points,
-            counts,
-            copies: copy_calls,
-        } = dry_counts(w, &base);
-        assert!(points > 0, "{w:?}: the workload made no crash-point call");
-        let ks = sample(points, full);
-        let sd = seed();
-        let modes = [
-            ("drop-all", Crash::DropAll),
-            ("keep-random", Crash::KeepRandom { seed: sd }),
-            ("tear-512", Crash::Tear { seed: sd ^ 0x5eed }),
-        ];
-        let mut lines = Vec::new();
-        for (name, mode) in modes {
-            for &k in &ks {
-                once(w, &base, Arm::CrashAfter(k, mode));
-            }
-            lines.push(format!("{name} {}", ks.len()));
-        }
-        let mut failed = 0;
-        for &(kind, fault) in failures {
-            let n = counts[&kind];
-            for i in sample(n, full) {
-                once(w, &base, Arm::Fail(kind, i, fault));
-                failed += 1;
-            }
-        }
-        let mut copy_runs = 0;
-        if copies {
-            assert!(copy_calls > 0, "{w:?}: the workload made no page copy");
-            for i in sample(copy_calls, full) {
-                once(w, &base, Arm::FailCopy(i));
-                copy_runs += 1;
-            }
-        }
-        println!(
-            "SUITE fault fs={fs} workload={w:?} crash_points={points} runs: {} failure_runs={failed} \
-             copy_failure_runs={copy_runs} seconds={:.1}{}",
-            lines.join(", "),
-            started.elapsed().as_secs_f64(),
-            if full { "" } else { " (sample)" }
+    super::each_dir(&dirs, |fs, base| {
+        sweep_dir(w, failures, copies, fs, base, full);
+    });
+}
+
+/// The sweeps of [`sweep`] in one suite directory.
+fn sweep_dir(
+    w: Workload,
+    failures: &[(Kind, Fault)],
+    copies: bool,
+    fs: &str,
+    base: &Path,
+    full: bool,
+) {
+    let started = Instant::now();
+    let Dry {
+        points,
+        counts,
+        copies: copy_calls,
+    } = dry_counts(w, base);
+    assert!(points > 0, "{w:?}: the workload made no crash-point call");
+    let ks = sample(points, full);
+    let sd = seed();
+    let modes = [
+        ("drop-all", Crash::DropAll),
+        ("keep-random", Crash::KeepRandom { seed: sd }),
+        ("tear-512", Crash::Tear { seed: sd ^ 0x5eed }),
+    ];
+    let mut arms = Vec::new();
+    let mut lines = Vec::new();
+    for (name, mode) in modes {
+        arms.extend(ks.iter().map(|&k| Arm::CrashAfter(k, mode)));
+        lines.push(format!("{name} {}", ks.len()));
+    }
+    let crash_runs = arms.len();
+    for &(kind, fault) in failures {
+        arms.extend(
+            sample(counts[&kind], full)
+                .into_iter()
+                .map(|i| Arm::Fail(kind, i, fault)),
         );
     }
+    let failed = arms.len() - crash_runs;
+    if copies {
+        assert!(copy_calls > 0, "{w:?}: the workload made no page copy");
+        arms.extend(sample(copy_calls, full).into_iter().map(Arm::FailCopy));
+    }
+    let copy_runs = arms.len() - crash_runs - failed;
+    let ended = run_all(w, base, &arms);
+    assert_eq!(
+        ended,
+        crash_runs + failed + copy_runs,
+        "{w:?}: runs that ended against runs planned"
+    );
+    println!(
+        "SUITE fault fs={fs} workload={w:?} crash_points={points} runs: {} failure_runs={failed} \
+         copy_failure_runs={copy_runs} seconds={:.1}{}",
+        lines.join(", "),
+        started.elapsed().as_secs_f64(),
+        if full { "" } else { " (sample)" }
+    );
 }
 
 /// Transaction batches of [`Workload::Transactions`].
