@@ -1,0 +1,2 @@
+SELECT *
+FROM { MATCH (p:Person) WHERE p.city = 'Lisbon' RETURN p.name AS name }

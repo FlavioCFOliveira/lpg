@@ -32,6 +32,7 @@ related:
 - **Home schema, home graph**: the schema and graph a session uses when a request names none ([FR-SES-002](functional-requirements.md#sessions)).
 - **In-memory projection**: the copy of an algorithm's input graph that the crate holds in memory for one algorithm run ([FR-ALG-004](functional-requirements.md#graph-algorithms)).
 - **Labeled Property Graph (LPG)**: a graph of nodes and edges that carry labels and properties.
+- **Mandatory surface**: every construct of the GQL grammar that no feature identifier covers, under the provisional placement rule of [FR-GQL-002](functional-requirements.md#gql).
 - **Memory cap**: the database-wide limit on the memory used by the cache, query execution and the old versions kept for MVCC together; the application passes it to create and open, with no default ([FR-LIM-003](functional-requirements.md#resource-limits)).
 - **Multiversion concurrency control (MVCC)**: keeping several committed versions of the data so that a transaction reads the versions of its snapshot without waiting for writers ([NFR-PERF-003](non-functional-requirements.md#performance), [FR-TX-006](functional-requirements.md#transactions)).
 - **Old version**: a committed version of data that a later commit has replaced, kept while a transaction's snapshot may still read it ([FR-LIM-005](functional-requirements.md#resource-limits)).
@@ -49,5 +50,6 @@ related:
 - **SRID**: spatial reference identifier, the number that identifies a coordinate reference system.
 - **Stable storage**: storage whose content survives process crash, power loss and operating-system crash.
 - **Storage abstraction**: the application-provided abstraction through which the crate performs storage I/O; the crate provides a default filesystem implementation.
+- **Supported feature set**: the mandatory surface and the optional features that the crate supports ([FR-GQL-002](functional-requirements.md#gql)).
 - **Torn page write**: a page write that a power loss or crash leaves only partly on storage.
 - **Unusable database**: the state of a database after a checksum failure or a flush failure while it is open: every operation on its handle fails until the database is closed and reopened ([FR-REC-005](functional-requirements.md#recovery), [FR-REC-006](functional-requirements.md#recovery)).

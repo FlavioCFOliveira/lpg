@@ -1,0 +1,2 @@
+MATCH (x:Peer)-[f:FRIEND]->(y:Peer)
+RETURN f.rank AS rank

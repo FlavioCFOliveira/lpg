@@ -1,0 +1,1 @@
+INSERT (a:P {name: 'a'})-[:R {w: 2}]->(b:P {name: 'b'})

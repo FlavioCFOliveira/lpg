@@ -470,6 +470,22 @@ enum Taken<'a> {
     More(Arc<[Slot]>, usize),
 }
 
+/// A registration that borrows nothing ([`Readers::enter_detached`]). It
+/// must be passed to [`Readers::leave`] of the registry that made it;
+/// dropping it instead leaves the slot taken.
+#[must_use]
+pub(crate) struct Detached {
+    slot: Held,
+}
+
+/// The slot a detached registration holds.
+enum Held {
+    /// Slot `.0` of the first block.
+    First(usize),
+    /// Slot `.1` of an overflow block.
+    More(Arc<[Slot]>, usize),
+}
+
 impl Drop for Registered<'_> {
     fn drop(&mut self) {
         let slot = match &self.slot {
@@ -489,6 +505,17 @@ impl Readers {
     /// timestamp instead (TS-14 Snapshot registry). Never waits for
     /// another registration to end.
     pub(crate) fn enter(&self, applied: &AtomicU64) -> Registered<'_> {
+        let slot = match self.enter_detached(applied).slot {
+            Held::First(i) => Taken::First(&self.slots[i].0),
+            Held::More(b, i) => Taken::More(b, i),
+        };
+        Registered { slot }
+    }
+
+    /// [`Readers::enter`] for a registration that borrows nothing: an
+    /// owned transaction keeps its snapshot registration this way (TS-02
+    /// "Owned transactions") and withdraws it with [`Readers::leave`].
+    pub(crate) fn enter_detached(&self, applied: &AtomicU64) -> Detached {
         let mut i = HINT.with(|h| {
             if h.get() == usize::MAX {
                 h.set(self.next_hint.fetch_add(1, Ordering::Relaxed) % SLOTS);
@@ -508,21 +535,32 @@ impl Readers {
                 // (store-buffering with SeqCst fences on both sides).
                 fence(Ordering::SeqCst);
                 HINT.with(|h| h.set(i));
-                return Registered {
-                    slot: Taken::First(slot),
+                return Detached {
+                    slot: Held::First(i),
                 };
             }
             i = (i + 1) % SLOTS;
         }
         // The overflow mutex orders it (the type's documentation).
-        Registered {
-            slot: self.enter_more(value),
+        let (block, j) = self.enter_more(value);
+        Detached {
+            slot: Held::More(block, j),
         }
+    }
+
+    /// Withdraws a registration of [`Readers::enter_detached`].
+    pub(crate) fn leave(&self, d: Detached) {
+        let slot = match &d.slot {
+            Held::First(i) => &self.slots[*i].0,
+            Held::More(b, i) => &b[*i].0,
+        };
+        // Release, as `Registered::drop`.
+        slot.store(FREE, Ordering::Release);
     }
 
     /// Stores `value` in a free overflow slot, appending a block if none
     /// is free, under the overflow mutex.
-    fn enter_more(&self, value: u64) -> Taken<'_> {
+    fn enter_more(&self, value: u64) -> (Arc<[Slot]>, usize) {
         let mut more = self.more.lock().unwrap_or_else(PoisonError::into_inner);
         for block in more.iter() {
             for (j, s) in block.iter().enumerate() {
@@ -530,14 +568,14 @@ impl Readers {
                     .compare_exchange(FREE, value, Ordering::SeqCst, Ordering::Relaxed)
                     .is_ok()
                 {
-                    return Taken::More(Arc::clone(block), j);
+                    return (Arc::clone(block), j);
                 }
             }
         }
         let block: Arc<[Slot]> = (0..SLOTS).map(|_| Slot::free()).collect();
         block[0].0.store(value, Ordering::SeqCst);
         more.push(Arc::clone(&block));
-        Taken::More(block, 0)
+        (block, 0)
     }
 
     /// The lowest registered value, or `u64::MAX` if no reader is

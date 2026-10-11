@@ -72,7 +72,7 @@ use crate::catalog::stats::{Delta, StatKey};
 use crate::catalog::{CATALOG_TREE, Kind, name_key};
 use crate::storage::btree::{MAX_KEY, Store, Tree};
 use crate::storage::engine::{Core, Engine};
-use crate::storage::error::{Error, Result};
+use crate::storage::error::{Error, Missing, Result, Violation};
 use crate::storage::graph::{EdgeRecord, Graph, decode_edge, element_key, element_of};
 use crate::tx::Transaction;
 use crate::tx::lock::{Mode, Resource};
@@ -104,7 +104,7 @@ pub(crate) enum Entity {
 /// no byte-string property type, lpg has byte-string values (TS-21; user
 /// decision 2026-10-08, rmp #34).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum PropertyType {
+pub enum PropertyType {
     Boolean = 0,
     Integer = 1,
     Float = 2,
@@ -175,6 +175,39 @@ impl TypeSet {
     fn from_bits(bits: u64) -> Option<TypeSet> {
         let b = u32::try_from(bits).ok()?;
         (b != 0 && b & !TYPE_BITS == 0).then_some(TypeSet(b))
+    }
+
+    /// The set as Neo4j's `SHOW CONSTRAINTS` writes it: its types in
+    /// order, then its list types, joined by ` | `, such as `STRING |
+    /// LIST<STRING NOT NULL>` (Cypher Manual, "List constraints", read
+    /// 2026-10-11).
+    pub(crate) fn describe(self) -> String {
+        const NAMES: [&str; 12] = [
+            "BOOLEAN",
+            "INTEGER",
+            "FLOAT",
+            "STRING",
+            "DATE",
+            "LOCAL TIME",
+            "LOCAL DATETIME",
+            "ZONED TIME",
+            "ZONED DATETIME",
+            "DURATION",
+            "POINT",
+            "BYTES",
+        ];
+        let mut parts: Vec<String> = Vec::new();
+        for (i, n) in NAMES.iter().enumerate() {
+            if self.0 & (1 << i) != 0 {
+                parts.push((*n).to_string());
+            }
+        }
+        for (i, n) in NAMES.iter().enumerate() {
+            if self.0 & (1 << (LIST_SHIFT as usize + i)) != 0 {
+                parts.push(format!("LIST<{n} NOT NULL>"));
+            }
+        }
+        parts.join(" | ")
     }
 
     /// Whether `v` has one of the set's types. A list has `LIST<T NOT
@@ -638,18 +671,14 @@ pub(crate) fn check_constraint(def: &SchemaDef, el: &Element) -> Result<()> {
     match def.kind {
         SchemaKind::Exists | SchemaKind::NodeKey => {
             if def.props.iter().any(|&p| prop(&el.props, p).is_none()) {
-                return Err(Error::ConstraintViolation(
-                    "an element lacks a property its constraint requires",
-                ));
+                return Err(Error::ConstraintViolation(Violation::MissingProperty));
             }
         }
         SchemaKind::Type(t) => {
             if let Some(v) = prop(&el.props, def.props[0])
                 && !t.accepts(v)
             {
-                return Err(Error::ConstraintViolation(
-                    "a property has another type than its constraint requires",
-                ));
+                return Err(Error::ConstraintViolation(Violation::PropertyType));
             }
         }
         _ => {}
@@ -691,12 +720,7 @@ fn unique_violation(store: &Store<'_>, tree: Tree, change: &Change) -> Result<bo
 /// [`Error::ConstraintViolation`]; [`Error::InvalidArgument`] for an index
 /// key longer than 1 024 bytes or a malformed record in the write set;
 /// storage errors.
-pub(crate) fn derive(
-    core: &Core,
-    store: &Store<'_>,
-    tx: &Transaction<'_>,
-    ts: u64,
-) -> Result<Derived> {
+pub(crate) fn derive(core: &Core, store: &Store<'_>, tx: &Transaction, ts: u64) -> Result<Derived> {
     let mut d = Derived::default();
     if let Some(on) = &tx.online {
         switch(core, store, on, &mut d)?;
@@ -778,9 +802,7 @@ pub(crate) fn derive(
             && !change.added.is_empty()
             && unique_violation(store, tree_of(store, ix.tree)?, change)?
         {
-            return Err(Error::ConstraintViolation(
-                "a value of a uniqueness or node-key constraint is in use",
-            ));
+            return Err(Error::ConstraintViolation(Violation::ValueInUse));
         }
     }
     let mut seq = 0u32;
@@ -952,7 +974,7 @@ pub(crate) fn read_side(
 fn switch(core: &Core, store: &Store<'_>, on: &Online, d: &mut Derived) -> Result<()> {
     let def = core.catalog.schema().get(&on.index).cloned();
     let Some(def) = def.filter(|s| s.state == State::Populating) else {
-        return Err(Error::NotFound("a POPULATING index"));
+        return Err(Error::NotFound(Missing::PopulatingIndex));
     };
     let t = tree_of(store, def.tree)?;
     let records = read_side(store, tree_of(store, def.side)?, &on.from, usize::MAX)?;
@@ -1114,7 +1136,7 @@ pub(crate) fn check(core: &Core, push: &mut dyn FnMut(String)) -> Result<()> {
 // ---------------------------------------------------------------------------
 // The transaction API: definitions, reads, constraint locks, drops.
 
-impl Transaction<'_> {
+impl Transaction {
     /// Definition `id` of `graph` as the snapshot sees it.
     ///
     /// # Errors
@@ -1161,7 +1183,7 @@ impl Transaction<'_> {
                 let t = self.tree(def.tree)?;
                 Ok((def, t))
             }
-            _ => Err(Error::NotFound("an ONLINE index")),
+            _ => Err(Error::NotFound(Missing::OnlineIndex)),
         }
     }
 
@@ -1182,6 +1204,26 @@ impl Transaction<'_> {
         lo: &[u8],
         hi: Option<&[u8]>,
     ) -> Result<Vec<u64>> {
+        self.index_scan_chunk(g, id, lo, hi, usize::MAX)
+            .map(|(v, _)| v)
+    }
+
+    /// [`Transaction::index_scan`] that reads at most `limit` committed
+    /// index entries ([`Transaction::scan_chunk`]): the elements of the keys
+    /// up to the last one read, and the key (without the index's prefix)
+    /// to resume from, `None` when the range is done (rmp #45).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::index_scan`].
+    pub(crate) fn index_scan_chunk(
+        &mut self,
+        g: &Graph,
+        id: u64,
+        lo: &[u8],
+        hi: Option<&[u8]>,
+        limit: usize,
+    ) -> Result<(Vec<u64>, Option<Vec<u8>>)> {
         let (def, t) = self.online_index(g, id)?;
         let prefix = def.key_prefix();
         let flo = [&prefix[..], lo].concat();
@@ -1189,12 +1231,13 @@ impl Transaction<'_> {
             Some(h) => Some([&prefix[..], h].concat()),
             None => crate::tx::conflict::Interval::prefix(&prefix).hi,
         };
-        let in_range = |k: &[u8]| k >= flo.as_slice() && fhi.as_deref().is_none_or(|h| k < h);
         let mut keys: BTreeSet<Vec<u8>> = BTreeSet::new();
-        self.scan_range(t, &flo, fhi.as_deref(), |k, _| {
+        let resume = self.scan_chunk(t, &flo, fhi.as_deref(), limit, |k, _| {
             keys.insert(k.to_vec());
             true
         })?;
+        let chunk_hi = resume.clone().or(fhi);
+        let in_range = |k: &[u8]| k >= flo.as_slice() && chunk_hi.as_deref().is_none_or(|h| k < h);
         // This transaction's record changes, which no index entry holds
         // until it commits.
         let elements = match def.entity {
@@ -1225,7 +1268,11 @@ impl Transaction<'_> {
                 }
             }
         }
-        Ok(keys.iter().filter_map(|k| element_of_key(k)).collect())
+        let resume = resume.map(|r| r[prefix.len()..].to_vec());
+        Ok((
+            keys.iter().filter_map(|k| element_of_key(k)).collect(),
+            resume,
+        ))
     }
 
     /// The elements of graph `g` whose property of point index `id` is a
@@ -1354,9 +1401,7 @@ impl Transaction<'_> {
                 return Err(self.abort_with(e));
             }
             if other {
-                return Err(Error::ConstraintViolation(
-                    "a value of a uniqueness or node-key constraint is in use",
-                ));
+                return Err(Error::ConstraintViolation(Violation::ValueInUse));
             }
         }
         Ok(())
@@ -1425,10 +1470,10 @@ impl Transaction<'_> {
     /// transaction ends ([`crate::catalog`] Graph types in use).
     pub(crate) fn lock_graph(&mut self, graph: u64) -> Result<Graph> {
         let Some(o) = self.object(graph)? else {
-            return Err(Error::NotFound("the graph"));
+            return Err(Error::NotFound(Missing::Graph));
         };
         if o.kind != Kind::Graph {
-            return Err(Error::NotFound("the graph"));
+            return Err(Error::NotFound(Missing::Graph));
         }
         let t = self.tree(CATALOG_TREE)?;
         self.lock_key(t, &name_key(o.parent, &o.name), Mode::S)?;

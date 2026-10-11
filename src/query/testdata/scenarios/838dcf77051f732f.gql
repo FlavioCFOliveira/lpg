@@ -1,0 +1,2 @@
+WITH null AS map
+RETURN map.name IS NULL AS result

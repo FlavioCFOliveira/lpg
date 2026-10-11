@@ -1,0 +1,366 @@
+file	function	count	regions_covered	regions
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database as core::fmt::Debug>::fmt	0	0	7
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::backup	5	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::backup::{closure#0}	4	10	12
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::backup::{closure#0}::{closure#0}	4	7	8
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::check_integrity	7	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::check_integrity::{closure#0}	6	8	10
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::check_integrity::{closure#0}::{closure#0}	6	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::close	75	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::close::{closure#0}	74	4	4
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::close_with_timeout	77	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::close_with_timeout::{closure#0}	76	15	17
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::close_with_timeout::{closure#0}::{closure#0}	76	3	3
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::create	71	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::create::{closure#0}	70	17	18
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::create::{closure#0}::{closure#0}	70	6	6
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::create::{closure#0}::{closure#1}	2	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::engine_handle	19	5	5
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::migrate	3	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::migrate::{closure#0}	2	9	10
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::migrate::{closure#0}::{closure#0}	2	3	3
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::migrate::{closure#0}::{closure#1}	2	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::migrate::{closure#0}::{closure#2}	0	0	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::open	7	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::open::{closure#0}	6	14	15
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::open::{closure#0}::{closure#0}	6	5	5
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::open::{closure#0}::{closure#1}	2	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::register	52	5	6
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::register_function	8	8	8
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::register_procedure	36	5	5
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::register_write_procedure	8	5	5
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::restore	5	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::restore::{closure#0}	4	16	18
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::restore::{closure#0}::{closure#0}	4	6	6
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::restore::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::routines	1	3	3
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::session	116	1	1
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::session::{closure#0}	115	21	24
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::session::{closure#0}::{closure#0}	115	14	18
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::session::{closure#0}::{closure#0}::{closure#0}	230	16	18
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::session::{closure#0}::{closure#0}::{closure#0}::{closure#0}	6	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Database>::wrap	76	25	25
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner as lpg::proc::Host>::authorise	14	6	6
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner as lpg::proc::Host>::transactions	6	7	7
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner as lpg::proc::Host>::transactions::{closure#0}	8	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::abort_tx	80	9	9
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::authorise_blocking	1488	15	16
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::authorise_blocking::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::begin_tx	702	57	60
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::begin_tx::{closure#0}	2	7	7
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::check_integrity	6	51	59
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::check_integrity::{closure#0}	210	4	4
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::check_integrity::{closure#1}	2	4	4
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::check_integrity::{closure#2}	14	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::check_open	1869	11	12
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::close	76	41	42
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::commit_tx	634	25	29
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::end_tx	704	29	29
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::engine_handle	2813	7	8
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::transactions	20	6	6
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::DbInner>::visible	12	26	26
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::IntegrityReport>::is_ok	4	4	4
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::NullSink as lpg::obs::MetricsSink>::counter	162	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::NullSink as lpg::obs::MetricsSink>::gauge	1082	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::NullSink as lpg::obs::MetricsSink>::histogram	31	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Options as core::fmt::Debug>::fmt	0	0	8
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Options>::new	79	3	3
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Options>::sink	80	5	5
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Options>::sink::{closure#0}	12	3	3
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::Options>::with_metrics	68	5	5
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::TxShared>::current_query	14	4	4
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::TxShared>::row	8	41	41
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::TxShared>::row::{closure#0}	6	5	5
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::TxShared>::row::{closure#1}	8	2	2
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::TxShared>::status_text	14	5	9
+/data/dev/xumiga/lpg/src/api/database.rs	<lpg::api::database::TxShared>::take	704	4	4
+/data/dev/xumiga/lpg/src/api/database.rs	lpg::api::database::ended	2	3	3
+/data/dev/xumiga/lpg/src/api/database.rs	lpg::api::database::open_error	4	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(), <lpg::api::session::Transaction>::rollback::{closure#0}::{closure#0}>	15	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(), <lpg::api::session::Transaction>::rollback::{closure#0}::{closure#0}>::{closure#0}	15	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(), <lpg::api::session::Transaction>::rollback::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	15	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(), <lpg::api::session::Transaction>::rollback::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(lpg::query::exec::Cursor, lpg::api::stream::Progress, core::result::Result<lpg::api::stream::Step, lpg::error::Error>), <lpg::api::stream::ResultStream>::next::{closure#0}::{closure#0}>	3643	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(lpg::query::exec::Cursor, lpg::api::stream::Progress, core::result::Result<lpg::api::stream::Step, lpg::error::Error>), <lpg::api::stream::ResultStream>::next::{closure#0}::{closure#0}>::{closure#0}	3643	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(lpg::query::exec::Cursor, lpg::api::stream::Progress, core::result::Result<lpg::api::stream::Step, lpg::error::Error>), <lpg::api::stream::ResultStream>::next::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	3643	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<(lpg::query::exec::Cursor, lpg::api::stream::Progress, core::result::Result<lpg::api::stream::Step, lpg::error::Error>), <lpg::api::stream::ResultStream>::next::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::backup::{closure#0}::{closure#0}>	4	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::backup::{closure#0}::{closure#0}>::{closure#0}	4	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::backup::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	4	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::backup::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::close_with_timeout::{closure#0}::{closure#0}>	76	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::close_with_timeout::{closure#0}::{closure#0}>::{closure#0}	76	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::close_with_timeout::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	76	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::database::Database>::close_with_timeout::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}>	10	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}>::{closure#0}	10	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	10	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Transaction>::commit::{closure#0}::{closure#0}>	34	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Transaction>::commit::{closure#0}::{closure#0}>::{closure#0}	34	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Transaction>::commit::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	34	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(), lpg::error::Error>, <lpg::api::session::Transaction>::commit::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, alloc::string::String, alloc::string::String), lpg::error::Error>, <lpg::api::session::Session>::graph_of::{closure#0}::{closure#0}>	54	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, alloc::string::String, alloc::string::String), lpg::error::Error>, <lpg::api::session::Session>::graph_of::{closure#0}::{closure#0}>::{closure#0}	54	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, alloc::string::String, alloc::string::String), lpg::error::Error>, <lpg::api::session::Session>::graph_of::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	54	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, alloc::string::String, alloc::string::String), lpg::error::Error>, <lpg::api::session::Session>::graph_of::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, u64), lpg::error::Error>, <lpg::api::database::Database>::session::{closure#0}::{closure#0}>	115	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, u64), lpg::error::Error>, <lpg::api::database::Database>::session::{closure#0}::{closure#0}>::{closure#0}	115	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, u64), lpg::error::Error>, <lpg::api::database::Database>::session::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	115	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<(u64, u64), lpg::error::Error>, <lpg::api::database::Database>::session::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::string::String, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#1}>	10	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::string::String, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#1}>::{closure#0}	10	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::string::String, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#1}>::{closure#0}::{closure#0}	10	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::string::String, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#1}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::vec::Vec<alloc::sync::Arc<lpg::api::database::TxShared>>, lpg::error::Error>, <lpg::api::session::Session>::list_transactions::{closure#0}::{closure#0}>	6	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::vec::Vec<alloc::sync::Arc<lpg::api::database::TxShared>>, lpg::error::Error>, <lpg::api::session::Session>::list_transactions::{closure#0}::{closure#0}>::{closure#0}	6	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::vec::Vec<alloc::sync::Arc<lpg::api::database::TxShared>>, lpg::error::Error>, <lpg::api::session::Session>::list_transactions::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	6	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<alloc::vec::Vec<alloc::sync::Arc<lpg::api::database::TxShared>>, lpg::error::Error>, <lpg::api::session::Session>::list_transactions::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<core::option::Option<lpg::ops::migrate::Migrated>, lpg::storage::error::Error>, <lpg::api::database::Database>::migrate::{closure#0}::{closure#0}>	2	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<core::option::Option<lpg::ops::migrate::Migrated>, lpg::storage::error::Error>, <lpg::api::database::Database>::migrate::{closure#0}::{closure#0}>::{closure#0}	2	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<core::option::Option<lpg::ops::migrate::Migrated>, lpg::storage::error::Error>, <lpg::api::database::Database>::migrate::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	2	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<core::option::Option<lpg::ops::migrate::Migrated>, lpg::storage::error::Error>, <lpg::api::database::Database>::migrate::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::database::IntegrityReport, lpg::error::Error>, <lpg::api::database::Database>::check_integrity::{closure#0}::{closure#0}>	6	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::database::IntegrityReport, lpg::error::Error>, <lpg::api::database::Database>::check_integrity::{closure#0}::{closure#0}>::{closure#0}	6	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::database::IntegrityReport, lpg::error::Error>, <lpg::api::database::Database>::check_integrity::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	6	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::database::IntegrityReport, lpg::error::Error>, <lpg::api::database::Database>::check_integrity::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::session::Opened, lpg::error::Error>, <lpg::api::stream::ResultStream>::start::{closure#0}::{closure#0}>	1496	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::session::Opened, lpg::error::Error>, <lpg::api::stream::ResultStream>::start::{closure#0}::{closure#0}>::{closure#0}	1496	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::session::Opened, lpg::error::Error>, <lpg::api::stream::ResultStream>::start::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	1496	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::api::session::Opened, lpg::error::Error>, <lpg::api::stream::ResultStream>::start::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::query::plan::Description, lpg::error::Error>, <lpg::api::session::Session>::explain::{closure#0}::{closure#0}>	2	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::query::plan::Description, lpg::error::Error>, <lpg::api::session::Session>::explain::{closure#0}::{closure#0}>::{closure#0}	2	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::query::plan::Description, lpg::error::Error>, <lpg::api::session::Session>::explain::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	2	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::query::plan::Description, lpg::error::Error>, <lpg::api::session::Session>::explain::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::create::{closure#0}::{closure#0}>	70	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::create::{closure#0}::{closure#0}>::{closure#0}	70	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::create::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	70	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::create::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::open::{closure#0}::{closure#0}>	6	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::open::{closure#0}::{closure#0}>::{closure#0}	6	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::open::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	6	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::open::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::restore::{closure#0}::{closure#0}>	4	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::restore::{closure#0}::{closure#0}>::{closure#0}	4	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::restore::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	4	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<lpg::storage::engine::Engine, lpg::storage::error::Error>, <lpg::api::database::Database>::restore::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_constraint::{closure#0}::{closure#0}>	14	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_constraint::{closure#0}::{closure#0}>::{closure#0}	14	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_constraint::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	14	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_constraint::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}>	10	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}>::{closure#0}	10	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}>::{closure#0}::{closure#0}	10	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_index::{closure#0}::{closure#0}>	28	1	1
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_index::{closure#0}::{closure#0}>::{closure#0}	28	7	7
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_index::{closure#0}::{closure#0}>::{closure#0}::{closure#0}	28	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::blocking::<core::result::Result<u64, lpg::error::Error>, <lpg::api::session::Session>::create_index::{closure#0}::{closure#0}>::{closure#0}::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::closed_error	4	3	3
+/data/dev/xumiga/lpg/src/api/mod.rs	lpg::api::internal	0	0	4
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Busy as core::ops::drop::Drop>::drop	1670	5	5
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session as core::fmt::Debug>::fmt	0	0	7
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::ask	64	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::ask::{closure#0}	64	7	7
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::begin	58	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::begin::{closure#0}	57	24	26
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::begin::{closure#0}::{closure#0}	48	2	2
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::cancel	4	4	4
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::cancel::{closure#0}	2	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_constraint	15	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_constraint::{closure#0}	14	26	30
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_constraint::{closure#0}::{closure#0}	14	35	38
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_constraint::{closure#0}::{closure#0}::{closure#0}	4	8	8
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_constraint::{closure#0}::{closure#0}::{closure#1}	2	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory	7	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory::{closure#0}	6	8	9
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory_unlocked	10	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory_unlocked::{closure#0}	10	37	42
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#0}	24	2	2
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#1}	10	23	26
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#1}::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}	10	7	7
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}::{closure#0}	10	22	24
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_index	33	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_index::{closure#0}	32	39	42
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::create_index::{closure#0}::{closure#0}	28	28	31
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_constraint	5	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_constraint::{closure#0}	4	6	6
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_index	7	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_index::{closure#0}	6	6	6
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_schema	10	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_schema::{closure#0}	10	25	29
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}	10	4	4
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}::{closure#0}	10	18	21
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}::{closure#0}::{closure#0}	6	5	5
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::execute	568	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::execute::{closure#0}	567	7	7
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::explain	3	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::explain::{closure#0}	2	13	15
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::explain::{closure#0}::{closure#0}	2	22	38
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::graph_of	54	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::graph_of::{closure#0}	54	10	11
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::graph_of::{closure#0}::{closure#0}	54	25	29
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::graph_of::{closure#0}::{closure#0}::{closure#0}	174	2	2
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::limits	48	4	4
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::list_transactions	7	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::list_transactions::{closure#0}	6	12	15
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::list_transactions::{closure#0}::{closure#0}	6	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::list_transactions::{closure#0}::{closure#1}	6	10	10
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::new	115	19	19
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::principal	2	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::profile	99	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::profile::{closure#0}	98	7	7
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::set_limits	8	4	4
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::terminate_transaction	9	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::terminate_transaction::{closure#0}	8	21	22
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Session>::terminate_transaction::{closure#0}::{closure#0}	6	2	2
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner as core::ops::drop::Drop>::drop	115	14	14
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::acquire	1678	16	16
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::active	87	4	4
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::clear	91	10	10
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::clear::{closure#0}	53	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::close	2	12	13
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::ctx	1484	9	9
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::in_transaction::<(), <lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}::{closure#0}>	10	31	48
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::in_transaction::<(), <lpg::api::session::Session>::drop_schema::{closure#0}::{closure#0}::{closure#0}>::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::in_transaction::<u64, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}::{closure#0}>	10	43	48
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::in_transaction::<u64, <lpg::api::session::Session>::create_directory_unlocked::{closure#0}::{closure#2}::{closure#0}>::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::SessionInner>::state	3193	5	5
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction as core::fmt::Debug>::fmt	0	0	7
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::cancel	2	5	5
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::check_active	55	11	11
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::commit	39	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::commit::{closure#0}	38	16	17
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::commit::{closure#0}::{closure#0}	34	10	10
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::create_directory	5	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::create_directory::{closure#0}	4	10	12
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::execute	838	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::execute::{closure#0}	837	7	7
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::id	14	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::rollback	15	1	1
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::rollback::{closure#0}	15	14	16
+/data/dev/xumiga/lpg/src/api/session.rs	<lpg::api::session::Transaction>::rollback::{closure#0}::{closure#0}	15	8	8
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::end_of	856	5	6
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::fail_in	8	6	7
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::open_in	1482	51	63
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::open_in::{closure#0}	1466	4	4
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::open_in::{closure#1}	366524	2	2
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::open_request	1496	96	107
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::open_request::{closure#1}	835	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::owned	42	6	6
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::owned::{closure#0}	38	2	2
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::prop_tokens	42	6	6
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::prop_tokens::{closure#0}	38	5	5
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::session_closed	2	3	3
+/data/dev/xumiga/lpg/src/api/session.rs	lpg::api::session::tokens	42	15	16
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Reason>::code	17	6	6
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Reason>::error	18	6	6
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Reason>::text	18	6	6
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Status as core::default::Default>::default	702	3	3
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Status>::begin_commit	634	10	11
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Status>::check	368010	6	6
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Status>::reason	368024	6	6
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Status>::reason_of	368034	7	7
+/data/dev/xumiga/lpg/src/api/status.rs	<lpg::api::status::Status>::stop	17	8	8
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::Counters>::contains_updates	2	3	3
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream as core::fmt::Debug>::fmt	0	0	9
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream as core::ops::drop::Drop>::drop	1464	12	12
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::columns	12	3	3
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::next	2007000	1	1
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::next::{closure#0}	2006999	58	81
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::next::{closure#0}::{closure#0}	3643	14	14
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::record_success	1423	13	13
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::scan_rows	2	5	5
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::start	1502	1	1
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::start::{closure#0}	1502	69	69
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::start::{closure#0}::{closure#0}	1496	7	7
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::start::{closure#0}::{closure#2}	487	2	2
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::summary	104	4	4
+/data/dev/xumiga/lpg/src/api/stream.rs	<lpg::api::stream::ResultStream>::transaction_id	2	3	3
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::limit_error	6	4	4
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::record_failure	66	8	8
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::step	3643	106	115
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::step::{closure#0}	2009306	2	2
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::step::{closure#1}	8	2	2
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::step::{closure#2}	4	2	2
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::step::{closure#3}	1423	2	2
+/data/dev/xumiga/lpg/src/api/stream.rs	lpg::api::stream::stop	32	9	9
+/data/dev/xumiga/lpg/src/auth/mod.rs	<_ as lpg::auth::Authoriser>::authenticate	0	0	4
+/data/dev/xumiga/lpg/src/auth/mod.rs	<_ as lpg::auth::Authoriser>::authenticate::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/auth/mod.rs	<lpg::api::tests::TestAuth as lpg::auth::Authoriser>::impersonate	0	0	4
+/data/dev/xumiga/lpg/src/auth/mod.rs	<lpg::api::tests::TestAuth as lpg::auth::Authoriser>::impersonate::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/auth/mod.rs	<lpg::auth::Action as core::fmt::Display>::fmt	10	5	5
+/data/dev/xumiga/lpg/src/auth/mod.rs	<lpg::auth::Action>::name	10	7	26
+/data/dev/xumiga/lpg/src/auth/mod.rs	<lpg::auth::Object as core::fmt::Display>::fmt	10	10	10
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::ask_all	1483	1	1
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::ask_all::{closure#0}	1483	22	23
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::catalog_request	20	37	49
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::on_graph	1689	9	11
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::owner_of	1689	7	8
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::path_of	1719	10	11
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::refused	10	4	4
+/data/dev/xumiga/lpg/src/auth/mod.rs	lpg::auth::requests	1480	92	99
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::all	5602	56	56
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::all::{closure#0}	44816	6	6
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::catalog_rows	8	43	44
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::catalog_rows::{closure#0}	48	8	9
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::constraint_row	18	40	41
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::constraint_row::{closure#0}	18	3	3
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::distance	3	13	15
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::elements	48	31	34
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::elements::{closure#0}	14400	9	10
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::entity_name	48	4	5
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::float	119	9	9
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::index_row	30	42	44
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::index_row::{closure#0}	30	3	3
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::invalid	3	4	4
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::list	88	7	7
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::list::{closure#0}	92	2	2
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point	9	55	58
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point::{closure#0}	1	1	1
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point::{closure#1}	3	2	2
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point::{closure#2}	0	0	1
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point_arg	102	6	7
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point_of	14768	15	17
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point_of::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::point_of::{closure#1}	9968	2	2
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::requests	136	11	11
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::run	136	35	42
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::s	408	4	4
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::schema_rows	14	31	34
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::string_arg	192	5	7
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::token_name	92	6	6
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::token_name::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::tree_of	96	5	5
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::within	96	91	104
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::within::{closure#0}	96	4	4
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::within::{closure#1}	96	4	4
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::within::{closure#2}	736	4	4
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::within::{closure#3}	72	7	7
+/data/dev/xumiga/lpg/src/proc/builtin.rs	lpg::proc::builtin::within::{closure#4}	2400	2	2
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Parameter>::new	67248	4	4
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Parameter>::with_default	11212	4	4
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Procs as core::cmp::PartialEq>::eq	0	0	5
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Procs as core::fmt::Debug>::fmt	0	0	8
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Procs>::builtins	5526	5	5
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Procs>::get	186	4	4
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::ReadContext>::check	354864	5	6
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::ReadContext>::principal	6	3	3
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::ReadContext>::query	10	7	7
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::ReadContext>::reserve	1	8	8
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Registry>::get	186	7	7
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Registry>::names	1	6	6
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Registry>::register	53	29	31
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Registry>::with_builtins	5602	12	12
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Routine>::invoke	175	28	29
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Routine>::mode	181	5	5
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::RoutineRef as core::cmp::PartialEq>::eq	0	0	5
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::RoutineRef as core::fmt::Debug>::fmt	97	5	5
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::RoutineRef>::get	671	3	3
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::RoutineRef>::requests	172	7	7
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Signature>::new	44869	9	9
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::Signature>::new::{closure#0}	201734	2	2
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::WriteContext as core::ops::deref::Deref>::deref	6	3	3
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::WriteContext as core::ops::deref::DerefMut>::deref_mut	6	3	3
+/data/dev/xumiga/lpg/src/proc/mod.rs	<lpg::proc::WriteContext>::execute	6	7	7

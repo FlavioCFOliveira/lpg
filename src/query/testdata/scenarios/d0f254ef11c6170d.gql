@@ -1,0 +1,4 @@
+RETURN ('abc' STARTS WITH null OR true) = (('abc' STARTS WITH null) OR true) AS a,
+       ('abc' STARTS WITH null OR true) <> ('abc' STARTS WITH (null OR true)) AS b,
+       (true OR null STARTS WITH 'abc') = (true OR (null STARTS WITH 'abc')) AS c,
+       (true OR null STARTS WITH 'abc') <> ((true OR null) STARTS WITH 'abc') AS d

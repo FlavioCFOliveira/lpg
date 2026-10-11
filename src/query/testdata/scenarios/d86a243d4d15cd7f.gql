@@ -1,0 +1,3 @@
+UNWIND [true, false] AS a
+UNWIND [true, false] AS b
+RETURN a, b, (a AND b) = (b AND a) AS result

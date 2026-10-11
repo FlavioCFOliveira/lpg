@@ -8,7 +8,8 @@
 #     cargo nextest run -p lpg --profile stress
 #
 # The default profile caps the tests that use the most space in
-# `/tmp/lpgram` (test group `disk-heavy`, below).
+# `/tmp/lpgram` (test group `disk-heavy`, below) and starts the slowest
+# tests first. `.config/gates.sh` runs every test gate.
 
 experimental = ["wrapper-scripts"]
 
@@ -18,12 +19,19 @@ experimental = ["wrapper-scripts"]
 # three of their 89 tests run at once, which bounds the peak space of a
 # default run in `/tmp/lpgram`, on a `/tmp` that enforces user quotas: the
 # three largest with the thirteen largest other tests sum to 990 MiB.
+# Re-measured on 2026-10-11 (docs/evidence/lab-sprint-3/test-speed.md): a
+# default run peaks at 754 MiB in `/tmp/lpgram` with this cap and at
+# 1.9 GiB with 16, and is no faster with 16. In a run with the lab
+# directories the cap also bounds the lab space, since each suite runs its
+# own runs in parallel: kill and two sweeps peaked at 4.7 GiB on the 8 GiB
+# XFS lab file system, where the kill suite alone takes 3.5 GiB.
 [test-groups]
 disk-heavy = { max-threads = 3 }
 
 # A hung test fails the run: it is killed after 10 periods of 60 s. The
 # slowest legitimate test, `suites::fault::restore_` in full on both lab
-# file systems, took 189.9 s (2026-10-08, docs/evidence/lab-sprint-2).
+# file systems, took 189.9 s (2026-10-08, docs/evidence/lab-sprint-2), and
+# 221.0 s before and 141.5 s after its runs went parallel (2026-10-11).
 [profile.default]
 slow-timeout = { period = "60s", terminate-after = 10 }
 
@@ -35,6 +43,29 @@ test(/^ops::(backup|migrate|restore)::/)
 | test(/^tx::commit::/)
 '''
 test-group = "disk-heavy"
+
+# The slowest tests start first, so that none of them begins late and
+# holds up the end of the run; SQLite's test runner starts its slow and
+# very slow scripts first the same way (R-LIBSQL
+# `libsql-sqlite3/test/testrunner.tcl:1026-1028`). In a run with the lab
+# directories the restore sweep, the commits sweep and the kill suite are
+# the longest tests; in a default run, the million random operations.
+# Measured with a wider set of tests at priority 100: default run
+# 15.29-15.43 s against 15.52-15.71 s without priorities (2026-10-11).
+[[profile.default.overrides]]
+filter = '''
+test(=suites::kill::kill_and_reopen)
+| test(=storage::btree::tests::a_million_random_puts_and_deletes_match_a_btreemap_model)
+'''
+priority = 100
+
+[[profile.default.overrides]]
+filter = 'test(=suites::fault::restore_)'
+priority = 90
+
+[[profile.default.overrides]]
+filter = 'test(=suites::fault::commits)'
+priority = 80
 
 [scripts.wrapper.copies]
 command = { command-line = ".config/stress-copies.sh", relative-to = "workspace-root" }
@@ -100,6 +131,12 @@ test(=obs::recording::tests::concurrent_calls_are_all_recorded)
 | test(=index::tests::index::a_constraint_commit_during_a_backup_waits_and_the_backup_restores_intact)
 | test(=index::tests::index::a_build_release_during_a_backup_waits_and_the_backup_restores_intact)
 | test(=index::tests::index::a_backup_under_four_committers_and_an_index_build_restores_to_one_commit_point)
+| test(=api::tests::api::sessions_trust_their_principal_and_refuse_a_concurrent_request)
+| test(=api::tests::api::backup_restore_integrity_check_and_migration_through_the_api)
+| test(=api::tests::api::close_waits_for_the_timeout_then_aborts_the_transaction)
+| test(=api::tests::limits::the_second_statement_fails_after_the_transaction_time_limit)
+| test(=api::tests::limits::a_cancelled_statement_fails_and_its_write_is_never_visible)
+| test(=api::tests::limits::a_terminated_transactions_statement_fails_and_its_writes_vanish)
 '''
 # Sixteen copies share the machine: one test at a time.
 test-threads = 1

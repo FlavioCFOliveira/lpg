@@ -1,0 +1,3 @@
+MATCH (x), r = (a)-[q]-(b), (s)-[p]-(t)-[]-(b)
+MATCH (r)
+RETURN r

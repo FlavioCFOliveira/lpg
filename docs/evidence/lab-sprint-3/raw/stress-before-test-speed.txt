@@ -1,0 +1,4 @@
+# Stress profile, before (HEAD 0a6e549, baseline worktree), command: LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs cargo nextest run -p lpg --profile stress --no-fail-fast
+     Summary [ 111.386s] 69 tests run: 69 passed, 467 skipped
+wall=111.51
+tests whose 16 copies all passed: 69

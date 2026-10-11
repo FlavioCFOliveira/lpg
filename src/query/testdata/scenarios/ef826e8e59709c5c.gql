@@ -1,0 +1,1 @@
+USE /public/other MATCH (n:A) RETURN n.x AS x

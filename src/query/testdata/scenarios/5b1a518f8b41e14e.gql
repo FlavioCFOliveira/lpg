@@ -1,0 +1,3 @@
+SELECT p.name AS name, p.age AS age
+FROM CURRENT_PROPERTY_GRAPH MATCH (p:Person)
+WHERE p.age > 40

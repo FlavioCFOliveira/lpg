@@ -1,0 +1,1 @@
+MATCH (n:P) SET n.v = 2 REMOVE n.name RETURN n.v AS v, n.name AS name

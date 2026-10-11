@@ -129,7 +129,7 @@ fn kill_label(iter: u64) -> String {
 fn retry<T>(
     e: &Engine,
     iso: Isolation,
-    mut f: impl FnMut(&mut crate::tx::Transaction<'_>) -> crate::storage::error::Result<T>,
+    mut f: impl FnMut(&mut crate::tx::Transaction) -> crate::storage::error::Result<T>,
 ) -> T {
     use crate::storage::error::Error;
     loop {
@@ -842,68 +842,76 @@ fn kill_and_reopen() {
     }
     let (dirs, full) = suite_dirs();
     let iterations = if full { 200 } else { 3 };
-    for (fs, base) in dirs {
-        let started = Instant::now();
-        let dir = tempfile::tempdir_in(&base).unwrap();
-        let backups = tempfile::tempdir_in(&base).unwrap();
-        let sd = seed();
-        let mut rng = StdRng::seed_from_u64(sd);
-        let mut printed = BTreeMap::new();
-        let mut tree = None;
-        let mut fig = Figures::default();
-        for iter in 0..iterations {
-            let delay = Duration::from_millis(rng.random_range(5..150));
-            iteration(
-                dir.path(),
-                backups.path(),
-                iter,
-                delay,
-                &mut printed,
-                &mut tree,
-                &mut fig,
-            );
-        }
-        let pct = |v: &[f64], q: f64| {
-            let mut s = v.to_vec();
-            s.sort_by(f64::total_cmp);
-            s[((q * s.len() as f64).ceil() as usize).clamp(1, s.len()) - 1]
-        };
-        let replayed: Vec<f64> = fig.replayed.iter().map(|&b| b as f64).collect();
-        println!(
-            "SUITE kill fs={fs} dir={} iterations={iterations} printed_commits={} \
-             recovery_ms_p50={:.1} recovery_ms_p99={:.1} replayed_bytes_p50={:.0} \
-             replayed_bytes_p99={:.0} child_commits_per_s_p50={:.0} \
-             kills_in_checkpoint={} kills_in_backup={} recycling_checkpoints={} \
-             printed_drops={} kills_in_index_build={} index_builds={} restarted_index_builds={} \
-             kept_indexes_checked={} seconds={:.1}",
-            base.display(),
-            fig.printed,
-            pct(&fig.recovery_ms, 0.5),
-            pct(&fig.recovery_ms, 0.99),
-            pct(&replayed, 0.5),
-            pct(&replayed, 0.99),
-            pct(&fig.commits_per_s, 0.5),
-            fig.in_checkpoint,
-            fig.in_backup,
-            fig.recycling,
-            fig.drops.len(),
-            fig.in_build,
-            fig.builds,
-            fig.restarted,
-            fig.kept_checked,
-            started.elapsed().as_secs_f64(),
+    // Each directory has its own database, backups, children and figures;
+    // the iterations inside one directory chain its database and stay in
+    // order.
+    super::each_dir(&dirs, |fs, base| kill_dir(fs, base, iterations, full));
+}
+
+/// The 200 kill-and-reopen iterations of [`kill_and_reopen`] in one suite
+/// directory (3 in a sample run), with their figures and, in a full run,
+/// the counts the run requires.
+fn kill_dir(fs: &str, base: &Path, iterations: u64, full: bool) {
+    let started = Instant::now();
+    let dir = tempfile::tempdir_in(base).unwrap();
+    let backups = tempfile::tempdir_in(base).unwrap();
+    let sd = seed();
+    let mut rng = StdRng::seed_from_u64(sd);
+    let mut printed = BTreeMap::new();
+    let mut tree = None;
+    let mut fig = Figures::default();
+    for iter in 0..iterations {
+        let delay = Duration::from_millis(rng.random_range(5..150));
+        iteration(
+            dir.path(),
+            backups.path(),
+            iter,
+            delay,
+            &mut printed,
+            &mut tree,
+            &mut fig,
         );
-        if full {
-            assert!(
-                fig.in_checkpoint > 0
-                    && fig.in_backup > 0
-                    && fig.recycling > 0
-                    && !fig.drops.is_empty()
-                    && fig.in_build > 0
-                    && fig.restarted > 0,
-                "{fs}: no kill fell in a checkpoint, a backup or an index build, no checkpoint \
-                 recycled, no drop was printed, or no interrupted build was finished"
-            );
-        }
+    }
+    let pct = |v: &[f64], q: f64| {
+        let mut s = v.to_vec();
+        s.sort_by(f64::total_cmp);
+        s[((q * s.len() as f64).ceil() as usize).clamp(1, s.len()) - 1]
+    };
+    let replayed: Vec<f64> = fig.replayed.iter().map(|&b| b as f64).collect();
+    println!(
+        "SUITE kill fs={fs} dir={} iterations={iterations} printed_commits={} \
+         recovery_ms_p50={:.1} recovery_ms_p99={:.1} replayed_bytes_p50={:.0} \
+         replayed_bytes_p99={:.0} child_commits_per_s_p50={:.0} \
+         kills_in_checkpoint={} kills_in_backup={} recycling_checkpoints={} \
+         printed_drops={} kills_in_index_build={} index_builds={} restarted_index_builds={} \
+         kept_indexes_checked={} seconds={:.1}",
+        base.display(),
+        fig.printed,
+        pct(&fig.recovery_ms, 0.5),
+        pct(&fig.recovery_ms, 0.99),
+        pct(&replayed, 0.5),
+        pct(&replayed, 0.99),
+        pct(&fig.commits_per_s, 0.5),
+        fig.in_checkpoint,
+        fig.in_backup,
+        fig.recycling,
+        fig.drops.len(),
+        fig.in_build,
+        fig.builds,
+        fig.restarted,
+        fig.kept_checked,
+        started.elapsed().as_secs_f64(),
+    );
+    if full {
+        assert!(
+            fig.in_checkpoint > 0
+                && fig.in_backup > 0
+                && fig.recycling > 0
+                && !fig.drops.is_empty()
+                && fig.in_build > 0
+                && fig.restarted > 0,
+            "{fs}: no kill fell in a checkpoint, a backup or an index build, no checkpoint \
+             recycled, no drop was printed, or no interrupted build was finished"
+        );
     }
 }

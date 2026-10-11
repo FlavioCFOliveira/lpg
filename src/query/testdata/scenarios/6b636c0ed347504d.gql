@@ -1,0 +1,1 @@
+RETURN COALESCE(NULL, 'x', 'y') AS v

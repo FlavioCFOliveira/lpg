@@ -1,0 +1,30 @@
+# Deepest accepted nesting per shape (tests.rs deep_texts), binary search, 2 MiB thread, 2026-10-09
+# shape: opt-level 1 (test profile) | opt-level 0 (CARGO_PROFILE_TEST_OPT_LEVEL=0)
+parentheses: 126 | 61
+unary minus: 253 | 185
+NOT: 253 | 185
++ chain: 252 | 252
+AND chain: 252 | 252
+property chain: 253 | 253
+|| chain: 252 | 252
+IS TRUE chain: 254 | 254
+label |: 251 | 251
+label !: 252 | 252
+label (): 252 | 252
+path (): 248 | 60
+UNION chain: 253 | 253
+list: 126 | 54
+record: 126 | 50
+LIST suffix: 252 | 252
+LIST<>: 252 | 223
+type |: 251 | 251
+braces: 89 | 57
+CALL: 89 | 43
+EXISTS: 50 | 23
+VALUE: 69 | 26
+simplified (): 241 | 67
+simplified concat: 252 | 252
+simplified &: 252 | 252
+CASE: 126 | 46
+ABS: 253 | 73
+numeric chain: 251 | 251

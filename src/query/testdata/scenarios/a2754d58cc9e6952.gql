@@ -1,0 +1,5 @@
+UNWIND [true, false, null] AS a
+UNWIND [true, false, null] AS b
+WITH collect((a AND b IS NULL) = (a AND (b IS NULL))) AS eq,
+     collect((a AND b IS NULL) <> ((a AND b) IS NULL)) AS neq
+RETURN all(x IN eq WHERE x) AND any(x IN neq WHERE x) AS result

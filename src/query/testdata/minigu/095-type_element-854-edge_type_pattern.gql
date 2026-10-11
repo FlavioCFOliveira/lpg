@@ -1,0 +1,1 @@
+(:Person) ~[:knows {since int}]~ (:Person)

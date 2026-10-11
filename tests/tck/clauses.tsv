@@ -1,0 +1,50 @@
+artefact	file	clause
+opencypher	clauses/call/Call1.feature	15.1 <call procedure statement> and <procedure call>
+opencypher	clauses/call/Call2.feature	15.1 <call procedure statement> and <procedure call>
+opencypher	clauses/call/Call3.feature	15.1 <call procedure statement> and <procedure call>
+opencypher	clauses/call/Call4.feature	15.1 <call procedure statement> and <procedure call>
+opencypher	clauses/call/Call5.feature	15.1 <call procedure statement> and <procedure call>
+opencypher	clauses/match-where/MatchWhere1.feature	16.13 <where clause>
+opencypher	clauses/match/Match1.feature	14.4 <match statement>
+opencypher	clauses/match/Match2.feature	14.4 <match statement>
+opencypher	clauses/match/Match3.feature	14.4 <match statement>
+opencypher	clauses/match/Match7.feature	14.4 <match statement>
+opencypher	clauses/remove/Remove1.feature	13.4 <remove statement>
+opencypher	clauses/return-orderby/ReturnOrderBy2.feature	16.16 <order by clasue>
+opencypher	clauses/return-orderby/ReturnOrderBy6.feature	16.16 <order by clasue>
+opencypher	clauses/return/Return1.feature	14.11 <return statement>
+opencypher	clauses/return/Return2.feature	14.11 <return statement>
+opencypher	clauses/return/Return4.feature	14.11 <return statement>
+opencypher	clauses/return/Return6.feature	14.11 <return statement>
+opencypher	clauses/return/Return7.feature	14.11 <return statement>
+opencypher	clauses/set/Set1.feature	13.3 <set statement>
+opencypher	clauses/set/Set4.feature	13.3 <set statement>
+opencypher	expressions/aggregation/Aggregation8.feature	20.9 <aggregate function>
+opencypher	expressions/boolean/Boolean1.feature	20.20 <boolean value expression>
+opencypher	expressions/boolean/Boolean2.feature	20.20 <boolean value expression>
+opencypher	expressions/boolean/Boolean4.feature	20.20 <boolean value expression>
+opencypher	expressions/comparison/Comparison1.feature	19.3 <comparison predicate>
+opencypher	expressions/comparison/Comparison2.feature	19.3 <comparison predicate>
+opencypher	expressions/existentialSubqueries/ExistentialSubquery2.feature	19.4 <exists predicate>
+opencypher	expressions/graph/Graph6.feature	20.11 <property reference>
+opencypher	expressions/literals/Literals1.feature	21.2 <literal>
+opencypher	expressions/literals/Literals2.feature	21.2 <literal>
+opencypher	expressions/literals/Literals5.feature	21.2 <literal>
+opencypher	expressions/literals/Literals6.feature	21.2 <literal>
+opencypher	expressions/mathematical/Mathematical8.feature	20.21 <numeric value expression>
+opencypher	expressions/null/Null1.feature	19.5 <null predicate>
+opencypher	expressions/null/Null2.feature	19.5 <null predicate>
+opencypher	expressions/pattern/Pattern1.feature	16.4 <graph pattern>
+opencypher	expressions/precedence/Precedence1.feature	20.1 <value expression>
+opencypher	expressions/precedence/Precedence2.feature	20.1 <value expression>
+opencypher	expressions/precedence/Precedence4.feature	20.1 <value expression>
+opencypher	expressions/temporal/Temporal1.feature	20.29 <duration value function>
+opencypher	expressions/temporal/Temporal2.feature	20.27 <datetime value function>
+opengql-tck	Debug.feature	12.2 <insert schema statement>
+opengql-tck	expressions/aggregation/Aggregation3.feature	20.9 <aggregate function>
+opengql-tck	expressions/boolean/Boolean1.feature	20.20 <boolean value expression>
+opengql-tck	expressions/boolean/Boolean2.feature	20.20 <boolean value expression>
+opengql-tck	expressions/boolean/Boolean4.feature	20.20 <boolean value expression>
+opengql-tck	statements/catalog-modifying/create/graphs/Create2.feature	12.4 <insert graph statement>
+opengql-tck	statements/catalog-modifying/create/schemas/Create1.feature	12.2 <insert schema statement>
+opengql-tck	statements/catalog-modifying/drop/drop1.feature	12.3 <drop schema statement>

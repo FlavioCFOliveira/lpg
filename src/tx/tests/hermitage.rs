@@ -98,7 +98,7 @@ fn int(props: &[(u64, Value)], key: u64) -> i64 {
     }
 }
 
-fn val(tx: &mut Transaction<'_>, t: &Data, k: u8) -> Option<i64> {
+fn val(tx: &mut Transaction, t: &Data, k: u8) -> Option<i64> {
     match t {
         Data::Entries(t) => tx
             .get(*t, &[b'0' + k])
@@ -112,7 +112,7 @@ fn val(tx: &mut Transaction<'_>, t: &Data, k: u8) -> Option<i64> {
     }
 }
 
-fn set(tx: &mut Transaction<'_>, t: &Data, k: u8, v: i64) -> Result<()> {
+fn set(tx: &mut Transaction, t: &Data, k: u8, v: i64) -> Result<()> {
     match t {
         Data::Entries(t) => tx.put(*t, &[b'0' + k], v.to_string().as_bytes()),
         Data::Nodes { tokens, ids } => {
@@ -132,7 +132,7 @@ fn set(tx: &mut Transaction<'_>, t: &Data, k: u8, v: i64) -> Result<()> {
 }
 
 /// Deletes row `k`: the entry, or the node.
-fn del(tx: &mut Transaction<'_>, t: &Data, k: u8) -> Result<bool> {
+fn del(tx: &mut Transaction, t: &Data, k: u8) -> Result<bool> {
     match t {
         Data::Entries(t) => tx.delete(*t, &[b'0' + k]),
         Data::Nodes { ids, .. } => {
@@ -145,7 +145,7 @@ fn del(tx: &mut Transaction<'_>, t: &Data, k: u8) -> Result<bool> {
 
 /// `(key, value)` of every row whose value satisfies `pred`, read by a
 /// scan of the whole tree or node tree (a predicate read).
-fn select(tx: &mut Transaction<'_>, t: &Data, pred: impl Fn(i64) -> bool) -> Vec<(u8, i64)> {
+fn select(tx: &mut Transaction, t: &Data, pred: impl Fn(i64) -> bool) -> Vec<(u8, i64)> {
     let mut rows: Vec<(u8, i64)> = match t {
         Data::Entries(t) => all(tx, *t)
             .into_iter()

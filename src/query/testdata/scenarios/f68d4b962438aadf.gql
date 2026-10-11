@@ -1,0 +1,3 @@
+RETURN true OR false = false AS a,
+       true OR (false = false) AS b,
+       (true OR false) = false AS c

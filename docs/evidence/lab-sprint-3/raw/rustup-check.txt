@@ -1,0 +1,7 @@
+stable-x86_64-unknown-linux-gnu - up to date: 1.99.0 (b940084d7 2026-09-28)
+nightly-x86_64-unknown-linux-gnu - up to date: 1.101.0-nightly (1d81eb4ad 2026-10-07)
+1.80-x86_64-unknown-linux-gnu - up to date: 1.80.1 (3f5fd8dd4 2024-08-06)
+1.85-x86_64-unknown-linux-gnu - up to date: 1.85.1 (4eb161250 2025-03-15)
+1.89-x86_64-unknown-linux-gnu - up to date: 1.89.0 (29483883e 2025-08-04)
+rustup - up to date : 1.29.1
+rustup 1.29.1 (d95a37b6a 2026-08-13)

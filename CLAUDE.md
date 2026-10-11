@@ -52,6 +52,22 @@ Profiling tooling:
 - **Purpose.** `/tmp/lpgram` only accelerates the file I/O of this crate, so that exercises are faster to create, run and observe. It has no other role.
 - **Not a production scenario.** Never consider, design for, document or present `/tmp/lpgram` as a realistic production setup, nor use results obtained in it to describe production behaviour. The crate is designed to run on persistent storage. On `tmpfs`, data does not survive a reboot or power loss and `fsync` does not reach a disk, so results obtained in `/tmp/lpgram` say nothing about real-disk durability or I/O performance. Any claim about those properties must be measured on persistent storage and must state that it was.
 
+## Build output in RAM
+
+- **Location.** Cargo build output goes to `/dev/shm/lpg-target/`, a RAM-backed `tmpfs`, set by a local `.cargo/config.toml` (`[build] target-dir`) that is excluded from git (user authorisation, 2026-10-11). Never put build output in `/tmp/lpgram/`.
+- **Scope.** It applies to every cargo workspace in the repository (`.`, `fuzz/`, `tools/gql-oracle/`), and so to every build, test, coverage, fuzz and `loom` run.
+- **Transient tool output.** Intermediate files of tools (coverage JSON and `profraw`, `heaptrack` recordings, perf and flame-graph data, logs) go to the session scratchpad or `/tmp`, both `tmpfs`, never to the repository on disk. Only the final evidence is written to `docs/evidence/`.
+- **Purpose.** It only speeds up builds. The same limits as `/tmp/lpgram` apply: it is not persistent and says nothing about production behaviour.
+
+## RAM space discipline (mandatory)
+
+RAM-backed space (`/tmp/lpgram/`, `/dev/shm/lpg-target/`) is scarce and shared. Delete every file there as soon as it is no longer needed (user decision, 2026-10-11):
+
+- **Graph data:** delete each run's subdirectory when the run ends, including after a failure.
+- **Build output:** delete single-use build directories (for example `--target-dir` variants for `--cfg fuzzing`, `cargo llvm-cov` or `loom` builds) as soon as their gate or measurement finishes. Keep only the build in current use.
+- **Close of a sprint:** delete `/dev/shm/lpg-target/` when no further build is planned.
+- Measure the space before and after every heavy run, and report what was left and why.
+
 ## Simplicity (code strategy)
 
 > **Avoid over-engineering. Always choose the simplest solution that meets the project's strict needs.**
@@ -92,6 +108,7 @@ Profiling tooling:
   - `opengql/grammar`: the GQL grammar, including a parser generated from it in a test-only crate.
   - `opengql/tck`: the GQL technology compatibility kit.
   - The openCypher TCK: only the scenarios applicable to GQL.
+  - `gql-compat`: its mandatory and condition cases only, as an input to lpg's own scenarios, translated and attributed (user decision, 2026-10-08).
 - **ISO electronic inserts:** the official ISO/IEC 39075:2024 electronic inserts (grammar, GQLSTATUS conditions, features, implementation-defined and implementation-dependent items) are stored unmodified in `docs/standards/iso-iec-39075/`. They are a supplementary source for the tables the grammar does not contain (GQLSTATUS conditions, feature identifiers, implementation-defined items), not the grammar authority. Never edit them.
 - **GQL reference:** the ISO/IEC 39075:2024 text is not available to this project. The trusted reference for GQL syntax is the official community ANTLR4 grammar, `opengql/grammar` (<https://github.com/opengql/grammar>).
 

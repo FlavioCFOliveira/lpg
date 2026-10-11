@@ -1,0 +1,2 @@
+INSERT (w1:Person {name: 'Ada', age: 36}),
+       (w2:Person {name: 'Linus', age: 54})

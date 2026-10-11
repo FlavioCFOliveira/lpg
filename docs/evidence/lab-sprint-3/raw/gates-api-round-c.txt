@@ -1,0 +1,26 @@
+## cargo fmt --all -- --check
+exit=0
+## cargo clippy --all-targets -- -D warnings
+    Checking lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.77s
+exit=0
+## RUSTFLAGS=--cfg fuzzing clippy
+    Checking lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.69s
+exit=0
+## cargo build -p lpg (no features)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+exit=0
+## nm bolt symbols
+0
+## cargo tree -e normal --depth 1
+lpg v0.1.0 (/data/dev/xumiga/lpg)
+├── crc32c v0.6.8
+├── jiff v0.2.38
+├── rand v0.10.3
+├── rustix v1.1.5
+├── tokio v1.53.2
+└── tracing v0.1.44
+## cargo deny check licenses
+licenses ok
+exit=0

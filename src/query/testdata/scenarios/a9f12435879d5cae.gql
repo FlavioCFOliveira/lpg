@@ -1,0 +1,2 @@
+WITH {name: null, name2: null} AS map
+RETURN map.name2 IS NULL AS result

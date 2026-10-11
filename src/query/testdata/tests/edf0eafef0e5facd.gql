@@ -1,0 +1,1 @@
+RETURN COUNT ( * ) IS TYPED LIST < { } > NOT NULL

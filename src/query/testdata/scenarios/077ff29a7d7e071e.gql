@@ -1,0 +1,2 @@
+WITH 42.45 AS nonGraphElement
+RETURN nonGraphElement.num

@@ -1,0 +1,4 @@
+UNWIND [true, false, null] AS a
+UNWIND [true, false, null] AS b
+WITH a, b WHERE a IS NULL OR b IS NULL
+RETURN a, b, (a AND b) IS NULL = (b AND a) IS NULL AS result

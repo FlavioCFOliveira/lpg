@@ -1,0 +1,1 @@
+RETURN time({hour: 12, minute: 34, second: 56, timezone: '+02:05:59'}) AS result

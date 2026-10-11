@@ -1,0 +1,3 @@
+CREATE (:A:B:C), (:A:B), (:A:C), (:B:C),
+       (:A), (:B), (:C),
+       ({name: ':A:B:C'}), ({abc: 'abc'}), ()

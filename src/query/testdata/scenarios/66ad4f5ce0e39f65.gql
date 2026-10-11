@@ -1,0 +1,4 @@
+UNWIND [true, false, null] AS a
+UNWIND [true, false, null] AS b
+WITH collect((NOT (a <> b)) = ((NOT a) <> b)) AS eq
+RETURN all(x IN eq WHERE x) AS result

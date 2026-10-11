@@ -1,0 +1,36 @@
+info: experimental features enabled: wrapper-scripts
+   Compiling lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `test` profile [optimized + debuginfo] target(s) in 12.32s
+────────────
+ Nextest run ID 3740ce2a-d2b9-4a58-bfa6-634e5f256d61 with nextest profile: stress
+    Starting 6 tests across 1 binary (515 tests skipped, including 32 tests via profile.stress.default-filter)
+        PASS [   1.049s] (1/6) lpg api::tests::api::backup_restore_integrity_check_and_migration_through_the_api
+  stdout ───
+    stress: 16 copies, LPG_SEED 3517674067 to 3517674082, 0 failed
+
+        PASS [   0.513s] (2/6) lpg api::tests::api::close_waits_for_the_timeout_then_aborts_the_transaction
+  stdout ───
+    stress: 16 copies, LPG_SEED 493579326 to 493579341, 0 failed
+
+        PASS [   0.103s] (3/6) lpg api::tests::api::sessions_trust_their_principal_and_refuse_a_concurrent_request
+  stdout ───
+    stress: 16 copies, LPG_SEED 1445862965 to 1445862980, 0 failed
+
+        PASS [   0.097s] (4/6) lpg api::tests::limits::a_cancelled_statement_fails_and_its_write_is_never_visible
+  stdout ───
+    stress: 16 copies, LPG_SEED 745849559 to 745849574, 0 failed
+
+        PASS [   0.095s] (5/6) lpg api::tests::limits::a_terminated_transactions_statement_fails_and_its_writes_vanish
+  stdout ───
+    stress: 16 copies, LPG_SEED 2358338323 to 2358338338, 0 failed
+
+        PASS [   0.492s] (6/6) lpg api::tests::limits::the_second_statement_fails_after_the_transaction_time_limit
+  stdout ───
+    stress: 16 copies, LPG_SEED 2774747729 to 2774747744, 0 failed
+
+────────────
+     Summary [   2.349s] 6 tests run: 6 passed, 515 skipped
+
+real	0m14,764s
+user	2m25,330s
+sys	0m26,836s

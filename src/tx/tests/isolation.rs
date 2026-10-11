@@ -33,7 +33,7 @@ fn write_skew_fails_one_transaction_under_serializable_and_none_under_snapshot()
             Isolation::Serializable => {
                 let err = r2.unwrap_err();
                 assert!(matches!(err, Error::Serialization), "{err:?}");
-                assert_eq!(err.gqlstatus(), Some("25N11"));
+                assert_eq!(err.gqlstatus().code(), "25N11");
                 assert_eq!(read(&e, t, b"y"), Some(b"1".to_vec()));
             }
             Isolation::Snapshot => {
@@ -150,7 +150,7 @@ fn a_closed_wait_cycle_aborts_the_requester_with_deadlock() {
         until_waiting(e, 1);
         let err = t2.put(t, b"A", b"2").unwrap_err();
         assert!(matches!(err, Error::Deadlock), "{err:?}");
-        assert_eq!(err.gqlstatus(), Some("50N05"));
+        assert_eq!(err.gqlstatus().code(), "50N05");
         assert!(matches!(t2.commit(), Err(Error::Aborted)));
         assert!(t1.join().unwrap().is_some());
     });
@@ -249,7 +249,7 @@ fn a_failed_transaction_ran_its_operations_once() {
     let before = sink.snapshot();
     let calls = std::cell::Cell::new(0);
     let mut t1 = e.begin(Isolation::Serializable).unwrap();
-    let op = |tx: &mut Transaction<'_>, write: bool| {
+    let op = |tx: &mut Transaction, write: bool| {
         calls.set(calls.get() + 1);
         if write {
             tx.put(t, b"m", b"1").map(|()| None)

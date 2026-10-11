@@ -1,0 +1,1 @@
+RETURN NOT true AS nt, NOT false AS nf, NOT null AS nn

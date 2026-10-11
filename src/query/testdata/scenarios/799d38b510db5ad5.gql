@@ -1,0 +1,2 @@
+MATCH (r), (a)-[q]-(b), (s), (s)-[r]-(t)-[]-(b)
+RETURN r

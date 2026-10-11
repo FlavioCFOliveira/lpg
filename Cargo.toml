@@ -14,6 +14,13 @@ rand = "0.10.3"
 # (`tzdb-zoneinfo`, /usr/share/zoneinfo or TZDIR); jiff bundles no zone
 # rules. Zone links are fixed in `src/types/zone_links.rs`.
 jiff = { version = "0.2.38", default-features = false, features = ["std", "tzdb-zoneinfo"] }
+# The public API is async on the application's tokio runtime (TS-02):
+# `spawn_blocking` per result batch (`rt`) and the time limit's timer
+# (`time`). No other feature is used.
+tokio = { version = "1.53.2", default-features = false, features = ["rt", "time"] }
+# Events per request and transaction (TS-24). No default features: the
+# `attributes` proc-macro crate is not used.
+tracing = { version = "0.1.44", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 tempfile = "3.27.0"
@@ -21,17 +28,25 @@ tempfile = "3.27.0"
 # the current thread's heap use (peak bytes of a closure). The crate
 # forbids `unsafe`, so it cannot define its own `GlobalAlloc`.
 allocation-counter = "0.8.1"
+# The API tests run on both runtime flavours (rmp #47 acceptance): the
+# `multi_thread` runtime needs `rt-multi-thread`, a test-only feature.
+tokio = { version = "1.53.2", default-features = false, features = ["rt", "rt-multi-thread", "time"] }
 
 # Concurrency model checkers (TS-30 Concurrency, R11), compiled only under
 # their `cfg`: `RUSTFLAGS="--cfg loom"` or `RUSTFLAGS="--cfg shuttle"`.
 [target.'cfg(loom)'.dev-dependencies]
 loom = "0.7.2"
+# tokio 1.53.2 does not compile under `--cfg loom` without its `sync`
+# feature (`src/runtime/time/entry.rs:62` imports `sync::AtomicWaker`, which
+# `src/sync/mod.rs:489` gates on `sync`). The feature joins the `loom`
+# test builds only; normal builds keep `rt` and `time`.
+tokio = { version = "1.53.2", default-features = false, features = ["rt", "time", "sync"] }
 
 [target.'cfg(shuttle)'.dev-dependencies]
 shuttle = "0.9.5"
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)', 'cfg(shuttle)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)', 'cfg(shuttle)', 'cfg(fuzzing)'] }
 
 [profile.lab]
 inherits = "release"

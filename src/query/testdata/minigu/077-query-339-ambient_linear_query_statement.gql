@@ -1,0 +1,7 @@
+
+            MATCH (a)-[:KNOWS]->(b)
+            MATCH (b)-[:KNOWS]->(c)
+            RETURN a.id, count(c)
+            ORDER BY a.id DESC NULLS LAST
+            OFFSET 10
+            LIMIT 10

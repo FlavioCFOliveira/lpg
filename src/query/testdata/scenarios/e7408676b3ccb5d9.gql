@@ -1,0 +1,1 @@
+USE /public/g2 MATCH (n:C) RETURN n.g AS g

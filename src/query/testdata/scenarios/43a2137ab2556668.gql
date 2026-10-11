@@ -1,0 +1,1 @@
+RETURN localdatetime('20150721T21:40') AS result

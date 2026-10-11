@@ -1,7 +1,7 @@
 ---
 title: Dependencies
 status: draft
-last-reviewed: 2026-10-07
+last-reviewed: 2026-10-11
 related:
   - quality-and-testing.md
   - README.md
@@ -15,13 +15,13 @@ related:
 - **Licence allow-list** for `cargo-deny` (user decision 2026-10-02): MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, 0BSD, BSL-1.0, CC0-1.0, Unicode-3.0. Copyleft licences are excluded. A crate whose licence expression offers alternatives passes when one of them is listed (D-DENY).
 - **Satisfies**: NFR-DEP-001, NFR-DEP-002, NFR-SIMP-001.
 
-crates.io data as of 2026-10-02, and as of 2026-10-07 for `jiff` and `shuttle` (downloads: total / last 90 days).
+crates.io data as of 2026-10-02, as of 2026-10-07 for `jiff` and `shuttle`, and as of 2026-10-11 for `tokio` and `tracing` (downloads: total / last 90 days).
 
 | Crate | Version | Licence | Downloads | Last release | Kind | Used by |
 |---|---|---|---|---|---|---|
-| tokio | 1.53.1 | MIT | 1 020.7 M / 242.4 M | 2026-07-20 | runtime | [TS-02](architecture.md#ts-02-async-api-and-threading), [TS-22](bolt.md#ts-22-bolt-and-packstream) |
+| tokio | 1.53.2 | MIT | 1 051.0 M / 253.8 M | 2026-10-03 | runtime, features `rt` and `time`; test builds add `rt-multi-thread` (both runtime flavours) and, under `cfg(loom)` only, `sync`, without which tokio 1.53.2 does not compile there (`src/runtime/time/entry.rs:62`) | [TS-02](architecture.md#ts-02-async-api-and-threading), [TS-22](bolt.md#ts-22-bolt-and-packstream) |
 | rustix | 1.1.5 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | 1 197.0 M / 275.0 M | 2026-09-16 | runtime, feature `fs` | [TS-03](interfaces.md#ts-03-storage-abstraction) (`fstatvfs`, `fallocate`) |
-| tracing | 0.1.44 | MIT | 893.2 M / 206.0 M | 2025-12-18 | runtime | [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events) |
+| tracing | 0.1.44 | MIT | 920.3 M / 216.9 M | 2025-12-18 | runtime, feature `std` only (no `attributes` proc-macro crate); brings `tracing-core` 0.1.36, `once_cell`, `pin-project-lite` | [TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events) |
 | crc32c | 0.6.8 | Apache-2.0/MIT | 85.9 M / 16.5 M | 2024-06-09 | runtime | [TS-12](storage.md#ts-12-checksums-corruption-and-integrity-check) |
 | jiff | 0.2.38 | Unlicense OR MIT | 216.0 M / 79.1 M | 2026-10-06 | runtime | [TS-21](values-and-types.md#ts-21-values-and-types) |
 | petgraph | 0.8.3 | MIT OR Apache-2.0 | 533.5 M / 114.7 M | 2025-09-30 | runtime | [TS-25](algorithms.md#ts-25-graph-algorithms) |

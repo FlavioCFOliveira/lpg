@@ -1,0 +1,1 @@
+vertex type nt :Person => {id::int} as p

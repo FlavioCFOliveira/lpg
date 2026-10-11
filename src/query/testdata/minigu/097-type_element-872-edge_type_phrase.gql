@@ -1,0 +1,1 @@
+undirected edge type et :transfer {amount int} connecting (a~b)

@@ -1,0 +1,4 @@
+FOR a IN [true, false]
+FOR b IN [true, false]
+FOR c IN [true, false]
+RETURN a, b, c, (a AND (b AND c)) = ((a AND b) AND c) AS result

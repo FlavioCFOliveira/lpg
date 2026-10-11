@@ -1,0 +1,3 @@
+WITH true AS r
+MATCH ()-[r]-()
+RETURN r

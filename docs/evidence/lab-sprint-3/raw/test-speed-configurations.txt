@@ -1,0 +1,123 @@
+# Full-run configurations measured on 2026-10-11 (ext4 /data/tmp/lpg-lab + XFS /mnt/lpg-xfs unless noted), same command as nextest-full-after-test-speed.log
+
+## Before, ext4 only (HEAD 0a6e549); peak ext4 5107748 KiB was measured for the fault suites alone after the change, not here
+     Summary [ 156.141s] 508 tests run: 508 passed (2 slow), 28 skipped
+SUITE fault fs=ext4 workload=Backup seconds=33.3
+SUITE fault fs=ext4 workload=BulkLoad seconds=17.8
+SUITE fault fs=ext4 workload=Checkpoint seconds=11.9
+SUITE fault fs=ext4 workload=Commits seconds=68.9
+SUITE fault fs=ext4 workload=Migration seconds=1.3
+SUITE fault fs=ext4 workload=RecoveryCheckpoint seconds=10.8
+SUITE fault fs=ext4 workload=Restore seconds=118.3
+SUITE fault fs=ext4 workload=Transactions seconds=28.5
+SUITE kill fs=ext4 seconds=45.5
+
+## Sweeps in parallel, 4 threads per directory (SWEEP_THREADS=4), disk-heavy max-threads=3; peak ext4 5060608 KiB, xfs 3319980 KiB
+     Summary [ 163.831s] 508 tests run: 508 passed (5 slow), 28 skipped
+wall=163.94 user=970.97 sys=1309.13 cpu=1390%
+SUITE fault fs=ext4 workload=Backup seconds=38.2
+SUITE fault fs=ext4 workload=BulkLoad seconds=19.9
+SUITE fault fs=ext4 workload=Checkpoint seconds=13.1
+SUITE fault fs=ext4 workload=Commits seconds=95.1
+SUITE fault fs=ext4 workload=Migration seconds=2.2
+SUITE fault fs=ext4 workload=RecoveryCheckpoint seconds=14.2
+SUITE fault fs=ext4 workload=Restore seconds=135.8
+SUITE fault fs=ext4 workload=Transactions seconds=15.5
+SUITE fault fs=xfs workload=Backup seconds=35.1
+SUITE fault fs=xfs workload=BulkLoad seconds=18.4
+SUITE fault fs=xfs workload=Checkpoint seconds=12.3
+SUITE fault fs=xfs workload=Commits seconds=87.8
+SUITE fault fs=xfs workload=Migration seconds=1.8
+SUITE fault fs=xfs workload=RecoveryCheckpoint seconds=13.2
+SUITE fault fs=xfs workload=Restore seconds=125.3
+SUITE fault fs=xfs workload=Transactions seconds=14.2
+SUITE kill fs=ext4 seconds=93.0
+SUITE kill fs=xfs seconds=102.1
+
+## A: 2 threads per directory, max-threads=3 (adopted)
+     Summary [ 145.355s] 508 tests run: 508 passed (3 slow), 28 skipped
+wall=145.47 user=651.87 sys=882.14 cpu=1054%
+SUITE fault fs=ext4 workload=Backup seconds=36.0
+SUITE fault fs=ext4 workload=BulkLoad seconds=19.0
+SUITE fault fs=ext4 workload=Checkpoint seconds=12.5
+SUITE fault fs=ext4 workload=Commits seconds=79.7
+SUITE fault fs=ext4 workload=Migration seconds=1.8
+SUITE fault fs=ext4 workload=RecoveryCheckpoint seconds=10.7
+SUITE fault fs=ext4 workload=Restore seconds=141.9
+SUITE fault fs=ext4 workload=Transactions seconds=21.8
+SUITE fault fs=xfs workload=Backup seconds=36.8
+SUITE fault fs=xfs workload=BulkLoad seconds=17.4
+SUITE fault fs=xfs workload=Checkpoint seconds=11.3
+SUITE fault fs=xfs workload=Commits seconds=70.9
+SUITE fault fs=xfs workload=Migration seconds=1.7
+SUITE fault fs=xfs workload=RecoveryCheckpoint seconds=10.3
+SUITE fault fs=xfs workload=Restore seconds=119.5
+SUITE fault fs=xfs workload=Transactions seconds=22.3
+SUITE kill fs=ext4 seconds=70.5
+SUITE kill fs=xfs seconds=77.3
+
+## B: 4 threads per directory, max-threads=2
+     Summary [ 147.905s] 508 tests run: 508 passed (2 slow), 28 skipped
+wall=148.02 user=722.46 sys=991.03 cpu=1157%
+SUITE fault fs=ext4 workload=Backup seconds=24.8
+SUITE fault fs=ext4 workload=BulkLoad seconds=11.2
+SUITE fault fs=ext4 workload=Checkpoint seconds=7.2
+SUITE fault fs=ext4 workload=Commits seconds=37.5
+SUITE fault fs=ext4 workload=Migration seconds=1.3
+SUITE fault fs=ext4 workload=RecoveryCheckpoint seconds=9.1
+SUITE fault fs=ext4 workload=Restore seconds=78.9
+SUITE fault fs=ext4 workload=Transactions seconds=14.7
+SUITE fault fs=xfs workload=Backup seconds=23.7
+SUITE fault fs=xfs workload=BulkLoad seconds=9.9
+SUITE fault fs=xfs workload=Checkpoint seconds=6.7
+SUITE fault fs=xfs workload=Commits seconds=33.4
+SUITE fault fs=xfs workload=Migration seconds=1.2
+SUITE fault fs=xfs workload=RecoveryCheckpoint seconds=7.9
+SUITE fault fs=xfs workload=Restore seconds=70.5
+SUITE fault fs=xfs workload=Transactions seconds=14.0
+SUITE kill fs=ext4 seconds=71.2
+SUITE kill fs=xfs seconds=77.9
+
+## E: restore 4 threads per directory, other sweeps 2, max-threads=3
+     Summary [ 154.284s] 508 tests run: 508 passed (3 slow), 28 skipped
+wall=154.40 user=835.36 sys=1119.63 cpu=1266%
+SUITE fault fs=ext4 workload=Backup seconds=32.0
+SUITE fault fs=ext4 workload=BulkLoad seconds=15.7
+SUITE fault fs=ext4 workload=Checkpoint seconds=10.5
+SUITE fault fs=ext4 workload=Commits seconds=120.2
+SUITE fault fs=ext4 workload=Migration seconds=1.4
+SUITE fault fs=ext4 workload=RecoveryCheckpoint seconds=13.9
+SUITE fault fs=ext4 workload=Restore seconds=112.4
+SUITE fault fs=ext4 workload=Transactions seconds=22.7
+SUITE fault fs=xfs workload=Backup seconds=31.4
+SUITE fault fs=xfs workload=BulkLoad seconds=14.5
+SUITE fault fs=xfs workload=Checkpoint seconds=10.0
+SUITE fault fs=xfs workload=Commits seconds=111.4
+SUITE fault fs=xfs workload=Migration seconds=1.6
+SUITE fault fs=xfs workload=RecoveryCheckpoint seconds=9.8
+SUITE fault fs=xfs workload=Restore seconds=102.9
+SUITE fault fs=xfs workload=Transactions seconds=21.6
+SUITE kill fs=ext4 seconds=81.1
+SUITE kill fs=xfs seconds=89.1
+
+## Adopted configuration, final validation run (= nextest-full-after-test-speed.log)
+     Summary [ 147.390s] 508 tests run: 508 passed (3 slow), 28 skipped
+wall=147.50 user=675.12 sys=872.17 cpu=1048%
+SUITE fault fs=ext4 workload=Backup seconds=36.1
+SUITE fault fs=ext4 workload=BulkLoad seconds=20.6
+SUITE fault fs=ext4 workload=Checkpoint seconds=12.8
+SUITE fault fs=ext4 workload=Commits seconds=82.4
+SUITE fault fs=ext4 workload=Migration seconds=1.8
+SUITE fault fs=ext4 workload=RecoveryCheckpoint seconds=11.2
+SUITE fault fs=ext4 workload=Restore seconds=141.5
+SUITE fault fs=ext4 workload=Transactions seconds=22.7
+SUITE fault fs=xfs workload=Backup seconds=35.5
+SUITE fault fs=xfs workload=BulkLoad seconds=18.7
+SUITE fault fs=xfs workload=Checkpoint seconds=12.2
+SUITE fault fs=xfs workload=Commits seconds=75.4
+SUITE fault fs=xfs workload=Migration seconds=1.3
+SUITE fault fs=xfs workload=RecoveryCheckpoint seconds=10.7
+SUITE fault fs=xfs workload=Restore seconds=119.7
+SUITE fault fs=xfs workload=Transactions seconds=21.5
+SUITE kill fs=ext4 seconds=70.3
+SUITE kill fs=xfs seconds=78.7

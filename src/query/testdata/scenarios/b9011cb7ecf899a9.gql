@@ -1,0 +1,3 @@
+RETURN true OR false AND false AS a,
+       true OR (false AND false) AS b,
+       (true OR false) AND false AS c

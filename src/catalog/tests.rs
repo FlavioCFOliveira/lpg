@@ -277,7 +277,7 @@ mod catalog {
                 if first_commits {
                     let err = r2.unwrap_err();
                     assert!(matches!(err, Error::Serialization), "{iso:?}: {err:?}");
-                    assert_eq!(err.gqlstatus(), Some("25N11"));
+                    assert_eq!(err.gqlstatus().code(), "25N11");
                     assert_eq!(g.owner, "a");
                 } else {
                     r2.unwrap();

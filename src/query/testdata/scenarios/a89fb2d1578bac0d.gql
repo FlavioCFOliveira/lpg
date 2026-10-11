@@ -1,0 +1,1 @@
+RETURN date({date: date('1816-12-30'), week: 2, dayOfWeek: 3}) AS d

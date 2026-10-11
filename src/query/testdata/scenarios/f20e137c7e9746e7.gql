@@ -1,0 +1,5 @@
+INSERT (r1:Item {name: 'a', rank: 3}),
+       (r2:Item {name: 'b', rank: NULL}),
+       (r3:Item {name: 'c', rank: 1}),
+       (r4:Item {name: 'd', rank: NULL}),
+       (r5:Item {name: 'e', rank: 2})

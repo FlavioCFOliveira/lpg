@@ -1,0 +1,1 @@
+INSERT (a:Person {id: 1, firstName: 'Ann', born: DATE '1990-01-01'})-[:KNOWS {since: 2020}]->(b:Person {id: 2, firstName: 'Bob'})

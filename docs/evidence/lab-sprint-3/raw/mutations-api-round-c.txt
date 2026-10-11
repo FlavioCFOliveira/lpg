@@ -1,0 +1,9 @@
+M1 no authorisation | api::tests::auth | Summary [   0.296s] 7 tests run: 4 passed, 3 failed, 514 skipped | exit 100
+M2 no status check | api::tests::limits | Summary [  30.028s] 8 tests run: 5 passed, 3 failed, 513 skipped | exit 100
+M3 no row/byte limit | api::tests::limits::row_and_byte | Summary [   0.017s] 1 test run: 0 passed, 1 failed, 520 skipped | exit 100
+M4 no memory limit | api::tests::limits::a_statement_over_the_memory_limit | Summary [   0.233s] 1 test run: 0 passed, 1 failed, 520 skipped | exit 100
+M5 rows not charged | api::tests::procs::a_routines_own_memory | Summary [   0.050s] 1 test run: 0 passed, 1 failed, 520 skipped | exit 100
+M6 point search ignores the index | api::tests::procs::the_point_searches | Summary [   0.071s] 1 test run: 0 passed, 1 failed, 520 skipped | exit 100
+M7 read-write procedure allowed in a query | api::tests::procs::read_write_procedures | Summary [   0.017s] 1 test run: 0 passed, 1 failed, 520 skipped | exit 100
+M8 nested read-only check removed | api::tests::procs::read_write_procedures | Summary [   0.018s] 1 test run: 0 passed, 1 failed, 520 skipped | exit 100
+M9 commit ignores the stopped status | api::tests::limits::a_terminated | Summary [   0.017s] 1 test run: 0 passed, 1 failed, 520 skipped | exit 100

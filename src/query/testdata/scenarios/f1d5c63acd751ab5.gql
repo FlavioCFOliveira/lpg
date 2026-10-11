@@ -1,0 +1,2 @@
+INSERT (s1:Peer {name: 'solo'}),
+       (s1)-[:FRIEND]->(s1)

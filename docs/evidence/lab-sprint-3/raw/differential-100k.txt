@@ -1,0 +1,37 @@
+$ cargo nextest run -p lpg --run-ignored all -E 'test(/differential::/)' --no-capture   (LPG_DIFF_COUNT unset: 100000; LPG_SEED unset: seeds 20261008, 1, 12648430)
+info: experimental features enabled: wrapper-scripts
+────────────
+ Nextest run ID a1063bb2-be89-4339-b48d-394235116776 with nextest profile: default
+    Starting 6 tests across 1 binary (431 tests skipped)
+       START [         ] (1/6) lpg query::parser::differential::debug_parse_file
+test query::parser::differential::debug_parse_file ... ok
+        PASS [   0.005s] (1/6) lpg query::parser::differential::debug_parse_file
+       START [         ] (2/6) lpg query::parser::differential::differential_generated_sentences_and_mutants
+seed 20261008 generate: 100000 texts, 100000 accepted by the oracle
+seed 20261008 generate: 100000 texts, 0 differences
+seed 20261008 mutants: 100000 texts, 1930 accepted by the oracle
+seed 20261008 mutants: 100000 texts, 0 differences
+seed 1 generate: 100000 texts, 100000 accepted by the oracle
+seed 1 generate: 100000 texts, 0 differences
+seed 1 mutants: 100000 texts, 2073 accepted by the oracle
+seed 1 mutants: 100000 texts, 0 differences
+seed 12648430 generate: 100000 texts, 100000 accepted by the oracle
+seed 12648430 generate: 100000 texts, 0 differences
+seed 12648430 mutants: 100000 texts, 2090 accepted by the oracle
+seed 12648430 mutants: 100000 texts, 0 differences
+test query::parser::differential::differential_generated_sentences_and_mutants ... ok
+        PASS [  42.917s] (2/6) lpg query::parser::differential::differential_generated_sentences_and_mutants
+       START [         ] (3/6) lpg query::parser::differential::differential_input_file
+test query::parser::differential::differential_input_file ... ok
+        PASS [   0.005s] (3/6) lpg query::parser::differential::differential_input_file
+       START [         ] (4/6) lpg query::parser::differential::differential_stored_labels_are_current
+test query::parser::differential::differential_stored_labels_are_current ... ok
+        PASS [   0.308s] (4/6) lpg query::parser::differential::differential_stored_labels_are_current
+       START [         ] (5/6) lpg query::parser::differential::stored_corpora_match_the_oracle_labels
+test query::parser::differential::stored_corpora_match_the_oracle_labels ... ok
+        PASS [   0.009s] (5/6) lpg query::parser::differential::stored_corpora_match_the_oracle_labels
+       START [         ] (6/6) lpg query::parser::differential::test_texts_match_the_oracle_labels
+test query::parser::differential::test_texts_match_the_oracle_labels ... ok
+        PASS [   0.016s] (6/6) lpg query::parser::differential::test_texts_match_the_oracle_labels
+────────────
+     Summary [  43.261s] 6 tests run: 6 passed, 431 skipped

@@ -1,0 +1,1 @@
+RETURN 1 < 2 AS lt, 2 <= 2 AS le, 3 <> 4 AS ne, 4 > 3 AS gt, 4 >= 4 AS ge, 5 = 5 AS eq

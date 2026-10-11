@@ -1,0 +1,1 @@
+(:Person) <-[:know_ => :knows {since::int}]- (:Person)

@@ -1,0 +1,1 @@
+RETURN duration('PT0.75M') AS result

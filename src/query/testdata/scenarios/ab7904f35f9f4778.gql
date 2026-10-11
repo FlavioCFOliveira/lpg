@@ -1,0 +1,2 @@
+MATCH (x:Nonexistent)
+RETURN x.name AS name

@@ -30,6 +30,7 @@ mod bulk;
 mod commit;
 mod files;
 mod generator;
+mod micro;
 mod migrate;
 mod obs;
 mod pool;

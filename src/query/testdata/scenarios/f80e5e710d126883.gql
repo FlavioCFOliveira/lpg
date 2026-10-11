@@ -1,0 +1,7 @@
+MATCH (n) WHERE exists {
+  MATCH (n)-->(m)
+  WITH n, count(*) AS numConnections
+  WHERE numConnections = 3
+  RETURN true
+}
+RETURN n

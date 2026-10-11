@@ -1,0 +1,2 @@
+MATCH (n)
+  RETRN n

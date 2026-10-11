@@ -1,0 +1,2 @@
+MATCH (a {name: 'Andres'})<-[:FATHER]-(child)
+RETURN a.name, {foo: a.name='Andres', kids: collect(child.name)}

@@ -34,7 +34,7 @@ use super::float_cmp;
 
 /// A coordinate reference system (FR-TYPE-002).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum Srid {
+pub enum Srid {
     /// Cartesian 2D, SRID 7203.
     Cartesian2D,
     /// Cartesian 3D, SRID 9157.
@@ -47,7 +47,8 @@ pub(crate) enum Srid {
 
 impl Srid {
     /// The SRID code.
-    pub(crate) fn code(self) -> u32 {
+    #[must_use]
+    pub fn code(self) -> u32 {
         match self {
             Srid::Cartesian2D => 7203,
             Srid::Cartesian3D => 9157,
@@ -57,7 +58,8 @@ impl Srid {
     }
 
     /// The system with SRID `code`.
-    pub(crate) fn from_code(code: u32) -> Option<Srid> {
+    #[must_use]
+    pub fn from_code(code: u32) -> Option<Srid> {
         Some(match code {
             7203 => Srid::Cartesian2D,
             9157 => Srid::Cartesian3D,
@@ -96,7 +98,7 @@ impl Srid {
 
 /// A point.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct Point {
+pub struct Point {
     srid: Srid,
     /// x, y and z; z is 0 in 2D.
     coords: [f64; 3],
@@ -105,7 +107,8 @@ pub(crate) struct Point {
 impl Point {
     /// A point in `srid` with `coords`, one per dimension; `None` if their
     /// number does not match the system.
-    pub(crate) fn new(srid: Srid, coords: &[f64]) -> Option<Point> {
+    #[must_use]
+    pub fn new(srid: Srid, coords: &[f64]) -> Option<Point> {
         if coords.len() != srid.dims() {
             return None;
         }
@@ -115,12 +118,14 @@ impl Point {
     }
 
     /// The coordinate reference system.
-    pub(crate) fn srid(&self) -> Srid {
+    #[must_use]
+    pub fn srid(&self) -> Srid {
         self.srid
     }
 
     /// The coordinates, one per dimension.
-    pub(crate) fn coords(&self) -> &[f64] {
+    #[must_use]
+    pub fn coords(&self) -> &[f64] {
         &self.coords[..self.srid.dims()]
     }
 
@@ -144,6 +149,7 @@ impl Point {
     }
 
     /// The lexical form `{srid: S, x: X, y: Y[, z: Z]}` (TS-21).
+    #[cfg(test)]
     pub(crate) fn lexical(&self) -> String {
         let c = self.coords();
         match c {
@@ -157,6 +163,7 @@ impl Point {
     }
 
     /// Parses a lexical form of [`Point::lexical`].
+    #[cfg(test)]
     pub(crate) fn parse(text: &str) -> Option<Point> {
         let body = text.trim().strip_prefix('{')?.strip_suffix('}')?;
         let mut srid = None;

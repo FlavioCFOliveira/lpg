@@ -1,0 +1,15 @@
+test api::status::loom_tests::loom_the_model_fails_when_the_commit_ignores_the_status ... ok
+test api::status::loom_tests::loom_a_cancel_racing_a_commit_either_aborts_or_has_no_effect ... ok
+test tx::lock::tests::loom_two_transaction_cycle_fails_exactly_one_request ... ok
+test storage::btree::bulk::tests::loom_a_build_run_and_an_undone_batch_never_share_a_page ... ok
+test storage::memory::tests::loom_concurrent_charges_never_exceed_the_cap ... ok
+test catalog::tests::loom_two_creators_of_one_token_get_one_identifier ... ok
+test tx::lock::tests::loom_lock_grants_follow_the_queue ... ok
+test tx::lock::tests::loom_cycle_through_a_waiting_request_fails_the_requester ... ok
+test index::tests::loom_side_tree_replay_and_online_switch ... ok
+test tx::mvcc::tests::loom_no_snapshot_is_below_a_horizon_computed_while_it_registers ... ok
+test tx::lock::tests::loom_three_transaction_cycle_fails_exactly_one_request ... ok
+test tx::mvcc::tests::loom_no_overflow_snapshot_is_below_a_horizon_computed_while_it_registers ... ok
+test storage::wal::tests::loom_published_timestamps_increase_and_never_exceed_the_durable_ones ... ok
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 399 filtered out; finished in 17.20s
+exit=0

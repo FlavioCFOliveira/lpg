@@ -1,7 +1,7 @@
 ---
 title: Interfaces
 status: draft
-last-reviewed: 2026-10-07
+last-reviewed: 2026-10-11
 related:
   - architecture.md
   - bolt.md
@@ -14,9 +14,9 @@ related:
 
 | Handle or item | Operations | Requirements |
 |---|---|---|
-| `Database` | `create(location, storage, memory_cap, owner, options)`, `open(location, storage, memory_cap, options)`, `close(timeout)` (default 10 s), `session(principal, home)`, `register_procedure`, `register_function`, `backup`, `restore`, `migrate` (on a closed location), `check_integrity` | FR-DB-001..009, FR-AUTH-002, FR-LIM-003, FR-API-005, FR-OPS-001..013, FR-REC-010 |
-| `Session` | `execute(gql, parameters)`, `begin(options)` (isolation, limits), `explain`, `profile`, `cancel`, session limits; index and constraint management; `list_transactions`, `terminate_transaction`; `import`, `export` | FR-API-001, FR-API-004, FR-API-007..009, FR-GQL-005, FR-OBS-003..006, FR-SES-001..004, FR-TX-004, FR-IMP-001..006 |
-| `Transaction` | `execute`, `commit`, `rollback`, `cancel`, `create_directory`, algorithm runs | FR-TX-001, FR-API-009, FR-CAT-004, FR-CAT-005, FR-ALG-002 |
+| `Database` | `create(location, storage, memory_cap, owner, options)`, `open(location, storage, memory_cap, options)`, `close()` (10 s, `DEFAULT_CLOSE_TIMEOUT`) and `close_with_timeout(timeout)`, `session(principal, home_schema, home_graph)`, `register_procedure`, `register_write_procedure`, `register_function`, `routines`, `backup`, `restore`, `migrate` (on a closed location), `check_integrity` | FR-DB-001..009, FR-AUTH-002, FR-LIM-003, FR-API-005, FR-OPS-001..013, FR-REC-010 |
+| `Session` | `execute(gql, parameters)`, `begin(options)` (isolation, limits, `tx_metadata`), `explain`, `profile`, `cancel`, `limits`, `set_limits`; `create_index`, `drop_index`, `create_constraint`, `drop_constraint`, `create_directory`; `list_transactions`, `terminate_transaction`; `import`, `export` (Sprint 4) | FR-API-001, FR-API-004, FR-API-007..009, FR-GQL-005, FR-OBS-003..006, FR-SES-001..004, FR-TX-004, FR-IMP-001..006 |
+| `Transaction` | `execute`, `commit`, `rollback`, `cancel`, `create_directory`, `id`; algorithm runs (Sprint 5) | FR-TX-001, FR-API-009, FR-CAT-004, FR-CAT-005, FR-ALG-002 |
 | `ResultStream` | `async fn next()` returning one row; `summary()` | FR-API-010 |
 | `bolt::Server` (feature `bolt`) | `new(database, advertised_address, default_limits, auth)`, `serve(connection)` | FR-BOLT-001, FR-BOLT-009, FR-LIM-004, ABS-001, ABS-002 |
 | `bolt::Client` (feature `bolt`) | `connect(connection, auth)`, then auto-commit queries, transactions, `PULL`, bookmarks | FR-BOLT-002, FR-BOLT-019 |
@@ -27,6 +27,62 @@ related:
 - Operations that need a principal live on `Session` or `Transaction`, never on `Database`. Each of them is authorised and records an owner ([TS-23](#ts-23-authentication-and-authorisation)), and the catalog changes join a transaction (FR-CAT-004).
 - The exception is `create`: its required `owner` argument is the principal recorded as the owner of the default schema and default graph ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics); user decision 2026-10-07). `create` makes no authorisation request ([TS-23](#ts-23-authentication-and-authorisation)).
 - GQLSTATUS codes come from the ISO conditions insert ([S45]) where it defines one. Otherwise they are Neo4j's codes [S48], such as 25N11 and 50N05 ([TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)). Codes that depend on rules outside the inserts are provisional (OQ-005).
+- **Built** (rmp #47 to #51, `src/api/`, `src/auth/`, `src/proc/`):
+  - `Options` carries the authoriser (required) and the metrics sink (optional; none discards the metrics). Values are the public `Value` type; parameters are `Parameters`, a map from name to `Value` (IW006).
+  - `Session` is a cheap clone; clones share its busy flag. Requests, `begin`, `commit`, `rollback`, `explain`, `profile` and the management calls take the flag; `cancel`, `list_transactions` and `terminate_transaction` do not, so they work while a request runs.
+  - A request without result columns runs to its end inside `execute`. A request with columns runs one batch per pull; its auto-commit transaction commits when the last row is pulled, and is rolled back if the stream is dropped earlier.
+  - Dropping a `Transaction` handle leaves the transaction active in its session (FR-GQL-005: text and API act on the same transaction); `SESSION CLOSE`, `ROLLBACK` or dropping the session ends it.
+  - `close` waits for the registered transactions on a condition variable up to the timeout, stops the rest with the termination reason and aborts them, then closes the engine. The handle holds the engine's shared state only through its owning `Engine`, so the files close and `LOCK` is released at `close` while clones of the `Database` exist ([TS-27](storage.md#ts-27-single-process-lock)).
+  - **Index and constraint creation does not join the session's transaction** (deviation from the rmp #48 text, recorded there): each runs in a transaction of its own, as the online build and the constraint validation require ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints)). Index and constraint drops and directory creation join the active transaction when there is one, else commit their own (FR-CAT-004).
+  - Index kinds (FR-IDX-001): single-property and range are one structure, a range index on one property; composite is a range index on two or more; lookup; point. Index and constraint definitions store no name and no owner: the listings name them `index_<id>` and `constraint_<id>`, and their authorisation object is their graph, with the graph's owner.
+- **`ResultStream::summary()`**, available once the last row is pulled:
+  - counters, as Neo4j's `SummaryCounters` (D-N4DRIVER): nodes created and deleted, edges created and deleted (Neo4j's relationships), properties set, labels added and removed, catalog updates (Neo4j's `systemUpdates`, here the catalog objects a statement creates or drops), and whether any is above zero. There are no index or constraint counters: those change only through the API (FR-API-004);
+  - the statement type, as Bolt's `type` (D-BOLTMSG): read, write, read-write or catalog;
+  - the completion GQLSTATUS: 00000 for a result with rows, 02000 ("no data") for a result without rows, 00001 ("omitted result") for a statement with no result columns. All three are ISO conditions, and Neo4j uses the same three (D-N4STATUS, "Notifications");
+  - for PROFILE, the profiled plan ([TS-20](query-engine.md#ts-20-binder-planner-and-execution)).
+
+### GQLSTATUS codes
+
+Each failure and its code (rmp task #39, point 5; rule above; D-N4STATUS). ISO lines are those of `ISO_IEC_39075(en)-conditions.xml`; Neo4j lines those of R-NEO `community/neo4j-gql-status/.../GqlStatusInfoCodes.java` @ `54a7dcf`, read for study only. A code that only matches Neo4j's description, with no Neo4j use of it for that case confirmed, is marked "by description".
+
+| Failure (error kind) | GQLSTATUS | Source |
+|---|---|---|
+| Text `GQL.g4` does not accept | 42001 | ISO (124) |
+| A construct of an unsupported feature | 42001, with the cause 51N26 naming the feature code | Neo4j's helper for an unsupported construct builds exactly this pair (R-NEO `.../gqlstatus/GqlHelper.java:1234-1244`); provisional (OQ-005) |
+| A name in a statement that resolves to nothing (in a catalog-modifying statement, see below) | 42002 | ISO (125) |
+| A catalog-modifying statement that fails with 42N11, 42002 or G1000 | 42000, with that error as the cause | opengql/tck @ `e0700a7` expects 42000 for each of these failures (`Create1.feature` [3], [5], [6]; `drop1.feature` [2], [4]–[6]); the pair follows the 42001 + 51N26 row; user decision 2026-10-11 (DECISION 386 on rmp #52) |
+| A variable that a graph pattern binds as two element kinds (a node and an edge) | 42000, with the cause 22N27 | 42000 by DECISION 326 on rmp #43; the cause is Neo4j's for this case, which Neo4j raises as 22G03 with the cause 22N27 "invalid entity type" (697; R-NEO `community/cypher/front-end/ast/.../semantics/SemanticState.scala:545-575`, `SemanticError.scala:388-402`); user decision 2026-10-11 (DECISION 386 on rmp #52) |
+| No such procedure; no such function | 42N08; 42N48 | Neo4j (2090; 2341) |
+| A data exception (overflow, division by zero, invalid value type, string too long, …) | its ISO class-22 code, such as 22003, 22012, 22G03, 22001 | ISO (70-111) |
+| `START TRANSACTION` while a transaction is active | 25G01 | ISO (114) |
+| `COMMIT` or `ROLLBACK` with no active transaction | 2D000 | ISO class 2D (119) |
+| A request on a closed session | 08000 | ISO class 08 (67) |
+| `Serialization` | 25N11 | [TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks) |
+| `Deadlock` | 50N05 | [TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks) |
+| A request on a busy session (FR-SES-004) | 25N03 | Neo4j (1457) |
+| A statement of a transaction that has ended, or a request through a `Transaction` that is no longer the session's active one | 25N05 | Neo4j "transaction closed" (1466), by description |
+| A procedure call with too many arguments, or without one that has no default; a registration whose name is taken | 22N11 | Neo4j (601), by description |
+| A `YIELD` of a column the procedure does not have | 42002 | ISO (125) |
+| A `CALL` that is part of a larger statement, without `YIELD`, of a procedure with result columns | 42002, with the cause 42N25 | Neo4j: "`YIELD` is necessary if the procedure call is part of a larger Cypher statement" (Operations Manual, "Call procedures", `docs-operations` @ `0bb72f0` `modules/ROOT/pages/procedures/call-procedures.adoc:153`); Neo4j raises 42001 with the cause 42N25 "missing YIELD" (2224) and lets a procedure without result columns omit `YIELD` (R-NEO `community/cypher/front-end/frontend/.../phases/ResolvedCall.scala:163-178`; `.../gqlstatus/GqlHelper.java:1025-1034`). The top code is ISO 42002 (125), not 42001, because lpg's 42001 is text `GQL.g4` rejects or an unsupported feature; user decision 2026-10-11 (DECISION 386 on rmp #52) |
+| A transaction cancelled (FR-API-009), terminated (FR-OBS-004) or timed out (FR-API-007) | 25N14, with the reason in the message | Neo4j: `Terminated` and `TransactionTimedOut` are client errors (R-NEO `community/common/.../exceptions/Status.java:151-154, 169`), and a client-error termination is 25N14 (`community/graphdb-api/.../TransactionTerminatedHelper.java:47-50`) |
+| `Aborted`: a statement of a transaction an earlier failure aborted | 25N05 | Neo4j "transaction closed" (1466), by description |
+| `MemoryLimit` of the memory cap | 51N72 | Neo4j "memory pool out of memory" (3380) |
+| The transaction memory limit (FR-API-007) | 51N73 | Neo4j "transaction memory limit reached" (3387) |
+| A row or byte limit (FR-LIM-002) | 51N66 | Neo4j "resource exhaustion" (3347), by description: no reference has a result-size limit |
+| A refusal of the authoriser (FR-AUTH-001) | 42NFF | Neo4j "permission/access denied" (2797) |
+| A read-only routine that writes (FR-PROC-002) | 42N02 | Neo4j "writing in read access mode" (2052), by description |
+| A closed graph type violated | G2000 | ISO class G2, "graph type violation" (147) |
+| `EdgesStillExist` | G1001 | ISO (143) |
+| `GraphTypeInUse`, `NotEmpty` (in a catalog-modifying statement, the cause of 42000) | G1000 | ISO class G1, "dependent object error" (142) |
+| `CatalogObjectExists`, `DatabaseExists` (in a catalog-modifying statement, the cause of 42000) | 42N11 | Neo4j "graph reference already exists" (2150), by description |
+| `NotFound` through the API: a graph, schema, graph type or directory; an index; a constraint | 22N51; 22N69; 22N64 | Neo4j (839; 938; 911); by description for a schema, graph type or directory |
+| `NoDatabase` | 22N51 | Neo4j "graph reference not found" (839), by description |
+| `ConstraintViolation`: uniqueness or key; existence; property type | 22N79; 22N77; 22N78 | Neo4j (1003; 979; 991) |
+| `InvalidArgument` | 22N11 | Neo4j (601) |
+| An open that fails: `Locked`, `LockMissing`, `MigrationRequired`, `NewerFormat`, `Corruption` found at open | 51N40 | Neo4j "unable to start database" (3196), by description |
+| `Unusable`, `Corruption` found while open, any call after `close` | 08N09 | Neo4j "database unavailable" (352), by description |
+| `IncompleteBackup`, `LoadRunning`, `NotCleanlyClosed`, `MigrationPath` | 51N41 | Neo4j "admin operation failed" (3201-3205), by description |
+| `Io`, `TreeDropped`, any other internal failure | 50N00 | Neo4j "internal error" (2812) |
 
 ## TS-03 Storage abstraction
 
@@ -67,6 +123,7 @@ The transport abstraction is the bound `tokio::io::AsyncRead + AsyncWrite + Unpi
   - The object of a data action is its graph. The owner is the one recorded on the catalog object ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)).
   - After planning and before execution, the crate asks once per statement for every `(action, object)` pair the plan can perform. API operations ask once per call, except `create`, which runs before any session or principal exists and makes no request ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics) Creation). A refusal fails the request before any effect. Consequence: a statement fails if its plan could perform a refused action, even when the data would not have led it to.
   - Rust API sessions receive their principal from the application and are not authenticated.
+  - **Built** (rmp #48, `src/auth/mod.rs`). `authenticate` and `impersonate` have default implementations that refuse: only Bolt (Sprint 6) calls them. The pairs of a plan: `TRAVERSE` and `READ` on every graph a scan, seek or expansion reads; `CREATE` for an insert; `SET PROPERTY` for `SET` and for `REMOVE` of a property (Neo4j's `SET PROPERTY` privilege covers the `SET` clause; Neo4j Operations Manual "Write privileges", read 2026-10-11); `CREATE` or `DROP` per catalog kind, whose object is the created or dropped object's path and whose owner is the dropped object's, or the parent's for a create, or the requesting principal when the parent is created by the same statement list; `SHOW INDEX` and `SHOW CONSTRAINT` on every graph for `show_indexes` and `show_constraints`; `TRAVERSE` and `READ` on the working graph for the point searches. Each distinct pair is asked once per statement; a refusal (42NFF) fails the statement and aborts its transaction. Nested statements of a procedure are authorised the same way when they run, from the statement's blocking thread (`Handle::block_on`). `SHOW TRANSACTION` and `TERMINATE TRANSACTION` name a transaction object, whose owner is the transaction's principal, and are asked only for another principal's transaction. `show_catalog` asks nothing: no action lists catalog objects. EXPLAIN asks nothing: it performs no action.
 - **Satisfies**: ABS-002, FR-AUTH-001, FR-AUTH-002, BR-AUTH-001, FR-API-004, FR-SES-001, FR-SES-002, FR-BOLT-011, FR-BOLT-012, FR-BOLT-013, FR-OBS-003, FR-OBS-004.
 - **Evidence**: Neo4j read, write and database privilege names (D-PRIV, [S46]); `async fn` in traits is not object-safe (D-AFIT).
 - **Crates**: `async-trait` is not used; the boxed futures give the same dyn compatibility without a dependency.
@@ -82,17 +139,50 @@ The transport abstraction is the bound `tokio::io::AsyncRead + AsyncWrite + Unpi
     - Implementations are synchronous and return row iterators. They run on the statement's thread with a context that gives the caller's snapshot, the cancellation status and the memory tracker.
     - Read-only is enforced in three ways: the read-only context type has no write methods; the binder rejects a `ReadWrite` procedure where only reads are allowed; and nested GQL run through a read-only context fails if it modifies data.
     - Rows a procedure returns are charged to the memory cap. Memory it allocates on its own is not.
+  - **Names and calls** (provisional, OQ-005).
+    - A `CALL` names its routine with `procedureReference`: an optional parent and a name, or a reference parameter (`GQL.g4:1458-1465`). No GQL statement creates a procedure, so no catalog object is one.
+    - A database handle's registry holds the built-in and the application's routines in one namespace. A reference whose parent is object names only, such as `gds.pageRank.stream`, is looked up by its whole dotted text. A reference with a schema part, or a `$$` reference parameter, names no registered routine and fails with 42N08.
+    - `GQL.g4` has no function call in value expressions (`valueExpressionPrimary`, `GQL.g4:2220-2235`). A registered function is therefore called with `CALL` (FR-API-006): it is a routine with exactly one result column, declared when it is registered, that returns exactly one row.
+    - The binder checks a routine's mode wherever the call stands: the oracle parses a lone `CALL` as a catalog-modifying statement ([TS-19](query-engine.md#ts-19-parser) Ambiguities).
   - **Built-in procedures.**
     - The four catalog-listing procedures `show_transactions`, `show_indexes`, `show_constraints` and `show_catalog`.
     - The algorithm procedures, registered under the names, parameters, modes and output columns that FR-ALG-007 and the inventory table fix (for example `gds.pageRank.stream`, `gds.pageRank.write`; [TS-25](algorithms.md#ts-25-graph-algorithms)).
+    - **Point procedures** (user decision 2026-10-08, "Valores + CALL", OQ-006; [TS-21](values-and-types.md#ts-21-values-and-types)). Mode `ReadOnly`. Arguments are positional: a record argument such as Neo4j's `{x: 1, y: 2}` needs GV45, which is not supported. `INTEGER` arguments are accepted for `FLOAT` parameters (IA005).
+
+      | Call | Yields | Semantics |
+      |---|---|---|
+      | `point(x :: FLOAT, y :: FLOAT, z :: FLOAT = NULL, srid :: INTEGER = NULL)` | one row: `point` | A point. With `srid` null: SRID 7203, or 9157 when `z` is given. With `srid` 4326 or 4979: `x` is the longitude, `y` the latitude, `z` the height. `z` must be given exactly when the SRID is 9157 or 4979, and any other SRID fails; both fail with 22N11. If `x` or `y` is null, `point` is null. |
+      | `point.distance(from :: POINT, to :: POINT)` | one row: `distance` (`FLOAT`) | The distance of TS-21 Spatial: metres for WGS-84, coordinate units for Cartesian. Null if either point is null or their CRSs differ. |
+      | `point.nodesWithinDistance(label :: STRING, property :: STRING, center :: POINT, distance :: FLOAT)` | one row per node: `node`, `distance` | Every node of the working graph that has `label` and whose `property` is a point in `center`'s CRS at a distance of at most `distance` from it. Rows have no order. No rows when `center` or `distance` is null. |
+      | `point.edgesWithinDistance(edgeType :: STRING, property :: STRING, center :: POINT, distance :: FLOAT)` | one row per edge: `edge`, `distance` | The same for edges of `edgeType`. |
+
+      - **Index.** The two searches use the ONLINE point index on `(label or edge type, property)` when one exists (`index_within`, `src/index/mod.rs:1241`; [TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints)). Otherwise they scan the label or edge type with the same filter, so the rows are the same with and without the index (FR-TYPE-005).
+      - Not specified: `point.withinBBox` and point equality, which Neo4j's point index also serves. No requirement needs them.
     - The validity of these names as GQL procedure references is provisional (OQ-005).
-  - **Metrics.** An own sink trait per database handle with `counter`, `gauge` and `histogram` calls and static metric names, grouped by the categories of FR-OBS-001.
+  - **Built** (rmp #50, `src/proc/`; registry layout ported from zu @ `a821319` `crates/zu-query/src/procedures.rs`, Apache-2.0).
+    - A routine is registered with a `Signature` (name, parameters with optional defaults, result columns) and an implementation whose type is its mode: `ReadProcedure` and `Function` read only, `WriteProcedure` may write. `ReadContext` offers `query` (nested read-only GQL in the caller's transaction and snapshot), `check` (the status, 25N14 once stopped), `reserve` (charges bytes until the current batch of rows is returned) and `principal`; `WriteContext` adds `execute`. A nested statement that would modify data fails with 42N02 before it runs; transaction and session commands fail with 25G01, 2D000 or 42000.
+    - The binder resolves `CALL` by the whole dotted name; a schema part or a reference parameter fails with 42N08. In a query (a statement ending in `RETURN`) a read-write routine fails with 42N02. Arguments fill the parameters in order, then their defaults. A lone `CALL`, which the parser reads as a catalog-modifying statement, returns its yielded columns, as Neo4j's standalone `CALL` does; without `YIELD` every result column becomes a variable of its name. A `CALL` that is part of a larger statement needs `YIELD` when the routine has result columns, else it fails with 42002 and the cause 42N25, as Neo4j requires ("GQLSTATUS codes" above). `OPTIONAL CALL` fails with 42000: it is outside the approved feature set.
+    - The operator `ProcedureCall` calls the routine once per input row and pulls its rows a batch at a time; the rows of the batch are charged through the operator's reservation until the batch is returned (FR-LIM-006).
+    - The built-in listings use Neo4j's values: index types `RANGE`, `LOOKUP`, `POINT`; constraint types `NODE_PROPERTY_UNIQUENESS`, `NODE_PROPERTY_EXISTENCE`, `NODE_PROPERTY_TYPE`, `NODE_KEY` and their `RELATIONSHIP_` forms; property types written as `STRING | LIST<STRING NOT NULL>` (Cypher Manual "List indexes", "List constraints", read 2026-10-11). `populationPercent` is 100.0 for an ONLINE index and null while it is POPULATING (the build records no progress). `transactionId` is `transaction-<id>`, Neo4j's `<database>-transaction-<id>` without a database name; `status` is `Running` or `Terminated with reason: …`; `startTime` is a UTC zoned date-time; `elapsedTime` a `DURATION(DAY TO SECOND)`; `metaData` a record.
+  - **Metrics built** (rmp #51): the query execution metrics when a request ends (success with its latency in milliseconds, or failure); `index.<kind>.queried` once per run of an index scan or seek (`lookup` for a label scan, `point`, `range` for a range seek, `single_property` or `composite` for an equality seek on a one- or many-property index) and `index.<kind>.populated` when a build makes an index ONLINE (`lookup`, `point`, `range` for one property, `composite`). The data count gauges are set by `Database::check_integrity`, which counts every node and edge of every graph: the statistics hold no total count ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)). `transaction.started` and `transaction.rollbacks` are counted by the API.
+  - **Events built** (rmp #51): the request span records `transaction_id` and `tx_metadata` once the transaction is chosen; `peak_memory_bytes` is the most the transaction held from the accountant when one of the statement's operators reserved, or at a batch boundary; `buffer_hits` and `buffer_misses` are the statement's own reads. The blocking part of a request runs with the caller's `tracing` dispatcher, so its events reach the caller's subscriber.
+  - **Metrics.** An own sink trait per database handle with `counter`, `gauge` and `histogram` calls and static metric names, grouped by the categories of FR-OBS-001. Names of the Sprint 3 categories, Neo4j's without its `<prefix>.`:
+    - query execution: `db.query.execution.success` and `db.query.execution.failure` (counters), `db.query.execution.latency.millis` (histogram of successful executions, in milliseconds);
+    - data counts: `neo4j.count.node`, `neo4j.count.relationship` and `neo4j.count.relationship_types` (gauges; the last is the number of edge-type tokens);
+    - indexes: `index.<kind>.queried` and `index.<kind>.populated` (counters), with `<kind>` `lookup`, `range` or `point` as in Neo4j, and `single_property` or `composite` for the two kinds Neo4j does not have (lpg names).
   - **Events.** `tracing` events per request carry the query text and `tx_metadata`, never parameter values.
+    - Target `lpg::query`: one span per request, with fields `query`, `tx_metadata`, `principal`, `transaction_id`. Events at `INFO`: `start`; `success` with `elapsed_ms`, `peak_memory_bytes`, `buffer_hits`, `buffer_misses`; `fail` with `gqlstatus` and `message`.
+    - Target `lpg::transaction`: events at `INFO` for `start`, `commit` and `rollback`, with `transaction_id`, `principal` and `tx_metadata`.
+    - No field, message or `Debug` output holds a parameter value. Error messages are built without values (IV016, [TS-20](query-engine.md#ts-20-binder-planner-and-execution)).
 - **Satisfies**: ABS-004, ABS-005, FR-API-005, FR-API-006, FR-PROC-001..004, FR-LIM-006, FR-ALG-002, FR-ALG-007, FR-OBS-001, FR-OBS-002, FR-OPS-005, FR-OPS-006, FR-BOLT-018.
 - **Evidence**:
   - Neo4j checks procedure modes at run time (`procedure-api/.../Mode.java`, `kernel/.../ProcedureCaller.java`; R-NEO).
   - Memgraph passes an immutable graph to read procedures (R-MG `src/query/procedure/mg_procedure_impl.cpp`; line references in [M-QE](../evidence/research/research-03-query-engine.md) §Q8).
   - The `metrics` crate supports one process-global recorder, or a thread-scoped one inside a closure (D-METRICS).
+  - Point procedures. Neo4j's `point(input)` builds a point from a map whose `x`, `y` without `crs` or `srid` default to Cartesian 7203 (9157 with `z`), or with `srid` 4326 or 4979 read as longitude and latitude; `point.distance(from, to)` returns a `FLOAT`, null for a null argument or for points in different CRSs (Cypher Manual, "Spatial functions", checked 2026-10-08). Memgraph has the same `point(map)` and `point.distance(x, y)` (Memgraph documentation, "Functions", checked 2026-10-08). Neo4j's point index solves `point.distance(n.prop, center) <= distance` (Cypher Manual, "Create indexes", point indexes, "Supported predicates"). Neither reference has a search procedure: they write the search as a predicate, which needs a function call GQL lacks; the search procedures' names are lpg's.
+  - Names: no GQL statement creates a procedure, so a named call waits "on a name the standard never supplies" (R-GQLC README, on GP04, GP14 and GP15).
+  - Metric names: Neo4j Operations Manual, "Metrics reference", tables of query execution, data count and index metrics (checked 2026-10-08).
+  - Events: Neo4j logs query events `start`, `fail` and `success`, and transaction events `start`, `commit` and `rollback`, at `INFO`, with the query text, the executing user, `annotationData` (the transaction metadata), the elapsed time, page hits and faults and the error's GQLSTATUS; parameters only when parameter logging is on (Neo4j Operations Manual, "Logging", query log fields, checked 2026-10-08). FR-OBS-002 removes the parameters.
 - **Crates**: `tracing` is a dependency. `metrics` is not used: it has no recorder per database handle.
 - **Rejected**:
   - Run-time-only write checks: the types remove the check from the hot path.

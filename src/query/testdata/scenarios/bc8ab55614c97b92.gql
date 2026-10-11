@@ -1,0 +1,1 @@
+RETURN localtime('21:40:32.142') AS result

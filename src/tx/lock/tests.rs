@@ -115,7 +115,7 @@ mod threads {
             until_waiting(&lt, 1);
             let e = lt.lock(2, &a, Mode::X).unwrap_err();
             assert!(matches!(e, Error::Deadlock));
-            assert_eq!(e.gqlstatus(), Some("50N05"));
+            assert_eq!(e.gqlstatus().code(), "50N05");
             lt.release_all(2);
             assert_eq!(t1.join().unwrap().unwrap(), Granted::AfterWait);
         });

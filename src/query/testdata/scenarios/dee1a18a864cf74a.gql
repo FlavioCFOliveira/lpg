@@ -1,0 +1,1 @@
+USE /public/g2 INSERT (:C {g: 'second'})

@@ -1,0 +1,1 @@
+RETURN duration({months: 0.75}) AS result

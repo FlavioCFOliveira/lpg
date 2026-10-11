@@ -1,0 +1,2 @@
+MATCH (me: Person)--(you: Person)
+RETURN me.age + you.age, me.age + you.age + count(*)

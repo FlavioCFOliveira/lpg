@@ -1,0 +1,2 @@
+MATCH r = (a)-[p]-(s)-[*]-(b), (s)-[]-(t), (t), (t)-[r*]-(b)
+RETURN r

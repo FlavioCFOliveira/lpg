@@ -1,0 +1,99 @@
+# Gate runner (.config/gates.sh) against the same commands run one after the other (the measurement script below), 2026-10-11, working tree of test-speed
+
+## With LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs, serial
+fmt: exit 0, 1 s
+clippy: exit 0, 0 s
+cfgfuzz: exit 0, 5 s
+nextest: exit 0, 159 s
+loom: exit 0, 47 s
+shuttle: exit 0, 56 s
+without stress: 268 s
+88M	/dev/shm/lpg-target/cfgfuzz
+112M	/dev/shm/lpg-target/loom
+1,1G	/dev/shm/lpg-target/shuttle
+stress: exit 0, 64 s
+all: 332 s
+
+## Same, concurrent (.config/gates.sh)
+gate logs: /tmp/claude-1000/-data-dev-xumiga-lpg/bc0debeb-5e34-491a-919b-83324fcd4c4f/scratchpad/ts/gates-conc-logs
+clippy: exit 0, 0 s
+fmt: exit 0, 5 s
+cfgfuzz: exit 0, 41 s
+loom: exit 0, 187 s
+nextest: exit 0, 192 s
+shuttle: exit 0, 204 s
+concurrent gates: 204 s
+stress: exit 0, 65 s
+all gates: 269 s, 0 failed
+
+## Without lab directories, concurrent
+gate logs: /tmp/claude-1000/-data-dev-xumiga-lpg/bc0debeb-5e34-491a-919b-83324fcd4c4f/scratchpad/ts/gates-conc-default-logs
+clippy: exit 0, 0 s
+fmt: exit 0, 4 s
+cfgfuzz: exit 0, 24 s
+nextest: exit 0, 26 s
+loom: exit 0, 75 s
+shuttle: exit 0, 85 s
+concurrent gates: 85 s
+stress: exit 0, 63 s
+all gates: 148 s, 0 failed
+
+## Without lab directories, serial
+fmt: exit 0, 0 s
+clippy: exit 0, 0 s
+cfgfuzz: exit 0, 5 s
+nextest: exit 0, 16 s
+loom: exit 0, 47 s
+shuttle: exit 0, 56 s
+without stress: 124 s
+88M	/dev/shm/lpg-target/cfgfuzz
+112M	/dev/shm/lpg-target/loom
+1,1G	/dev/shm/lpg-target/shuttle
+stress: exit 0, 62 s
+all: 186 s
+
+## Test results inside the gate logs (lab runs: serial then concurrent)
+### gates-serial-logs
+nextest:      Summary [ 144.259s] 508 tests run: 508 passed (3 slow), 28 skipped
+loom: test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 16.42s
+shuttle: test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 19.45s
+stress:      Summary [  63.931s] 69 tests run: 69 passed, 467 skipped
+stress copies failed in total: 0, lines 69
+### gates-conc-logs
+nextest:      Summary [ 191.902s] 508 tests run: 508 passed (3 slow), 28 skipped
+loom: test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 34.65s
+shuttle: test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 27.27s
+stress:      Summary [  64.891s] 69 tests run: 69 passed, 467 skipped
+stress copies failed in total: 0, lines 69
+### gates-conc-default-logs
+nextest:      Summary [  26.422s] 508 tests run: 508 passed, 28 skipped
+loom: test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 22.98s
+shuttle: test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 20.44s
+stress:      Summary [  62.332s] 69 tests run: 69 passed, 467 skipped
+stress copies failed in total: 0, lines 69
+### gates-serial-default-logs
+nextest:      Summary [  15.112s] 508 tests run: 508 passed, 28 skipped
+loom: test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 16.61s
+shuttle: test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 20.25s
+stress:      Summary [  61.239s] 69 tests run: 69 passed, 467 skipped
+stress copies failed in total: 0, lines 69
+
+## The measurement script of the serial runs
+```
+#!/usr/bin/env bash
+# Measurement only: the commands of .config/gates.sh, one after the other.
+cd /data/dev/xumiga/lpg; t=/dev/shm/lpg-target; logs=$1; mkdir -p $logs
+g() { local n=$1 s=$SECONDS; shift; "$@" >"$logs/$n.log" 2>&1; echo "$n: exit $?, $((SECONDS-s)) s"; }
+start=$SECONDS
+g fmt cargo fmt --all -- --check
+g clippy cargo clippy --all-targets --target-dir "$t/clippy" -- -D warnings
+g cfgfuzz env RUSTFLAGS="--cfg fuzzing" cargo clippy --lib --target-dir "$t/cfgfuzz" -- -D warnings
+g nextest cargo nextest run -p lpg --no-fail-fast
+g loom env RUSTFLAGS="--cfg loom" cargo test -p lpg --lib --release --target-dir "$t/loom" loom_
+g shuttle env RUSTFLAGS="--cfg shuttle" cargo test -p lpg --lib --target-dir "$t/shuttle" shuttle_
+echo "without stress: $((SECONDS-start)) s"
+du -sh $t/cfgfuzz $t/loom $t/shuttle
+rm -rf "$t/cfgfuzz" "$t/loom" "$t/shuttle"
+g stress cargo nextest run -p lpg --profile stress --no-fail-fast
+echo "all: $((SECONDS-start)) s"
+```

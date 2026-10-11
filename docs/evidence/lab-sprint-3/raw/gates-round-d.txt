@@ -1,0 +1,58 @@
+$ cargo fmt --all -- --check
+exit 0
+$ cargo clippy --all-targets -- -D warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+exit 0
+$ RUSTFLAGS="--cfg fuzzing" cargo clippy --lib --target-dir /dev/shm/lpg-target/cfgfuzz -- -D warnings
+    Checking lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.94s
+exit 0
+$ grep -rn 'forbid(unsafe_code)' src/lib.rs
+src/lib.rs:9:#![forbid(unsafe_code)]
+$ grep -rnE 'std::fs|OpenOptions|File::(open|create)' src --include=*.rs
+src/suites/kill.rs:358:                std::fs::create_dir(&target).unwrap();
+src/suites/kill.rs:362:                std::fs::remove_dir_all(&target).unwrap();
+src/ops/restore/tests.rs:633:    let ino = std::fs::metadata(&lock).unwrap().ino();
+src/ops/restore/tests.rs:634:    assert_eq!(std::fs::metadata(&lock).unwrap().len(), 0);
+src/ops/restore/tests.rs:659:    assert_eq!(std::fs::metadata(&lock).unwrap().ino(), ino);
+src/query/features/tests.rs:11:    std::fs::read_to_string(
+src/tck/scan.rs:59:        let Ok(entries) = std::fs::read_dir(&dir) else {
+src/tck/scan.rs:315:        let src = std::fs::read_to_string(&path).expect("a feature file");
+src/tck/run.rs:506:                std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+src/tck/mod.rs:419:        if let Ok(entries) = std::fs::read_dir(graphs) {
+src/tck/mod.rs:423:                    out.insert(std::fs::read_to_string(p).expect("a graph script"));
+src/tck/mod.rs:439:    let text = std::fs::read_to_string(tck_dir().join("selection.tsv")).expect("selection.tsv");
+src/tck/mod.rs:616:        let mut file = std::fs::OpenOptions::new()
+src/tck/mod.rs:698:    let g4 = std::fs::read_to_string(
+src/tck/mod.rs:721:        std::fs::read_to_string(tck_dir().join("clauses.tsv"))
+src/query/parser/differential.rs:137:        let mut f = std::fs::OpenOptions::new()
+src/query/parser/differential.rs:157:    let labels = std::fs::read_to_string(dir.join("labels.tsv")).expect("labels.tsv");
+src/query/parser/differential.rs:164:            let text = std::fs::read_to_string(dir.join(&name)).expect("corpus file");
+src/query/parser/differential.rs:209:        for entry in std::fs::read_dir(&dir).expect("read src") {
+src/query/parser/differential.rs:220:        let source = std::fs::read_to_string(&file).expect("read a source file");
+src/query/parser/differential.rs:306:    let stored: std::collections::BTreeSet<String> = std::fs::read_dir(&dir)
+src/query/parser/differential.rs:314:        std::fs::create_dir_all(&dir).expect("create the corpus directory");
+src/query/parser/differential.rs:316:            std::fs::remove_file(dir.join(name)).expect("remove a stale text");
+src/query/parser/differential.rs:319:            std::fs::write(dir.join(name), text).expect("write a text");
+src/query/parser/differential.rs:395:            std::fs::write(dir.join("labels.tsv"), &live).expect("write labels.tsv");
+src/query/parser/differential.rs:398:        let stored = std::fs::read_to_string(dir.join("labels.tsv")).expect("labels.tsv");
+src/query/parser/differential.rs:451:    let texts: Vec<String> = std::fs::read_to_string(path)
+src/query/parser/differential.rs:469:    for line in std::fs::read_to_string(path).expect("input").lines() {
+src/storage/fs.rs:8:use std::fs::{self, File, OpenOptions};
+src/storage/fs.rs:35:        let file = OpenOptions::new().read(true).write(true).open(path)?;
+src/storage/fs.rs:40:        let file = OpenOptions::new()
+src/storage/fs.rs:65:        File::open(dir)?.sync_all()
+src/storage/fs.rs:69:        let file = File::open(path)?;
+src/storage/fs.rs:75:        let stat = fstatvfs(File::open(dir)?)?;
+src/storage/fs.rs:266:                let raw = File::open(&path).unwrap();
+src/query/lexer/tests.rs:30:    let g4 = std::fs::read_to_string(manifest_dir().join("tools/gql-oracle/grammar/GQL.g4"))
+src/query/lexer/tests.rs:171:    let g4 = std::fs::read_to_string(manifest_dir().join("tools/gql-oracle/grammar/GQL.g4"))
+src/query/lexer/tests.rs:199:    let text = std::fs::read_to_string(
+src/gqlstatus/tests.rs:32:    std::fs::read_to_string(
+src/gqlstatus/tests.rs:225:        std::fs::write(&path, rendered).expect("write the generated file");
+src/gqlstatus/tests.rs:228:    let on_disk = std::fs::read_to_string(&path).unwrap_or_default();
+src/test_support/history.rs:171:            let _ = std::fs::remove_file(&self.path);
+src/test_support/history.rs:207:    std::fs::create_dir_all(&dir).expect("create target/lpg-histories");
+src/test_support/history.rs:209:    std::fs::write(&path, edn).expect("write the history");
+src/lab/micro.rs:143:        let mut f = std::fs::OpenOptions::new()
+src/test_support/mod.rs:102:    std::fs::create_dir_all(GRAPH_DIR).expect("create /tmp/lpgram");

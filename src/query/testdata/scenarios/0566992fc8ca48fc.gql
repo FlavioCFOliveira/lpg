@@ -1,0 +1,2 @@
+MATCH (c:Company)
+RETURN c.name AS name

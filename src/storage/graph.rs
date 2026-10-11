@@ -51,7 +51,7 @@ use crate::index::{Element, Entity};
 use crate::storage::btree::node::ADJ_KEY_LEN;
 use crate::storage::btree::{Store, Tree};
 use crate::storage::engine::{Core, Engine};
-use crate::storage::error::{Error, Result};
+use crate::storage::error::{Error, Missing, Result};
 use crate::tx::Transaction;
 use crate::tx::lock::{Mode, Resource};
 use crate::types::Value;
@@ -216,7 +216,7 @@ fn corrupt(what: &str) -> Error {
     Error::Corruption(what.into())
 }
 
-impl Transaction<'_> {
+impl Transaction {
     /// The trees of graph `id`, as the snapshot sees its catalog entry.
     ///
     /// # Errors
@@ -225,10 +225,10 @@ impl Transaction<'_> {
     /// [`Transaction::object`].
     pub(crate) fn graph(&mut self, id: u64) -> Result<Graph> {
         let Some(o) = self.object(id)? else {
-            return Err(Error::NotFound("the graph"));
+            return Err(Error::NotFound(Missing::Graph));
         };
         let (Kind::Graph, Definition::Graph(d)) = (o.kind, o.definition) else {
-            return Err(Error::NotFound("the graph"));
+            return Err(Error::NotFound(Missing::Graph));
         };
         Ok(Graph {
             id,
@@ -359,7 +359,7 @@ impl Transaction<'_> {
         let v = encode_node(labels, props)?;
         self.graph_writer(g)?;
         let Some((old, _)) = self.node(g, id)? else {
-            return Err(Error::NotFound("the node"));
+            return Err(Error::NotFound(Missing::Node));
         };
         let both: BTreeSet<u64> = old.iter().chain(labels).copied().collect();
         self.schema(g, &both.into_iter().collect::<Vec<_>>())?;
@@ -376,7 +376,7 @@ impl Transaction<'_> {
         f: impl FnOnce(&mut Vec<u64>, &mut Vec<(u64, Value)>),
     ) -> Result<()> {
         let Some((mut labels, mut props)) = self.node(g, id)? else {
-            return Err(Error::NotFound("the node"));
+            return Err(Error::NotFound(Missing::Node));
         };
         f(&mut labels, &mut props);
         self.set_node(g, id, &labels, &props)
@@ -509,7 +509,7 @@ impl Transaction<'_> {
         // label or property change of an endpoint fails nothing (TS-15).
         for n in [src, dst] {
             if self.get_locked(g.nodes, &element_key(n))?.is_none() {
-                return Err(Error::NotFound("an endpoint node"));
+                return Err(Error::NotFound(Missing::EndpointNode));
             }
         }
         let id = match self.engine().core().ids.element() {
@@ -556,7 +556,7 @@ impl Transaction<'_> {
         self.check_active()?;
         self.graph_writer(g)?;
         let Some(e) = self.edge(g, id)? else {
-            return Err(Error::NotFound("the edge"));
+            return Err(Error::NotFound(Missing::Edge));
         };
         let v = encode_edge(e.src, e.dst, e.ty, props)?;
         self.schema(g, &[e.ty])?;
@@ -682,7 +682,7 @@ fn add_edges(d: &mut Delta, graph: u64, labels: &[u64], a: &Adj, by: i64) {
 /// Storage errors; [`Error::Corruption`] for a malformed committed record;
 /// [`Error::InvalidArgument`] for a malformed record or key in the write
 /// set.
-pub(crate) fn stats_delta(_core: &Core, store: &Store<'_>, tx: &Transaction<'_>) -> Result<Delta> {
+pub(crate) fn stats_delta(_core: &Core, store: &Store<'_>, tx: &Transaction) -> Result<Delta> {
     let mut d = Delta::default();
     for g in &tx.graphs {
         let writes = |t: Tree| {

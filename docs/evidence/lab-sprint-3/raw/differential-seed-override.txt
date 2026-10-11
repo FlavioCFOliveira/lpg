@@ -1,0 +1,6 @@
+$ LPG_SEED=42 LPG_DIFF_COUNT=10000 cargo nextest run -p lpg --run-ignored only -E 'test(differential_generated)' --no-capture
+seed 42 generate: 10000 texts, 10000 accepted by the oracle
+seed 42 generate: 10000 texts, 0 differences
+seed 42 mutants: 10000 texts, 199 accepted by the oracle
+seed 42 mutants: 10000 texts, 0 differences
+     Summary [   2.765s] 1 test run: 1 passed, 436 skipped

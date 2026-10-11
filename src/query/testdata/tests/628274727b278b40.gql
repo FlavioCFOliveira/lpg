@@ -1,0 +1,1 @@
+MATCH (n) WHERE n.id = $id RETURN $id + 1 AS x

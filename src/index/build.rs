@@ -65,7 +65,7 @@ use crate::catalog::CATALOG_TREE;
 use crate::storage::btree::bulk::SortedEntries;
 use crate::storage::btree::{Keys, Write};
 use crate::storage::engine::{Core, Engine};
-use crate::storage::error::{Error, Result};
+use crate::storage::error::{Error, Result, Violation};
 use crate::storage::graph::element_of;
 use crate::storage::sort::{MIN_MEMORY, Sorted};
 use crate::sync::atomic::{AtomicBool, Ordering};
@@ -126,7 +126,7 @@ impl std::fmt::Debug for Builds {
 }
 
 impl Builds {
-    fn threads(&self) -> MutexGuard<'_, Vec<(u64, JoinHandle<Result<()>>)>> {
+    pub(crate) fn threads(&self) -> MutexGuard<'_, Vec<(u64, JoinHandle<Result<()>>)>> {
         self.threads.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
@@ -362,7 +362,22 @@ fn build(e: &Engine, index: u64) -> Result<()> {
         distinct,
     });
     tx.commit()?;
+    core.sink.counter(populated_metric(&cur), 1);
     Ok(())
+}
+
+/// The `index.<kind>.populated` metric of index `def` (TS-24 Metrics;
+/// `obs::names::indexes`).
+fn populated_metric(def: &SchemaDef) -> &'static str {
+    use crate::obs::names::indexes::{
+        COMPOSITE_POPULATED, LOOKUP_POPULATED, POINT_POPULATED, RANGE_POPULATED,
+    };
+    match def.kind {
+        SchemaKind::Lookup => LOOKUP_POPULATED,
+        SchemaKind::Point => POINT_POPULATED,
+        _ if def.props.len() > 1 => COMPOSITE_POPULATED,
+        _ => RANGE_POPULATED,
+    }
 }
 
 /// Steps 2 and 3 of the build of index `def`: scans `elements`, builds
@@ -562,9 +577,7 @@ impl SortedEntries for UniqueSorted<'_> {
         };
         let p = prefix_of(k);
         if !self.first && p == self.last.as_slice() {
-            return Err(Error::ConstraintViolation(
-                "two elements hold one value of the new constraint",
-            ));
+            return Err(Error::ConstraintViolation(Violation::DuplicateValues));
         }
         self.first = false;
         self.last.clear();
@@ -631,6 +644,7 @@ impl Engine {
     /// # Errors
     ///
     /// The build's error; [`Error::Unusable`] if its thread panicked.
+    #[cfg(test)]
     pub(crate) fn wait_index(&self, index: u64) -> Result<()> {
         let mine: Vec<_> = {
             let mut t = self.core().builds.threads();
@@ -675,7 +689,7 @@ impl Engine {
         let g = tx.lock_graph(graph)?;
         tx.lock_resource(Resource::Schema { graph, token }, Mode::X)?;
         pause(core, Phase::Validating);
-        let draw = |tx: &mut crate::tx::Transaction<'_>| match core.ids.catalog() {
+        let draw = |tx: &mut crate::tx::Transaction| match core.ids.catalog() {
             Ok(id) => Ok(id),
             Err(e) => Err(tx.abort_with(e)),
         };

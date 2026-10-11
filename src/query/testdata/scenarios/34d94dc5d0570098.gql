@@ -1,0 +1,2 @@
+MATCH (u:Solo)
+RETURN 1 AS alias

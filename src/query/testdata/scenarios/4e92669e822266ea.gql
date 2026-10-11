@@ -1,0 +1,3 @@
+RETURN true XOR false IS NULL AS a,
+       true XOR (false IS NULL) AS b,
+       (true XOR false) IS NULL AS c

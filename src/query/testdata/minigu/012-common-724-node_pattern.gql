@@ -1,0 +1,1 @@
+(a: Person1 & Person2 {id: 123, name: "Alice"})

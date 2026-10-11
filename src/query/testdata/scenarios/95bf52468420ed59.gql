@@ -1,0 +1,5 @@
+FOR a IN [true, false, null]
+FOR b IN [true, false, null]
+FOR c IN [true, false, null]
+FILTER WHERE a IS NULL OR b IS NULL OR c IS NULL
+RETURN a, b, c, (a AND (b AND c)) IS NULL = ((a AND b) AND c) IS NULL AS result

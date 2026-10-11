@@ -1,0 +1,5 @@
+UNWIND [true, false, null] AS a
+UNWIND [[], [true], [false], [null], [true, false], [true, false, null]] AS b
+WITH collect((NOT a IN b) = (NOT (a IN b))) AS eq,
+     collect((NOT a IN b) <> ((NOT a) IN b)) AS neq
+RETURN all(x IN eq WHERE x) AND any(x IN neq WHERE x) AS result

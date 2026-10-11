@@ -1,0 +1,1 @@
+RETURN LEFT('abc', -1) AS v

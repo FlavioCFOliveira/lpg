@@ -1,0 +1,1 @@
+RETURN duration({months: 5, days: 1.5}) AS result

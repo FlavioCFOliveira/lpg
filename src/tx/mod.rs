@@ -63,12 +63,14 @@ use versions::{Older, version_bytes, visible};
 use crate::storage::btree::{DIRECTORY, Keys, MAX_KEY, NewTree, Tree};
 use crate::storage::engine::Engine;
 use crate::storage::error::{Error, Result};
-use crate::storage::freelist::Registered;
+use crate::storage::freelist::Detached;
 use crate::storage::memory::Reservation;
+use crate::sync::Arc;
+use crate::sync::atomic::{AtomicU64, Ordering};
 
 /// The isolation level of a transaction (FR-TX-003, FR-TX-004).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub(crate) enum Isolation {
+pub enum Isolation {
     /// Serializable: the default.
     #[default]
     Serializable,
@@ -105,13 +107,17 @@ enum State {
 }
 
 /// A transaction (TS-14).
-pub(crate) struct Transaction<'e> {
-    engine: &'e Engine,
+pub(crate) struct Transaction {
+    /// A handle of the database: the transaction owns what it uses, so
+    /// it can move into `spawn_blocking` (TS-02 "Owned transactions").
+    engine: Engine,
     id: TxId,
     pub(crate) isolation: Isolation,
     pub(crate) snapshot: u64,
-    /// The snapshot registrations; dropping them ends the snapshot.
-    regs: Option<(Registered<'e>, Option<Registered<'e>>)>,
+    /// The snapshot registrations in `mvcc.snapshots` and, if
+    /// serializable, `mvcc.serializable`; [`Transaction::end`] withdraws
+    /// them.
+    regs: Option<(Detached, Option<Detached>)>,
     /// The private write set, by `(tree, key)`.
     pub(crate) writes: BTreeMap<(u64, Vec<u8>), Pending>,
     /// Trees dropped by this transaction.
@@ -136,9 +142,19 @@ pub(crate) struct Transaction<'e> {
     pub(crate) charge: Option<Reservation>,
     trees: HashMap<u64, TreeUse>,
     state: State,
+    /// B+tree entries this transaction's reads received (PROFILE's
+    /// independent check, rmp #45).
+    pub(crate) entries_read: u64,
+    /// The transaction's memory limit in bytes (FR-API-007, rmp #49), `None`
+    /// for none: what it holds from the accountant, its write set charge
+    /// and its statements' operator reservations together.
+    pub(crate) memory_limit: Option<u64>,
+    /// Bytes its statements' blocking operators hold (`query::exec::Held`),
+    /// counted against [`Transaction::memory_limit`].
+    pub(crate) operator_bytes: Arc<AtomicU64>,
 }
 
-impl std::fmt::Debug for Transaction<'_> {
+impl std::fmt::Debug for Transaction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Transaction")
             .field("id", &self.id)
@@ -155,24 +171,24 @@ impl Engine {
     /// # Errors
     ///
     /// [`Error::Unusable`].
-    pub(crate) fn begin(&self, isolation: Isolation) -> Result<Transaction<'_>> {
+    pub(crate) fn begin(&self, isolation: Isolation) -> Result<Transaction> {
         let core = self.core();
         core.health.check()?;
         let mvcc = &core.mvcc;
         let published = core.wal.progress.published_ts();
-        let (reg, snapshot) = mvcc::begin(&mvcc.snapshots, published);
+        let (reg, snapshot) = mvcc::begin_detached(&mvcc.snapshots, published);
         // A serializable transaction also registers in the second registry
         // before its snapshot is read: the load below follows both
         // registrations' fences, so both registered values are at most the
         // snapshot.
         let (ser, snapshot) = if isolation == Isolation::Serializable {
-            let (r, s) = mvcc::begin(&mvcc.serializable, published);
+            let (r, s) = mvcc::begin_detached(&mvcc.serializable, published);
             (Some(r), s)
         } else {
             (None, snapshot)
         };
         Ok(Transaction {
-            engine: self,
+            engine: Engine::handle(self.core_arc()),
             id: mvcc.next_tx(),
             isolation,
             snapshot,
@@ -192,19 +208,22 @@ impl Engine {
             ),
             trees: HashMap::new(),
             state: State::Active,
+            entries_read: 0,
+            memory_limit: None,
+            operator_bytes: Arc::new(AtomicU64::new(0)),
         })
     }
 }
 
-impl<'e> Transaction<'e> {
+impl Transaction {
     /// The transaction's snapshot: the highest commit timestamp it reads.
     pub(crate) fn snapshot(&self) -> u64 {
         self.snapshot
     }
 
     /// The database the transaction runs on.
-    pub(crate) fn engine(&self) -> &'e Engine {
-        self.engine
+    pub(crate) fn engine(&self) -> &Engine {
+        &self.engine
     }
 
     /// Aborts the transaction because of `e` and returns `e`, for the
@@ -252,12 +271,44 @@ impl<'e> Transaction<'e> {
         self.online = None;
         self.schema_stats = crate::catalog::stats::Delta::default();
         self.charge = None;
-        self.regs = None;
+        if let Some((all, ser)) = self.regs.take() {
+            core.mvcc.snapshots.leave(all);
+            if let Some(s) = ser {
+                core.mvcc.serializable.leave(s);
+            }
+        }
+    }
+
+    /// The bytes the transaction holds: its charge and its operators'
+    /// reservations (FR-API-007 memory limit).
+    pub(crate) fn memory_held(&self) -> u64 {
+        self.charge.as_ref().map_or(0, Reservation::bytes)
+            + self.operator_bytes.load(Ordering::Relaxed)
+    }
+
+    /// Fails with [`Error::TransactionMemoryLimit`] if `bytes` more would
+    /// make the transaction hold more than its memory limit. The caller
+    /// fails the statement, which aborts the transaction.
+    ///
+    /// # Errors
+    ///
+    /// As above.
+    pub(crate) fn check_memory(&self, bytes: u64) -> Result<()> {
+        match self.memory_limit {
+            Some(limit) if self.memory_held().saturating_add(bytes) > limit => {
+                Err(Error::TransactionMemoryLimit { limit })
+            }
+            _ => Ok(()),
+        }
     }
 
     /// Reserves `bytes` for this transaction through the buffer pool,
-    /// which evicts before it refuses (TS-14, TS-08); a refusal aborts it.
+    /// which evicts before it refuses (TS-14, TS-08); a refusal, or a
+    /// reservation beyond the transaction's memory limit, aborts it.
     fn reserve(&mut self, bytes: u64) -> Result<()> {
+        if let Err(e) = self.check_memory(bytes) {
+            return Err(self.fail(e));
+        }
         match self.engine.core().pool.reserve(bytes) {
             Ok(r) => {
                 self.charge
@@ -311,6 +362,10 @@ impl<'e> Transaction<'e> {
             Ok(s) => s,
             Err(e) => return Err(self.fail(e)),
         };
+        if status.is_some() && tree.id() != DIRECTORY.id() {
+            // The directory entry read (PROFILE's independent count).
+            self.entries_read += 1;
+        }
         match status {
             Some((t, dropped)) if t.root() == tree.root() => {
                 if dropped != 0 && dropped <= self.snapshot {
@@ -357,7 +412,12 @@ impl<'e> Transaction<'e> {
             return Ok(Tree::pending(id));
         }
         match self.engine.store().tree(id) {
-            Ok(Some(t)) => Ok(t),
+            Ok(Some(t)) => {
+                if id != DIRECTORY.id() {
+                    self.entries_read += 1;
+                }
+                Ok(t)
+            }
             Ok(None) => Err(Error::TreeDropped(id)),
             Err(e) => Err(self.fail(e)),
         }
@@ -444,6 +504,7 @@ impl<'e> Transaction<'e> {
         let Some(stamps) = stamps else {
             return Ok(None);
         };
+        self.entries_read += 1;
         Ok(match visible(stamps, self.snapshot) {
             Some(true) => Some(v),
             Some(false) => None,
@@ -524,29 +585,46 @@ impl<'e> Transaction<'e> {
         tree: Tree,
         lo: &[u8],
         hi: Option<&[u8]>,
-        mut f: impl FnMut(&[u8], &[u8]) -> bool,
+        f: impl FnMut(&[u8], &[u8]) -> bool,
     ) -> Result<()> {
+        self.scan_chunk(tree, lo, hi, usize::MAX, f).map(drop)
+    }
+
+    /// [`Transaction::scan_range`] that stops after `limit` committed
+    /// entries: the read of `[lo, k]`, `k` the last committed key it
+    /// returned, with this transaction's writes in that interval merged.
+    /// Returns the key to resume from (the smallest key above `k`), or
+    /// `None` when the range is done. A query scan reads in chunks this
+    /// way, so it holds and reads only what one batch needs (rmp #45,
+    /// FR-API-010).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::get`].
+    pub(crate) fn scan_chunk(
+        &mut self,
+        tree: Tree,
+        lo: &[u8],
+        hi: Option<&[u8]>,
+        limit: usize,
+        mut f: impl FnMut(&[u8], &[u8]) -> bool,
+    ) -> Result<Option<Vec<u8>>> {
         self.active()?;
         self.use_tree(tree, false)?;
-        self.record(
-            tree,
-            Interval {
-                lo: lo.to_vec(),
-                hi: hi.map(<[u8]>::to_vec),
-            },
-        )?;
         // Committed entries visible at the snapshot, copied first: the scan
         // calls back without page latches, and the old-version store is
         // read for entries newer than the snapshot.
         let mut committed: Vec<(Vec<u8>, Option<Vec<u8>>)> = Vec::new();
         let core = self.engine.core();
         let s = self.snapshot;
+        let mut delivered = 0u64;
         let r = if tree.is_pending() {
             Ok(())
         } else {
             self.engine
                 .store()
                 .scan_range_stamped(tree, lo, hi, |k, v, st| {
+                    delivered += 1;
                     let value = match visible(st, s) {
                         Some(true) => Some(v.to_vec()),
                         Some(false) => None,
@@ -558,23 +636,48 @@ impl<'e> Transaction<'e> {
                     if let Some(v) = value {
                         committed.push((k.to_vec(), Some(v)));
                     }
-                    true
+                    committed.len() < limit
                 })
         };
+        self.entries_read += delivered;
         if let Err(e) = r {
             return Err(self.fail(e));
         }
-        // Merge the write set's entries of the range over them.
+        // The interval read: up to the last committed key returned when the
+        // chunk is full, else the whole range.
+        let resume = if committed.len() >= limit {
+            committed.last().map(|(k, _)| {
+                let mut r = k.clone();
+                r.push(0);
+                r
+            })
+        } else {
+            None
+        };
+        let read_hi: Option<Vec<u8>> = match &resume {
+            Some(r) => Some(r.clone()),
+            None => hi.map(<[u8]>::to_vec),
+        };
+        self.record(
+            tree,
+            Interval {
+                lo: lo.to_vec(),
+                hi: read_hi.clone(),
+            },
+        )?;
+        // Merge the write set's entries of the interval over them.
         let own: Vec<(&Vec<u8>, &Pending)> = self
             .writes
             .range((tree.id(), lo.to_vec())..)
-            .take_while(|((t, k), _)| *t == tree.id() && hi.is_none_or(|h| k.as_slice() < h))
+            .take_while(|((t, k), _)| {
+                *t == tree.id() && read_hi.as_deref().is_none_or(|h| k.as_slice() < h)
+            })
             .map(|((_, k), p)| (k, p))
             .collect();
         let (mut i, mut j) = (0, 0);
         loop {
             let next = match (committed.get(i), own.get(j)) {
-                (None, None) => return Ok(()),
+                (None, None) => return Ok(resume),
                 (Some((ck, cv)), None) => {
                     i += 1;
                     (ck.as_slice(), cv.as_deref())
@@ -599,7 +702,7 @@ impl<'e> Transaction<'e> {
             if let (k, Some(v)) = next
                 && !f(k, v)
             {
-                return Ok(());
+                return Ok(resume);
             }
         }
     }
@@ -753,7 +856,7 @@ impl<'e> Transaction<'e> {
     /// case; its writes are not visible unless it returned `Ok`.
     pub(crate) fn commit(mut self) -> Result<Option<u64>> {
         self.active()?;
-        let engine = self.engine;
+        let engine = Engine::handle(self.engine.core_arc());
         let r = engine.commit_transaction(&mut self);
         // Step 10: the locks are released after publication.
         self.end();
@@ -776,7 +879,7 @@ impl<'e> Transaction<'e> {
         built: crate::storage::btree::bulk::Built<'_>,
     ) -> Result<Option<u64>> {
         self.active()?;
-        let engine = self.engine;
+        let engine = Engine::handle(self.engine.core_arc());
         let r = engine.commit_transaction_installing(&mut self, Some(&built));
         drop(built);
         self.end();
@@ -792,7 +895,7 @@ impl<'e> Transaction<'e> {
     }
 }
 
-impl Drop for Transaction<'_> {
+impl Drop for Transaction {
     fn drop(&mut self) {
         if self.state == State::Active {
             self.end();

@@ -1,0 +1,1 @@
+RETURN duration({weeks: 2.5}) AS result

@@ -1,0 +1,1 @@
+MATCH (a:A|B&!C)-[e:E]->(b) RETURN a

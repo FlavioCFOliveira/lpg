@@ -1,0 +1,245 @@
+# Feature anchors in GQL.g4 @ 16ea71b (provisional, OQ-005). Own data (MIT, lpg project).
+#
+# One line per feature code of ISO_IEC_39075(en)-features.xml:
+#   code <TAB> anchors <TAB> evidence
+# Anchor forms (checked against GQL.g4 by feature_map.py):
+#   rule        the whole parser rule
+#   rule/N      top-level alternative N (1-based) of the rule
+#   rule:NAME   one element (token or rule reference) of the rule; partial, unless the token
+#               alone forms an alternative (ANTLR reports one alternative for such token sets)
+#   ...+CODE    the anchor needs CODE as well (conjunction)
+#   -           no parser rule: the feature is semantic, lexical or a refinement of another code
+# Two codes on the same anchor in different lines are alternatives (either suffices).
+# Evidence: "insert" = the insert's description names the construct; "gc:<id>" = gql-compat @ 9de1991
+# case corpus/suite/*.yaml whose `features` list the code; "neo4j" = Neo4j Cypher Manual
+# "Supported optional GQL features" (fetched 2026-10-08).
+G002	differentEdgesMatchMode	insert; gc:optional/g002/different-edges-match-mode
+G003	repeatableElementsMatchMode	insert
+G004	pathVariableDeclaration	insert; neo4j
+G005	pathSearchPrefix	insert
+G006	keepClause	insert
+G007	keepClause	insert
+G010	pathMode:WALK	insert
+G011	pathMode:TRAIL	insert
+G012	pathMode:SIMPLE	insert
+G013	pathMode:ACYCLIC	insert
+G014	pathOrPaths	insert
+G015	allPathSearch	insert
+G016	anyPathSearch	insert
+G017	allShortestPathSearch	insert
+G018	anyShortestPathSearch	insert
+G019	countedShortestPathSearch	insert
+G020	countedShortestGroupSearch	insert
+G030	pathPatternExpression/2 simplifiedMultisetAlternation	insert
+G031	-	refinement of G030 (operand kind)
+G032	pathPatternExpression/3 simplifiedPathUnion	insert
+G033	-	refinement of G032 (operand kind)
+G035	pathFactor/2 simplifiedQuantified	insert; shares its syntax with G036
+G036	pathFactor/2 simplifiedQuantified	insert; shares its syntax with G035
+G037	pathFactor/3 simplifiedQuestioned	insert
+G038	parenthesizedPathPatternExpression	insert
+G039	simplifiedPathPatternExpression	insert; split of the alternatives between G039 and G080 not determined
+G041	-	semantic (predicate scope)
+G043	fullEdgePointingLeft fullEdgeAnyDirection fullEdgeLeftOrRight fullEdgeLeftOrUndirected+GH02 fullEdgeUndirectedOrRight+GH02	gc:optional/g043/full-edge-pointing-left; neo4j
+G044	abbreviatedEdgePattern:LEFT_ARROW abbreviatedEdgePattern:RIGHT_ARROW	gc:optional/g044/abbreviated-edge-left; gc:optional/g044/abbreviated-edge-right
+G045	abbreviatedEdgePattern:TILDE+GH02 abbreviatedEdgePattern:LEFT_ARROW_TILDE+GH02 abbreviatedEdgePattern:TILDE_RIGHT_ARROW+GH02 abbreviatedEdgePattern:LEFT_MINUS_RIGHT abbreviatedEdgePattern:MINUS_SIGN	gc:optional/g045/abbreviated-edge-any-direction; gc:optional/g045/abbreviated-edge-left-or-right
+G046	-	semantic (topological consistency)
+G047	-	semantic (topological consistency)
+G048	subpathVariableDeclaration	insert
+G049	parenthesizedPathPatternExpression:pathModePrefix	insert
+G050	parenthesizedPathPatternWhereClause	insert
+G051	-	semantic (predicate scope)
+G060	graphPatternQuantifier/3 generalQuantifier	insert
+G061	graphPatternQuantifier/1 graphPatternQuantifier/2 generalQuantifier	insert
+G074	labelExpression/5	insert; neo4j
+G080	simplifiedPathPatternExpression	insert; split of the alternatives between G039 and G080 not determined
+G081	simplifiedDirectionOverride	insert; split of the alternatives between G081 and G082 not determined
+G082	simplifiedDirectionOverride	insert; split of the alternatives between G081 and G082 not determined
+G100	element_idFunction	insert
+G110	directedPredicate directedPredicatePart2	insert
+G111	labeledPredicate labeledPredicatePart2	insert; neo4j
+G112	sourceDestinationPredicate sourcePredicatePart2 destinationPredicatePart2	insert
+G113	all_differentPredicate	insert
+G114	samePredicate	insert
+G115	property_existsPredicate	insert; neo4j
+GA01	-	semantic (IEEE 754 operations)
+GA03	nullOrdering	insert
+GA04	-	semantic (universal comparison)
+GA05	castSpecification	insert
+GA06	valueTypePredicatePart2	insert; neo4j
+GA07	-	semantic
+GA08	-	semantic (diagnostic records)
+GA09	-	semantic (path comparison)
+GB01	-	lexical (identifier length)
+GB02	-	lexical (lexer rule SIMPLE_COMMENT)
+GB03	-	lexical (lexer rule SIMPLE_COMMENT)
+GC01	createSchemaStatement dropSchemaStatement createGraphTypeStatement dropGraphTypeStatement	gc:optional/gc01/create-schema; gc:optional/gc01/drop-schema; gc:optional/gc03/create-graph-type-if-not-exists
+GC02	createSchemaStatement:IF dropSchemaStatement:IF	insert; gc:optional/gc02/create-schema-if-not-exists
+GC03	createGraphTypeStatement:IF dropGraphTypeStatement:IF	insert; gc:optional/gc03/create-graph-type-if-not-exists
+GC04	createGraphStatement dropGraphStatement	gc:optional/gc04/create-graph; gc:optional/gc04/drop-graph
+GC05	createGraphStatement:IF dropGraphStatement:IF	insert; gc:optional/gc05/create-graph-if-not-exists
+GD01	insertStatement setStatement removeStatement deleteStatement	gc:optional/gd01/insert-node; gc:optional/gd01/set-property; gc:optional/gd01/remove-property; neo4j
+GD02	setLabelItem removeLabelItem	gc:optional/gd02/set-label; gc:optional/gd02/remove-label
+GD03	deleteItem	insert; gc:optional/gd03/delete-item-is-a-subquery
+GD04	deleteItem	insert; gc:optional/gd04/delete-node
+GE01	valueExpression/12	insert
+GE02	valueExpression/13	insert
+GE03	letValueExpression	insert
+GE04	-	semantic (graph-typed parameters)
+GE05	-	semantic (binding-table-typed parameters)
+GE06	pathValueConstructor	insert
+GE07	valueExpression:XOR	insert; neo4j
+GE08	referenceParameterSpecification	insert
+GE09	-	semantic (horizontal aggregation)
+GF01	numericValueFunction/3 numericValueFunction/4 numericValueFunction/11 numericValueFunction/12 numericValueFunction/13	neo4j; gc:optional/gf01/floor-ceiling-absolute
+GF01	numericValueFunction/9 numericValueFunction/10	gc:optional/gf01/power-square-root-modulus; gql-compat cites EXP and POWER under GF01; Neo4j lists exp() and the ^ replacement of POWER() under GF03
+GF02	numericValueFunction/5	insert; neo4j
+GF03	numericValueFunction/6 numericValueFunction/7 numericValueFunction/8	insert; neo4j
+GF03	numericValueFunction/9 numericValueFunction/10	see GF01 line 2: references differ
+GF04	lengthExpression/3 elementsFunction	gc:optional/gf04/path-length-function; gc:optional/gf04/elements-function
+GF05	trimMultiCharacterCharacterString	insert; neo4j
+GF06	trimSpecification trimCharacterOrByteString	insert; neo4j
+GF07	-	semantic (TRIM on byte strings)
+GF10	generalSetFunctionType:COLLECT_LIST	gc:optional/gf10/collect-list
+GF11	binarySetFunction	insert; gc:optional/gf11/percentile-disc
+GF12	cardinalityExpression/1	insert; neo4j
+GF13	cardinalityExpression/2	insert
+GF20	-	semantic (aggregates in sort keys)
+GG01	openGraphType	gc:optional/gc04/create-graph
+GG02	ofGraphType/2 ofGraphType/3	gc:optional/gg03/graph-typed-by-a-reference; gc:optional/gg03/graph-type-inline
+GG03	nestedGraphTypeSpecification	insert; gc:optional/gg03/graph-type-inline; gc:optional/gc03/create-graph-type-if-not-exists
+GG04	graphTypeLikeGraph	insert; gc:optional/gg04/graph-type-like-a-graph
+GG05	graphSource	gc:optional/gg05/graph-as-copy-of
+GG20	nodeTypeName edgeTypeName	insert
+GG21	nodeTypeKeyLabelSet edgeTypeKeyLabelSet	insert
+GG22	-	semantic
+GG23	-	semantic
+GG24	-	semantic
+GG25	-	semantic
+GG26	-	semantic
+GH01	-	no GQL.g4 rule (ISO <external object reference> is "See the Syntax Rules")
+GH02	fullEdgeUndirected insertEdgeUndirected edgeTypePatternUndirected endpointPairUndirected	insert; gc:optional/gd01/insert-undirected-edge
+GL01	unsignedInteger:UNSIGNED_HEXADECIMAL_INTEGER	insert; neo4j
+GL02	unsignedInteger:UNSIGNED_OCTAL_INTEGER	insert; neo4j
+GL03	unsignedInteger:UNSIGNED_BINARY_INTEGER	insert
+GL04	exactNumericLiteral/3	insert; gc:optional/gl04/exact-number-without-suffix
+GL05	exactNumericLiteral/2 exactNumericLiteral/4	insert
+GL06	exactNumericLiteral/1	insert
+GL07	approximateNumericLiteral:UNSIGNED_DECIMAL_IN_COMMON_NOTATION_WITH_APPROXIMATE_NUMBER_SUFFIX approximateNumericLiteral:UNSIGNED_DECIMAL_INTEGER_WITH_APPROXIMATE_NUMBER_SUFFIX	insert
+GL08	approximateNumericLiteral:UNSIGNED_DECIMAL_IN_SCIENTIFIC_NOTATION_WITH_APPROXIMATE_NUMBER_SUFFIX	insert
+GL09	-	lexical (lexer fragment APPROXIMATE_NUMBER_SUFFIX)
+GL10	-	lexical (lexer fragment APPROXIMATE_NUMBER_SUFFIX)
+GL11	-	lexical (no-escape string literal)
+GL12	-	lexical (literal string formats)
+GP01	inlineProcedureCall	insert; neo4j
+GP02	-	refinement of GP01 (no variable scope clause)
+GP03	variableScopeClause	insert; neo4j
+GP04	namedProcedureCall	insert; neo4j
+GP05	bindingVariableDefinition/3	insert
+GP06	-	refinement of GP05
+GP07	-	refinement of GP05
+GP08	bindingVariableDefinition/2	insert
+GP09	-	refinement of GP08
+GP10	-	refinement of GP08
+GP11	bindingVariableDefinition/1	insert
+GP12	-	refinement of GP11
+GP13	-	refinement of GP11
+GP14	-	semantic (argument kind)
+GP15	-	semantic (argument kind)
+GP16	atSchemaClause	insert
+GP17	bindingVariableDefinitionBlock	insert
+GP18	-	semantic (statement mixing)
+GQ01	useGraphClause	insert; gc:optional/gq01/use-current-graph; neo4j
+GQ02	queryConjunction/2	insert
+GQ03	setOperator/1	insert; neo4j
+GQ04	setOperator/2	insert; DISTINCT and ALL split not determined
+GQ05	setOperator/2	insert; DISTINCT and ALL split not determined
+GQ06	setOperator/3	insert; DISTINCT and ALL split not determined
+GQ07	setOperator/3	insert; DISTINCT and ALL split not determined
+GQ08	filterStatement	insert; neo4j
+GQ09	letStatement	insert; neo4j
+GQ10	forStatement	insert; neo4j
+GQ11	forOrdinalityOrOffset	insert
+GQ12	offsetClause	insert; neo4j
+GQ13	limitClause	insert; gc:optional/gq13/limit; neo4j
+GQ14	-	semantic (sort key form)
+GQ15	groupByClause	insert; neo4j
+GQ16	-	semantic (sort key scope)
+GQ17	-	semantic
+GQ18	valueQueryExpression	gc:optional/gq18/scalar-subquery
+GQ19	graphPatternYieldClause	insert
+GQ20	nextStatement	insert; neo4j
+GQ21	-	semantic: more than one MATCH statement in an OPTIONAL block; gc:optional/gq21/optional-match-block
+GQ22	-	semantic: more than one MATCH statement in an EXISTS block, one is mandatory (gql-compat mandatory/pattern/exists-predicate); neo4j; gc:optional/gq22/exists-multiple-match
+GQ23	forStatement	insert (binding table source; shares the rule with GQ10)
+GQ24	forOrdinalityOrOffset	insert
+GS01	sessionSetGraphParameterClause	insert
+GS02	sessionSetBindingTableParameterClause	insert
+GS03	sessionSetValueParameterClause	insert
+GS04	sessionResetCommand	insert; the bare SESSION RESET and its arguments split over GS04-GS08 and GS16, not determined
+GS05	sessionResetCommand	insert; see GS04
+GS06	sessionResetCommand	insert; see GS04
+GS07	sessionResetCommand	insert; see GS04
+GS08	sessionResetCommand	insert; see GS04
+GS10	-	refinement of GS02
+GS11	-	refinement of GS03
+GS12	-	refinement of GS01
+GS13	-	refinement of GS02
+GS14	-	refinement of GS03
+GS15	sessionSetTimeZoneClause	gc:optional/gs15/session-set-time-zone
+GS16	sessionResetCommand	insert; see GS04
+GT01	startTransactionCommand commitCommand rollbackCommand	gc:optional/gt01/start-transaction-and-commit
+GT02	transactionCharacteristics	insert
+GT03	-	semantic (several graphs in one transaction)
+GV01	unsignedBinaryExactNumericType/1	insert
+GV02	signedBinaryExactNumericType/1 verboseBinaryExactNumericType/1	insert
+GV03	unsignedBinaryExactNumericType/2	insert
+GV04	signedBinaryExactNumericType/2 verboseBinaryExactNumericType/2	insert
+GV05	unsignedBinaryExactNumericType/7	insert
+GV06	unsignedBinaryExactNumericType/3	insert
+GV07	signedBinaryExactNumericType/3 verboseBinaryExactNumericType/3	insert
+GV08	unsignedBinaryExactNumericType/8	insert
+GV09	signedBinaryExactNumericType:precision unsignedBinaryExactNumericType:precision verboseBinaryExactNumericType:precision	insert
+GV10	unsignedBinaryExactNumericType/9	insert
+GV11	unsignedBinaryExactNumericType/4	insert
+GV12	signedBinaryExactNumericType/4 verboseBinaryExactNumericType/4	insert
+GV13	unsignedBinaryExactNumericType/5	insert
+GV14	signedBinaryExactNumericType/5 verboseBinaryExactNumericType/5	insert
+GV15	unsignedBinaryExactNumericType/6	insert
+GV16	signedBinaryExactNumericType/6 verboseBinaryExactNumericType/6	insert
+GV17	decimalExactNumericType	insert
+GV18	signedBinaryExactNumericType/7 verboseBinaryExactNumericType/7	insert
+GV19	signedBinaryExactNumericType/9 verboseBinaryExactNumericType/9	insert
+GV20	approximateNumericType/1	insert
+GV21	approximateNumericType/2	insert
+GV22	approximateNumericType:precision	insert
+GV23	approximateNumericType/7 approximateNumericType/8	insert
+GV24	approximateNumericType/3	insert
+GV25	approximateNumericType/4	insert
+GV26	approximateNumericType/5	insert
+GV30	characterStringType:minLength	insert
+GV31	characterStringType:maxLength characterStringType/3	insert
+GV32	characterStringType/2	insert
+GV35	byteStringType generalLiteral/3 lengthExpression/2	insert; gc:optional/gv35/byte-string-literal
+GV36	byteStringType:minLength	insert
+GV37	byteStringType:maxLength	insert
+GV38	byteStringType:fixedLength	insert
+GV39	dateType localdatetimeType localtimeType dateFunction localtimeFunction localdatetimeFunction dateLiteral	insert; gc:optional/gv39/date-literal-comparison; neo4j
+GV40	datetimeType timeType timeFunction datetimeFunction timeLiteral datetimeLiteral	insert; gc:optional/gv40/time-literal; neo4j
+GV41	temporalDurationType durationFunction durationLiteral datetimeSubtraction durationValueFunction/2	insert; gc:optional/gv41/duration-literal-comparison
+GV45	recordLiteral	gc:optional/gv45/record-value
+GV46	recordType/2	insert
+GV47	recordType/1	insert
+GV48	-	semantic (nesting)
+GV50	listValueConstructorByEnumeration valueType/3 valueType/4 valueType/5 trimListFunction	gc:optional/gv50/list-value-constructor; neo4j
+GV55	pathValueType	insert; neo4j
+GV60	graphReferenceValueType	insert
+GV61	bindingTableReferenceValueType	insert
+GV65	-	umbrella of GV66-GV68
+GV66	valueType/7	insert; neo4j
+GV67	valueType/9 valueType/10	insert; neo4j
+GV68	valueType/8	insert
+GV70	-	umbrella of GV71, GV72
+GV71	nullType	insert
+GV72	emptyType	insert
+GV90	notNull	insert

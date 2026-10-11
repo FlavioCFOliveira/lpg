@@ -1,0 +1,1 @@
+RETURN {k: 1, l: null} = {k: 1, l: 1} AS result

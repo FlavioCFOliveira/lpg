@@ -33,11 +33,12 @@ use jiff::civil::{Date, DateTime, Time};
 
 use crate::sync::Arc;
 
-pub(crate) use spatial::{Point, Srid};
+pub use spatial::{Point, Srid};
 
-/// A runtime value (TS-21).
+/// A runtime value (TS-21): what parameters, properties and result
+/// columns hold.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum Value {
+pub enum Value {
     /// The null value.
     Null,
     /// A boolean.
@@ -82,7 +83,7 @@ pub(crate) enum Value {
 
 /// A zoned time: local time and offset (GV40).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct ZonedTime {
+pub struct ZonedTime {
     /// The local time.
     pub(crate) time: Time,
     /// The offset from UTC in seconds.
@@ -90,6 +91,18 @@ pub(crate) struct ZonedTime {
 }
 
 impl ZonedTime {
+    /// The local time.
+    #[must_use]
+    pub fn time(&self) -> Time {
+        self.time
+    }
+
+    /// The offset from UTC, in seconds.
+    #[must_use]
+    pub fn offset_seconds(&self) -> i32 {
+        self.offset
+    }
+
     /// Nanoseconds of the day in UTC: the local nanoseconds of the day less
     /// the offset. Neo4j orders zoned times by it (R-NEO
     /// `storable/TimeValue.java:277-285`, studied only).
@@ -100,7 +113,7 @@ impl ZonedTime {
 
 /// A zoned date-time (GV40): an instant with a named zone or an offset.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct ZonedDateTime {
+pub struct ZonedDateTime {
     /// The instant and its zone.
     pub(crate) zoned: Zoned,
     /// Whether the zone is named. `jiff` turns a zero offset into its UTC
@@ -157,8 +170,15 @@ impl ZonedDateTime {
         }
     }
 
+    /// The instant and its zone (a fixed offset for an offset-only value).
+    #[must_use]
+    pub fn zoned(&self) -> &Zoned {
+        &self.zoned
+    }
+
     /// The zone name, `None` for an offset-only value.
-    pub(crate) fn zone_name(&self) -> Option<&str> {
+    #[must_use]
+    pub fn zone_name(&self) -> Option<&str> {
         if let Some(k) = &self.kept {
             Some(k)
         } else if self.named {
@@ -173,7 +193,7 @@ impl ZonedDateTime {
 /// the nanoseconds of the same sign as the total or zero after
 /// normalisation by [`DayToSecond::new`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct DayToSecond {
+pub struct DayToSecond {
     /// Whole seconds.
     pub(crate) seconds: i64,
     /// Nanoseconds, `0..1_000_000_000`.
@@ -181,6 +201,18 @@ pub(crate) struct DayToSecond {
 }
 
 impl DayToSecond {
+    /// Whole seconds.
+    #[must_use]
+    pub fn seconds(&self) -> i64 {
+        self.seconds
+    }
+
+    /// Nanoseconds, `0..1_000_000_000`.
+    #[must_use]
+    pub fn nanos(&self) -> u32 {
+        self.nanos
+    }
+
     /// The duration of `seconds` and `nanos` nanoseconds, normalised so
     /// that the nanoseconds are in `0..1e9` (Neo4j `DurationValue` keeps
     /// them so). `None` if the normalised seconds overflow `i64`.
@@ -248,7 +280,8 @@ impl Value {
     }
 
     /// A string value.
-    pub(crate) fn string(s: &str) -> Value {
+    #[must_use]
+    pub fn string(s: &str) -> Value {
         Value::String(Arc::from(s))
     }
 }

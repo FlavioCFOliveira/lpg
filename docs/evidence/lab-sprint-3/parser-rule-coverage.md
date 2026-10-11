@@ -1,0 +1,333 @@
+---
+title: Parser coverage per grammar rule
+status: measured
+last-reviewed: 2026-10-09
+related:
+  - report.md
+  - ../../technical-spec/query-engine.md
+---
+
+# Parser coverage per grammar rule
+
+Coverage of the GQL lexer and parser (`src/query/`, rmp #41) by the differential corpus alone: the stored corpora (21 samples, 142 miniGU inputs, 70 test texts) and the generated runs (100 000 sentences and 100 000 mutants for each seed 20261008, 1 and 12648430). Measured on 2026-10-09 with cargo-llvm-cov 0.9.1. A function is a rule function when its name is the snake_case of a `GQL.g4` parser rule; the other functions are helpers. Executions count calls of the function itself, closures excluded; regions include its closures.
+
+Commands:
+
+```sh
+cargo llvm-cov nextest -p lpg --json --output-path cov.json --run-ignored all \
+  -E 'test(/differential::(stored_corpora|differential_generated|test_texts)/)'
+python3 -I docs/evidence/lab-sprint-3/cov-functions.py cov.json src/query/ > cov-query.tsv
+python3 -I docs/evidence/lab-sprint-3/cov-rules.py cov-query.tsv tools/gql-oracle/grammar/GQL.g4
+```
+
+The raw per-function TSV is [raw/coverage-query-functions.tsv](raw/coverage-query-functions.tsv).
+
+## Result
+
+Rule functions: 155; never executed: 0. Other functions (helpers): 146. GQL.g4 parser rules: 574; without a function of their own: 419.
+
+| File | Function | GQL.g4 rule | Executions | Regions covered / total |
+|---|---|---|---:|---:|
+| `src/query/parser/catalog.rs` | `binding_table_expression` | `bindingTableExpression` | 58546 | 76 / 79 |
+| `src/query/parser/catalog.rs` | `catalog_schema_parent_and_name` | `catalogSchemaParentAndName` | 5859 | 30 / 31 |
+| `src/query/parser/catalog.rs` | `create_graph_statement` | `createGraphStatement` | 6881 | 26 / 26 |
+| `src/query/parser/catalog.rs` | `create_graph_type_statement` | `createGraphTypeStatement` | 4187 | 17 / 17 |
+| `src/query/parser/catalog.rs` | `create_schema_statement` | `createSchemaStatement` | 2949 | 17 / 19 |
+| `src/query/parser/catalog.rs` | `drop_graph_statement` | `dropGraphStatement` | 6760 | 25 / 26 |
+| `src/query/parser/catalog.rs` | `drop_graph_type_statement` | `dropGraphTypeStatement` | 3683 | 29 / 30 |
+| `src/query/parser/catalog.rs` | `drop_schema_statement` | `dropSchemaStatement` | 3011 | 17 / 19 |
+| `src/query/parser/catalog.rs` | `graph_expression` | `graphExpression` | 114075 | 55 / 57 |
+| `src/query/parser/catalog.rs` | `graph_source` | `graphSource` | 1594 | 16 / 17 |
+| `src/query/parser/catalog.rs` | `graph_type_like_graph` | `graphTypeLikeGraph` | 1404 | 8 / 9 |
+| `src/query/parser/catalog.rs` | `graph_type_reference` | `graphTypeReference` | 3890 | 40 / 41 |
+| `src/query/parser/catalog.rs` | `graph_type_source` | `graphTypeSource` | 2409 | 42 / 42 |
+| `src/query/parser/catalog.rs` | `object_expression_primary` | `objectExpressionPrimary` | 91843 | 21 / 21 |
+| `src/query/parser/catalog.rs` | `of_graph_type` | `ofGraphType` | 5698 | 73 / 73 |
+| `src/query/parser/catalog.rs` | `primitive_catalog_modifying_statement` | `primitiveCatalogModifyingStatement` | 19601 | 66 / 71 |
+| `src/query/parser/catalog.rs` | `procedure_reference` | `procedureReference` | 15221 | 45 / 46 |
+| `src/query/parser/catalog.rs` | `schema_reference` | `schemaReference` | 84850 | 24 / 24 |
+| `src/query/parser/expr.rs` | `aggregate_function` | `aggregateFunction` | 5095 | 67 / 67 |
+| `src/query/parser/expr.rs` | `case_expression` | `caseExpression` | 5294 | 65 / 65 |
+| `src/query/parser/expr.rs` | `character_string_literal` | `characterStringLiteral` | 24181 | 23 / 23 |
+| `src/query/parser/expr.rs` | `datetime_function` | `datetimeFunction` | 53885 | 40 / 41 |
+| `src/query/parser/expr.rs` | `else_clause` | `elseClause` | 1725 | 10 / 10 |
+| `src/query/parser/expr.rs` | `exists_predicate` | `existsPredicate` | 2506 | 74 / 74 |
+| `src/query/parser/expr.rs` | `non_parenthesized_value_expression_primary` | `nonParenthesizedValueExpressionPrimary` | 1540 | 10 / 12 |
+| `src/query/parser/expr.rs` | `normal_form` | `normalForm` | 18216 | 13 / 13 |
+| `src/query/parser/expr.rs` | `normalized_predicate_part2` | `normalizedPredicatePart2` | 18184 | 17 / 18 |
+| `src/query/parser/expr.rs` | `numeric_value_expression` | `numericValueExpression` | 7288 | 4 / 4 |
+| `src/query/parser/expr.rs` | `record_constructor` | `recordConstructor` | 726 | 44 / 44 |
+| `src/query/parser/expr.rs` | `searched_case` | `searchedCase` | 1358 | 30 / 31 |
+| `src/query/parser/expr.rs` | `simple_case` | `simpleCase` | 1226 | 63 / 63 |
+| `src/query/parser/expr.rs` | `truth_value` | `truthValue` | 20540 | 15 / 16 |
+| `src/query/parser/expr.rs` | `unsigned_literal` | `unsignedLiteral` | 32074 | 126 / 128 |
+| `src/query/parser/expr.rs` | `value_expression` | `valueExpression` | 105019 | 4 / 4 |
+| `src/query/parser/expr.rs` | `value_expression_primary` | `valueExpressionPrimary` | 273359 | 38 / 41 |
+| `src/query/parser/expr.rs` | `value_function` | `valueFunction` | 64630 | 190 / 195 |
+| `src/query/parser/expr.rs` | `when_operand` | `whenOperand` | 1690 | 81 / 85 |
+| `src/query/parser/mod.rs` | `identifier` | `identifier` | 62577 | 23 / 23 |
+| `src/query/parser/mod.rs` | `regular_identifier` | `regularIdentifier` | 363962 | 11 / 11 |
+| `src/query/parser/pattern.rs` | `edge_pattern` | `edgePattern` | 4604 | 53 / 53 |
+| `src/query/parser/pattern.rs` | `element_pattern_filler` | `elementPatternFiller` | 518 | 55 / 56 |
+| `src/query/parser/pattern.rs` | `element_property_specification` | `elementPropertySpecification` | 398 | 14 / 15 |
+| `src/query/parser/pattern.rs` | `graph_pattern` | `graphPattern` | 4095 | 38 / 40 |
+| `src/query/parser/pattern.rs` | `graph_pattern_binding_table` | `graphPatternBindingTable` | 3064 | 39 / 39 |
+| `src/query/parser/pattern.rs` | `graph_pattern_quantifier` | `graphPatternQuantifier` | 12928 | 57 / 59 |
+| `src/query/parser/pattern.rs` | `insert_edge_pattern` | `insertEdgePattern` | 1205 | 32 / 32 |
+| `src/query/parser/pattern.rs` | `insert_element_pattern_filler` | `insertElementPatternFiller` | 1712 | 38 / 39 |
+| `src/query/parser/pattern.rs` | `insert_graph_pattern` | `insertGraphPattern` | 988 | 21 / 21 |
+| `src/query/parser/pattern.rs` | `insert_node_pattern` | `insertNodePattern` | 1461 | 20 / 20 |
+| `src/query/parser/pattern.rs` | `insert_path_pattern` | `insertPathPattern` | 1147 | 20 / 20 |
+| `src/query/parser/pattern.rs` | `label_expression` | `labelExpression` | 2992 | 4 / 4 |
+| `src/query/parser/pattern.rs` | `label_set_specification` | `labelSetSpecification` | 4316 | 16 / 16 |
+| `src/query/parser/pattern.rs` | `match_mode` | `matchMode` | 4095 | 53 / 53 |
+| `src/query/parser/pattern.rs` | `node_pattern` | `nodePattern` | 447 | 14 / 15 |
+| `src/query/parser/pattern.rs` | `parenthesized_path_pattern_expression` | `parenthesizedPathPatternExpression` | 1166 | 51 / 54 |
+| `src/query/parser/pattern.rs` | `path_factor` | `pathFactor` | 7362 | 27 / 27 |
+| `src/query/parser/pattern.rs` | `path_mode` | `pathMode` | 7789 | 8 / 8 |
+| `src/query/parser/pattern.rs` | `path_or_paths` | `pathOrPaths` | 1708 | 7 / 7 |
+| `src/query/parser/pattern.rs` | `path_pattern` | `pathPattern` | 4092 | 44 / 45 |
+| `src/query/parser/pattern.rs` | `path_pattern_expression` | `pathPatternExpression` | 5256 | 49 / 50 |
+| `src/query/parser/pattern.rs` | `path_pattern_list` | `pathPatternList` | 4085 | 24 / 24 |
+| `src/query/parser/pattern.rs` | `path_pattern_prefix` | `pathPatternPrefix` | 1167 | 14 / 14 |
+| `src/query/parser/pattern.rs` | `path_primary` | `pathPrimary` | 7362 | 33 / 33 |
+| `src/query/parser/pattern.rs` | `path_search_prefix` | `pathSearchPrefix` | 592 | 73 / 75 |
+| `src/query/parser/pattern.rs` | `path_term` | `pathTerm` | 7276 | 33 / 33 |
+| `src/query/parser/pattern.rs` | `property_key_value_pair_list` | `propertyKeyValuePairList` | 587 | 29 / 29 |
+| `src/query/parser/pattern.rs` | `simplified_contents` | `simplifiedContents` | 2149 | 49 / 50 |
+| `src/query/parser/pattern.rs` | `simplified_factor_high` | `simplifiedFactorHigh` | 8397 | 26 / 27 |
+| `src/query/parser/pattern.rs` | `simplified_factor_low` | `simplifiedFactorLow` | 5708 | 40 / 41 |
+| `src/query/parser/pattern.rs` | `simplified_path_pattern_expression` | `simplifiedPathPatternExpression` | 1145 | 31 / 31 |
+| `src/query/parser/pattern.rs` | `simplified_primary` | `simplifiedPrimary` | 8397 | 32 / 32 |
+| `src/query/parser/pattern.rs` | `simplified_secondary` | `simplifiedSecondary` | 8397 | 19 / 19 |
+| `src/query/parser/pattern.rs` | `simplified_term` | `simplifiedTerm` | 3388 | 39 / 40 |
+| `src/query/parser/pattern.rs` | `simplified_tertiary` | `simplifiedTertiary` | 8397 | 44 / 44 |
+| `src/query/parser/program.rs` | `binding_table_variable_definition` | `bindingTableVariableDefinition` | 23806 | 18 / 19 |
+| `src/query/parser/program.rs` | `binding_variable_definition` | `bindingVariableDefinition` | 306907 | 38 / 38 |
+| `src/query/parser/program.rs` | `binding_variable_definition_block` | `bindingVariableDefinitionBlock` | 253269 | 11 / 11 |
+| `src/query/parser/program.rs` | `end_transaction_command` | `endTransactionCommand` | 42865 | 11 / 12 |
+| `src/query/parser/program.rs` | `gql_program` | `gqlProgram` | 618082 | 30 / 31 |
+| `src/query/parser/program.rs` | `graph_variable_definition` | `graphVariableDefinition` | 24176 | 18 / 19 |
+| `src/query/parser/program.rs` | `nested_procedure_specification` | `nestedProcedureSpecification` | 54154 | 23 / 23 |
+| `src/query/parser/program.rs` | `next_statement` | `nextStatement` | 5427 | 25 / 26 |
+| `src/query/parser/program.rs` | `opt_typed_binding_table_initializer` | `optTypedBindingTableInitializer` | 30983 | 28 / 28 |
+| `src/query/parser/program.rs` | `opt_typed_graph_initializer` | `optTypedGraphInitializer` | 31033 | 28 / 28 |
+| `src/query/parser/program.rs` | `opt_typed_value_initializer` | `optTypedValueInitializer` | 38582 | 28 / 28 |
+| `src/query/parser/program.rs` | `procedure_body` | `procedureBody` | 257232 | 26 / 27 |
+| `src/query/parser/program.rs` | `program_activity` | `programActivity` | 451752 | 12 / 12 |
+| `src/query/parser/program.rs` | `session_activity` | `sessionActivity` | 183465 | 52 / 56 |
+| `src/query/parser/program.rs` | `session_close_command` | `sessionCloseCommand` | 216717 | 9 / 11 |
+| `src/query/parser/program.rs` | `session_reset_arguments` | `sessionResetArguments` | 115367 | 65 / 66 |
+| `src/query/parser/program.rs` | `session_reset_command` | `sessionResetCommand` | 115367 | 21 / 23 |
+| `src/query/parser/program.rs` | `session_set_command` | `sessionSetCommand` | 155343 | 75 / 76 |
+| `src/query/parser/program.rs` | `session_set_parameter_clause` | `sessionSetParameterClause` | 32070 | 66 / 66 |
+| `src/query/parser/program.rs` | `session_set_parameter_name` | `sessionSetParameterName` | 27427 | 20 / 20 |
+| `src/query/parser/program.rs` | `start_transaction_command` | `startTransactionCommand` | 48646 | 18 / 19 |
+| `src/query/parser/program.rs` | `statement_block` | `statementBlock` | 233296 | 25 / 25 |
+| `src/query/parser/program.rs` | `transaction_access_mode` | `transactionAccessMode` | 37581 | 16 / 16 |
+| `src/query/parser/program.rs` | `transaction_activity` | `transactionActivity` | 268287 | 56 / 58 |
+| `src/query/parser/program.rs` | `transaction_characteristics` | `transactionCharacteristics` | 21652 | 21 / 21 |
+| `src/query/parser/program.rs` | `typed` | `typed` | 73391 | 8 / 8 |
+| `src/query/parser/program.rs` | `value_variable_definition` | `valueVariableDefinition` | 29096 | 14 / 15 |
+| `src/query/parser/query.rs` | `call_procedure_statement` | `callProcedureStatement` | 29579 | 20 / 21 |
+| `src/query/parser/query.rs` | `delete_statement` | `deleteStatement` | 2989 | 27 / 27 |
+| `src/query/parser/query.rs` | `filter_statement` | `filterStatement` | 2019 | 10 / 11 |
+| `src/query/parser/query.rs` | `for_statement` | `forStatement` | 1216 | 47 / 48 |
+| `src/query/parser/query.rs` | `group_by_clause` | `groupByClause` | 827 | 31 / 32 |
+| `src/query/parser/query.rs` | `inline_procedure_call` | `inlineProcedureCall` | 14358 | 32 / 32 |
+| `src/query/parser/query.rs` | `is_or_colon` | `isOrColon` | 1366 | 12 / 12 |
+| `src/query/parser/query.rs` | `let_statement` | `letStatement` | 1278 | 7 / 8 |
+| `src/query/parser/query.rs` | `let_variable_definition` | `letVariableDefinition` | 7085 | 22 / 22 |
+| `src/query/parser/query.rs` | `let_variable_definition_list` | `letVariableDefinitionList` | 6585 | 21 / 21 |
+| `src/query/parser/query.rs` | `limit_clause` | `limitClause` | 1225 | 7 / 8 |
+| `src/query/parser/query.rs` | `match_statement` | `matchStatement` | 4201 | 20 / 20 |
+| `src/query/parser/query.rs` | `match_statement_block` | `matchStatementBlock` | 1485 | 26 / 30 |
+| `src/query/parser/query.rs` | `named_procedure_call` | `namedProcedureCall` | 15221 | 44 / 45 |
+| `src/query/parser/query.rs` | `non_negative_integer_specification` | `nonNegativeIntegerSpecification` | 2580 | 15 / 16 |
+| `src/query/parser/query.rs` | `offset_clause` | `offsetClause` | 1202 | 10 / 11 |
+| `src/query/parser/query.rs` | `optional_match_statement` | `optionalMatchStatement` | 1608 | 27 / 28 |
+| `src/query/parser/query.rs` | `order_by_and_page_statement` | `orderByAndPageStatement` | 3074 | 40 / 41 |
+| `src/query/parser/query.rs` | `order_by_clause` | `orderByClause` | 837 | 11 / 12 |
+| `src/query/parser/query.rs` | `primitive_data_modifying_statement` | `primitiveDataModifyingStatement` | 7983 | 15 / 15 |
+| `src/query/parser/query.rs` | `primitive_result_statement` | `primitiveResultStatement` | 56789 | 46 / 46 |
+| `src/query/parser/query.rs` | `procedure_call` | `procedureCall` | 29579 | 16 / 16 |
+| `src/query/parser/query.rs` | `query_conjunction` | `queryConjunction` | 20763 | 15 / 15 |
+| `src/query/parser/query.rs` | `remove_statement` | `removeStatement` | 793 | 39 / 40 |
+| `src/query/parser/query.rs` | `return_statement` | `returnStatement` | 4271 | 30 / 31 |
+| `src/query/parser/query.rs` | `select_statement` | `selectStatement` | 5048 | 78 / 89 |
+| `src/query/parser/query.rs` | `select_statement_body` | `selectStatementBody` | 492 | 73 / 75 |
+| `src/query/parser/query.rs` | `set_quantifier` | `setQuantifier` | 23112 | 11 / 11 |
+| `src/query/parser/query.rs` | `set_statement` | `setStatement` | 3213 | 70 / 71 |
+| `src/query/parser/query.rs` | `simple_match_statement` | `simpleMatchStatement` | 3155 | 16 / 16 |
+| `src/query/parser/query.rs` | `simple_query_statement` | `simpleQueryStatement` | 38825 | 24 / 24 |
+| `src/query/parser/query.rs` | `sort_specification` | `sortSpecification` | 790 | 51 / 51 |
+| `src/query/parser/query.rs` | `sort_specification_list` | `sortSpecificationList` | 733 | 21 / 21 |
+| `src/query/parser/query.rs` | `statement` | `statement` | 238634 | 78 / 79 |
+| `src/query/parser/query.rs` | `unsigned_decimal_integer` | `unsignedDecimalInteger` | 221 | 8 / 8 |
+| `src/query/parser/query.rs` | `unsigned_integer` | `unsignedInteger` | 10020 | 24 / 24 |
+| `src/query/parser/query.rs` | `yield_clause` | `yieldClause` | 5487 | 32 / 33 |
+| `src/query/parser/types.rs` | `binding_table_reference_value_type` | `bindingTableReferenceValueType` | 15377 | 12 / 12 |
+| `src/query/parser/types.rs` | `edge_type_specification` | `edgeTypeSpecification` | 4627 | 102 / 130 |
+| `src/query/parser/types.rs` | `element_type_specification` | `elementTypeSpecification` | 12719 | 47 / 48 |
+| `src/query/parser/types.rs` | `endpoint_pair` | `endpointPair` | 2366 | 45 / 45 |
+| `src/query/parser/types.rs` | `field_types_specification` | `fieldTypesSpecification` | 22284 | 39 / 39 |
+| `src/query/parser/types.rs` | `graph_reference_value_type` | `graphReferenceValueType` | 15664 | 42 / 42 |
+| `src/query/parser/types.rs` | `list_value_type_name` | `listValueTypeName` | 23374 | 9 / 9 |
+| `src/query/parser/types.rs` | `nested_graph_type_specification` | `nestedGraphTypeSpecification` | 9451 | 35 / 35 |
+| `src/query/parser/types.rs` | `node_type_specification` | `nodeTypeSpecification` | 5054 | 59 / 68 |
+| `src/query/parser/types.rs` | `not_null` | `notNull` | 83475 | 11 / 11 |
+| `src/query/parser/types.rs` | `numeric_type` | `numericType` | 1803 | 142 / 152 |
+| `src/query/parser/types.rs` | `predefined_type` | `predefinedType` | 9010 | 99 / 102 |
+| `src/query/parser/types.rs` | `record_type` | `recordType` | 6451 | 22 / 22 |
+| `src/query/parser/types.rs` | `temporal_duration_qualifier` | `temporalDurationQualifier` | 482 | 27 / 27 |
+| `src/query/parser/types.rs` | `temporal_type` | `temporalType` | 1103 | 87 / 91 |
+| `src/query/parser/types.rs` | `value_type` | `valueType` | 56144 | 4 / 4 |
+| `src/query/parser/types.rs` | `verbose_binary_exact_numeric_type` | `verboseBinaryExactNumericType` | 43 | 40 / 42 |
+| `src/query/lexer/mod.rs` | `advance` | helper | 9158841 | 11 / 11 |
+| `src/query/lexer/mod.rs` | `byte` | helper | 5987975 | 6 / 6 |
+| `src/query/lexer/mod.rs` | `byte_string` | helper | 19784 | 35 / 38 |
+| `src/query/lexer/mod.rs` | `char_at` | helper | 18722716 | 8 / 8 |
+| `src/query/lexer/mod.rs` | `decimal_integer` | helper | 173425 | 28 / 28 |
+| `src/query/lexer/mod.rs` | `describe` | helper | 4577754 | 53 / 74 |
+| `src/query/lexer/mod.rs` | `hex_digits` | helper | 28205 | 11 / 11 |
+| `src/query/lexer/mod.rs` | `is_identifier_extend` | helper | 19766957 | 11 / 11 |
+| `src/query/lexer/mod.rs` | `is_identifier_start` | helper | 4783701 | 11 / 11 |
+| `src/query/lexer/mod.rs` | `is_whitespace` | helper | 17722388 | 6 / 6 |
+| `src/query/lexer/mod.rs` | `keyword` | helper | 3488718 | 24 / 24 |
+| `src/query/lexer/mod.rs` | `location` | helper | 23795157 | 6 / 6 |
+| `src/query/lexer/mod.rs` | `next_match` | helper | 9759074 | 40 / 40 |
+| `src/query/lexer/mod.rs` | `number_or_period` | helper | 93546 | 146 / 147 |
+| `src/query/lexer/mod.rs` | `other` | helper | 1261567 | 75 / 75 |
+| `src/query/lexer/mod.rs` | `parameter_name` | helper | 113853 | 38 / 41 |
+| `src/query/lexer/mod.rs` | `quoted` | helper | 232137 | 36 / 36 |
+| `src/query/lexer/mod.rs` | `string_kind` | helper | 174619 | 6 / 6 |
+| `src/query/lexer/mod.rs` | `text` | helper | 1015683 | 4 / 4 |
+| `src/query/lexer/mod.rs` | `tokenize` | helper | 600233 | 34 / 34 |
+| `src/query/lexer/mod.rs` | `word` | helper | 3522134 | 46 / 47 |
+| `src/query/parser/catalog.rs` | `at_record_literal` | helper | 13066 | 8 / 8 |
+| `src/query/parser/catalog.rs` | `build_graph_ref` | helper | 26432 | 13 / 13 |
+| `src/query/parser/catalog.rs` | `build_object` | helper | 32860 | 32 / 32 |
+| `src/query/parser/catalog.rs` | `build_schema` | helper | 93023 | 29 / 29 |
+| `src/query/parser/catalog.rs` | `catalog_object_parent_and_name` | helper | 18304 | 33 / 33 |
+| `src/query/parser/catalog.rs` | `choose` | helper | 260835 | 78 / 78 |
+| `src/query/parser/catalog.rs` | `commit_to` | helper | 75793 | 9 / 9 |
+| `src/query/parser/catalog.rs` | `create_kind` | helper | 11068 | 45 / 46 |
+| `src/query/parser/catalog.rs` | `fail_path` | helper | 15341 | 105 / 105 |
+| `src/query/parser/catalog.rs` | `follows_at_schema` | helper | 102804 | 8 / 8 |
+| `src/query/parser/catalog.rs` | `follows_binding_definition` | helper | 13949 | 5 / 5 |
+| `src/query/parser/catalog.rs` | `follows_catalog_statement` | helper | 34053 | 6 / 6 |
+| `src/query/parser/catalog.rs` | `follows_expression` | helper | 22666 | 10 / 10 |
+| `src/query/parser/catalog.rs` | `follows_of_graph_type` | helper | 6006 | 6 / 6 |
+| `src/query/parser/catalog.rs` | `follows_select_graph` | helper | 109 | 4 / 4 |
+| `src/query/parser/catalog.rs` | `follows_session` | helper | 40890 | 4 / 4 |
+| `src/query/parser/catalog.rs` | `follows_use` | helper | 9005 | 7 / 7 |
+| `src/query/parser/catalog.rs` | `graph_reference_plans` | helper | 87074 | 26 / 26 |
+| `src/query/parser/catalog.rs` | `if_exists` | helper | 12299 | 11 / 11 |
+| `src/query/parser/catalog.rs` | `if_not_exists` | helper | 7816 | 15 / 15 |
+| `src/query/parser/catalog.rs` | `kind_at` | helper | 1730724 | 4 / 4 |
+| `src/query/parser/catalog.rs` | `name_at` | helper | 570366 | 6 / 6 |
+| `src/query/parser/catalog.rs` | `name_from` | helper | 124774 | 16 / 16 |
+| `src/query/parser/catalog.rs` | `name_slash_count` | helper | 269090 | 12 / 12 |
+| `src/query/parser/catalog.rs` | `names_from` | helper | 52476 | 8 / 8 |
+| `src/query/parser/catalog.rs` | `object_plans` | helper | 170126 | 27 / 27 |
+| `src/query/parser/catalog.rs` | `parameter_from` | helper | 49316 | 11 / 11 |
+| `src/query/parser/catalog.rs` | `parent_reference_plans` | helper | 170126 | 48 / 48 |
+| `src/query/parser/catalog.rs` | `schema_reference_plans` | helper | 260835 | 73 / 73 |
+| `src/query/parser/catalog.rs` | `span_of` | helper | 183243 | 9 / 9 |
+| `src/query/parser/catalog.rs` | `starts_binding_definition` | helper | 104010 | 9 / 9 |
+| `src/query/parser/catalog.rs` | `starts_of_graph_type` | helper | 9269 | 6 / 6 |
+| `src/query/parser/expr.rs` | `comparison` | helper | 187826 | 10 / 10 |
+| `src/query/parser/expr.rs` | `is_tail` | helper | 220758 | 24 / 24 |
+| `src/query/parser/expr.rs` | `keyword_predicate` | helper | 10393 | 62 / 62 |
+| `src/query/parser/expr.rs` | `match_block` | helper | 741 | 29 / 30 |
+| `src/query/parser/expr.rs` | `numeric_unary` | helper | 176254 | 22 / 22 |
+| `src/query/parser/expr.rs` | `numeric_value_expression_bp` | helper | 15648 | 81 / 83 |
+| `src/query/parser/expr.rs` | `predicate_tail` | helper | 157347 | 90 / 91 |
+| `src/query/parser/expr.rs` | `primary_or_predicate` | helper | 100549 | 14 / 14 |
+| `src/query/parser/expr.rs` | `spanned_label_expression` | helper | 2830 | 12 / 12 |
+| `src/query/parser/expr.rs` | `starts_body_at` | helper | 931 | 17 / 17 |
+| `src/query/parser/expr.rs` | `starts_numeric_function` | helper | 157350 | 9 / 9 |
+| `src/query/parser/expr.rs` | `starts_value_function` | helper | 145112 | 9 / 9 |
+| `src/query/parser/expr.rs` | `temporal_function_parameters` | helper | 702 | 31 / 32 |
+| `src/query/parser/expr.rs` | `trim_function` | helper | 1094 | 73 / 73 |
+| `src/query/parser/expr.rs` | `unary_function` | helper | 5515 | 20 / 20 |
+| `src/query/parser/expr.rs` | `value_expression_bp` | helper | 276403 | 102 / 105 |
+| `src/query/parser/expr.rs` | `value_expression_prefix` | helper | 276403 | 119 / 122 |
+| `src/query/parser/expr.rs` | `value_expression_primary_atom` | helper | 273359 | 139 / 141 |
+| `src/query/parser/mod.rs` | `at` | helper | 10395631 | 8 / 8 |
+| `src/query/parser/mod.rs` | `at_identifier` | helper | 14980 | 13 / 13 |
+| `src/query/parser/mod.rs` | `at_kw` | helper | 4547033 | 5 / 5 |
+| `src/query/parser/mod.rs` | `at_regular_identifier` | helper | 434536 | 10 / 10 |
+| `src/query/parser/mod.rs` | `bump` | helper | 1066863 | 8 / 8 |
+| `src/query/parser/mod.rs` | `decide` | helper | 237687 | 17 / 17 |
+| `src/query/parser/mod.rs` | `drop` | helper | 1134693 | 7 / 7 |
+| `src/query/parser/mod.rs` | `eat` | helper | 2653759 | 8 / 8 |
+| `src/query/parser/mod.rs` | `eat_kw` | helper | 2179437 | 5 / 5 |
+| `src/query/parser/mod.rs` | `error` | helper | 294211 | 38 / 46 |
+| `src/query/parser/mod.rs` | `expect` | helper | 2449487 | 9 / 9 |
+| `src/query/parser/mod.rs` | `expect_here` | helper | 14576511 | 10 / 10 |
+| `src/query/parser/mod.rs` | `expect_kw` | helper | 1607143 | 5 / 5 |
+| `src/query/parser/mod.rs` | `fail` | helper | 87913 | 108 / 132 |
+| `src/query/parser/mod.rs` | `fail_rule` | helper | 85677 | 70 / 90 |
+| `src/query/parser/mod.rs` | `is_identifier` | helper | 641429 | 6 / 6 |
+| `src/query/parser/mod.rs` | `is_regular_identifier` | helper | 1329384 | 8 / 8 |
+| `src/query/parser/mod.rs` | `nest` | helper | 1134693 | 12 / 16 |
+| `src/query/parser/mod.rs` | `new` | helper | 1236164 | 14 / 14 |
+| `src/query/parser/mod.rs` | `parse_program` | helper | 600233 | 108 / 110 |
+| `src/query/parser/mod.rs` | `peek` | helper | 13463684 | 4 / 4 |
+| `src/query/parser/mod.rs` | `peek_nth` | helper | 2910053 | 5 / 5 |
+| `src/query/parser/mod.rs` | `position` | helper | 294216 | 4 / 4 |
+| `src/query/parser/mod.rs` | `span_from` | helper | 2268008 | 11 / 12 |
+| `src/query/parser/mod.rs` | `spanned` | helper | 2180677 | 370 / 370 |
+| `src/query/parser/mod.rs` | `stack_address` | helper | 1734921 | 7 / 7 |
+| `src/query/parser/mod.rs` | `start` | helper | 4463549 | 4 / 4 |
+| `src/query/parser/mod.rs` | `token_at` | helper | 29066863 | 6 / 6 |
+| `src/query/parser/mod.rs` | `try_decrease` | helper | 1134693 | 8 / 9 |
+| `src/query/parser/mod.rs` | `try_parse` | helper | 233977 | 108 / 120 |
+| `src/query/parser/mod.rs` | `unquote` | helper | 193097 | 93 / 94 |
+| `src/query/parser/pattern.rs` | `label_expression_bp` | helper | 14190 | 106 / 108 |
+| `src/query/parser/pattern.rs` | `opt_path_mode` | helper | 1757 | 15 / 15 |
+| `src/query/parser/pattern.rs` | `starts_path_pattern` | helper | 7 | 14 / 16 |
+| `src/query/parser/pattern.rs` | `starts_path_primary` | helper | 8611 | 4 / 4 |
+| `src/query/parser/pattern.rs` | `starts_simplified_factor` | helper | 5518 | 9 / 9 |
+| `src/query/parser/program.rs` | `at_end_transaction` | helper | 263464 | 7 / 7 |
+| `src/query/parser/program.rs` | `at_session_close` | helper | 991123 | 6 / 6 |
+| `src/query/parser/program.rs` | `general_parameter` | helper | 48986 | 15 / 15 |
+| `src/query/parser/program.rs` | `parameter_name` | helper | 97109 | 17 / 17 |
+| `src/query/parser/program.rs` | `starts_procedure_body` | helper | 42814 | 16 / 16 |
+| `src/query/parser/query.rs` | `build_catalog` | helper | 22675 | 13 / 14 |
+| `src/query/parser/query.rs` | `build_data` | helper | 11146 | 35 / 40 |
+| `src/query/parser/query.rs` | `build_linear_query` | helper | 68793 | 92 / 94 |
+| `src/query/parser/query.rs` | `build_query` | helper | 51703 | 53 / 57 |
+| `src/query/parser/query.rs` | `classify_catalog` | helper | 35628 | 11 / 11 |
+| `src/query/parser/query.rs` | `classify_data` | helper | 12953 | 31 / 32 |
+| `src/query/parser/query.rs` | `classify_query` | helper | 87331 | 25 / 25 |
+| `src/query/parser/query.rs` | `expect_statement` | helper | 346092 | 5 / 5 |
+| `src/query/parser/query.rs` | `is_call` | helper | 27619 | 4 / 4 |
+| `src/query/parser/query.rs` | `is_query` | helper | 91888 | 4 / 4 |
+| `src/query/parser/query.rs` | `linear_query_shape` | helper | 106166 | 53 / 55 |
+| `src/query/parser/query.rs` | `return_items` | helper | 9319 | 41 / 41 |
+| `src/query/parser/query.rs` | `span` | helper | 84479 | 13 / 19 |
+| `src/query/parser/query.rs` | `starts_statement` | helper | 349771 | 7 / 7 |
+| `src/query/parser/query.rs` | `statement_item` | helper | 405247 | 71 / 72 |
+| `src/query/parser/types.rs` | `any_value_type` | helper | 22203 | 58 / 67 |
+| `src/query/parser/types.rs` | `at_label_phrase` | helper | 17553 | 9 / 9 |
+| `src/query/parser/types.rs` | `at_type_angle` | helper | 34354 | 6 / 6 |
+| `src/query/parser/types.rs` | `binding_table_type_value` | helper | 15651 | 17 / 17 |
+| `src/query/parser/types.rs` | `closed_element_reference_type` | helper | 96 | 25 / 26 |
+| `src/query/parser/types.rs` | `edge_type_pattern_rest` | helper | 2560 | 58 / 59 |
+| `src/query/parser/types.rs` | `node_type_reference` | helper | 4717 | 10 / 10 |
+| `src/query/parser/types.rs` | `opt_bracketed_max_length` | helper | 21974 | 15 / 15 |
+| `src/query/parser/types.rs` | `opt_label_set_phrase` | helper | 21938 | 41 / 42 |
+| `src/query/parser/types.rs` | `opt_parenthesized_precision` | helper | 40 | 13 / 15 |
+| `src/query/parser/types.rs` | `opt_type_filler` | helper | 17401 | 40 / 40 |
+| `src/query/parser/types.rs` | `parenthesized_node_type` | helper | 8110 | 25 / 26 |
+| `src/query/parser/types.rs` | `starts_edge_type_after_synonym` | helper | 148 | 6 / 6 |
+| `src/query/parser/types.rs` | `starts_node_type_after_synonym` | helper | 267 | 10 / 10 |
+| `src/query/parser/types.rs` | `starts_type_filler` | helper | 1186 | 4 / 4 |
+| `src/query/parser/types.rs` | `string_type` | helper | 2183 | 46 / 46 |
+| `src/query/parser/types.rs` | `type_keyword` | helper | 9490 | 14 / 14 |
+| `src/query/parser/types.rs` | `value_type_bp` | helper | 66049 | 70 / 73 |
+| `src/query/parser/types.rs` | `value_type_primary` | helper | 66049 | 50 / 50 |
+
+GQL.g4 parser rules parsed inside another function (419): `abbreviatedEdgePattern`, `absoluteCatalogSchemaReference`, `absoluteDirectoryPath`, `absoluteValueExpression`, `aggregatingValueExpression`, `allPathSearch`, `allShortestPathSearch`, `all_differentPredicate`, `ambientLinearDataModifyingStatement`, `ambientLinearDataModifyingStatementBody`, `ambientLinearQueryStatement`, `anyPathSearch`, `anyShortestPathSearch`, `approximateNumericLiteral`, `approximateNumericType`, `arcTypePointingLeft`, `arcTypePointingRight`, `arcTypeUndirected`, `atSchemaClause`, `binaryExactNumericType`, `binarySetFunction`, `binarySetFunctionType`, `bindingTableInitializer`, `bindingTableName`, `bindingTableReference`, `bindingTableType`, `bindingVariable`, `bindingVariableReference`, `bindingVariableReferenceList`, `booleanType`, `booleanValueExpression`, `byteLengthExpression`, `byteStringType`, `byteStringValueExpression`, `callCatalogModifyingProcedureStatement`, `callDataModifyingProcedureStatement`, `callQueryStatement`, `cardinalityExpression`, `cardinalityExpressionArgument`, `caseAbbreviation`, `caseOperand`, `caseSpecification`, `castOperand`, `castSpecification`, `castTarget`, `catalogGraphParentAndName`, `catalogGraphTypeParentAndName`, `catalogObjectParentReference`, `catalogProcedureParentAndName`, `ceilingFunction`, `charLengthExpression`, `characterOrByteStringFunction`, `characterStringType`, `characterStringValueExpression`, `closedEdgeReferenceValueType`, `closedGraphReferenceValueType`, `closedNodeReferenceValueType`, `commitCommand`, `commonLogarithm`, `compOp`, `compositeQueryExpression`, `compositeQueryPrimary`, `compositeQueryStatement`, `connectorPointingRight`, `connectorUndirected`, `copyOfGraphType`, `countedShortestGroupSearch`, `countedShortestPathSearch`, `currentGraph`, `dateFunction`, `dateFunctionParameters`, `dateLiteral`, `dateString`, `dateType`, `datetimeFunctionParameters`, `datetimeLiteral`, `datetimeString`, `datetimeSubtraction`, `datetimeSubtractionParameters`, `datetimeType`, `datetimeValueExpression`, `datetimeValueExpression1`, `datetimeValueExpression2`, `datetimeValueFunction`, `decimalExactNumericType`, `deleteItem`, `deleteItemList`, `delimitedBindingTableName`, `delimitedGraphName`, `dependentValueExpression`, `destinationNodeTypeAlias`, `destinationNodeTypeReference`, `destinationPredicatePart2`, `differentEdgesMatchMode`, `directedPredicate`, `directedPredicatePart2`, `directoryName`, `durationFunction`, `durationFunctionParameters`, `durationLiteral`, `durationString`, `durationValueExpression`, `durationValueFunction`, `dynamicParameterSpecification`, `edgeBindingsOrEdges`, `edgeKind`, `edgeReference`, `edgeReferenceValueExpression`, `edgeReferenceValueType`, `edgeSynonym`, `edgeTypeFiller`, `edgeTypeImpliedContent`, `edgeTypeKeyLabelSet`, `edgeTypeLabelSet`, `edgeTypeName`, `edgeTypePattern`, `edgeTypePatternDirected`, `edgeTypePatternPointingLeft`, `edgeTypePatternPointingRight`, `edgeTypePatternUndirected`, `edgeTypePhrase`, `edgeTypePhraseFiller`, `edgeTypePropertyTypes`, `edgesSynonym`, `elementBindingsOrElements`, `elementPattern`, `elementPatternPredicate`, `elementPatternWhereClause`, `elementTypeList`, `elementVariable`, `elementVariableDeclaration`, `elementVariableReference`, `element_idFunction`, `elementsFunction`, `emptyGroupingSet`, `emptyType`, `endpointPairDirected`, `endpointPairPhrase`, `endpointPairPointingLeft`, `endpointPairPointingRight`, `endpointPairUndirected`, `exactNumericLiteral`, `exactNumericType`, `exponentialFunction`, `field`, `fieldList`, `fieldName`, `fieldType`, `fieldTypeList`, `fieldsSpecification`, `fixedLength`, `fixedQuantifier`, `floorFunction`, `focusedLinearDataModifyingStatement`, `focusedLinearDataModifyingStatementBody`, `focusedLinearQueryAndPrimitiveResultStatementPart`, `focusedLinearQueryStatement`, `focusedLinearQueryStatementPart`, `focusedNestedDataModifyingProcedureSpecification`, `focusedNestedQuerySpecification`, `focusedPrimitiveResultStatement`, `foldCharacterString`, `forItem`, `forItemAlias`, `forItemSource`, `forOrdinalityOrOffset`, `fullEdgeAnyDirection`, `fullEdgeLeftOrRight`, `fullEdgeLeftOrUndirected`, `fullEdgePattern`, `fullEdgePointingLeft`, `fullEdgePointingRight`, `fullEdgeUndirected`, `fullEdgeUndirectedOrRight`, `generalLiteral`, `generalLogarithmArgument`, `generalLogarithmBase`, `generalLogarithmFunction`, `generalQuantifier`, `generalSetFunction`, `generalSetFunctionType`, `generalValueSpecification`, `graphInitializer`, `graphName`, `graphPatternWhereClause`, `graphPatternYieldClause`, `graphPatternYieldItem`, `graphPatternYieldItemList`, `graphReference`, `graphTypeName`, `graphTypeSpecificationBody`, `groupingElement`, `groupingElementList`, `havingClause`, `homeGraph`, `immaterialValueType`, `independentValueExpression`, `insertEdgePointingLeft`, `insertEdgePointingRight`, `insertEdgeUndirected`, `insertPathPatternList`, `insertStatement`, `isLabelExpression`, `isLabeledOrColon`, `keepClause`, `labelAndPropertySetSpecification`, `labelName`, `labelSetPhrase`, `labeledPredicate`, `labeledPredicatePart2`, `lengthExpression`, `letValueExpression`, `linearCatalogModifyingStatement`, `linearDataModifyingStatement`, `linearQueryStatement`, `listElement`, `listElementList`, `listLiteral`, `listValueConstructor`, `listValueConstructorByEnumeration`, `listValueExpression`, `listValueFunction`, `listValueTypeNameSynonym`, `localNodeTypeAlias`, `localdatetimeFunction`, `localdatetimeType`, `localtimeFunction`, `localtimeType`, `lowerBound`, `maxLength`, `minLength`, `modulusExpression`, `naturalLogarithm`, `nestedBindingTableQuerySpecification`, `nestedDataModifyingProcedureSpecification`, `nestedQuerySpecification`, `nodeReference`, `nodeReferenceValueExpression`, `nodeReferenceValueType`, `nodeSynonym`, `nodeTypeFiller`, `nodeTypeImpliedContent`, `nodeTypeKeyLabelSet`, `nodeTypeLabelSet`, `nodeTypeName`, `nodeTypePattern`, `nodeTypePhrase`, `nodeTypePhraseFiller`, `nodeTypePropertyTypes`, `nonParenthesizedValueExpressionPrimarySpecialCase`, `nonReservedWords`, `normalizeCharacterString`, `nullLiteral`, `nullOrdering`, `nullPredicate`, `nullPredicatePart2`, `nullType`, `numberOfGroups`, `numberOfPaths`, `numericValueExpressionBase`, `numericValueExpressionDividend`, `numericValueExpressionDivisor`, `numericValueExpressionExponent`, `numericValueFunction`, `objectName`, `objectNameOrBindingVariable`, `offsetSynonym`, `openEdgeReferenceValueType`, `openGraphReferenceValueType`, `openGraphType`, `openNodeReferenceValueType`, `optionalOperand`, `orderingSpecification`, `parenthesizedPathPatternWhereClause`, `parenthesizedValueExpression`, `pathElementList`, `pathElementListStart`, `pathElementListStep`, `pathLengthExpression`, `pathModePrefix`, `pathValueConstructor`, `pathValueConstructorByEnumeration`, `pathValueExpression`, `pathValueType`, `pathVariable`, `pathVariableDeclaration`, `pathVariableReference`, `powerFunction`, `precision`, `predefinedSchemaReference`, `predicate`, `primitiveQueryStatement`, `procedureArgument`, `procedureArgumentList`, `procedureName`, `procedureSpecification`, `propertyKeyValuePair`, `propertyName`, `propertyType`, `propertyTypeList`, `propertyTypesSpecification`, `propertyValueType`, `property_existsPredicate`, `recordLiteral`, `referenceParameterSpecification`, `referenceValueType`, `relativeCatalogSchemaReference`, `relativeDirectoryPath`, `removeItem`, `removeItemList`, `removeLabelItem`, `removePropertyItem`, `repeatableElementsMatchMode`, `result`, `resultExpression`, `returnItem`, `returnItemAlias`, `returnItemList`, `returnStatementBody`, `rollbackCommand`, `samePredicate`, `scale`, `schemaName`, `searchCondition`, `searchedWhenClause`, `selectGraphMatch`, `selectGraphMatchList`, `selectItem`, `selectItemAlias`, `selectItemList`, `selectQuerySpecification`, `sessionParameterSpecification`, `sessionSetBindingTableParameterClause`, `sessionSetGraphClause`, `sessionSetGraphParameterClause`, `sessionSetSchemaClause`, `sessionSetTimeZoneClause`, `sessionSetValueParameterClause`, `setAllPropertiesItem`, `setItem`, `setItemList`, `setLabelItem`, `setOperator`, `setPropertyItem`, `setTimeZoneValue`, `shortestPathSearch`, `signedBinaryExactNumericType`, `simpleCatalogModifyingStatement`, `simpleDataAccessingStatement`, `simpleDataModifyingStatement`, `simpleDirectoryPath`, `simpleLinearDataAccessingStatement`, `simpleLinearQueryStatement`, `simpleWhenClause`, `simplifiedDefaultingAnyDirection`, `simplifiedDefaultingLeft`, `simplifiedDefaultingLeftOrRight`, `simplifiedDefaultingLeftOrUndirected`, `simplifiedDefaultingRight`, `simplifiedDefaultingUndirected`, `simplifiedDefaultingUndirectedOrRight`, `simplifiedDirectionOverride`, `simplifiedMultisetAlternation`, `simplifiedNegation`, `simplifiedOverrideAnyDirection`, `simplifiedOverrideLeft`, `simplifiedOverrideLeftOrRight`, `simplifiedOverrideLeftOrUndirected`, `simplifiedOverrideRight`, `simplifiedOverrideUndirected`, `simplifiedOverrideUndirectedOrRight`, `simplifiedPathUnion`, `simplifiedQuantified`, `simplifiedQuestioned`, `sortKey`, `sourceDestinationPredicate`, `sourceNodeTypeAlias`, `sourceNodeTypeReference`, `sourcePredicatePart2`, `squareRoot`, `stringLength`, `subCharacterOrByteString`, `subpathVariable`, `subpathVariableDeclaration`, `temporalDurationType`, `temporalInstantType`, `temporalLiteral`, `timeFunction`, `timeFunctionParameters`, `timeLiteral`, `timeString`, `timeType`, `timeZoneString`, `transactionMode`, `trigonometricFunction`, `trigonometricFunctionName`, `trimCharacterOrByteString`, `trimCharacterOrByteStringSource`, `trimListFunction`, `trimMultiCharacterCharacterString`, `trimOperands`, `trimSingleCharacterOrByteString`, `trimSpecification`, `unsignedBinaryExactNumericType`, `unsignedNumericLiteral`, `unsignedValueSpecification`, `upperBound`, `useGraphClause`, `valueInitializer`, `valueQueryExpression`, `valueTypePredicate`, `valueTypePredicatePart2`, `variableScopeClause`, `whenOperandList`, `whereClause`, `yieldItem`, `yieldItemAlias`, `yieldItemList`, `yieldItemName`.

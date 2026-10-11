@@ -1,7 +1,7 @@
 ---
 title: Values and types
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - query-engine.md
   - bolt.md
@@ -36,7 +36,7 @@ related:
     - **Zoned date-time.** Class 0: the instant, then the offset. Class 1: the instant, then the zone name, then the offset. The instant is the floor of its Unix seconds (zigzag varint), then nanoseconds in `0..1e9` (varint), as Neo4j's property store keeps it (R-NEO `community/record-storage-engine/.../store/TemporalType.java:418-446`, `community/values/.../utils/TemporalValueWriterAdapter.java:68-80`).
   - **Index key encoding.** Order-preserving bytes per type, separate from the record encoding.
   - **Lexical forms**, used by import, export and literals:
-    - temporal values: ISO 8601 text, with an IANA zone name in brackets for named zones;
+    - temporal values: ISO 8601 text, with an IANA zone name in brackets for named zones; a date may also be written as an ISO 8601 week date (`2015-W30-2`), ordinal date (`2015-202`), basic form (`20150721`) or reduced-precision date (`2015-07`, `2015-W30`, `2015`), as Neo4j accepts (Cypher Manual, "Temporal values"; openCypher TCK `Temporal2.feature` [1]; rmp #52); Neo4j's quarter dates are not ISO 8601 and are not accepted. A date shifted by a duration with a time-of-day part, or a time by a duration with months, raises 22G14 (gql-compat `condition/22014/incompatible-temporal-units`);
     - points: `{srid, x, y[, z]}`.
   - **Features.** The temporal types implement features GV39, GV40 and GV41, verified against the ISO features insert [S45].
   - **Implementation-defined choices** (BR-GQL-002). Each was approved by the user on 2026-10-07 (rmp task #26). Codes and line numbers are those of the ISO implementation-defined insert [S45], `docs/standards/iso-iec-39075/ed-1/ISO_IEC_39075(en)-implementation-defined.xml`.
@@ -53,7 +53,48 @@ related:
     | Transactions | ID006 (154), IE002 (306), IE004 (314) | Serializable by default; snapshot isolation is the one relaxation, selected per transaction through the Rust API only ([FR-TX-003, FR-TX-004](../functional-spec/functional-requirements.md#transactions); [TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)). Confirmed by the user on 2026-10-07. |
     | Directory nesting | IL020 (378) | No fixed maximum depth. The 1 024-byte key limit ([TS-05](storage.md#ts-05-files-and-pages)) bounds each name, not the depth, because a catalog key holds the parent's identifier and the name ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)). |
 
-  - **Not decided.** Whether Point2D and Point3D conflict with the norm is OQ-006.
+  - **Implementation-defined choices of 2026-10-08** (BR-GQL-002; the user approved the rule "Neo4j first, then Memgraph, else the reference the blocking task cites", rmp task #38). "zu" and the place of Memgraph are as in [TS-19](query-engine.md#ts-19-parser); tasks #42 and #43 cite zu. Neo4j paths are under R-NEO `community/`.
+
+    | Item (line) | Choice | Source |
+    |---|---|---|
+    | IA003 (58) | No implicit normalisation: every operation reads the code points as written. | Neo4j compares strings with Java `String.equals` (`values/.../storable/StringValue.java:51-53`); zu. |
+    | IW017 (490) | A concatenation is the left operand's code points followed by the right's, not normalised. | As IA003; zu. |
+    | IA004 (62) | IEEE 754 binary64, round to nearest, ties to even. | Neo4j parses float literals with `Double.parseDouble` (`cypher/front-end/expressions/.../Literal.scala:136-141`), which rounds "by the usual round-to-nearest rule of IEEE 754" (Java SE API, `Double.valueOf(String)`). |
+    | IA006 (70) | One approximation: the nearest `FLOAT64`, ties to even. | Neo4j has one approximate type, `FLOAT`, held as a Java `double` (`storable/DoubleValue.java:30`; numeric literals are `INTEGER` or `FLOAT`, Cypher Manual, "Boolean, numeric, and string literals") |
+    | IA007 (74) | None: only `FLOAT64` values are approximate. | As IA006: Neo4j's `INTEGER` is a Java `long` (`storable/LongValue.java:30`) |
+    | IA005 (66), IA021 (118) | The one implicit assignment that can lose digits is an `INT64` argument to a `FLOAT64` routine parameter: it rounds to nearest, ties to even, with no condition. A value that does not fit any other target fails with 22G03. | The openCypher TCK, from Neo4j, has a `FLOAT` parameter accept an `INTEGER` (R-OCTCK `clauses/call/Call3.feature`, scenario 5); the JVM converts `long` to `double` by round to nearest (JLS §5.1.2). |
+    | IA010 (78) | `INT64` arithmetic is exact from −2<sup>63</sup> to 2<sup>63</sup> − 1. `+`, `−` and `*` outside that range, and `INT64` minimum ÷ −1, raise 22003; division by zero, integer or float, raises 22012. A `FLOAT64` operation whose result is infinite or NaN raises 22003: feature GA01, IEEE 754 operations, is not supported. User decision 2026-10-08, "Erro sempre" (rmp task #38). | Neo4j adds with `Math.addExact` (`values/.../utils/ValueMath.java:48-50`) and refuses an integer zero divisor (`cypher/runtime-util/.../CypherMath.java:274-280`), but returns infinity or NaN for floats (`storable/FloatingPointValue.java:124-125`) and wraps minimum ÷ −1 (`IntegralValue.java:128-130`); the user chose the error, as zu does. |
+    | IA011 (82) | Integer division truncates toward zero (`7 / 2` is 3, `-7 / 2` is −3); float division rounds to nearest. | Neo4j divides `long` values with Java `/` (`values/.../storable/IntegralValue.java:128-130`). |
+    | ID059 (202) | `COUNT` returns `INT64`. | Neo4j `count()` returns `INTEGER` (Cypher Manual, "Aggregating functions"). |
+    | ID063 (214) | `FLOAT64` when either operand is `FLOAT64`; the `INT64` operand is converted. | Neo4j `IntegralValue.plus(double)` returns a `DoubleValue` (`IntegralValue.java:113-115`). |
+    | ID064 (218) | `INT64` when both operands are `INT64`. | `ValueMath.java:48-50`. |
+    | ID065 (222), ID066 (226), ID074 (246) | 64 bits; a result outside the range raises 22003. | IA010. |
+    | ID067 (230) | `INT64`, scale 0, truncated toward zero; a zero divisor raises 22012. | IA010, IA011. |
+    | ID068 (234) | `INT64`. | Neo4j's one exact type, `INTEGER` (IA007) |
+    | ID075 (250) | Binary64: 53-bit significand. | Neo4j's `FLOAT` is a Java `double` (IA006) |
+    | ID079 (258) | `FLOAT64`. | Neo4j types a decimal double literal `CTFloat` (`cypher/front-end/ast/.../SemanticExpressionCheck.scala:889-895`). |
+    | ID095 (282) | `SUM` of `INT64` values is `INT64`; a total outside the `INT64` range becomes `FLOAT64`. | Neo4j sums with `overflowSafeAdd`, which "widen[s] type to use double" (`ValueMath.java:60-84`; `interpreted-runtime/.../aggregation/SumFunction.scala`). |
+    | ID096 (286) | None: `AVG` of exact values is `FLOAT64`. | Neo4j `AvgFunction` returns a double for numbers (`interpreted-runtime/.../aggregation/AvgFunction.scala`, `result`); zu. |
+    | ID097 (290), ID098 (294) | `FLOAT64`. | Neo4j `sum()` of floats, `avg()`, `stDev()` and `stDevP()` return `FLOAT` (Cypher Manual, "Aggregating functions"). |
+    | IV023 (434) | Truncating whitespace is U+0020 only. User decision 2026-10-08, "Só U+0020" (rmp task #38). | Neo4j's conformance page states that GQL `TRIM` removes only space characters (Cypher Manual, "Supported mandatory GQL features", 20.24), unlike Cypher's `trim()` (`storable/StringWrappingStringValue.java:119-123`); zu. |
+    | IL009 (354) | No minimum below the sum: a concatenation is as long as its operands together; one above 2<sup>32</sup> − 1 bytes fails with 22001. | Neo4j documents no limit; Memgraph has none in R-MG `src/query`, `src/utils`, `src/storage/v2` (searched 2026-10-08); zu. Sizes (IL013, above) |
+    | IA014 (94), ID085 (262) | No condition: a NULL whose type no context gives has the type `NULL`. | Neo4j's type `NULL` (Cypher Manual, "Property, structural, and constructed values", "Types and their synonyms"). |
+    | ID022 (166) | Unicode code-point order, with no locale. | Order within a group (IA015, above). |
+    | ID023 (170) | `STRING`; `BYTES` for byte strings. | Neo4j's type name `STRING` ("Types and their synonyms"); neither Neo4j nor Memgraph has byte strings (Byte strings, below), so `BYTES` is zu's |
+    | ID089 (270) | `GRAPH`. | Neo4j gives no type name to graph references (Cypher Manual, "Graph references"); Memgraph's `valueType()` names a graph value `GRAPH` (R-MG @ `847e224` `src/query/interpret/awesome_memgraph_functions.cpp:922-923`) |
+    | ID090 (274) | `NODE`. | Neo4j (same page as ID023). |
+    | ID091 (278) | `RELATIONSHIP`; `EDGE` is a synonym. | Neo4j (same page). zu chooses `EDGE`. |
+    | IV008 (406) | Neo4j's default type names and union normalisation; for types Neo4j lacks: `BYTES`, `DURATION(YEAR TO MONTH)`, `DURATION(DAY TO SECOND)`, `RECORD`. | Neo4j, "Types and their synonyms", "Type normalization". |
+    | IW019 (498) | The member that encompasses the others, if one does; otherwise the closed dynamic union of the members. | Neo4j, "Type normalization". |
+    | IW021 (502) | Neo4j's order: `NOTHING`, `NULL`, `BOOLEAN`, `STRING`, `BYTES` (lpg, beside the other string type), `INTEGER`, `FLOAT`, `DATE`, `LOCAL TIME`, `ZONED TIME`, `LOCAL DATETIME`, `ZONED DATETIME`, `DURATION(YEAR TO MONTH)`, `DURATION(DAY TO SECOND)`, `POINT`, `NODE`, `RELATIONSHIP`, `RECORD` (Neo4j's `MAP` place), `LIST` by inner type, `PATH`, dynamic unions, `ANY`; subtypes before the types enclosing them. | Neo4j, "Type normalization", "Ordering of types". |
+    | IV011 (414) | `PROPERTY VALUE`: `BOOLEAN`, `INTEGER`, `FLOAT`, `STRING`, `BYTES`, the five temporal instant types, both duration types, `POINT`, and lists of one of these without null. Setting any other value as a property fails with 22G03. | Neo4j's property types; lists "homogeneous and contain no `null` values" (Cypher Manual, "Property, structural, and constructed values"). zu adds byte strings, which lpg stores (tag 5). |
+    | IV012 (418) | Every value type of Runtime value, above. | Neo4j `ANY`; zu. |
+    | IV014 (422) | `ANY`. | Neo4j; zu. |
+    | IL003 (350) | A node type and an edge type each have exactly one key label. Element types are written with feature GG03, supported since 2026-10-08 ("Só GG03", rmp task #37). | Neo4j: each node element type has one identifying label and each relationship element type one identifying type (Cypher Manual, "Set graph types"). zu allows 0 to 63. |
+    | IV003 (402) | A graph type's normal form is the text that re-creates it, with element types, labels and property types sorted by name. Applies with GG03, as IL003. | Neo4j's `SHOW CURRENT GRAPH TYPE` returns the type "using the canonical form", reusable to re-create it; its examples sort by name, which the manual does not state as a rule (Cypher Manual, "Show graph types"). |
+
+    Not reached by the supported codes (TS-19): ID004 (146, constructors without values: GV45, GV50), ID057 (194) and ID058 (198) (`WITH ORDINALITY`, `WITH OFFSET`: GQ11, GQ24), ID062 (210, `LIMIT`, `OFFSET`, path counts: GQ12, GQ13, G016, G019, G020), ID069 (238, GF01–GF03), ID070 (242, GF12, GF13), ID099 (298, GF11).
+  - **Points** (user decision 2026-10-08, OQ-006): points enter and leave only as values, through parameters, properties and results. Constructors, distance and the distance-within search that uses the point index are built-in procedures invoked with `CALL`: `point`, `point.distance`, `point.nodesWithinDistance`, `point.edgesWithinDistance` ([TS-24](interfaces.md#ts-24-procedures-functions-metrics-and-events)). Whether Point2D and Point3D conflict with the norm stays unverified (OQ-006).
 - **Satisfies**: FR-TYPE-001, FR-TYPE-002, FR-TYPE-004, FR-TYPE-006, FR-TYPE-007, FR-SES-003, FR-BOLT-005, BR-BOLT-001, FR-IMP-006, NFR-PERF-003, BR-GQL-002.
 - **Evidence**:
   - jiff reads `/usr/share/zoneinfo`, or `TZDIR`, by default on Unix, and bundles zone data only with the `tzdb-bundle-*` features (D-JIFF).

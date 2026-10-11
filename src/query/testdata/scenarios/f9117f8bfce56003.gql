@@ -1,0 +1,2 @@
+INSERT (m1:Person&Employee {name: 'Mika'}),
+       (m2:Person {name: 'Noor'})

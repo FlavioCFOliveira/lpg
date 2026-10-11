@@ -1,0 +1,43 @@
+# Ambiguous GQL.g4 decisions on 600 000 generated texts (rmp #41, 2026-10-09)
+# GqlProbe.java (docs/evidence/planning/round-s) in LL_EXACT_AMBIG_DETECTION mode; texts: gql-oracle generate|mutants 100000, LPG_SEED in {20261008, 1, 12648430}
+# out-12648430-generate.txt: 100000 texts, 0 rejected
+# out-12648430-mutants.txt: 100000 texts, 97910 rejected
+# out-1-generate.txt: 100000 texts, 0 rejected
+# out-1-mutants.txt: 100000 texts, 97927 rejected
+# out-20261008-generate.txt: 100000 texts, 0 rejected
+# out-20261008-mutants.txt: 100000 texts, 98070 rejected
+# count rule/decision/alternatives
+   8752 statement/outer/{1,3}
+   8591 statement/outer/{2,3}
+   3359 graphExpression/outer/{1,2}
+   2254 bindingTableExpression/outer/{2,3}
+   2094 simpleDataAccessingStatement/outer/{1,2}
+   1401 valueType/inner302/{1,2}
+   1277 castOperand/outer/{1,2}
+    849 absoluteCatalogSchemaReference/outer/{1,2}
+    681 result/outer/{1,2}
+    528 endpointPair/outer/{1,2}
+    471 caseOperand/outer/{1,2}
+    452 valueFunction/outer/{1,4}
+    416 nodeTypePhrase/inner255/{1,2}
+    360 edgeTypePhrase/inner268/{1,2}
+    311 existsPredicate/inner418/{3,5}
+    215 primitiveCatalogModifyingStatement/outer/{3,5}
+    188 bindingTableReference/outer/{1,3}
+    162 insertElementPatternFiller/outer/{1,2}
+    111 graphReference/outer/{1,4}
+    109 labelAndPropertySetSpecification/outer/{1,2}
+     55 valueExpression/outer/{5,7}
+     34 orderByAndPageStatement/inner113/{1,2}
+     33 valueExpression/outer/{4,7}
+     16 simpleDirectoryPath/inner236/{1,2}
+     16 relativeDirectoryPath/inner235/{1,2}
+     16 primitiveCatalogModifyingStatement/outer/{4,6}
+      7 orderByAndPageStatement/inner111/{1,2}
+      7 absoluteDirectoryPath/inner233/{1,2}
+      6 orderByAndPageStatement/inner112/{1,2}
+      2 valueType/outer/{3,4}
+      2 catalogGraphParentAndName/outer/{1,2}
+      1 nodeTypeFiller/inner259/{1,2}
+      1 catalogObjectParentReference/inner246/{1,2}
+      1 catalogObjectParentReference/inner245/{1,2}

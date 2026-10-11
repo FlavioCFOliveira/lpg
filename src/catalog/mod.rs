@@ -91,7 +91,7 @@ use crate::storage::btree::node::put_varint;
 use crate::storage::btree::{Keys, Store, Tree, Write};
 use crate::storage::datafile::Bootstrap;
 use crate::storage::engine::{Core, Engine};
-use crate::storage::error::{Error, Result};
+use crate::storage::error::{Error, Missing, Result};
 use crate::storage::graph::Graph;
 use crate::sync::{Mutex, MutexGuard, PoisonError, RwLock};
 use crate::tx::Transaction;
@@ -105,6 +105,7 @@ pub(crate) const STATS_TREE: u64 = 2;
 /// The node, edge and adjacency trees of the default graph.
 pub(crate) const DEFAULT_GRAPH_TREES: [u64; 3] = [3, 4, 5];
 /// The trees `create` writes: catalog, statistics, the default graph's.
+#[cfg(test)]
 pub(crate) const CREATED_TREES: u64 = 5;
 /// The root directory: the parent of top-level objects. It has no entry.
 pub(crate) const ROOT: u64 = 0;
@@ -787,7 +788,7 @@ impl Effects {
     pub(crate) fn of(
         core: &Core,
         store: &Store<'_>,
-        tx: &Transaction<'_>,
+        tx: &Transaction,
         index_stats: &stats::Delta,
     ) -> Result<Effects> {
         let mut e = Effects::default();
@@ -917,7 +918,7 @@ fn parent_allowed(kind: Kind, parent: Option<Kind>) -> bool {
     }
 }
 
-impl Transaction<'_> {
+impl Transaction {
     fn catalog_tree(&mut self) -> Result<Tree> {
         self.tree(CATALOG_TREE)
     }
@@ -1072,7 +1073,7 @@ impl Transaction<'_> {
             None
         } else {
             let Some(p) = self.object(parent)? else {
-                return Err(Error::NotFound("the parent catalog object"));
+                return Err(Error::NotFound(Missing::ParentObject));
             };
             self.lock_key(t, &name_key(p.parent, &p.name), Mode::S)?;
             Some(p.kind)
@@ -1177,7 +1178,7 @@ impl Transaction<'_> {
                         let t = tx.catalog_tree()?;
                         tx.lock_key(t, &name_key(o.parent, &o.name), Mode::S)?;
                     }
-                    _ => return Err(Error::NotFound("the graph type")),
+                    _ => return Err(Error::NotFound(Missing::GraphType)),
                 }
             }
             let nodes = tx.create_tree(Keys::Prefix)?.id();

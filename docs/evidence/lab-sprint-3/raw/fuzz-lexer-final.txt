@@ -1,0 +1,100 @@
+# cargo +nightly fuzz run --target-dir /dev/shm/lpg-target/fuzz-final lexer fuzz/corpus/lexer -- -runs=10000000  (base 44c2dcb + round-D working tree, 2026-10-11T10:15:24Z)
+# corpus files at start: 8021
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.04s
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.04s
+     Running `/dev/shm/lpg-target/fuzz-final/x86_64-unknown-linux-gnu/release/lexer -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/lexer/ -runs=10000000 fuzz/corpus/lexer`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2953799610
+INFO: Loaded 1 modules   (1862 inline 8-bit counters): 1862 [0x5c76bb60b550, 0x5c76bb60bc96), 
+INFO: Loaded 1 PC tables (1862 PCs): 1862 [0x5c76bb60bc98,0x5c76bb6130f8), 
+INFO:     8021 files found in fuzz/corpus/lexer
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 8021 min: 1b max: 3970b total: 2647450b rss: 38Mb
+#8022	INITED cov: 760 ft: 4668 corp: 1570/368Kb exec/s: 8022 rss: 205Mb
+#10000000	DONE   cov: 760 ft: 4679 corp: 1579/352Kb lim: 4096 exec/s: 11415 rss: 466Mb
+###### Recommended dictionary. ######
+"]~" # Uses: 32578
+"\001\000\021\000" # Uses: 31441
+"<~/" # Uses: 29824
+"<~" # Uses: 30271
+"]~>" # Uses: 25972
+"IM" # Uses: 25003
+"--" # Uses: 24668
+"%4" # Uses: 24149
+"\001\000\000\000" # Uses: 22401
+"\275\377" # Uses: 22379
+"X1NULZ" # Uses: 20533
+"\\t" # Uses: 21528
+"\\\011" # Uses: 21391
+"JOIN" # Uses: 20390
+"!$" # Uses: 20633
+"/~" # Uses: 19548
+"\000\000\000*" # Uses: 18807
+"\001\000\000\000\000\000\001?" # Uses: 16376
+"OC" # Uses: 17896
+"\001\000\000\000\000\000\000\003" # Uses: 15878
+"OP" # Uses: 17379
+"+\341" # Uses: 15201
+"->" # Uses: 15159
+"TO" # Uses: 14578
+"EIO" # Uses: 14271
+"~/" # Uses: 14079
+"\375\011" # Uses: 13999
+"=>" # Uses: 13669
+"\005\000\000\000\000\000\000\000" # Uses: 12321
+"\000%" # Uses: 13303
+"\377\377\377\377" # Uses: 12516
+"LIST" # Uses: 11756
+"\001\000\000\000\000\000\000\000" # Uses: 10459
+"6\377\377\377" # Uses: 11304
+",TR" # Uses: 11466
+"TR" # Uses: 11311
+"\001\000\000\012" # Uses: 10617
+"\023\001\000\000" # Uses: 10416
+"//" # Uses: 10646
+"*o" # Uses: 10577
+"TY" # Uses: 9802
+"X1NUL" # Uses: 9224
+"\237\002" # Uses: 9385
+"j\000\000\000\000\000\000\000" # Uses: 8542
+"-0" # Uses: 9376
+"\\U" # Uses: 8892
+"q\013\000\000\000\000\000\000" # Uses: 8041
+"/->" # Uses: 8358
+"\000\000\000\000" # Uses: 7622
+">=" # Uses: 7764
+"AGES" # Uses: 6457
+"\236\000\000\000\000\000\000\000" # Uses: 5652
+"WIT" # Uses: 5485
+"\\\\" # Uses: 5207
+"\377\377\377\377\377\377\012c" # Uses: 3867
+"-[" # Uses: 4344
+"/*" # Uses: 4141
+"#\001\000\000\000\000\000\000" # Uses: 3583
+"+ " # Uses: 3966
+"\000:" # Uses: 3678
+", 1" # Uses: 3697
+"BI" # Uses: 3493
+"\376\377\377\355" # Uses: 3116
+"\001\000\000\000\000\000\001\366" # Uses: 2549
+"/~>" # Uses: 2805
+"\\\"" # Uses: 2733
+"\036\000" # Uses: 2071
+"DIFFE" # Uses: 1880
+"WITH" # Uses: 1548
+"$t" # Uses: 1433
+"B0X" # Uses: 1393
+"\002\262" # Uses: 711
+"|+|" # Uses: 685
+###### End of recommended dictionary. ######
+Done 10000000 runs in 876 second(s)
+# exit 0 at 2026-10-11T10:30:00Z

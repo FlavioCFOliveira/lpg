@@ -1,0 +1,1 @@
+RETURN {k: 'a', l: 2} = {k: 'a', l: 2} AS result

@@ -1,0 +1,12 @@
+RETURN true OR true OR true OR true OR true OR true OR true OR true OR true OR true OR true AS t,
+       true OR true OR true OR false OR true OR true OR true OR true OR true OR true OR true AS tsf,
+       true OR true OR true OR null OR true OR true OR true OR true OR true OR true OR true AS tsn,
+       false OR false OR false OR false OR false OR false OR false OR false OR false OR false OR false AS f,
+       false OR false OR false OR false OR true OR false OR false OR false OR false OR false OR false AS fst,
+       false OR false OR false OR false OR false OR false OR null OR false OR false OR false OR false AS fsn,
+       null OR null OR null OR null OR null OR null OR null OR null OR null OR null OR null AS n,
+       null OR null OR null OR null OR true OR null OR null OR null OR null OR null OR null AS nst,
+       null OR null OR null OR null OR false OR null OR null OR null OR null OR null OR null AS nsf,
+       true OR false OR false OR false OR true OR false OR false OR true OR true OR true OR false AS m1,
+       true OR true OR false OR false OR true OR false OR false OR true OR true OR true OR false AS m2,
+       true OR true OR false OR false OR true OR null OR false OR true OR true OR null OR false AS m3

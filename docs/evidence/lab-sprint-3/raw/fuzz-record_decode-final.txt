@@ -1,0 +1,43 @@
+# cargo +nightly fuzz run --target-dir /dev/shm/lpg-target/fuzz-final record_decode fuzz/corpus/record_decode -- -runs=1000000  (base 44c2dcb + round-D working tree, 2026-10-11T10:15:24Z)
+# corpus files at start: 1684
+    Blocking waiting for file lock on package cache
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.03s
+    Blocking waiting for file lock on package cache
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.03s
+     Running `/dev/shm/lpg-target/fuzz-final/x86_64-unknown-linux-gnu/release/record_decode -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/record_decode/ -runs=1000000 fuzz/corpus/record_decode`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2913462702
+INFO: Loaded 1 modules   (7776 inline 8-bit counters): 7776 [0x55bd43f03d90, 0x55bd43f05bf0), 
+INFO: Loaded 1 PC tables (7776 PCs): 7776 [0x55bd43f05bf0,0x55bd43f241f0), 
+INFO:     1684 files found in fuzz/corpus/record_decode
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 1684 min: 1b max: 4051b total: 241826b rss: 34Mb
+#1687	INITED cov: 1512 ft: 4188 corp: 987/111Kb exec/s: 0 rss: 81Mb
+#1000000	DONE   cov: 1514 ft: 4292 corp: 1034/130Kb lim: 4096 exec/s: 100000 rss: 318Mb
+###### Recommended dictionary. ######
+"afrD" # Uses: 12314
+"\326x\347\307" # Uses: 9651
+"Africa/Bla\000\000\000\000\000" # Uses: 8142
+"\377\377\377_\001\033\234\022" # Uses: 8875
+"\001\000\000\000\000\000\000\000" # Uses: 8298
+"\001\000\006\016" # Uses: 7661
+"H]1\024" # Uses: 4725
+"<\232\312\000" # Uses: 4004
+"?\000" # Uses: 3381
+"\377?" # Uses: 3092
+"Africa/Blnteyar" # Uses: 2018
+"\000\000\000\000\000\000\000+" # Uses: 2260
+"Afri" # Uses: 2088
+"\253\252\252\252\252\252\252\012" # Uses: 1633
+"\325\322\306\263" # Uses: 1082
+"\005\000\000\000\000\000\000\000" # Uses: 975
+"\000\000\000\000\000\000\000\000" # Uses: 640
+"8\000\000\000" # Uses: 741
+"afqica/jrazz\033\000!" # Uses: 315
+"\001\000\000\000\000\000\004\307" # Uses: 110
+"\344\005\000\000\000\000\000\000" # Uses: 59
+"Africa/B" # Uses: 55
+"\001\000\000\000\000\000\005\307" # Uses: 34
+###### End of recommended dictionary. ######
+Done 1000000 runs in 10 second(s)
+# exit 0 at 2026-10-11T10:15:35Z

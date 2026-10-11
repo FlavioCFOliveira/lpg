@@ -1,0 +1,1 @@
+CREATE GRAPH ANY AS COPY OF mysrcgraph

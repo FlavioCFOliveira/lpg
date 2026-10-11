@@ -1,0 +1,40 @@
+Differential on the stored corpora, 2026-10-11, aa25a75 plus the working tree: cargo nextest run -p lpg --run-ignored all --no-capture -E 'test(/differential::(scenario_texts|stored_corpora|test_texts|differential_stored_labels)/)'. Scenario texts: 1 386 (745 ACCEPT, 641 REJECT), unchanged; no GQL text of a scenario changed (only the expectation step of one gql-compat case). Every test passes: 0 differences.
+info: experimental features enabled: wrapper-scripts
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.02s
+────────────
+ Nextest run ID 5d86c67e-5bf1-4b35-b42b-f1da59b4c3cb with nextest profile: default
+    Starting 4 tests across 1 binary (534 tests skipped)
+       START [         ] (1/4) lpg query::parser::differential::differential_stored_labels_are_current
+
+running 1 test
+test query::parser::differential::differential_stored_labels_are_current ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 537 filtered out; finished in 1.23s
+
+        PASS [   1.234s] (1/4) lpg query::parser::differential::differential_stored_labels_are_current
+       START [         ] (2/4) lpg query::parser::differential::scenario_texts_match_the_oracle_labels
+
+running 1 test
+test query::parser::differential::scenario_texts_match_the_oracle_labels ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 537 filtered out; finished in 0.02s
+
+        PASS [   0.025s] (2/4) lpg query::parser::differential::scenario_texts_match_the_oracle_labels
+       START [         ] (3/4) lpg query::parser::differential::stored_corpora_match_the_oracle_labels
+
+running 1 test
+test query::parser::differential::stored_corpora_match_the_oracle_labels ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 537 filtered out; finished in 0.02s
+
+        PASS [   0.029s] (3/4) lpg query::parser::differential::stored_corpora_match_the_oracle_labels
+       START [         ] (4/4) lpg query::parser::differential::test_texts_match_the_oracle_labels
+
+running 1 test
+test query::parser::differential::test_texts_match_the_oracle_labels ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 537 filtered out; finished in 0.02s
+
+        PASS [   0.024s] (4/4) lpg query::parser::differential::test_texts_match_the_oracle_labels
+────────────
+     Summary [   1.313s] 4 tests run: 4 passed, 534 skipped

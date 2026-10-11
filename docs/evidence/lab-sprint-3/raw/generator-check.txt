@@ -1,0 +1,7 @@
+seed 20261008
+sentences 10000, tokens 83272 (mean 8.3, max 64)
+budget max 64 tokens (largest minimal context 13)
+directed sentences 125
+parser rules 574, reachable from gqlProgram 571, expanded 571, missing 0
+oracle: accepted 10000, rejected 0
+mutants 10000: accepted 210, rejected 9790

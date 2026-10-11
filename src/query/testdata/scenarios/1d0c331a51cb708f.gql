@@ -1,0 +1,3 @@
+RETURN NOT false >= false AS a,
+       NOT (false >= false) AS b,
+       (NOT false) >= false AS c

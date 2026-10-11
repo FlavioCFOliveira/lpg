@@ -1,0 +1,2 @@
+MATCH (p:Person)
+RETURN AVG(p.age) AS mean

@@ -1,0 +1,3 @@
+RETURN true OR true XOR true AS a,
+       true OR (true XOR true) AS b,
+       (true OR true) XOR true AS c

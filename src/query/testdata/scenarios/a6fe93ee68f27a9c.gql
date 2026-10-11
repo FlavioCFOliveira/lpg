@@ -1,0 +1,3 @@
+MATCH (:Root)-->(i:Child)
+WHERE i.var IS NULL OR i.var > 'x'
+RETURN i.var
