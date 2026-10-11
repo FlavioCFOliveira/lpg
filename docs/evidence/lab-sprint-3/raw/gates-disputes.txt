@@ -1,0 +1,53 @@
+Gates after the dispute decisions (DECISION 386 on rmp #52), 2026-10-11, aa25a75 plus the working tree.
+Command: LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs .config/gates.sh
+findmnt /mnt/lpg-xfs: /dev/loop59 xfs
+
+gate logs: /tmp/lpg-gates-disputes
+clippy: exit 0, 1 s
+fmt: exit 0, 5 s
+cfgfuzz: exit 0, 37 s
+loom: exit 0, 184 s
+nextest: exit 0, 191 s
+shuttle: exit 0, 203 s
+concurrent gates: 203 s
+stress: exit 0, 63 s
+all gates: 266 s, 0 failed
+exit 0
+
+== fmt.log (tail)
+
+== clippy.log (tail)
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.11s
+
+== cfgfuzz.log (tail)
+    Checking jiff v0.2.38
+    Checking rand v0.10.3
+    Checking lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 36.67s
+
+== nextest.log (tail)
+        PASS [ 187.812s] (509/510) lpg suites::fault::restore_
+        PASS [  39.193s] (510/510) lpg suites::fault::transactions
+────────────
+     Summary [ 189.864s] 510 tests run: 510 passed (3 slow), 28 skipped
+
+== loom.log (tail)
+test storage::wal::tests::loom_published_timestamps_increase_and_never_exceed_the_durable_ones ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 416 filtered out; finished in 42.30s
+
+
+== shuttle.log (tail)
+test tx::tests::shuttle::shuttle_commits_and_checkpoints_under_random_schedules ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 416 filtered out; finished in 26.98s
+
+
+== stress.log (tail)
+    stress: 16 copies, LPG_SEED 2369223089 to 2369223104, 0 failed
+
+────────────
+     Summary [  62.333s] 69 tests run: 69 passed, 469 skipped

@@ -834,6 +834,7 @@ mod catalog {
 
     use super::support::{error, rows, rows_in, session};
     use crate::catalog::{Kind, ROOT};
+    use crate::error::Error;
     use crate::query::exec::{Params, run};
     use crate::test_support::OWNER;
     use crate::tx::Isolation;
@@ -1020,15 +1021,27 @@ mod catalog {
         let (_d, e) = db();
         rows(&e, "CREATE SCHEMA /s");
         rows(&e, "CREATE GRAPH /s/g { (:A) }");
-        assert_eq!(error(&e, "CREATE GRAPH /s/g ANY").code(), "42N11");
+        // A catalog-modifying statement that fails with 42N11, 42002 or
+        // G1000 reports 42000 with that error as its cause (opengql/tck
+        // `Create1.feature`, `drop1.feature`; DECISION 386 on rmp #52).
+        let caused = |text: &str, cause: &str| {
+            let err = error(&e, text);
+            assert_eq!(err.code(), "42000", "{text}");
+            assert_eq!(err.cause().map(Error::code), Some(cause), "{text}");
+        };
+        caused("CREATE GRAPH /s/g ANY", "42N11");
+        caused("CREATE SCHEMA /s", "42N11");
         rows(&e, "CREATE OR REPLACE GRAPH /s/g ANY");
-        assert_eq!(error(&e, "DROP SCHEMA /s").code(), "G1000");
+        caused("DROP SCHEMA /s", "G1000");
+        caused("CREATE SCHEMA /s/g", "42002");
+        caused("DROP SCHEMA /s/g", "42002");
         rows(&e, "DROP GRAPH /s/g");
         rows(&e, "DROP SCHEMA /s");
-        assert_eq!(error(&e, "DROP GRAPH /s/g").code(), "42002");
+        caused("DROP GRAPH /s/g", "42002");
+        caused("DROP SCHEMA /s", "42002");
         rows(&e, "CREATE GRAPH TYPE t { (:A) }");
         rows(&e, "CREATE GRAPH h TYPED t");
-        assert_eq!(error(&e, "DROP GRAPH TYPE t").code(), "G1000");
+        caused("DROP GRAPH TYPE t", "G1000");
         rows(&e, "CREATE GRAPH TYPE t2 COPY OF t");
         rows(&e, "CREATE GRAPH h2 TYPED t2");
         assert_eq!(error(&e, "USE h2 INSERT (:B)").code(), "G2000");

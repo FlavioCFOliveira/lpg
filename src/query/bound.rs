@@ -318,6 +318,31 @@ pub(crate) enum CatalogOp {
     DropGraphType(Vec<Box<str>>),
 }
 
+/// The error of a catalog-modifying statement that fails with 42N11 (the
+/// object exists), 42002 (a name resolves to nothing or to an object of
+/// another kind) or G1000 (the object still has dependants): 42000, with
+/// that error as its cause, as opengql/tck expects 42000 for each of them
+/// (`Create1.feature`, `drop1.feature`). The pair follows the 42001 +
+/// 51N26 pattern of an unsupported feature (`interfaces.md` "GQLSTATUS
+/// codes"; DECISION 386 on rmp #52). Any other error is returned as it is.
+pub(crate) fn catalog_failure(e: crate::error::Error) -> crate::error::Error {
+    use crate::gqlstatus::codes;
+    let what = match e.status() {
+        s if s == codes::C42N11 => "the object already exists",
+        s if s == codes::C42002 => "a name resolves to no object of the required kind",
+        s if s == codes::CG1000 => "the object still has dependent objects",
+        _ => return e,
+    };
+    let mut top = crate::error::Error::new(
+        codes::C42000,
+        format!("syntax error or access rule violation: {what}"),
+    );
+    if let Some(p) = e.position() {
+        top = top.at(p);
+    }
+    top.caused_by(e)
+}
+
 /// The type of a graph being created.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum GraphTypeOf {

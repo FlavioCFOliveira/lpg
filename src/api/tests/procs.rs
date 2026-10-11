@@ -78,6 +78,15 @@ impl ReadProcedure for Counter {
     }
 }
 
+/// A procedure without result columns.
+struct Void;
+
+impl ReadProcedure for Void {
+    fn call(&self, _: &mut ReadContext<'_>, _: &[Value]) -> Result<Rows, Error> {
+        Ok(Box::new(std::iter::empty()))
+    }
+}
+
 fn register_all(db: &Database, one: &Arc<One>) {
     db.register_procedure(
         Signature::new(
@@ -205,9 +214,51 @@ fn read_write_procedures_run_in_the_callers_transaction_and_read_only_ones_canno
                 .code(),
             "42N02"
         );
-        // Outside a query, as a data-modifying statement, it may write.
-        rows(&sess, "MATCH (n:ByProc) CALL test.write()").await;
+        // Outside a query, as a data-modifying statement, it may write;
+        // as part of a larger statement it needs YIELD (Neo4j).
+        rows(&sess, "MATCH (n:ByProc) CALL test.write() YIELD done").await;
         assert_eq!(int(&sess, "MATCH (n:ByProc) RETURN count(*) AS c").await, 2);
+        db.close().await.unwrap();
+    });
+}
+
+/// A `CALL` without `YIELD` that is part of a larger statement fails with
+/// 42002 and the cause 42N25 when the procedure has result columns, as
+/// Neo4j fails it; a standalone `CALL` without `YIELD` returns every
+/// column, and a procedure without result columns needs no `YIELD`
+/// (Neo4j `ResolvedCall.resultCheck`; DECISION 386 on rmp #52).
+#[test]
+fn an_in_query_call_without_yield_fails_and_a_standalone_one_returns_every_column() {
+    both(|| async {
+        let d = graph_dir();
+        let db = create(d.path(), &TestAuth::new()).await;
+        register_all(&db, &Arc::new(One::default()));
+        db.register_procedure(Signature::new("test.void", vec![], &[]), Arc::new(Void))
+            .unwrap();
+        let sess = session(&db, OWNER).await;
+        let st = sess
+            .execute("CALL test.one(1, 'x')", Parameters::new())
+            .await
+            .unwrap();
+        assert_eq!(st.columns(), ["n", "name"]);
+        drop(st);
+        for q in [
+            "CALL test.one(1, 'x') RETURN n",
+            "CALL test.one(1, 'x') RETURN 1 AS k",
+            "MATCH (m) CALL test.tally() RETURN m",
+            "MATCH (m) CALL test.write()",
+        ] {
+            let e = error(&sess, q).await;
+            assert_eq!(e.code(), "42002", "{q}");
+            assert_eq!(e.cause().map(Error::code), Some("42N25"), "{q}");
+        }
+        assert_eq!(
+            rows(&sess, "CALL test.one(1, 'x') YIELD n RETURN n")
+                .await
+                .len(),
+            1
+        );
+        rows(&sess, "CALL test.void() RETURN 1 AS k").await;
         db.close().await.unwrap();
     });
 }

@@ -13,7 +13,7 @@
 //!   pass; the others are skipped with the codes that exclude them.
 //!   [`EXCEPTIONS`] lists the selected instances that do something else,
 //!   with why: an engine gate the rule cannot see, an expectation outside
-//!   GQL, or a dispute reported to the user. Each must do exactly what the
+//!   GQL, or a divergence the user decided to keep. Each must do exactly what the
 //!   list says ([`run::Instead`]).
 //! * **Clause or feature code**: every scenario carries a feature-code tag
 //!   or a `@clause-N.N` tag, or its file has a clause in
@@ -49,9 +49,10 @@ enum Why {
     Gate,
     /// What it expects is outside GQL as the cited source defines it.
     NotGql,
-    /// It contradicts a recorded lpg decision or is defective; reported to
-    /// the user, awaiting a decision. Its current behaviour is pinned.
-    Disputed,
+    /// A recorded divergence: it contradicts an lpg decision the user kept,
+    /// or it is defective upstream (DECISION 386 on rmp #52). What lpg does
+    /// instead is pinned; it never counts as passed.
+    Divergence,
 }
 
 /// A selected scenario that does something else: artefact, file, title,
@@ -83,12 +84,10 @@ const GF20: &str = "an aggregate in a sort key is GF20 (rmp #43 binder)";
 /// (`ISO_IEC_39075(en).bnf.txt:2639-2670`); lpg's two duration types
 /// (GV41, TS-21) hold no mixed value.
 const DURATION: &str = "not a GQL duration string (ISO BNF insert 2639-2670; GV41 types)";
-const CODES: &str = "lpg's code for this failure is recorded in interfaces.md \"GQLSTATUS codes\"; opengql/tck expects 42000";
-const DIRS: &str = "needs CREATE SCHEMA to create its parent directory; FR-CAT-005: directories only through the API";
+const DIRS: &str = "needs CREATE SCHEMA to create its parent directory; FR-CAT-005 kept (DECISION 386 on rmp #52): directories only through the API";
 
 const GC_QUERY: &str = "gql-compat/10-mandatory-query.feature";
 const GC_SESSION: &str = "gql-compat/13-mandatory-session.feature";
-const GC_CONDITIONS: &str = "gql-compat/30-conditions.feature";
 const GC_VALUE: &str = "gql-compat/31-conditions-value.feature";
 
 const EXCEPTIONS: &[Exception] = &[
@@ -106,25 +105,16 @@ const EXCEPTIONS: &[Exception] = &[
         GC_SESSION,
         "Scenario: [mandatory/session/set-schema-at-the-root] A session may be pointed at the root of the catalog",
         "",
-        Why::Disputed,
+        Why::Divergence,
         Instead::Fails("42002"),
-        "the root is a directory, not a schema (TS-17); whether `/` names a schema needs the ISO text (unverified point 1)",
-    ),
-    (
-        "lpg",
-        GC_CONDITIONS,
-        "Scenario: [condition/42002/redeclared-variable] Binding one variable to two different element types is an invalid reference",
-        "",
-        Why::Disputed,
-        Instead::Fails("42000"),
-        "a variable bound twice is 42000 (DECISION 326 on rmp #43); gql-compat expects 42002",
+        "the root is a directory, not a schema (TS-17), kept by DECISION 386 on rmp #52",
     ),
     (
         "lpg",
         GC_VALUE,
         "Scenario: [condition/22g04/comparing-a-number-with-a-string] Comparing values of unrelated types raises values not comparable",
         "",
-        Why::Disputed,
+        Why::Divergence,
         Instead::Succeeds,
         "`<` across type groups is NULL (IV002, IV010; user decision 2026-10-07); gql-compat expects 22G04",
     ),
@@ -273,30 +263,21 @@ const EXCEPTIONS: &[Exception] = &[
         DURATION,
     ),
     (
-        "opencypher",
-        "clauses/call/Call1.feature",
-        "Scenario: [12] In-query call to procedure that has outputs fails if no outputs are yielded",
-        "",
-        Why::Disputed,
-        Instead::Succeeds,
-        "a CALL without YIELD binds every column (DECISION 360 on rmp #50)",
-    ),
-    (
         "opengql-tck",
         "expressions/aggregation/Aggregation3.feature",
         "Scenario: [1] Sum only non-null values",
         "",
-        Why::Disputed,
+        Why::Divergence,
         Instead::Fails("42000"),
-        "defective: its setup INSERTs give the bound 'p' labels, and its header names n.name, sum(n.num)",
+        "defective upstream (DECISION 386 on rmp #52): its setup INSERTs give the bound 'p' labels, and its header names n.name, sum(n.num)",
     ),
     (
         "opengql-tck",
         "Debug.feature",
         "Scenario: [4] Raise error condition creating a schema whose name identifies a directory",
         "",
-        Why::Disputed,
-        Instead::Fails("42002"),
+        Why::Divergence,
+        Instead::FailsCaused("42000", "42002"),
         DIRS,
     ),
     (
@@ -304,8 +285,8 @@ const EXCEPTIONS: &[Exception] = &[
         CREATE1,
         "Scenario: [2] Create a schema, in a directory",
         "",
-        Why::Disputed,
-        Instead::Fails("42002"),
+        Why::Divergence,
+        Instead::FailsCaused("42000", "42002"),
         DIRS,
     ),
     (
@@ -313,8 +294,8 @@ const EXCEPTIONS: &[Exception] = &[
         CREATE1,
         "Scenario: [4] Raise error condition creating a schema whose name identifies a directory",
         "",
-        Why::Disputed,
-        Instead::Fails("42002"),
+        Why::Divergence,
+        Instead::FailsCaused("42000", "42002"),
         DIRS,
     ),
     (
@@ -322,72 +303,9 @@ const EXCEPTIONS: &[Exception] = &[
         DROP1,
         "Scenario: [3] Raise error condition dropping a schema whose name identifies a directory",
         "",
-        Why::Disputed,
-        Instead::Fails("42002"),
+        Why::Divergence,
+        Instead::FailsCaused("42000", "42002"),
         DIRS,
-    ),
-    (
-        "opengql-tck",
-        CREATE1,
-        "Scenario: [3] Raise error condition creating a schema that already exists",
-        "",
-        Why::Disputed,
-        Instead::Fails("42N11"),
-        CODES,
-    ),
-    (
-        "opengql-tck",
-        CREATE1,
-        "Scenario: [5] Raise error condition creating a schema whose name identifies a graph",
-        "",
-        Why::Disputed,
-        Instead::Fails("42002"),
-        CODES,
-    ),
-    (
-        "opengql-tck",
-        CREATE1,
-        "Scenario: [6] Raise error condition creating a schema whose name identifies a graph type",
-        "",
-        Why::Disputed,
-        Instead::Fails("42002"),
-        CODES,
-    ),
-    (
-        "opengql-tck",
-        DROP1,
-        "Scenario: [2] Raise error condition dropping a schema that doesn't exists",
-        "",
-        Why::Disputed,
-        Instead::Fails("42002"),
-        CODES,
-    ),
-    (
-        "opengql-tck",
-        DROP1,
-        "Scenario: [4] Raise error condition dropping a schema whose name identifies a graph",
-        "",
-        Why::Disputed,
-        Instead::Fails("42002"),
-        CODES,
-    ),
-    (
-        "opengql-tck",
-        DROP1,
-        "Scenario: [5] Raise error condition dropping a schema whose name identifies a graph type",
-        "",
-        Why::Disputed,
-        Instead::Fails("42002"),
-        CODES,
-    ),
-    (
-        "opengql-tck",
-        DROP1,
-        "Scenario: [6] Raise error condition dropping a non-empty schema",
-        "",
-        Why::Disputed,
-        Instead::Fails("G1000"),
-        CODES,
     ),
 ];
 
@@ -564,7 +482,7 @@ struct Counts {
     unselected: usize,
     gate: usize,
     not_gql: usize,
-    disputed: usize,
+    divergence: usize,
 }
 
 /// Prints the verdicts and their counts; `LPG_TCK_REPORT` names a file
@@ -591,13 +509,13 @@ fn report(artefact: &str, verdicts: &[(String, Verdict)]) -> Counts {
                 match w {
                     Why::Gate => c.gate += 1,
                     Why::NotGql => c.not_gql += 1,
-                    Why::Disputed => c.disputed += 1,
+                    Why::Divergence => c.divergence += 1,
                 }
                 (
                     match w {
                         Why::Gate => "GATE",
                         Why::NotGql => "NOT-GQL",
-                        Why::Disputed => "DISPUTED",
+                        Why::Divergence => "DIVERGENCE",
                     },
                     why.as_str(),
                 )
@@ -790,4 +708,28 @@ fn a_wrong_expected_row_fails_the_runner() {
     ] {
         assert!(scenario(rows, order).is_err(), "{rows} {order}");
     }
+}
+
+/// The runner checks the cause of `X caused by Y`: the right cause passes,
+/// a wrong cause or none fails (a permanent check that it compares causes
+/// at all).
+#[test]
+fn a_wrong_expected_cause_fails_the_runner() {
+    let scenario = |expected: &str, query: &str| {
+        let src = format!(
+            "Feature: f\n  Scenario: s\n    Given any graph\n    When executing query:\n      \
+             \"\"\"\n      {query}\n      \"\"\"\n    \
+             Then an exception condition should be raised: {expected}\n"
+        );
+        let s = scan::scan("self-test.feature", &src).remove(0);
+        let dir = tempfile::tempdir_in(graph_base()).expect("a scenario dir");
+        run::run(&s, dir.path(), dir.path(), None)
+    };
+    let conflict = "MATCH (a)-[k]->(b), (k) RETURN 1 AS x";
+    assert!(scenario("42000 caused by 22N27", conflict).is_ok());
+    assert!(scenario("42000", conflict).is_ok());
+    assert!(scenario("42000 caused by 42002", conflict).is_err());
+    assert!(scenario("42002 caused by 22N27", conflict).is_err());
+    // 42002 without a cause.
+    assert!(scenario("42002 caused by 22N27", "RETURN y AS x").is_err());
 }

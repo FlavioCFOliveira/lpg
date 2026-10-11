@@ -341,7 +341,7 @@ impl<'a> Binder<'a> {
                 let Spanned(ast::CatalogModifyingStatement::Call(c), span) = &list[0] else {
                     unreachable!("matched above");
                 };
-                self.at(*span, |b| b.bind_call(c))?;
+                self.at(*span, |b| b.bind_call(c, false))?;
                 if let Some(Part::Call { yields, .. }) = self.parts.last() {
                     self.columns = yields
                         .iter()
@@ -353,7 +353,10 @@ impl<'a> Binder<'a> {
             ast::Statement::Catalog(list) => {
                 let mut ops = Vec::new();
                 for Spanned(c, span) in list {
-                    ops.push(self.at(*span, |b| b.bind_catalog(c))?);
+                    ops.push(
+                        self.at(*span, |b| b.bind_catalog(c))
+                            .map_err(crate::query::bound::catalog_failure)?,
+                    );
                 }
                 Ok(Body::Catalog(ops))
             }

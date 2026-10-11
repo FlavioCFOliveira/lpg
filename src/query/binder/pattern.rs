@@ -420,12 +420,20 @@ impl Binder<'_> {
             .or_else(|| self.lookup(name));
         if let Some(s) = found {
             if self.slots[s].kind != kind {
+                // 42000 (DECISION 326 on rmp #43), with the cause Neo4j
+                // gives a variable used as another element kind: 22N27,
+                // invalid entity type (`SemanticState.implicitVariable`,
+                // `SemanticError.invalidEntityType`; DECISION 386 on
+                // rmp #52).
+                let (was, used) = (kind_name(self.slots[s].kind), kind_name(kind));
                 return Err(self.locate(
-                    rule(&format!(
-                        "'{name}' is bound twice, as a {} and as a {}",
-                        kind_name(self.slots[s].kind),
-                        kind_name(kind)
-                    )),
+                    rule(&format!("'{name}' is bound twice, as a {was} and as a {used}"))
+                        .caused_by(Error::new(
+                            codes::C22N27,
+                            format!(
+                                "invalid entity type: the variable '{name}' is a {was}, expected a {used}"
+                            ),
+                        )),
                     *span,
                 ));
             }

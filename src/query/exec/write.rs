@@ -27,7 +27,9 @@ use super::{Batch, Cx, Held, Operator, row_bytes};
 use crate::catalog::{Definition, Kind, ROOT, TokenKind};
 use crate::error::Error;
 use crate::gqlstatus::codes;
-use crate::query::bound::{CatalogOp, GraphTypeOf, GraphTypeSource, InsertPattern, Name, SetItem};
+use crate::query::bound::{
+    CatalogOp, GraphTypeOf, GraphTypeSource, InsertPattern, Name, SetItem, catalog_failure,
+};
 use crate::query::expr::{Slot, eval, invalid_type, type_name};
 use crate::query::graph_type::GraphType;
 use crate::storage::graph::Graph;
@@ -595,7 +597,7 @@ impl Operator for Catalog {
         if !self.done {
             self.done = true;
             for op in &self.ops {
-                run_catalog(cx, op)?;
+                run_catalog(cx, op).map_err(catalog_failure)?;
             }
         }
         Ok(None)

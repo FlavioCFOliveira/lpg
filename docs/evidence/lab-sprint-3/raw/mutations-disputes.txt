@@ -1,0 +1,49 @@
+Reversion check of the dispute decisions (DECISION 386 on rmp #52), 2026-10-11, on aa25a75 plus the working tree.
+The three fixes reverted at once, then restored from copies:
+  M1 src/query/bound.rs catalog_failure: returns every error unchanged (catalog statements keep 42N11, 42002, G1000).
+  M2 src/query/binder/statements.rs bind_call: the in-query YIELD rule disabled (if false && ...).
+  M3 src/query/binder/pattern.rs element_var: the 22N27 cause removed (plain 42000).
+
+== Reverted: cargo nextest run -p lpg --no-fail-fast -E 'test(/^(tck|api::tests::procs|query::binder::tests|query::exec::tests::catalog)::/)'
+        FAIL [   0.045s] (15/27) lpg tck::a_wrong_expected_cause_fails_the_runner
+        FAIL [   0.049s] ( 4/27) lpg query::binder::tests::no_statement_creates_a_directory
+        FAIL [   0.051s] ( 8/27) lpg query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail
+        FAIL [   0.053s] (10/27) lpg api::tests::procs::an_in_query_call_without_yield_fails_and_a_standalone_one_returns_every_column
+        FAIL [   0.071s] (17/27) lpg query::exec::tests::catalog::drop_statements_and_their_errors
+        FAIL [   0.579s] (25/27) lpg tck::opengql_tck_selected_scenarios_pass
+        FAIL [   0.667s] (26/27) lpg tck::lpg_scenarios_pass
+        FAIL [   0.959s] (27/27) lpg tck::opencypher_tck_selected_scenarios_pass
+     Summary [   1.012s] 27 tests run: 19 passed, 8 failed, 511 skipped
+
+FAIL opengql-tck/Debug.feature: Scenario: [4] Raise error condition creating a schema whose name identifies a directory
+listed as Divergence FailsCaused("42000", "42002"), but: step 2 failed with 42002: invalid reference: no directory at /foo
+FAIL opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [2] Create a schema, in a directory
+listed as Divergence FailsCaused("42000", "42002"), but: step 2 failed with 42002: invalid reference: no directory at /foo
+FAIL opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [3] Raise error condition creating a schema that already exists
+step 4 "an exception condition should be raised: 42000": failed with 42N11: a catalog object of that name already exists in that parent, expected ["42000"]
+FAIL opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [4] Raise error condition creating a schema whose name identifies a directory
+listed as Divergence FailsCaused("42000", "42002"), but: step 2 failed with 42002: invalid reference: no directory at /foo
+FAIL opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [5] Raise error condition creating a schema whose name identifies a graph
+step 4 "an exception condition should be raised: 42000": failed with 42002: invalid reference: no directory at /foo, expected ["42000"]
+FAIL opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [6] Raise error condition creating a schema whose name identifies a graph type
+step 4 "an exception condition should be raised: 42000": failed with 42002: invalid reference: no directory at /foo, expected ["42000"]
+FAIL opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [2] Raise error condition dropping a schema that doesn't exists
+step 3 "an exception condition should be raised: 42000": failed with 42002: invalid reference: no schema at /missing_schema, expected ["42000"]
+FAIL opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [3] Raise error condition dropping a schema whose name identifies a directory
+listed as Divergence FailsCaused("42000", "42002"), but: step 2 failed with 42002: invalid reference: no directory at /foo
+FAIL opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [4] Raise error condition dropping a schema whose name identifies a graph
+step 4 "an exception condition should be raised: 42000": failed with 42002: invalid reference: no directory at /foo, expected ["42000"]
+FAIL opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [5] Raise error condition dropping a schema whose name identifies a graph type
+step 4 "an exception condition should be raised: 42000": failed with 42002: invalid reference: no directory at /foo, expected ["42000"]
+FAIL opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [6] Raise error condition dropping a non-empty schema
+step 4 "an exception condition should be raised: 42000": failed with G1000: the directory or schema still holds an object, expected ["42000"]
+FAIL lpg/gql-compat/30-conditions.feature: Scenario: [condition/42002/redeclared-variable] Binding one variable to two different element types is an invalid reference
+step 4 "an exception condition should be raised: 42000 caused by 22N27": failed with 42000: syntax error or access rule violation: 'k' is bound twice, as a edge and as a node (at line 1, column 42) without a cause, expected 22N27
+FAIL opencypher/clauses/call/Call1.feature: Scenario: [12] In-query call to procedure that has outputs fails if no outputs are yielded
+step 4 "a SyntaxError should be raised at compile time: UndefinedVariable": succeeded with [], expected ["42002"]
+opengql-tck: 139 instances; Counts { passed: 33, failed: 11, unselected: 94, gate: 0, not_gql: 0, divergence: 1 }
+lpg: 138 instances; Counts { passed: 134, failed: 1, unselected: 0, gate: 1, not_gql: 0, divergence: 2 }
+opencypher: 1091 instances; Counts { passed: 183, failed: 1, unselected: 891, gate: 10, not_gql: 6, divergence: 0 }
+
+== Restored (cmp with the copies: identical), same command
+     Summary [   1.039s] 27 tests run: 27 passed, 511 skipped

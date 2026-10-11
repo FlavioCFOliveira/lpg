@@ -1,4 +1,5 @@
 translated 124 of 130 selected cases
+  decided: condition/42002/redeclared-variable: expects 42000 caused by 22N27
   not translated: condition/22g0n/node-with-no-labels: limit IL001: unreachable under lpg's approved value
   not translated: condition/42004/two-identifiers-that-look-the-same: limit IW014: unreachable under lpg's approved value
   not translated: condition/25g02/data-statement-after-a-catalog-statement: unless GP18: lpg supports GP18

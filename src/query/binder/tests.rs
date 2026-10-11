@@ -231,6 +231,17 @@ fn undefined_variables_duplicate_bindings_and_conditional_joins_fail() {
     assert_eq!(code("MATCH (a) RETURN b"), "42002");
     assert_eq!(code("MATCH (a) SET b.p = 1"), "42002");
     assert_eq!(code("MATCH (a)-[a]->(b) RETURN a"), "42000");
+    // A variable bound as two element kinds: 42000 with the cause 22N27,
+    // invalid entity type (gql-compat `condition/42002/redeclared-variable`;
+    // DECISION 386 on rmp #52), in one path pattern or across two.
+    for t in [
+        "MATCH (a)-[a]->(b) RETURN a",
+        "MATCH (p)-[k]->(q), (k) RETURN p",
+    ] {
+        let err = bind_text(&e, t).unwrap_err();
+        assert_eq!(err.code(), "42000", "{t}");
+        assert_eq!(err.cause().map(Error::code), Some("22N27"), "{t}");
+    }
     assert_eq!(code("MATCH (a) RETURN a.p AS x, a.q AS x"), "42000");
     assert_eq!(
         code("MATCH (a) INSERT (a)-[e:T]->(b), (a)-[e:T]->(c)"),
@@ -269,10 +280,11 @@ fn undefined_variables_duplicate_bindings_and_conditional_joins_fail() {
     assert_eq!(code("MATCH (a)-[r]->()-[r]->(a) RETURN r"), "42000");
     assert_eq!(code("MATCH ()-[r]->(), ()-[r]->() RETURN r"), "42000");
     assert_eq!(code("RETURN DATE '2020-13-01'"), "22007");
-    assert_eq!(
-        code("CREATE GRAPH TYPE t { (x :A), (:A)-[:T]->(y) }"),
-        "42002"
-    );
+    // An invalid reference in a catalog-modifying statement is 42000 with
+    // the cause 42002 (DECISION 386 on rmp #52).
+    let err = bind_text(&e, "CREATE GRAPH TYPE t { (x :A), (:A)-[:T]->(y) }").unwrap_err();
+    assert_eq!(err.code(), "42000");
+    assert_eq!(err.cause().map(Error::code), Some("42002"));
     assert_eq!(code("CREATE GRAPH TYPE t { (:A), (:A) }"), "42000");
     assert_eq!(code("USE nosuchgraph MATCH (a) RETURN a"), "42002");
     assert_eq!(code("CALL my.proc()"), "42N08");
@@ -359,7 +371,8 @@ fn no_statement_creates_a_directory() {
         Ok(mut c) => crate::query::exec::collect(&mut c, &mut tx).expect_err("no directory d"),
         Err(err) => err,
     };
-    assert_eq!(err.code(), "42002");
+    assert_eq!(err.code(), "42000");
+    assert_eq!(err.cause().map(Error::code), Some("42002"));
     let mut tx = e.begin(Isolation::Serializable).unwrap();
     assert!(tx.lookup(crate::catalog::ROOT, "d").unwrap().is_none());
 }

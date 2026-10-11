@@ -167,7 +167,7 @@ impl Binder<'_> {
                 }
                 Ok(())
             }
-            ast::SimpleQueryStatement::Call(c) => self.bind_call(c),
+            ast::SimpleQueryStatement::Call(c) => self.bind_call(c, true),
         }
     }
 
@@ -188,8 +188,15 @@ impl Binder<'_> {
     /// routine (42N08). A read-write routine fails with 42N02 inside a
     /// query, where only reads are allowed. Arguments fill the parameters
     /// in order, then their defaults. Without `YIELD`, every result column
-    /// becomes a variable of its name.
-    pub(super) fn bind_call(&mut self, c: &ast::CallProcedureStatement) -> Result<(), Error> {
+    /// becomes a variable of its name, but only in a standalone `CALL`:
+    /// `in_query` (a `CALL` that is part of a larger statement) without
+    /// `YIELD` fails with 42002 and the cause 42N25 when the routine has
+    /// result columns, as Neo4j fails it (DECISION 386 on rmp #52).
+    pub(super) fn bind_call(
+        &mut self,
+        c: &ast::CallProcedureStatement,
+        in_query: bool,
+    ) -> Result<(), Error> {
         let n = match &c.procedure.0 {
             ast::ProcedureCall::Inline(_) => return Err(unsupported("GP01")),
             ast::ProcedureCall::Named(n) => n,
@@ -253,6 +260,28 @@ impl Binder<'_> {
                     ));
                 }
             }
+        }
+        if in_query && n.yield_clause.is_none() && !columns.is_empty() {
+            // Neo4j: "YIELD is necessary if the procedure call is part of
+            // a larger Cypher statement" (Operations Manual, "Call
+            // procedures"); `ResolvedCall.resultCheck` raises 42001 with
+            // the cause 42N25 "missing YIELD", and lets a procedure without
+            // result columns omit it. lpg's 42001 is reserved for text
+            // `GQL.g4` rejects and for unsupported features, so the top
+            // code is ISO 42002: the result columns cannot be referenced.
+            return Err(Error::new(
+                codes::C42002,
+                format!(
+                    "invalid reference: the result columns of the procedure {name} need YIELD inside a query"
+                ),
+            )
+            .caused_by(Error::new(
+                codes::C42N25,
+                format!(
+                    "missing YIELD: a procedure call inside a query does not name its results implicitly; use YIELD with the columns {}",
+                    columns.join(", ")
+                ),
+            )));
         }
         let wanted: Vec<(usize, Box<str>)> = match &n.yield_clause {
             None => columns

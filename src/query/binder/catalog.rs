@@ -136,7 +136,7 @@ impl Binder<'_> {
         self.writes = true;
         match c {
             C::Call(call) => {
-                self.bind_call(call)?;
+                self.bind_call(call, false)?;
                 Err(rule("a procedure call is not a catalog statement"))
             }
             C::CreateSchema(s) => {

@@ -52,6 +52,7 @@ Feature: gql-compat 30-conditions
     Then an exception condition should be raised: 42002
 
   # gql-compat @ 9de1991, corpus/suite/30-conditions.yaml, case condition/42002/redeclared-variable (ISO subclauses 16.4, 16.7, 22.1)
+  # Changed by lpg: expects 42000 with the cause 22N27 (invalid entity type) instead of 42002: a variable bound twice is 42000 (DECISION 326 on rmp #43), with a detailed cause (user decision 2026-10-11, DECISION 386 on rmp #52).
   @clause-16.4 @clause-16.7
   Scenario: [condition/42002/redeclared-variable] Binding one variable to two different element types is an invalid reference
     Given an empty graph
@@ -78,7 +79,7 @@ Feature: gql-compat 30-conditions
       MATCH (p:Person)-[k:KNOWS]->(q:Person), (k:Person)
       RETURN p.name AS name
       """
-    Then an exception condition should be raised: 42002
+    Then an exception condition should be raised: 42000 caused by 22N27
 
   # gql-compat @ 9de1991, corpus/suite/30-conditions.yaml, case condition/22g03/non-boolean-search-condition (ISO subclauses 19.1, 16.13)
   @clause-16.13 @clause-19.1

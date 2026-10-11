@@ -98,7 +98,7 @@ PASS	lpg/gql-compat/12-mandatory-value.feature: Scenario: [mandatory/value/strin
 PASS	lpg/gql-compat/12-mandatory-value.feature: Scenario: [mandatory/value/parameter-reference] A general parameter reference binds a value supplied outside the statement	
 PASS	lpg/gql-compat/12-mandatory-value.feature: Scenario: [mandatory/value/parameter-in-predicate] A parameter is usable wherever a value specification is	
 PASS	lpg/gql-compat/12-mandatory-value.feature: Scenario: [mandatory/value/property-of-absent-key] Reading a property an element does not have gives null, not an error	
-DISPUTED	lpg/gql-compat/13-mandatory-session.feature: Scenario: [mandatory/session/set-schema-at-the-root] A session may be pointed at the root of the catalog	Fails("42002"): the root is a directory, not a schema (TS-17); whether `/` names a schema needs the ISO text (unverified point 1)
+DIVERGENCE	lpg/gql-compat/13-mandatory-session.feature: Scenario: [mandatory/session/set-schema-at-the-root] A session may be pointed at the root of the catalog	Fails("42002"): the root is a directory, not a schema (TS-17), kept by DECISION 386 on rmp #52
 PASS	lpg/gql-compat/13-mandatory-session.feature: Scenario: [mandatory/session/set-schema-by-a-predefined-name] HOME_SCHEMA and CURRENT_SCHEMA name a schema without spelling a path	
 PASS	lpg/gql-compat/13-mandatory-session.feature: Scenario: [mandatory/session/set-schema-at-a-relative-path] A schema reference may climb out of the current schema with two periods	
 PASS	lpg/gql-compat/13-mandatory-session.feature: Scenario: [mandatory/session/set-graph] A session may be pointed at a graph	
@@ -106,7 +106,7 @@ PASS	lpg/gql-compat/13-mandatory-session.feature: Scenario: [mandatory/session/s
 PASS	lpg/gql-compat/13-mandatory-session.feature: Scenario: [mandatory/session/close] A session may be closed by the program running in it	
 PASS	lpg/gql-compat/30-conditions.feature: Scenario: [condition/22012/division-by-zero] Dividing by zero raises data exception, division by zero	
 PASS	lpg/gql-compat/30-conditions.feature: Scenario: [condition/42002/unbound-variable-in-predicate] A where clause naming an unbound variable is an invalid reference	
-DISPUTED	lpg/gql-compat/30-conditions.feature: Scenario: [condition/42002/redeclared-variable] Binding one variable to two different element types is an invalid reference	Fails("42000"): a variable bound twice is 42000 (DECISION 326 on rmp #43); gql-compat expects 42002
+PASS	lpg/gql-compat/30-conditions.feature: Scenario: [condition/42002/redeclared-variable] Binding one variable to two different element types is an invalid reference	
 PASS	lpg/gql-compat/30-conditions.feature: Scenario: [condition/22g03/non-boolean-search-condition] A search condition that is not a boolean raises invalid value type	
 PASS	lpg/gql-compat/30-conditions.feature: Scenario: [condition/22007/invalid-date-format] A date literal that is not a date raises invalid date, time, or datetime format	
 PASS	lpg/gql-compat/30-conditions.feature: Scenario: [condition/22g0h/invalid-duration-format] A duration literal that is not a duration raises invalid duration format	
@@ -116,7 +116,7 @@ PASS	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22008/date
 PASS	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22014/incompatible-temporal-units] Adding hours to a date raises incompatible temporal instant unit groups	
 PASS	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22011/negative-substring-length] Asking for a negative number of characters raises substring error	
 PASS	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22015/duration-past-its-range] Multiplying a duration past its range raises interval field overflow	
-DISPUTED	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22g04/comparing-a-number-with-a-string] Comparing values of unrelated types raises values not comparable	Succeeds: `<` across type groups is NULL (IV002, IV010; user decision 2026-10-07); gql-compat expects 22G04
+DIVERGENCE	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22g04/comparing-a-number-with-a-string] Comparing values of unrelated types raises values not comparable	Succeeds: `<` across type groups is NULL (IV002, IV010; user decision 2026-10-07); gql-compat expects 22G04
 PASS	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22g12/arithmetic-on-a-string] Adding a number to a string raises invalid value type	
 PASS	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22g07/duration-field-that-is-not-a-field] A duration constructor field ISO does not define raises invalid field name	
 PASS	lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/00001/insert-returns-no-result] A statement with nothing to return completes with an omitted result	
@@ -147,7 +147,7 @@ PASS	opencypher/clauses/call/Call1.feature: Scenario: [8] In-query call to proce
 PASS	opencypher/clauses/call/Call1.feature: Scenario: [9] Standalone call to procedure should fail if too many explicit argument are given	
 PASS	opencypher/clauses/call/Call1.feature: Scenario: [10] In-query call to procedure should fail if too many explicit argument are given	
 UNSELECTED	opencypher/clauses/call/Call1.feature: Scenario: [11] Standalone call to procedure should fail if implicit argument is missing	not-gql 
-DISPUTED	opencypher/clauses/call/Call1.feature: Scenario: [12] In-query call to procedure that has outputs fails if no outputs are yielded	Succeeds: a CALL without YIELD binds every column (DECISION 360 on rmp #50)
+PASS	opencypher/clauses/call/Call1.feature: Scenario: [12] In-query call to procedure that has outputs fails if no outputs are yielded	
 UNSELECTED	opencypher/clauses/call/Call1.feature: Scenario: [13] Standalone call to unknown procedure should fail	not-gql 
 PASS	opencypher/clauses/call/Call1.feature: Scenario: [14] In-query call to unknown procedure should fail	
 UNSELECTED	opencypher/clauses/call/Call1.feature: Scenario: [15] In-query procedure call should fail if shadowing an already bound variable	not-gql 
@@ -1227,8 +1227,8 @@ PASS	opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [7] Sh
 NOT-GQL	opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [7] Should parse duration from string ['P2.5W' | 'P17DT12H']	Fails("22G0H"): not a GQL duration string (ISO BNF insert 2639-2670; GV41 types)
 NOT-GQL	opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [7] Should parse duration from string ['P12Y5M14DT16H12M70S' | 'P12Y5M14DT16H13M10S']	Fails("22G0H"): not a GQL duration string (ISO BNF insert 2639-2670; GV41 types)
 NOT-GQL	opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [7] Should parse duration from string ['P2012-02-02T14:37:21.545' | 'P2012Y2M2DT14H37M21.545S']	Fails("22G0H"): not a GQL duration string (ISO BNF insert 2639-2670; GV41 types)
-DISPUTED	opengql-tck/Debug.feature: Scenario: [4] Raise error condition creating a schema whose name identifies a directory	Fails("42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005: directories only through the API
-DISPUTED	opengql-tck/expressions/aggregation/Aggregation3.feature: Scenario: [1] Sum only non-null values	Fails("42000"): defective: its setup INSERTs give the bound 'p' labels, and its header names n.name, sum(n.num)
+DIVERGENCE	opengql-tck/Debug.feature: Scenario: [4] Raise error condition creating a schema whose name identifies a directory	FailsCaused("42000", "42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005 kept (DECISION 386 on rmp #52): directories only through the API
+DIVERGENCE	opengql-tck/expressions/aggregation/Aggregation3.feature: Scenario: [1] Sum only non-null values	Fails("42000"): defective upstream (DECISION 386 on rmp #52): its setup INSERTs give the bound 'p' labels, and its header names n.name, sum(n.num)
 UNSELECTED	opengql-tck/expressions/aggregation/Aggregation3.feature: Scenario: [2] No overflow during summation	not-gql 
 PASS	opengql-tck/expressions/boolean/Boolean1.feature: Scenario: [1] Conjunction of two truth values	
 PASS	opengql-tck/expressions/boolean/Boolean1.feature: Scenario: [2] Conjunction of three truth values	
@@ -1351,18 +1351,18 @@ UNSELECTED	opengql-tck/statements/catalog-modifying/create/graphs/Create2.featur
 UNSELECTED	opengql-tck/statements/catalog-modifying/create/graphs/Create2.feature: Scenario: [7] Creating a closed graph, by copying an existing closed graph with different type, fails	unsupported GG05
 UNSELECTED	opengql-tck/statements/catalog-modifying/create/graphs/Create2.feature: Scenario: [8] Create an open graph, by copying an existing closed graph	not-gql 
 PASS	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [1] Create a schema at the root	
-DISPUTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [2] Create a schema, in a directory	Fails("42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005: directories only through the API
-DISPUTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [3] Raise error condition creating a schema that already exists	Fails("42N11"): lpg's code for this failure is recorded in interfaces.md "GQLSTATUS codes"; opengql/tck expects 42000
-DISPUTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [4] Raise error condition creating a schema whose name identifies a directory	Fails("42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005: directories only through the API
-DISPUTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [5] Raise error condition creating a schema whose name identifies a graph	Fails("42002"): lpg's code for this failure is recorded in interfaces.md "GQLSTATUS codes"; opengql/tck expects 42000
-DISPUTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [6] Raise error condition creating a schema whose name identifies a graph type	Fails("42002"): lpg's code for this failure is recorded in interfaces.md "GQLSTATUS codes"; opengql/tck expects 42000
+DIVERGENCE	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [2] Create a schema, in a directory	FailsCaused("42000", "42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005 kept (DECISION 386 on rmp #52): directories only through the API
+PASS	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [3] Raise error condition creating a schema that already exists	
+DIVERGENCE	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [4] Raise error condition creating a schema whose name identifies a directory	FailsCaused("42000", "42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005 kept (DECISION 386 on rmp #52): directories only through the API
+PASS	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [5] Raise error condition creating a schema whose name identifies a graph	
+PASS	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [6] Raise error condition creating a schema whose name identifies a graph type	
 UNSELECTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [7] Create a schema, if not exists	unsupported GC02
 UNSELECTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [8] Create schema statement fails from read-only transaction	unsupported GT02
 UNSELECTED	opengql-tck/statements/catalog-modifying/create/schemas/Create1.feature: Scenario: [9] Create schema statement fails, if combined with other statements	unsupported GQ20
 PASS	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [1] Drop a schema at the root	
-DISPUTED	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [2] Raise error condition dropping a schema that doesn't exists	Fails("42002"): lpg's code for this failure is recorded in interfaces.md "GQLSTATUS codes"; opengql/tck expects 42000
-DISPUTED	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [3] Raise error condition dropping a schema whose name identifies a directory	Fails("42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005: directories only through the API
-DISPUTED	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [4] Raise error condition dropping a schema whose name identifies a graph	Fails("42002"): lpg's code for this failure is recorded in interfaces.md "GQLSTATUS codes"; opengql/tck expects 42000
-DISPUTED	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [5] Raise error condition dropping a schema whose name identifies a graph type	Fails("42002"): lpg's code for this failure is recorded in interfaces.md "GQLSTATUS codes"; opengql/tck expects 42000
-DISPUTED	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [6] Raise error condition dropping a non-empty schema	Fails("G1000"): lpg's code for this failure is recorded in interfaces.md "GQLSTATUS codes"; opengql/tck expects 42000
+PASS	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [2] Raise error condition dropping a schema that doesn't exists	
+DIVERGENCE	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [3] Raise error condition dropping a schema whose name identifies a directory	FailsCaused("42000", "42002"): needs CREATE SCHEMA to create its parent directory; FR-CAT-005 kept (DECISION 386 on rmp #52): directories only through the API
+PASS	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [4] Raise error condition dropping a schema whose name identifies a graph	
+PASS	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [5] Raise error condition dropping a schema whose name identifies a graph type	
+PASS	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [6] Raise error condition dropping a non-empty schema	
 UNSELECTED	opengql-tck/statements/catalog-modifying/drop/drop1.feature: Scenario: [7] Drop a schema, if exists	unsupported GC02

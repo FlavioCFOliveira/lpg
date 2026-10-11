@@ -147,16 +147,19 @@ Run on 2026-10-11 on commit `44c2dcb` plus the round-D working tree. The last co
 
 **Counts per artefact.** Whole artefacts as the TS-30 rule counts them (reproduces TS-30): opengql/tck 206 instances, 45 selected; openCypher TCK 3 897, 200 selected; gql-compat 107 mandatory cases, 106 selected, and 69 condition cases, 24 selected.
 
-| Artefact | Selected | Passed | Gate (code) | Not GQL | Disputed | Not translated |
+Counts after the user's decisions on the disputes (DECISION 386 on rmp #52), rerun on 2026-10-11 on `aa25a75` plus the working tree ([raw](raw/tck-summary.txt)):
+
+| Artefact | Selected | Passed | Gate (code) | Not GQL | Recorded divergence | Not translated |
 |---|---|---|---|---|---|---|
-| opengql/tck @ `e0700a7` | 45 | 33 | 0 | 0 | 12 | – |
-| openCypher TCK @ `677cbaf` | 200 | 183 | 10 (GB02 8, GF20 2) | 6 | 1 | – |
-| gql-compat @ `9de1991` (translated) | 130 | 120 | 1 (GQ14) | 0 | 3 | 6 |
+| opengql/tck @ `e0700a7` | 45 | 40 | 0 | 0 | 5 | – |
+| openCypher TCK @ `677cbaf` | 200 | 184 | 10 (GB02 8, GF20 2) | 6 | 0 | – |
+| gql-compat @ `9de1991` (translated) | 130 | 121 | 1 (GQ14) | 0 | 2 | 6 |
 | lpg's own (`approved-features.feature`) | 14 | 14 | 0 | 0 | 0 | – |
 
 * **Gate**: an engine gate whose code has no `GQL.g4` construct, so the TS-30 rule cannot see it; the runner checks 42001 with the cause 51N26 naming the code. GB02: `(a)--(b)` is a `--` comment in GQL; GF20: an aggregate in a sort key; GQ14: a sort key that is not a result column (gql-compat places it in the mandatory surface; TS-20 reads GQ14 more strictly; unverified, needs the ISO text).
 * **Not GQL**: duration strings with weeks, fractions outside seconds or mixed year-month and day-time parts (ISO BNF insert, lines 2639-2670), and a duration record with years and days (no GV41 type holds it); the runner checks 22G0H or 22G07.
-* **Disputed** (reported for a decision; the runner pins the current behaviour): opengql/tck expects 42000 where `interfaces.md` gives 42N11, 42002 or G1000 (7); opengql/tck needs `CREATE SCHEMA` to create directories, which FR-CAT-005 forbids (4); `Aggregation3.feature` [1] is defective (1); openCypher `Call1.feature` [12] against DECISION 360 on rmp #50 (1); gql-compat `SESSION SET SCHEMA /`, redeclared variable 42002, and `1 < 'a'` 22G04 against TS-17, DECISION 326 on rmp #43 and IV002/IV010 (3).
+* **Decided, now passing** (DECISION 386 on rmp #52; [raw](raw/mutations-disputes.txt): each fix reverted made its scenarios fail): opengql/tck catalog failures (7): a catalog-modifying statement that fails with 42N11, 42002 or G1000 reports 42000 with that error as its cause; openCypher `Call1.feature` [12]: a `CALL` in a larger statement without `YIELD` fails with 42002 and the cause 42N25, as Neo4j requires (revises DECISION 360 on rmp #50); gql-compat redeclared variable: 42000 with the cause 22N27, which the translated case now expects (its comment states the change).
+* **Recorded divergence** (kept by the user, DECISION 386 on rmp #52; pinned, never counted as passed): opengql/tck needs `CREATE SCHEMA` to create directories, which FR-CAT-005 forbids (4; the setup fails with 42000, cause 42002); `Aggregation3.feature` [1] is defective upstream (1); gql-compat `SESSION SET SCHEMA /` (the root is a directory, TS-17) and `1 < 'a'` (NULL, IV002/IV010, user decision 2026-10-07) (2).
 * **Not translated**: 6 gql-compat cases whose condition cannot arise in lpg (`unless GP18`, `unless GT03`, `limit IL001` for nodes, `limit IW014`, 2 `fault cut-after-send`).
 * **Unselected** instances of the vendored files, by excluding code (one instance may need several): opengql/tck GV50 47, GV45 32, GL04 17, GQ10 8, GQ23 8, GQ08 4, GG05 3, GC02 2, GG04 1, GQ20 1, GT02 1, rejected by `GQL.g4` 6; openCypher rejected by `GQL.g4` 652, G043 100, GV50 50, GL04 50, GV45 48, G004 38, GE07 4.
 
@@ -198,6 +201,7 @@ The full GQL texts of IS1–IS7 are in `src/lab/micro.rs` and in the raw file. L
 
 | Run or gate | Command | Result | Raw |
 |---|---|---|---|
+| Gates after the dispute decisions (DECISION 386 on rmp #52) | `LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs .config/gates.sh` (XFS mounted: `/dev/loop59`) | exit 0, 0 failed: fmt, clippy, `--cfg fuzzing` clippy clean; nextest 510 passed, 28 skipped; loom 13; shuttle 4; stress 69 passed | [raw](raw/gates-disputes.txt) |
 | Full suite, ext4 lab directory | `LPG_LAB_EXT4=/data/tmp/lpg-lab cargo nextest run -p lpg --no-fail-fast` | exit 0; 508 passed (2 slow), 28 skipped | [log](raw/nextest-full-round-d.log) |
 | XFS lab directory | `LPG_LAB_XFS=/mnt/lpg-xfs` | **not run**: `/mnt/lpg-xfs` is not mounted (root needed) | – |
 | Stress profile | `LPG_LAB_EXT4=/data/tmp/lpg-lab cargo nextest run -p lpg --profile stress --no-fail-fast` | exit 0; 69 passed, 16 copies each | [log](raw/stress-round-d.log) |
@@ -209,7 +213,7 @@ The full GQL texts of IS1–IS7 are in `src/lab/micro.rs` and in the raw file. L
 | Lints | `cargo fmt --all -- --check`; `cargo clippy --all-targets -- -D warnings`; the same clippy of the library with `--cfg fuzzing` | exit 0 each | [raw](raw/gates-round-d.txt) |
 | `forbid(unsafe_code)` | `grep -rn 'forbid(unsafe_code)' src/lib.rs` | `src/lib.rs:9` | [raw](raw/gates-round-d.txt) |
 | FR-STO-002 grep | `grep -rnE 'std::fs\|OpenOptions\|File::(open\|create)' src --include=*.rs` | product code matches only `src/storage/fs.rs`; every other match is test code (`src/tck/`, `src/lab/`, `*/tests.rs`, `differential.rs`, `suites/`, `test_support/`), and, after the fork-mode change, `src/fuzz.rs` (compiled only under `cfg(fuzzing)`) | [raw](raw/gates-round-d.txt) |
-| NFR-PERF-007 over every scenario | the operator counter of #45, read for each statement the runner profiles | 429 statements profiled to completion (26 + 137 + 266), at most 1 operator running at once | [raw](raw/tck-summary.txt) |
+| NFR-PERF-007 over every scenario | the operator counter of #45, read for each statement the runner profiles | 428 statements profiled to completion (26 + 136 + 266; `Call1.feature` [12] now fails when compiled), at most 1 operator running at once | [raw](raw/tck-summary.txt) |
 | Coverage, query engine | `cargo llvm-cov nextest -p lpg --json -E 'test(/^(query\|tck\|lab::micro)::/)'`, `cov-functions.py`, `cov-rules.py` | executor (`src/query/exec/`): 288 functions and closures, 22 never executed (`reset` of 5 operators, `Debug`, `run_nested`, closures); rule functions without the generated sentences: 151 of 155 executed. The parser is unchanged in round D, so round A's 155 of 155 with the generated sentences stands | [raw](raw/coverage-query-round-d.tsv) |
 | Peak heap per blocking operator | round B, not rerun (the operators are unchanged in round D) | see [engine-round-b.md](engine-round-b.md) | [raw](raw/heaptrack-blocking-operators.tsv) |
 | Fuzz, lexer | `cargo +nightly fuzz run --target-dir /dev/shm/lpg-target/fuzz-final lexer fuzz/corpus/lexer -- -runs=10000000` | exit 0, "Done 10000000 runs in 876 second(s)", no artifact | [raw](raw/fuzz-lexer-final.txt) |
@@ -222,7 +226,7 @@ The full GQL texts of IS1–IS7 are in `src/lab/micro.rs` and in the raw file. L
 | Criterion | Passing tests | State |
 |---|---|---|
 | The parser accepts and rejects as the ANTLR oracle on the samples, every GQL text of the tests and the generated sentences | `query::parser::differential::*` (above), now with the 1 386 scenario texts | met |
-| Every scenario of the approved feature set passes and names its clause or feature code | `tck::*` | **not fully met**: 350 pass, 11 gate and 6 not-GQL exclusions are verified, **16 disputed scenarios await a user decision** |
+| Every scenario of the approved feature set passes and names its clause or feature code | `tck::*` | **met except 7 recorded divergences**: 359 pass, 11 gate and 6 not-GQL exclusions are verified; the 7 divergences the user kept (DECISION 386 on rmp #52) stay pinned and do not pass |
 | FR-API-001..010 (Rust API part), FR-SES-001..004, FR-AUTH-001/002, FR-PROC-001..004, FR-LIM-001/002/006, FR-OBS-002..006 through the Rust API | `api::tests::{api,auth,limits,procs,obs}::*` (rmp #47–#51 TEST entries), in the full run | met |
 | FR-CAT-001, FR-IDX-001, FR-TYPE-005, FR-LIM-003/005/007, FR-GQL-004, FR-OPS-001/002/008/010, FR-REC-004/010 through a statement, a procedure or the API | `api::tests::procs::the_show_procedures_list_their_objects_with_the_specified_columns`, `…point_searches_return_the_same_rows_with_and_without_the_index`, `…no_built_in_backs_up_restores_or_creates_a_directory`; `api::tests::auth::every_index_and_constraint_kind_is_managed_through_the_api`, `…a_restored_backup_holds_graphs_index_and_constraint`; `api::tests::limits::{a_statement_over_the_memory_limit_fails_and_earlier_writes_vanish, writes_and_old_versions_at_the_cap_fail_with_51n72}`; `api::tests::api::backup_restore_integrity_check_and_migration_through_the_api`; scenarios `Create2.feature` [1]–[3], `approved-features.feature` [13], [14] (FR-GQL-004) | met; the FR-OPS-001 load half cannot run through the API before Sprint 4 (FINDING 353 on rmp #47) |
 | A query uses at most one thread at a time (NFR-PERF-007) | `query::exec::tests::…across_a_thousand_batches_at_most_one_operator_runs_at_once`; the runner's counter over every scenario statement | met |

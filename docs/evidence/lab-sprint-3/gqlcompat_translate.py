@@ -17,6 +17,9 @@ cases that `tck_manifest.py` selected (`tests/tck/selection.tsv`, artefact `gql-
 * the tags name the case's ISO subclauses that are `GQL.g4` subclause headings, and the
   headings of its `productions`, as `@clause-N.N`.
 
+A case whose condition lpg reports differently by a recorded user decision (`DECIDED`) gets
+lpg's expectation instead, and its attribution comment states the change and the decision.
+
 A case is not translated when its condition cannot arise in lpg, and the reason is printed:
 `unless` names a feature lpg supports; `limit` names an implementation-defined item whose
 approved value makes the condition unreachable; `fault` needs a transport (the API is
@@ -50,6 +53,16 @@ Loader.yaml_implicit_resolvers = {
     for k, v in yaml.SafeLoader.yaml_implicit_resolvers.items()}
 Loader.add_implicit_resolver("tag:yaml.org,2002:bool", re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"),
                              list("tTfF"))
+
+# Cases whose expected condition lpg changes by a recorded user decision: case id ->
+# (lpg's `an exception condition should be raised:` value, the change note).
+DECIDED = {
+    "condition/42002/redeclared-variable": (
+        "42000 caused by 22N27",
+        "expects 42000 with the cause 22N27 (invalid entity type) instead of 42002: a variable "
+        "bound twice is 42000 (DECISION 326 on rmp #43), with a detailed cause (user decision "
+        "2026-10-11, DECISION 386 on rmp #52)"),
+}
 
 UNREACHABLE_LIMIT = {("IL001", "condition/22g0n/node-with-no-labels"),
                      ("IW014", "condition/42004/two-identifiers-that-look-the-same")}
@@ -166,6 +179,8 @@ def main():
                 raise SystemExit(f"{c['id']}: no GQL.g4 subclause")
             s = f"  # gql-compat @ {COMMIT}, corpus/suite/{fn}, case {c['id']}"
             s += f" (ISO subclauses {', '.join(c.get('subclauses', []))})\n"
+            if c["id"] in DECIDED:
+                s += f"  # Changed by lpg: {DECIDED[c['id']][1]}.\n"
             s += "  " + " ".join(f"@clause-{n}" for n in clauses) + "\n"
             s += f"  Scenario: [{c['id']}] {' '.join(c['name'].split())}\n"
             s += "    Given an empty graph\n"
@@ -191,7 +206,8 @@ def main():
                 s += "    Then the statement succeeds\n"
             elif kind == "error":
                 codes = [e["gqlstatus"]] + list(e.get("also_gqlstatus") or [])
-                s += f"    Then an exception condition should be raised: {' or '.join(codes)}\n"
+                want = DECIDED[c["id"]][0] if c["id"] in DECIDED else " or ".join(codes)
+                s += f"    Then an exception condition should be raised: {want}\n"
             else:
                 raise SystemExit(f"{c['id']}: unknown expectation {kind}")
             scenarios.append(s)
@@ -209,6 +225,8 @@ def main():
             f.write("\n".join(scenarios))
         written += len(scenarios)
     print(f"translated {written} of {len(selected)} selected cases")
+    for cid, (want, _) in DECIDED.items():
+        print(f"  decided: {cid}: expects {want}")
     for cid, why in skipped:
         print(f"  not translated: {cid}: {why}")
 

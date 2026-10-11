@@ -441,11 +441,25 @@ impl World<'_> {
 
     async fn other_step(&mut self, step: &Step) -> Result<(), String> {
         let text = step.text.as_str();
-        if let Some(codes) = text.strip_prefix("an exception condition should be raised: ") {
+        if let Some(spec) = text.strip_prefix("an exception condition should be raised: ") {
             // One code, or alternatives joined by ` or ` (gql-compat's
-            // `also_gqlstatus`).
+            // `also_gqlstatus`); `X caused by Y`: the code X with a cause
+            // whose code is Y (lpg's own form, for a cause lpg decided).
+            let (codes, cause) = match spec.split_once(" caused by ") {
+                Some((codes, cause)) => (codes, Some(cause.trim())),
+                None => (spec, None),
+            };
             let codes: Vec<&str> = codes.split(" or ").map(str::trim).collect();
-            return self.check_error(&codes);
+            self.check_error(&codes)?;
+            return match (cause, &self.outcome) {
+                (None, _) => Ok(()),
+                (Some(want), Some(Outcome::Failed(e))) => match e.cause() {
+                    Some(c) if c.code() == want => Ok(()),
+                    Some(c) => Err(format!("failed with the cause {c}, expected {want}")),
+                    None => Err(format!("failed with {e} without a cause, expected {want}")),
+                },
+                (Some(_), _) => Err("no statement failed".into()),
+            };
         }
         if text == "the statement succeeds" {
             return self.rows().map(|_| ());
@@ -531,6 +545,11 @@ fn is_gate(e: &Error, code: &str) -> bool {
             .is_some_and(|c| c.code() == "51N26" && c.message().contains(code))
 }
 
+/// Whether `e` has the code `code` and a cause with the code `cause`.
+fn is_caused(e: &Error, code: &str, cause: &str) -> bool {
+    e.code() == code && e.cause().is_some_and(|c| c.code() == cause)
+}
+
 /// What a scenario listed in `super::EXCEPTIONS` must do instead of its
 /// own expectations: its statements run in order.
 #[derive(Debug, Clone, Copy)]
@@ -539,6 +558,9 @@ pub(super) enum Instead {
     Gate(&'static str),
     /// A statement fails with this GQLSTATUS.
     Fails(&'static str),
+    /// A statement fails with the first GQLSTATUS and a cause with the
+    /// second.
+    FailsCaused(&'static str, &'static str),
     /// Every statement succeeds.
     Succeeds,
 }
@@ -590,6 +612,12 @@ pub(super) fn run(
                             break;
                         }
                         (Ok(Outcome::Failed(e)), Instead::Fails(code)) if e.code() == code => {
+                            result = Ok(());
+                            break;
+                        }
+                        (Ok(Outcome::Failed(e)), Instead::FailsCaused(code, cause))
+                            if is_caused(&e, code, cause) =>
+                        {
                             result = Ok(());
                             break;
                         }
