@@ -1,7 +1,7 @@
 ---
 title: Functional specification
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - ../../README.md
 ---
@@ -104,5 +104,10 @@ These sources were checked on 2026-10-08:
 - [S56] Neo4j community source <https://github.com/neo4j/neo4j> at commit `54a7dcf7c2501b31866199143364c5332da8936f`: `db.transaction.timeout` defaults to `Duration.ZERO` and `db.memory.transaction.max` to 0, where "Zero means 'largest possible value'" (`community/configuration/src/main/java/org/neo4j/configuration/GraphDatabaseSettings.java:486-491, 1062-1068`); a timeout passed when a transaction begins replaces the configured one (`community/kernel/src/main/java/org/neo4j/kernel/impl/api/KernelImpl.java:100-120`).
 - [S57] Neo4j Cypher Manual, "Spatial functions": <https://neo4j.com/docs/cypher-manual/current/functions/spatial/> (`point(input)` builds a point from a map; `point.distance(from, to)` returns the distance between two points).
 - [S58] Memgraph, "Functions": <https://memgraph.com/docs/querying/functions> (`point(parameters: map)` builds a point; `point.distance(x, y)` returns the distance between two points).
+
+These sources were checked on 2026-10-11:
+
+- [S59] Neo4j Cypher Manual, "Create indexes": <https://neo4j.com/docs/cypher-manual/current/indexes/search-performance-indexes/create-indexes/> ("If no index type is specified in the create command a range index is created"; "A range index on multiple properties is also called a composite index").
+- [S60] Neo4j Operations Manual, "Call procedures": <https://neo4j.com/docs/operations-manual/current/procedures/call-procedures/> ("YIELD is necessary if the procedure call is part of a larger Cypher statement (i.e. not a standalone procedure call)"; a VOID procedure "does not declare any result fields" and "does not allow for the use of YIELD").
 
 The ISO/IEC 39075:2024 text is not available to the project. The authority for GQL syntax is opengql/grammar [S4] ([NFR-VER-002](non-functional-requirements.md#verification)). The ISO electronic inserts [S45], consulted on 2026-10-02, are a supplementary source for the GQLSTATUS conditions, the feature identifiers and the implementation-defined items cited in this folder. What still depends on the standard's Syntax Rules, General Rules and Conformance Rules, or on ISO/IEC 39075:2024/Cor 1:2026, is listed in [OQ-005](open-questions.md#oq-005) (user decision 2026-10-02).
