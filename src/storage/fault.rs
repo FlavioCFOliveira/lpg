@@ -344,6 +344,9 @@ struct State {
     space: Option<u64>,
     /// Set by [`FaultStorage::skip_device_sync`].
     skip_device_sync: bool,
+    /// Bytes each successful `read_at` and `write_at` moved, by kind and
+    /// file name ([`FaultStorage::bytes`]; rmp #54).
+    bytes: HashMap<(Kind, OsString), u64>,
 }
 
 impl State {
@@ -549,6 +552,19 @@ impl FaultStorage {
         lock(&self.state).lose.push(n);
     }
 
+    /// Bytes the successful calls of `kind` (`ReadAt` or `WriteAt`) moved
+    /// so far to or from files whose name starts with `prefix`: the
+    /// temporary-file bytes of a sort, for example (rmp #54). A read counts
+    /// the bytes it returned.
+    pub(crate) fn bytes(&self, kind: Kind, prefix: &str) -> u64 {
+        lock(&self.state)
+            .bytes
+            .iter()
+            .filter(|((k, name), _)| *k == kind && name.to_string_lossy().starts_with(prefix))
+            .map(|(_, n)| n)
+            .sum()
+    }
+
     /// Calls of `kind` made so far.
     pub(crate) fn count(&self, kind: Kind) -> u64 {
         lock(&self.state).counts.get(&kind).copied().unwrap_or(0)
@@ -676,6 +692,29 @@ impl Storage for FaultStorage {
         Ok(())
     }
 
+    /// As [`FaultStorage::rename`], through the wrapped storage's
+    /// no-replace rename; nothing is replaced, so nothing is backed up.
+    fn rename_noreplace(&self, from: &Path, to: &Path) -> io::Result<()> {
+        let mut st = lock(&self.state);
+        st.log
+            .push(Call::Rename(from.to_path_buf(), to.to_path_buf()));
+        st.call(Kind::Rename)?;
+        self.inner.rename_noreplace(from, to)?;
+        if let Some(key) = st.names.remove(from) {
+            st.names.insert(to.to_path_buf(), key);
+            if let Some(file) = st.files.get_mut(&key) {
+                file.path = to.to_path_buf();
+            }
+        }
+        st.pending.push(Pending::Renamed {
+            from: from.to_path_buf(),
+            to: to.to_path_buf(),
+            backup: None,
+        });
+        st.passed(Kind::Rename);
+        Ok(())
+    }
+
     fn list(&self, dir: &Path) -> io::Result<Vec<OsString>> {
         let mut st = lock(&self.state);
         st.log.push(Call::List(dir.to_path_buf()));
@@ -764,12 +803,15 @@ impl StorageFile for FaultFile {
         buf[n..].fill(0);
         file.overlay(buf, offset);
         let len = file.len;
+        let got = len.saturating_sub(offset).min(buf.len() as u64);
+        let name = path.file_name().unwrap_or_default().to_os_string();
+        *st.bytes.entry((Kind::ReadAt, name)).or_insert(0) += got;
         st.log.push(Call::ReadAt {
             path,
             offset,
             len: buf.len() as u64,
         });
-        Ok(len.saturating_sub(offset).min(buf.len() as u64) as usize)
+        Ok(got as usize)
     }
 
     fn write_at(&self, buf: &[u8], offset: u64) -> io::Result<()> {
@@ -798,6 +840,8 @@ impl StorageFile for FaultFile {
         } else {
             file.push(Op::Write(offset, buf.to_vec()));
         }
+        let name = file.path.file_name().unwrap_or_default().to_os_string();
+        *st.bytes.entry((Kind::WriteAt, name)).or_insert(0) += buf.len() as u64;
         st.passed(Kind::WriteAt);
         Ok(())
     }

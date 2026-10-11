@@ -593,6 +593,27 @@ impl Sorted<'_> {
         }
     }
 
+    /// The record [`Sorted::next_record`] returned last, again; `None`
+    /// before the first and after the last. A source that inspects a
+    /// record before handing it on returns it with this (the fast initial
+    /// load, [`crate::ops::bulk::fast`]).
+    ///
+    /// # Errors
+    ///
+    /// None; the signature matches [`Sorted::next_record`].
+    pub(crate) fn current(&self) -> Result<Option<(&[u8], &[u8])>> {
+        Ok(match &self.inner {
+            Inner::Memory { at } => match at.checked_sub(1).and_then(|i| self.index.get(i)) {
+                Some(&off) => {
+                    let (k, v, _) = record(&self.arena, off);
+                    Some((k, v))
+                }
+                None => None,
+            },
+            Inner::Merge(m) => m.last.map(|run| m.readers[run].current()),
+        })
+    }
+
     /// Temporary files still present.
     pub(crate) fn files(&self) -> usize {
         self.files.live.len()

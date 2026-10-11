@@ -180,6 +180,13 @@ enum Workload {
     /// node deletion, and a checkpoint's statistics batch (rmp #31, #32;
     /// [`tx_graph`]); two online index builds (rmp #33; [`tx_indexes`]).
     Transactions,
+    /// A fast initial load (rmp #58, TS-26 steps 1 to 7) of [`FAST_NODES`]
+    /// nodes and [`FAST_EDGES`] edges into the default graph, which has a
+    /// uniqueness constraint and a range index: its sorts, its bottom-up
+    /// builds, its install commit and its report file. Oracle: after
+    /// reopen the graph is empty or complete, never partial, and passes the
+    /// integrity check.
+    FastLoad,
 }
 
 /// What a run arms before the workload.
@@ -311,6 +318,10 @@ fn setup(w: Workload, r: &Run) -> State {
     s.base = base;
     match w {
         Workload::Commits | Workload::Checkpoint | Workload::Backup | Workload::BulkLoad => {
+            s.engine = Some(e);
+        }
+        Workload::FastLoad => {
+            fast_setup(&e);
             s.engine = Some(e);
         }
         Workload::Transactions => {
@@ -471,6 +482,13 @@ fn run(w: Workload, r: &Run, s: &mut State, arm: Arm) {
                 Err(err) => assert!(armed, "unexpected failure: {err}"),
             }
         }
+        Workload::FastLoad => {
+            let e = s.engine.as_ref().unwrap();
+            match run_fast_load(e, r.target.path()) {
+                Ok(()) => s.loaded = true,
+                Err(err) => assert!(armed, "unexpected failure: {err}"),
+            }
+        }
         Workload::Restore => {
             s.engine = restore(r.target.path(), r.restored.path(), r.storage(), CAP, sink()).ok();
         }
@@ -586,6 +604,23 @@ fn verify(w: Workload, r: &Run, s: &State, arm: Arm, what: &str) {
             let mut sorter = e.sorter(MIN_MEMORY).unwrap();
             sorter.push(b"x", b"1").unwrap();
             drop(sorter.finish().unwrap());
+        }
+        Workload::FastLoad => {
+            let e = super::open_held(r.db.path(), || r.open(r.db.path()))
+                .unwrap_or_else(|e| panic!("{what}: reopen: {e}"));
+            let loaded = fast_matches_model(&e, what);
+            assert!(!s.loaded || loaded, "{what}: a returned fast load is lost");
+            let names = FsStorage.list(r.db.path()).unwrap();
+            assert!(
+                !names.iter().any(|n| is_sort_temp(n)),
+                "{what}: open left sort files: {names:?}"
+            );
+            assert!(
+                e.store().build_records().unwrap().is_empty(),
+                "{what}: a build record survives the open"
+            );
+            super::finish_builds(&e, what);
+            assert_intact(&e, what);
         }
         Workload::Restore => {
             if has(r.restored.path(), CONTROL) {
@@ -1255,6 +1290,233 @@ fn bulk_load() {
     let mut f = NOSPACE.to_vec();
     f.extend([(Kind::SyncData, Fault::Eio), (Kind::WriteAt, Fault::Eio)]);
     sweep(Workload::BulkLoad, &f, false);
+}
+
+/// The nodes of [`Workload::FastLoad`].
+const FAST_NODES: usize = 300;
+/// The edges of [`Workload::FastLoad`].
+const FAST_EDGES: usize = 400;
+
+/// The default graph's constraint and index of [`Workload::FastLoad`]:
+/// uniqueness of `uid` on label `L` and a range index on `L.p`.
+fn fast_setup(e: &Engine) {
+    use crate::catalog::{DEFAULT_GRAPH_ID, TokenKind};
+    // The collector's passes commit at times of their own; paused, the
+    // workload's calls are the same in every run.
+    crate::tx::tests::pause_gc(e);
+    use crate::index::{Entity, SchemaKind};
+    let l = e.token(TokenKind::Label, "L").unwrap();
+    let uid = e.token(TokenKind::PropertyKey, "uid").unwrap();
+    let p = e.token(TokenKind::PropertyKey, "p").unwrap();
+    e.create_constraint(
+        DEFAULT_GRAPH_ID,
+        SchemaKind::Unique,
+        Entity::Node,
+        l,
+        &[uid],
+    )
+    .unwrap();
+    let ix = e
+        .create_index(DEFAULT_GRAPH_ID, SchemaKind::Range, Entity::Node, l, &[p])
+        .unwrap();
+    e.wait_index(ix).unwrap();
+}
+
+/// The records of [`Workload::FastLoad`], in memory: nodes `uid` 0 to
+/// [`FAST_NODES`] with label `L` and a property `p`, every tenth with a
+/// value long enough for an overflow chain; edges between them.
+struct FastSource;
+
+impl crate::ops::bulk::model::Source for FastSource {
+    fn nodes(
+        &mut self,
+        f: &mut crate::ops::bulk::model::Sink<'_, crate::ops::bulk::model::NodeIn>,
+    ) -> Result<(), crate::Error> {
+        use crate::ops::bulk::model::{NodeIn, Pos};
+        use crate::types::Value;
+        let file: Arc<str> = Arc::from("fast");
+        for i in 0..FAST_NODES {
+            let s = if i.is_multiple_of(10) {
+                "x".repeat(3_000)
+            } else {
+                format!("v{i}")
+            };
+            f(Ok(NodeIn {
+                file: file.clone(),
+                pos: Pos::Ordinal(i as u64 + 1),
+                id: Some(format!("n{i}")),
+                space: String::new(),
+                labels: vec!["L".into()],
+                props: vec![
+                    ("uid".into(), Value::Int(i as i64)),
+                    ("p".into(), Value::Int((i % 17) as i64)),
+                    ("s".into(), Value::string(&s)),
+                ],
+            }))?;
+        }
+        Ok(())
+    }
+
+    fn edges(
+        &mut self,
+        f: &mut crate::ops::bulk::model::Sink<'_, crate::ops::bulk::model::EdgeIn>,
+    ) -> Result<(), crate::Error> {
+        use crate::ops::bulk::model::{EdgeIn, Pos};
+        let file: Arc<str> = Arc::from("fast");
+        for i in 0..FAST_EDGES {
+            f(Ok(EdgeIn {
+                file: file.clone(),
+                pos: Pos::Ordinal(i as u64 + 1),
+                id: None,
+                start: (String::new(), format!("n{}", (i * 7) % FAST_NODES)),
+                end: (String::new(), format!("n{}", (i * 13 + 1) % FAST_NODES)),
+                ty: "T".into(),
+                props: Vec::new(),
+            }))?;
+        }
+        Ok(())
+    }
+}
+
+/// [`Workload::FastLoad`]: the load, its report in `report_dir`.
+fn run_fast_load(e: &Engine, report_dir: &Path) -> Result<(), crate::Error> {
+    use crate::ops::bulk::OnInvalid;
+    use crate::ops::bulk::model::Report;
+    let storage = e.core().storage.clone();
+    let mut report = Report::create(&*storage, report_dir, "report", OnInvalid::Abort)?;
+    let r = crate::ops::bulk::fast::load(
+        e,
+        crate::catalog::DEFAULT_GRAPH_ID,
+        &mut FastSource,
+        &mut report,
+    );
+    report.commit()?;
+    let (n, m) = r?;
+    assert_eq!((n, m), (FAST_NODES as u64, FAST_EDGES as u64));
+    Ok(())
+}
+
+/// The FastLoad oracle (rmp #58 FINDING 453): the default graph equals
+/// the shadow model of [`FastSource`] or is empty, in every structure: the
+/// nodes with their labels and properties, the edges with their endpoints
+/// and type, each node's adjacency entries in both directions, and every
+/// index's entries; never a mix. As Turso's simulator compares the
+/// recovered database with its shadow model (R-TURSO @ `be5bab8`
+/// `testing/simulator/model/property.rs:187-196`, studied only). Returns
+/// whether the graph is loaded.
+fn fast_matches_model(e: &Engine, what: &str) -> bool {
+    use crate::storage::graph::{IN, OUT};
+    use crate::types::Value;
+    type NodeModel = (u64, Vec<String>, Vec<(String, Value)>);
+    let mut tx = e.begin(Isolation::Snapshot).unwrap();
+    let g = tx.graph(crate::catalog::DEFAULT_GRAPH_ID).unwrap();
+    let mut nodes: BTreeMap<i64, NodeModel> = BTreeMap::new();
+    crate::ops::bulk::export::each_node(e, &mut tx, &g, &mut |n| {
+        let Some((_, Value::Int(u))) = n.props.iter().find(|(k, _)| k == "uid").cloned() else {
+            panic!("{what}: a node without uid");
+        };
+        let mut props = n.props;
+        props.sort_by(|a, b| a.0.cmp(&b.0));
+        nodes.insert(u, (n.id, n.labels, props));
+        Ok(())
+    })
+    .unwrap();
+    let uid_of: BTreeMap<u64, i64> = nodes.iter().map(|(u, (id, _, _))| (*id, *u)).collect();
+    let mut edges: Vec<(i64, i64, String)> = Vec::new();
+    crate::ops::bulk::export::each_edge(e, &mut tx, &g, &mut |ed| {
+        edges.push((uid_of[&ed.src], uid_of[&ed.dst], ed.ty));
+        Ok(())
+    })
+    .unwrap();
+    let mut adj = 0usize;
+    tx.scan_prefix(g.adj, b"", |_, _| {
+        adj += 1;
+        true
+    })
+    .unwrap();
+    let indexes: Vec<u64> = e
+        .core()
+        .catalog
+        .schema()
+        .values()
+        .filter(|d| d.graph == crate::catalog::DEFAULT_GRAPH_ID && d.kind.is_index())
+        .map(|d| d.id)
+        .collect();
+    assert_eq!(indexes.len(), 2, "{what}: the owned and the range index");
+    let mut index_entries = Vec::new();
+    for &ix in &indexes {
+        let mut v = tx.index_scan(&g, ix, b"", None).unwrap();
+        v.sort_unstable();
+        index_entries.push(v);
+    }
+    if nodes.is_empty() {
+        assert!(
+            edges.is_empty() && adj == 0 && index_entries.iter().all(Vec::is_empty),
+            "{what}: no node, but {} edges, {adj} adjacency entries, index entries {:?}",
+            edges.len(),
+            index_entries.iter().map(Vec::len).collect::<Vec<_>>()
+        );
+        tx.abort();
+        return false;
+    }
+    assert_eq!(nodes.len(), FAST_NODES, "{what}: a partial fast load");
+    for (u, (_, labels, props)) in &nodes {
+        let i = *u as usize;
+        let s = if i.is_multiple_of(10) {
+            "x".repeat(3_000)
+        } else {
+            format!("v{i}")
+        };
+        let mut want = vec![
+            ("p".to_owned(), Value::Int((i % 17) as i64)),
+            ("s".to_owned(), Value::string(&s)),
+            ("uid".to_owned(), Value::Int(*u)),
+        ];
+        want.sort_by(|a, b| a.0.cmp(&b.0));
+        assert_eq!(
+            (labels.as_slice(), props),
+            (&["L".to_owned()][..], &want),
+            "{what}: node {u}"
+        );
+    }
+    let mut want_edges: Vec<(i64, i64, String)> = (0..FAST_EDGES)
+        .map(|i| {
+            (
+                ((i * 7) % FAST_NODES) as i64,
+                ((i * 13 + 1) % FAST_NODES) as i64,
+                "T".into(),
+            )
+        })
+        .collect();
+    want_edges.sort();
+    edges.sort();
+    assert_eq!(edges, want_edges, "{what}: the edges");
+    assert_eq!(adj, 2 * FAST_EDGES, "{what}: the adjacency entries");
+    for (u, (id, _, _)) in &nodes {
+        let out = tx.expand(&g, *id, OUT, None).unwrap().len();
+        let inc = tx.expand(&g, *id, IN, None).unwrap().len();
+        let wo = want_edges.iter().filter(|x| x.0 == *u).count();
+        let wi = want_edges.iter().filter(|x| x.1 == *u).count();
+        assert_eq!((out, inc), (wo, wi), "{what}: adjacency of node {u}");
+    }
+    let mut all: Vec<u64> = nodes.values().map(|(id, _, _)| *id).collect();
+    all.sort_unstable();
+    for v in &index_entries {
+        assert_eq!(v, &all, "{what}: an index's entries");
+    }
+    tx.abort();
+    true
+}
+
+/// rmp #58 acceptance: every crash point and every ENOSPC point (reserve,
+/// create, write) of the fast load, and EIO on its writes and syncs; after
+/// each, the reopened graph is empty or complete and passes the integrity
+/// check (counts printed as `SUITE fault ... workload=FastLoad`).
+#[test]
+fn fast_load() {
+    let mut f = NOSPACE.to_vec();
+    f.extend([(Kind::SyncData, Fault::Eio), (Kind::WriteAt, Fault::Eio)]);
+    sweep(Workload::FastLoad, &f, false);
 }
 
 #[test]

@@ -99,6 +99,15 @@ pub(crate) enum Phase {
     BeforeOnline,
     /// A constraint creation holds its schema lock, before it validates.
     Validating,
+    /// A fast initial load holds its locks and found the graph empty
+    /// (TS-26 step 1), before it reads its input.
+    LoadLocked,
+    /// A fast initial load has built and synced every tree (TS-26 step
+    /// 5), before its install commit.
+    LoadBuilt,
+    /// A database-scope import has read the empty catalog in its catalog
+    /// transaction, before it creates anything (TS-26 item D).
+    DatabaseChecked,
 }
 
 /// A test hook called at each [`Phase`].

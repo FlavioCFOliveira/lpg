@@ -18,6 +18,7 @@
 //!   keys.
 
 pub(crate) mod key;
+pub(crate) mod lexical;
 pub(crate) mod record;
 pub(crate) mod spatial;
 pub(crate) mod temporal;

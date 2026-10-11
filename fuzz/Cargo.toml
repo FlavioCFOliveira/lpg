@@ -44,5 +44,40 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "lexical_parse"
+path = "fuzz_targets/lexical_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "dump_read"
+path = "fuzz_targets/dump_read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "csv_read"
+path = "fuzz_targets/csv_read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "jsonl_read"
+path = "fuzz_targets/jsonl_read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "graphml_read"
+path = "fuzz_targets/graphml_read.rs"
+test = false
+doc = false
+bench = false
+
 # Standalone: never a member of the lpg workspace.
 [workspace]

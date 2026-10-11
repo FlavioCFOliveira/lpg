@@ -242,6 +242,14 @@ impl Transaction {
     /// statistics of the commit.
     fn graph_writer(&mut self, g: &Graph) -> Result<()> {
         self.lock_resource(Resource::Graph(g.id), Mode::S)?;
+        // A fast initial load that committed after the snapshot changed
+        // the graph: the write-write rule (TS-15, TS-26 step 6).
+        if [g.nodes, g.edges, g.adj]
+            .iter()
+            .any(|t| self.hidden(t.id()))
+        {
+            return Err(self.abort_with(Error::Serialization));
+        }
         if !self.graphs.iter().any(|x| x.id == g.id) {
             self.graphs.push(*g);
         }

@@ -137,6 +137,10 @@ pub(crate) struct Transaction {
     /// Statistics this transaction's commit adds: the counts of an index
     /// it makes ONLINE or creates built (TS-17).
     pub(crate) schema_stats: crate::catalog::stats::Delta,
+    /// The trees a fast initial load installs with this transaction's
+    /// commit: snapshots older than the commit read them empty (TS-26
+    /// step 6, [`crate::catalog::Loaded`]).
+    pub(crate) loaded_trees: Vec<u64>,
     /// The memory of the write set, before-images, write keys and lock
     /// entries (TS-14).
     pub(crate) charge: Option<Reservation>,
@@ -201,6 +205,7 @@ impl Engine {
             reads: ReadSet::default(),
             online: None,
             schema_stats: crate::catalog::stats::Delta::default(),
+            loaded_trees: Vec::new(),
             charge: Some(
                 core.accountant
                     .try_reserve(0)
@@ -216,6 +221,14 @@ impl Engine {
 }
 
 impl Transaction {
+    /// Whether tree `id` was installed by a fast initial load that
+    /// committed after this transaction's snapshot: the snapshot then reads
+    /// it empty, its state before the load (TS-26 step 6, Catalog version;
+    /// [`crate::catalog::Loaded`]).
+    pub(crate) fn hidden(&self, id: u64) -> bool {
+        self.engine.core().catalog.loaded.hides(id, self.snapshot)
+    }
+
     /// The transaction's snapshot: the highest commit timestamp it reads.
     pub(crate) fn snapshot(&self) -> u64 {
         self.snapshot
@@ -492,7 +505,7 @@ impl Transaction {
     /// The committed version of `key` in `tree` that the snapshot sees,
     /// without this transaction's writes and without recording a read.
     pub(crate) fn read_committed(&mut self, tree: Tree, key: &[u8]) -> Result<Option<Vec<u8>>> {
-        if tree.is_pending() {
+        if tree.is_pending() || self.hidden(tree.id()) {
             return Ok(None);
         }
         let store = self.engine.store();
@@ -618,7 +631,7 @@ impl Transaction {
         let core = self.engine.core();
         let s = self.snapshot;
         let mut delivered = 0u64;
-        let r = if tree.is_pending() {
+        let r = if tree.is_pending() || self.hidden(tree.id()) {
             Ok(())
         } else {
             self.engine
@@ -880,7 +893,32 @@ impl Transaction {
     ) -> Result<Option<u64>> {
         self.active()?;
         let engine = Engine::handle(self.engine.core_arc());
-        let r = engine.commit_transaction_installing(&mut self, Some(&built));
+        let r = engine.commit_transaction_installing(&mut self, &[(&built, None)]);
+        drop(built);
+        self.end();
+        self.state = State::Aborted;
+        engine.core().mvcc.notify_gc();
+        r
+    }
+
+    /// Commits the transaction, as [`Transaction::commit`], with every
+    /// tree of `built` installed by the same commit into the existing tree
+    /// it is paired with: the install of a fast initial load (TS-26 step
+    /// 6). Then, or on failure, the builds' unused pages are released.
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::commit`].
+    pub(crate) fn commit_installing_all(
+        mut self,
+        built: Vec<(crate::storage::btree::bulk::Built<'_>, Tree)>,
+    ) -> Result<Option<u64>> {
+        self.active()?;
+        let engine = Engine::handle(self.engine.core_arc());
+        let pairs: Vec<(&crate::storage::btree::bulk::Built<'_>, Option<Tree>)> =
+            built.iter().map(|(b, t)| (b, Some(*t))).collect();
+        let r = engine.commit_transaction_installing(&mut self, &pairs);
+        drop(pairs);
         drop(built);
         self.end();
         self.state = State::Aborted;

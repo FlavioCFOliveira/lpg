@@ -931,6 +931,140 @@ impl Session {
     }
 }
 
+/// The rows of a query-result export, pulled from its stream on a blocking
+/// thread ([`Session::export`]).
+struct StreamRows {
+    stream: ResultStream,
+    engine: crate::storage::engine::Engine,
+    runtime: tokio::runtime::Handle,
+}
+
+impl crate::ops::bulk::export::Rows for StreamRows {
+    fn columns(&self) -> Vec<String> {
+        self.stream.columns().to_vec()
+    }
+
+    fn next_row(
+        &mut self,
+        contents: &mut crate::ops::bulk::export::ContentsMap,
+    ) -> Result<Option<Vec<crate::types::Value>>, Error> {
+        let Some(row) = self.runtime.block_on(self.stream.next())? else {
+            return Ok(None);
+        };
+        // Between two pulls no batch holds the slot; the transaction is
+        // still open, since the stream ends it only after its last batch.
+        let mut g = self
+            .stream
+            .shared()
+            .slot
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if let Some(tx) = g.as_mut() {
+            crate::ops::bulk::export::read_contents(&self.engine, tx, &row, contents)?;
+        }
+        Ok(Some(row))
+    }
+}
+
+impl Session {
+    /// Exports `scope` in `format` into the files `files` of `location`,
+    /// which must exist (FR-IMP-001, FR-IMP-003, UC-OPS-004; TS-26): a
+    /// CSV graph export names a node file and an edge file, every other
+    /// export one file. Each file is written as `<name>.tmp`, synced and
+    /// renamed; the export fails if a target exists and removes its files
+    /// on failure. A graph or database export reads one snapshot and asks
+    /// `TRAVERSE` and `READ` on each graph; a query-result export runs the
+    /// request as [`Session::execute`] does and asks what it asks.
+    ///
+    /// # Errors
+    ///
+    /// 22N11 for a format that does not cover the scope, wrong file names,
+    /// a target that exists or a name the format cannot hold; 22N51 for a
+    /// missing graph; 42NFF for a refusal; the request's errors; 50N00
+    /// for I/O failures, a full device among them.
+    pub async fn export(
+        &self,
+        scope: crate::ops::bulk::ExportScope,
+        format: crate::ops::bulk::Format,
+        location: &std::path::Path,
+        files: &[&str],
+    ) -> Result<crate::ops::bulk::ExportSummary, Error> {
+        use crate::ops::bulk::{ExportScope, check_export, export};
+        check_export(format, &scope, files)?;
+        let (location, names) = (location.to_path_buf(), owned(files));
+        match scope {
+            ExportScope::Query { gql, parameters } => {
+                let stream = self.execute(&gql, parameters).await?;
+                let engine = self.inner.db.engine_handle()?;
+                let runtime = tokio::runtime::Handle::current();
+                blocking(move || {
+                    let refs: Vec<&str> = names.iter().map(String::as_str).collect();
+                    let mut rows = StreamRows {
+                        stream,
+                        engine: crate::storage::engine::Engine::handle(engine.core_arc()),
+                        runtime,
+                    };
+                    export::query(&engine, &mut rows, format, &location, &refs)
+                })
+                .await?
+            }
+            scope => {
+                let _busy = self.inner.acquire()?;
+                let s = self.inner.clone();
+                blocking(move || {
+                    let e = s.db.engine_handle()?;
+                    let stored = match &scope {
+                        ExportScope::Graph(path) => {
+                            export::Stored::Graph(crate::ops::bulk::import::graph_at(&e, path)?.0)
+                        }
+                        _ => export::Stored::Database,
+                    };
+                    let refs: Vec<&str> = names.iter().map(String::as_str).collect();
+                    export::stored(&e, stored, format, &location, &refs, &|r| {
+                        s.db.authorise_blocking(&s.principal, r)
+                    })
+                })
+                .await?
+            }
+        }
+    }
+
+    /// Imports `request` (FR-IMP-001 to FR-IMP-005, UC-OPS-003; TS-26): by
+    /// one transaction, or by the fast initial load into an empty graph; a
+    /// database-scope native dump into a catalog that holds only the
+    /// default schema and an empty default graph. New element identifiers
+    /// are assigned; input identifiers only connect edges to nodes. Each
+    /// invalid record is a line of the report file the request names;
+    /// with [`crate::ops::bulk::OnInvalid::Abort`], the default, the import
+    /// stops at the first and adds nothing. Asks `CREATE`, `SET LABEL` and
+    /// `SET PROPERTY` on the target graph, and for a database dump the
+    /// create actions of the objects it creates. The transaction memory
+    /// limit is the session's.
+    ///
+    /// # Errors
+    ///
+    /// 22N11 for a request that does not fit or a report file that exists;
+    /// 22N51; 42NFF; the code of the invalid record that aborted the
+    /// import; 22N05 for a malformed header or a damaged dump; 51N41 for a
+    /// fast load into a graph that is not empty or a database import into
+    /// a catalog that holds other objects; 51N72, 51N73; 50N00.
+    pub async fn import(
+        &self,
+        request: crate::ops::bulk::ImportRequest,
+    ) -> Result<crate::ops::bulk::ImportSummary, Error> {
+        let _busy = self.inner.acquire()?;
+        let s = self.inner.clone();
+        let memory = self.limits().memory;
+        blocking(move || {
+            let e = s.db.engine_handle()?;
+            crate::ops::bulk::import::run(&e, &request, &s.principal, memory, &|r| {
+                s.db.authorise_blocking(&s.principal, r)
+            })
+        })
+        .await?
+    }
+}
+
 fn owned(xs: &[&str]) -> Vec<String> {
     xs.iter().map(|x| (*x).to_string()).collect()
 }

@@ -206,3 +206,43 @@ fn audit_a_run_file_left_by_a_crashed_sort_does_not_fail_the_next_sort() {
     let mut sorted = sorter.finish().unwrap();
     assert_eq!(drain(&mut sorted).len(), input.len());
 }
+
+/// rmp #54: the bytes a spilling sort writes and reads through the storage
+/// trait are counted by the fault storage: both are non-zero, and the
+/// bytes written equal the sum of its run files' lengths, measured through
+/// the storage while the files exist (one merge pass, so no run is removed
+/// before the merge). Printed for the laboratory report.
+#[test]
+fn the_temporary_file_bytes_of_a_spilling_sort_are_counted() {
+    let dir = crate::test_support::graph_dir();
+    let fault = Arc::new(FaultStorage::new(Box::new(FsStorage)));
+    fault.skip_device_sync();
+    let e = engine(dir.path(), fault.clone());
+    let mut sorter = e.sorter(MIN_MEMORY).unwrap();
+    for (k, v) in records(3_000, 5) {
+        sorter.push(&k, &v).unwrap();
+    }
+    let mut sorted = sorter.finish().unwrap();
+    let runs = sorted.files();
+    assert!(runs > 1, "precondition: the sort spills runs");
+    let written = fault.bytes(Kind::WriteAt, SORT_TEMP);
+    let lengths: u64 = fault
+        .list(dir.path())
+        .unwrap()
+        .iter()
+        .filter(|n| is_sort_temp(n))
+        .map(|n| fault.open(&dir.path().join(n)).unwrap().len().unwrap())
+        .sum();
+    assert_eq!(drain(&mut sorted).len(), 3_000);
+    let read = fault.bytes(Kind::ReadAt, SORT_TEMP);
+    println!(
+        "SORT temp-file bytes: runs={runs} written={written} read={read} run_lengths={lengths}"
+    );
+    assert!(written > 0 && read > 0);
+    assert_eq!(
+        written, lengths,
+        "bytes written against the run files' lengths"
+    );
+    // The merge reads every run back.
+    assert_eq!(read, written);
+}

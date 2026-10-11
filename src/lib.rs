@@ -35,6 +35,10 @@ pub use api::{
 };
 pub use error::{Error, Position};
 pub use index::PropertyType;
+pub use ops::bulk::{
+    ExportScope, ExportSummary, Format, IdType, ImportMode, ImportRequest, ImportSummary,
+    ImportTarget, InputFile, OnInvalid,
+};
 pub use query::exec::profile::ProfileStats;
 pub use query::plan::Description as PlanDescription;
 pub use tx::Isolation;

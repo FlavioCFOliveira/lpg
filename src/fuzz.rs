@@ -84,3 +84,82 @@ impl crate::obs::MetricsSink for NoMetrics {
     fn gauge(&self, _: &'static str, _: u64) {}
     fn histogram(&self, _: &'static str, _: u64) {}
 }
+
+/// The type names the `lexical_parse` target picks from by its first
+/// byte when its input holds no line feed.
+const TYPE_NAMES: [&str; 22] = [
+    "NULL",
+    "BOOLEAN",
+    "INTEGER",
+    "FLOAT",
+    "STRING",
+    "BYTES",
+    "DATE",
+    "LOCAL TIME",
+    "ZONED TIME",
+    "LOCAL DATETIME",
+    "ZONED DATETIME",
+    "DURATION(YEAR TO MONTH)",
+    "DURATION(DAY TO SECOND)",
+    "POINT",
+    "LIST<ANY>",
+    "LIST<INTEGER>",
+    "LIST<LIST<STRING>>",
+    "RECORD",
+    "NODE",
+    "RELATIONSHIP",
+    "PATH",
+    "LIST<DATE>",
+];
+
+/// Reads `data` as a type name and a lexical form (rmp #56): the text
+/// before the first line feed is the type name, the rest the form; without
+/// a line feed the first byte picks a type name and the rest is the form.
+/// The reader never panics, and a form it accepts is written again and
+/// reads back to an equal value (bit equality, NaN for NaN).
+pub fn lexical_parse(data: &[u8]) {
+    use crate::types::lexical::{TypeName, bit_eq, lexical, parse};
+    let (t, text) = match data.iter().position(|&b| b == b'\n') {
+        Some(i) => (
+            String::from_utf8_lossy(&data[..i]).into_owned(),
+            String::from_utf8_lossy(&data[i + 1..]).into_owned(),
+        ),
+        None => match data.split_first() {
+            Some((b, rest)) => (
+                TYPE_NAMES[usize::from(*b) % TYPE_NAMES.len()].to_owned(),
+                String::from_utf8_lossy(rest).into_owned(),
+            ),
+            None => return,
+        },
+    };
+    let Some(t) = TypeName::parse(&t) else {
+        return;
+    };
+    if let Some(v) = parse(&t, &text) {
+        let again = lexical(&v);
+        let back = parse(&t, &again).expect("a written form reads back");
+        assert!(bit_eq(&v, &back), "{text:?} -> {again:?}");
+    }
+}
+
+/// Reads `data` as a native dump (rmp #57): never panics; a damaged dump
+/// fails with an error.
+pub fn dump_read(data: &[u8]) {
+    let _ = crate::ops::bulk::dump::read_all(data);
+}
+
+/// Reads `data` as a CSV node file and as an edge file (rmp #59): never
+/// panics.
+pub fn csv_read(data: &[u8]) {
+    let _ = crate::ops::bulk::csv::read_all(data);
+}
+
+/// Reads `data` as a JSON Lines input (rmp #59): never panics.
+pub fn jsonl_read(data: &[u8]) {
+    let _ = crate::ops::bulk::jsonl::read_all(data);
+}
+
+/// Reads `data` as a GraphML document (rmp #59): never panics.
+pub fn graphml_read(data: &[u8]) {
+    let _ = crate::ops::bulk::graphml::read_all(data);
+}

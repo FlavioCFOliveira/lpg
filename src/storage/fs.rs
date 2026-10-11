@@ -53,6 +53,22 @@ impl Storage for FsStorage {
         fs::rename(from, to)
     }
 
+    /// `renameat2(RENAME_NOREPLACE)` (Linux 3.15; rustix
+    /// `renameat_with`); on a file system that does not support the flag
+    /// (`EINVAL`), `link(2)`, which fails with `EEXIST` if `to` exists, then
+    /// `unlink(2)` of `from`.
+    fn rename_noreplace(&self, from: &Path, to: &Path) -> io::Result<()> {
+        use rustix::fs::{CWD, RenameFlags, renameat_with};
+        match renameat_with(CWD, from, CWD, to, RenameFlags::NOREPLACE) {
+            Ok(()) => Ok(()),
+            Err(rustix::io::Errno::INVAL) => {
+                fs::hard_link(from, to)?;
+                fs::remove_file(from)
+            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
     fn list(&self, dir: &Path) -> io::Result<Vec<OsString>> {
         let mut names = fs::read_dir(dir)?
             .map(|entry| entry.map(|e| e.file_name()))
