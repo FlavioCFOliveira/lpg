@@ -1,0 +1,2 @@
+# Vendored conformance artefacts stay byte-identical to upstream (no EOL conversion).
+tests/tck/** -text
