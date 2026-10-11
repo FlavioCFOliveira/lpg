@@ -333,6 +333,7 @@ impl Pool {
         let shard = self.shard(page_no);
         if let Some(frame) = self.pin_mapped(&read_map(shard), page_no) {
             shard.hits.fetch_add(1, Ordering::Relaxed);
+            super::counters::hit();
             return Ok(PinnedPage { pool: self, frame });
         }
         self.load(shard, page_no)
@@ -369,6 +370,7 @@ impl Pool {
                 drop(buf);
                 f.unpin();
                 shard.hits.fetch_add(1, Ordering::Relaxed);
+                super::counters::hit();
                 return Ok(PinnedPage {
                     pool: self,
                     frame: other,
@@ -379,6 +381,7 @@ impl Pool {
             f.usage.store(1, Ordering::Relaxed);
         }
         shard.misses.fetch_add(1, Ordering::Relaxed);
+        super::counters::miss();
         if let Err(e) = self.data.read_page(page_no, &mut buf) {
             // `read_page` has set the unusable latch; threads waiting on this
             // frame see it once they get the latch.

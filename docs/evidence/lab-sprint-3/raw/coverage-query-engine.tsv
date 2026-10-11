@@ -1,0 +1,785 @@
+file	function	count	regions_covered	regions
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::add	1476	39	51
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::add::{closure#0}	0	0	1
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::finish	14038	28	45
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::finish::{closure#0}	0	0	3
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::held	119904	10	10
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::held::{closure#0}	0	0	4
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::held::{closure#0}::{closure#0}	0	0	2
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::new	54270	6	6
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::update	59998	60	64
+src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::wrong	1	5	5
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog	49	109	141
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#0}	16	3	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#1}	2	3	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#2}	5	3	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#3}	4	3	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#4}	12	3	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#5}	0	0	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#6}	12	3	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#7}	3	3	3
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type	17	54	58
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#0}	16	2	2
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#1}	1	2	2
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#2}	4	4	4
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#3}	0	0	2
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::object_path	40	20	27
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::path_of	49	9	11
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::resolve_graph_expr	26	25	41
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::resolve_path	26	20	24
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::resolve_schema	1	10	11
+src/query/binder/catalog.rs	<lpg::query::binder::Binder>::schema_path	14	6	33
+src/query/binder/catalog.rs	lpg::query::binder::catalog::absolute	23	9	9
+src/query/binder/catalog.rs	lpg::query::binder::catalog::absolute::{closure#0}	12	2	2
+src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type	4	40	48
+src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}	8	39	43
+src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}::{closure#0}	2	2	2
+src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}::{closure#2}	1	2	2
+src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}::{closure#3}	4	2	2
+src/query/binder/catalog.rs	lpg::query::binder::catalog::filler	25	34	37
+src/query/binder/catalog.rs	lpg::query::binder::catalog::filler::{closure#0}	25	2	2
+src/query/binder/catalog.rs	lpg::query::binder::catalog::filler::{closure#1}	25	2	2
+src/query/binder/catalog.rs	lpg::query::binder::catalog::filler::{closure#2}	8	2	2
+src/query/binder/catalog.rs	lpg::query::binder::catalog::invalid_reference	3	4	4
+src/query/binder/catalog.rs	lpg::query::binder::catalog::node_type	16	16	17
+src/query/binder/catalog.rs	lpg::query::binder::catalog::prop_type	16	60	111
+src/query/binder/catalog.rs	lpg::query::binder::catalog::prop_type::{closure#0}	13	5	5
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_aggregate	3049	53	53
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_aggregate::{closure#0}	2418	4	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case	4	110	123
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case::{closure#0}	0	0	2
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case::{closure#1}	3	5	5
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case::{closure#2}	2	4	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists	5	27	27
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}	5	44	51
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#0}	2	4	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#1}	1	4	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#2}	1	3	3
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_expr	47251	194	219
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_function	28	119	142
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_value	5730	10	10
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_value::{closure#0}	5730	4	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::boolean	2962	9	9
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::label	1338	11	11
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::label_test	11411	41	52
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::literal	5460	40	45
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::literal::{closure#0}	0	0	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::prop_key	439	7	7
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::sub	27736	8	8
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::sub::{closure#0}	27736	4	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::temporal_arg	4	22	24
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::temporal_arg::{closure#0}	4	4	4
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::tok	28003	8	8
+src/query/binder/expr.rs	<lpg::query::binder::Binder>::when_operand	3	25	45
+src/query/binder/expr.rs	<lpg::query::binder::expr::ExprCtx>::aggregating	11361	3	3
+src/query/binder/expr.rs	<lpg::query::binder::expr::ExprCtx>::plain	5730	3	3
+src/query/binder/expr.rs	lpg::query::binder::expr::integer	5398	10	10
+src/query/binder/expr.rs	lpg::query::binder::expr::integer::{closure#0}	5498	1	1
+src/query/binder/expr.rs	lpg::query::binder::expr::integer::{closure#1}	1	2	2
+src/query/binder/expr.rs	lpg::query::binder::expr::is_min_magnitude	3	10	11
+src/query/binder/expr.rs	lpg::query::binder::expr::is_min_magnitude::{closure#0}	21	1	1
+src/query/binder/expr.rs	lpg::query::binder::expr::numeric	5411	45	50
+src/query/binder/expr.rs	lpg::query::binder::expr::numeric::{closure#0}	24	1	1
+src/query/binder/expr.rs	lpg::query::binder::expr::numeric::{closure#1}	0	0	4
+src/query/binder/expr.rs	lpg::query::binder::expr::temporal_literal	6	32	46
+src/query/binder/expr.rs	lpg::query::binder::expr::temporal_literal::{closure#0}	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#0}>	63	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#0}>::{closure#0}	8	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#1}>	7	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#2}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#2}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_graph_pattern::{closure#2}>	6647	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_graph_pattern::{closure#2}>::{closure#0}	13	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#0}>	7	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#1}>	6	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#2}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#3}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#3}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#4}>	6617	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#4}>::{closure#0}	35	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#5}>	5359	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#5}>::{closure#0}	40	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#6}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#6}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#0}>	5376	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#0}>::{closure#0}	30	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#1}>	1260	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#2}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_nested::{closure#0}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_nested::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_result::{closure#0}>	5372	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_result::{closure#0}>::{closure#0}	33	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#0}>	3	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#1}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#2}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::use_graph::{closure#0}>	22	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::use_graph::{closure#0}>::{closure#0}	3	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#1}>	3	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#3}>	3	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#3}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_result::{closure#1}>	1104	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_result::{closure#1}>::{closure#0}	5	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_select::{closure#4}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_select::{closure#4}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_simple_query::{closure#0}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_simple_query::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(usize, lpg::query::bound::Name), <lpg::query::binder::Binder>::bind_modifying::{closure#1}>	4	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(usize, lpg::query::bound::Name), <lpg::query::binder::Binder>::bind_modifying::{closure#1}>::{closure#0}	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#0}>	16	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#1}>	2	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#3}>	4	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#3}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#4}>	12	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#4}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#5}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#5}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#7}>	3	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#7}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, <lpg::query::binder::Binder>::bind_procedure::{closure#0}>	5505	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, <lpg::query::binder::Binder>::bind_procedure::{closure#0}>::{closure#0}	103	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, lpg::query::binder::bind::{closure#2}>	5508	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, lpg::query::binder::bind::{closure#2}>::{closure#0}	106	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::CatalogOp, <lpg::query::binder::Binder>::bind_statement::{closure#0}>	49	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::CatalogOp, <lpg::query::binder::Binder>::bind_statement::{closure#0}>::{closure#0}	13	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::IEdge, <lpg::query::binder::Binder>::bind_insert::{closure#2}>	153	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::IEdge, <lpg::query::binder::Binder>::bind_insert::{closure#2}>::{closure#0}	3	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#0}>	2	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#1}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::match_table::{closure#0}>	6635	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::match_table::{closure#0}>::{closure#0}	29	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SessionCmd, lpg::query::binder::bind::{closure#0}>	4	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SessionCmd, lpg::query::binder::bind::{closure#0}>::{closure#0}	2	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SetItem, <lpg::query::binder::Binder>::bind_modifying::{closure#0}>	8	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SetItem, <lpg::query::binder::Binder>::bind_modifying::{closure#0}>::{closure#0}	2	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_aggregate::{closure#0}>	2418	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_aggregate::{closure#0}>::{closure#0}	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#1}>	3	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#2}>	2	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#10}>	3189	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#10}>::{closure#0}	8	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#5}>	2104	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#5}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#6}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#6}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#1}>	11360	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#1}>::{closure#0}	30	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#2}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_select::{closure#3}>	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_select::{closure#3}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_set_item::{closure#0}>	2	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_set_item::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_value::{closure#0}>	5730	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_value::{closure#0}>::{closure#0}	8	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::insert_props::{closure#1}>	430	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::insert_props::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::sub::{closure#0}>	27736	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::sub::{closure#0}>::{closure#0}	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::temporal_arg::{closure#0}>	4	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::temporal_arg::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::LabelTest, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#3}>	11406	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::LabelTest, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#3}>::{closure#0}	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::EdgeType, <lpg::query::binder::Binder>::graph_type::{closure#2}>	4	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::EdgeType, <lpg::query::binder::Binder>::graph_type::{closure#2}>::{closure#0}	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#2}>	5	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#2}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#6}>	12	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#6}>::{closure#0}	7	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::NodeType, <lpg::query::binder::Binder>::graph_type::{closure#0}>	16	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::NodeType, <lpg::query::binder::Binder>::graph_type::{closure#0}>::{closure#0}	5	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#0}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#1}>	1	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#0}>	1301	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#0}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#1}>	154	4	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#1}>::{closure#0}	0	0	4
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_procedure	5508	33	35
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_procedure::{closure#0}	5505	3	3
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_session_set	4	24	28
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_session_set::{closure#0}	1	3	3
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_session_set::{closure#1}	1	3	3
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_statement	5505	28	28
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_statement::{closure#0}	49	3	3
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::finish	5366	19	19
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::graph_index	6686	10	10
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::graph_index::{closure#0}	1283	2	2
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::hidden	4269	17	17
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::locate	515	11	11
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::lookup	34449	5	5
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::lookup::{closure#0}	43372	2	2
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::new	5518	13	13
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::param	398	11	11
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::param::{closure#0}	409	2	2
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::slot	33927	10	10
+src/query/binder/mod.rs	<lpg::query::binder::Binder>::text_of	27	6	6
+src/query/binder/mod.rs	<lpg::query::binder::SessionCtx>::new	5520	3	3
+src/query/binder/mod.rs	lpg::query::binder::bind	5520	75	90
+src/query/binder/mod.rs	lpg::query::binder::bind::{closure#0}	4	3	3
+src/query/binder/mod.rs	lpg::query::binder::bind::{closure#1}	3	2	2
+src/query/binder/mod.rs	lpg::query::binder::bind::{closure#2}	5508	3	3
+src/query/binder/mod.rs	lpg::query::binder::bind::{closure#3}	3	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern	6638	256	336
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#0}	6650	8	8
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#10}	3189	3	3
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#1}	13	4	4
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#2}	6647	16	19
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#3}	11406	4	4
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#4}	6660	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#5}	2104	3	3
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#6}	1	3	3
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#8}	3	3	3
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#9}	2	3	3
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert	36	49	55
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert::{closure#0}	1301	9	9
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert::{closure#1}	154	9	9
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert::{closure#2}	153	9	9
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::element_var	19479	51	51
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::element_var::{closure#0}	23660	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::element_var::{closure#2}	19459	3	3
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_edge	153	52	53
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_edge::{closure#0}	152	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_edge::{closure#1}	3	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node	1455	76	80
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node::{closure#0}	5897	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node::{closure#1}	1170	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node::{closure#2}	1187	3	3
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_props	1341	24	29
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_props::{closure#0}	218	2	2
+src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_props::{closure#1}	430	3	3
+src/query/binder/pattern.rs	<lpg::query::bound::Degree>::max_of	19	6	7
+src/query/binder/pattern.rs	lpg::query::binder::pattern::degrees	24258	75	75
+src/query/binder/pattern.rs	lpg::query::binder::pattern::degrees::{closure#0}	8	10	10
+src/query/binder/pattern.rs	lpg::query::binder::pattern::degrees::{closure#1}	42	3	3
+src/query/binder/pattern.rs	lpg::query::binder::pattern::elements	24171	10	11
+src/query/binder/pattern.rs	lpg::query::binder::pattern::elements::{closure#0}	17537	2	2
+src/query/binder/pattern.rs	lpg::query::binder::pattern::gates	24191	31	31
+src/query/binder/pattern.rs	lpg::query::binder::pattern::kind_name	2	5	6
+src/query/binder/pattern.rs	lpg::query::binder::pattern::merge	19542	9	9
+src/query/binder/pattern.rs	lpg::query::binder::pattern::merge::{closure#0}	7	3	3
+src/query/binder/pattern.rs	lpg::query::binder::pattern::node_index	13056	10	12
+src/query/binder/pattern.rs	lpg::query::binder::pattern::node_index::{closure#0}	8191	2	2
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_call	2	12	13
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_composite	5411	22	24
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data	46	26	32
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data::{closure#0}	63	10	10
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data::{closure#1}	7	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data::{closure#2}	0	0	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query	5407	40	63
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#0}	7	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#1}	6	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#2}	0	0	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#3}	0	0	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#4}	6617	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#5}	5359	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#6}	0	0	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match	6638	27	28
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match::{closure#0}	5376	4	4
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match::{closure#1}	1260	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match::{closure#2}	1	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying	48	58	60
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying::{closure#0}	8	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying::{closure#1}	4	12	13
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying::{closure#2}	1	1	1
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_nested	1	14	29
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_nested::{closure#0}	1	6	11
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection	5375	134	137
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#0}	8661	2	2
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#1}	11360	4	4
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#2}	1	4	4
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#4}	3044	6	6
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#5}	3043	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result	5372	34	40
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result::{closure#0}	5372	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result::{closure#1}	1104	4	4
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key	1104	36	38
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#0}	1101	2	2
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#1}	2	2	2
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#2}	2	5	6
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#2}::{closure#0}	2	2	2
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_return	5372	21	22
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_scope_sort_key	1	12	25
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select	4	44	101
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#0}	3	8	9
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#1}	0	0	7
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#2}	0	0	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#3}	0	0	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#4}	0	0	4
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_set_item	8	45	48
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_set_item::{closure#0}	2	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_simple_query	6639	32	35
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_simple_query::{closure#0}	1	3	3
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::element	10	10	11
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::items	5375	24	29
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::items::{closure#0}	0	0	2
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::items::{closure#1}	11361	16	16
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::match_table	6636	24	24
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::match_table::{closure#0}	6635	4	4
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::page	1107	17	17
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::use_graph	22	5	5
+src/query/binder/statements.rs	<lpg::query::binder::Binder>::use_graph::{closure#0}	22	9	10
+src/query/binder/statements.rs	lpg::query::binder::statements::has_aggregate	4	11	15
+src/query/binder/statements.rs	lpg::query::binder::statements::map_slots	3049	32	112
+src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#0}	5	4	4
+src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#1}	0	0	3
+src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#2}	0	0	3
+src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#3}	0	0	9
+src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#4}	0	0	4
+src/query/binder/statements.rs	lpg::query::binder::statements::regroup	3044	10	10
+src/query/binder/statements.rs	lpg::query::binder::statements::regroup::{closure#0}	3045	11	13
+src/query/binder/statements.rs	lpg::query::binder::statements::regroup::{closure#0}::{closure#0}	1	2	2
+src/query/binder/statements.rs	lpg::query::binder::statements::rule	9	4	4
+src/query/binder/statements.rs	lpg::query::binder::statements::undefined	3	4	4
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::is_empty	11555	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::is_full	2215904	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::len	2258727	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::new	42660	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::push	62573	9	9
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::push_owned	8656230	9	9
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::row	6708668	5	5
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::rows	31391	4	4
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::rows::{closure#0}	6664766	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Batch>::width	15861	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cursor as core::fmt::Debug>::fmt	0	0	9
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::columns	1	5	5
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::control	2	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::counters	1	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::kind	2	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::max_running	1004	5	5
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::next_batch	10737	40	41
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::next_batch::{closure#0}	4163378	2	2
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::profile	6	13	13
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::scan_rows	2	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::set_check	1	4	4
+src/query/exec/mod.rs	<lpg::query::exec::Cursor>::type_checks	2	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::exists	5	27	31
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::exists::{closure#0}	0	0	2
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::now	3	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::param	7185	7	7
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::principal	1	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::property	74633	27	32
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::property::{closure#0}	82908	2	2
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::property::{closure#2}	2275	2	2
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::token	2	6	6
+src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::tokens	60008	14	26
+src/query/exec/mod.rs	<lpg::query::exec::Held>::grow	136624	28	28
+src/query/exec/mod.rs	<lpg::query::exec::Held>::peak	77	3	3
+src/query/exec/mod.rs	<lpg::query::exec::Held>::release	4438	5	5
+src/query/exec/mod.rs	<lpg::query::exec::State>::argument	13000	5	5
+src/query/exec/mod.rs	<lpg::query::exec::State>::argument::{closure#0}	6828	3	3
+src/query/exec/mod.rs	<lpg::query::exec::State>::tick	4633686	8	11
+src/query/exec/mod.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::held	1048	3	3
+src/query/exec/mod.rs	<lpg::query::exec::ops::Argument as lpg::query::exec::Operator>::held	0	0	3
+src/query/exec/mod.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::held	2	3	3
+src/query/exec/mod.rs	<lpg::query::exec::ops::Filter as lpg::query::exec::Operator>::held	4	3	3
+src/query/exec/mod.rs	<lpg::query::exec::ops::Project as lpg::query::exec::Operator>::held	2056	3	3
+src/query/exec/mod.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::held	2838	3	3
+src/query/exec/mod.rs	<lpg::query::exec::write::Catalog as lpg::query::exec::Operator>::held	0	0	3
+src/query/exec/mod.rs	lpg::query::exec::collect	5334	14	14
+src/query/exec/mod.rs	lpg::query::exec::explain	13	8	11
+src/query/exec/mod.rs	lpg::query::exec::fail	20	8	8
+src/query/exec/mod.rs	lpg::query::exec::graph_type_of	5316	23	29
+src/query/exec/mod.rs	lpg::query::exec::graph_type_of::{closure#0}	0	0	2
+src/query/exec/mod.rs	lpg::query::exec::prepare	5355	52	60
+src/query/exec/mod.rs	lpg::query::exec::profile	6	8	8
+src/query/exec/mod.rs	lpg::query::exec::profile::{closure#0}	0	0	3
+src/query/exec/mod.rs	lpg::query::exec::row_bytes	185079	5	5
+src/query/exec/mod.rs	lpg::query::exec::run	5336	8	8
+src/query/exec/mod.rs	lpg::query::exec::run::{closure#0}	4	3	3
+src/query/exec/mod.rs	lpg::query::exec::start	5342	53	55
+src/query/exec/mod.rs	lpg::query::exec::start::{closure#0}	2	3	3
+src/query/exec/mod.rs	lpg::query::exec::value_bytes	459520	6	19
+src/query/exec/mod.rs	lpg::query::exec::value_bytes::{closure#0}	0	0	3
+src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::held	22	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::next_batch	2637	152	172
+src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::next_batch::{closure#0}	53724	3	3
+src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::next_batch::{closure#1}	527	3	3
+src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::reset	3	9	9
+src/query/exec/ops.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::next_batch	4095	69	76
+src/query/exec/ops.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::next_batch::{closure#0}	6162	3	3
+src/query/exec/ops.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::reset	0	0	13
+src/query/exec/ops.rs	<lpg::query::exec::ops::Argument as lpg::query::exec::Operator>::next_batch	7090	14	14
+src/query/exec/ops.rs	<lpg::query::exec::ops::Argument as lpg::query::exec::Operator>::reset	3516	3	3
+src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::held	22	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::next_batch	1683	39	43
+src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::next_batch::{closure#0}	26882	2	2
+src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::reset	3	8	8
+src/query/exec/ops.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::next_batch	13936	77	85
+src/query/exec/ops.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::next_batch::{closure#0}	18568	3	3
+src/query/exec/ops.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::reset	3516	13	13
+src/query/exec/ops.rs	<lpg::query::exec::ops::Filter as lpg::query::exec::Operator>::next_batch	23806	27	30
+src/query/exec/ops.rs	<lpg::query::exec::ops::Filter as lpg::query::exec::Operator>::reset	3	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Project as lpg::query::exec::Operator>::next_batch	8084	31	34
+src/query/exec/ops.rs	<lpg::query::exec::ops::Project as lpg::query::exec::Operator>::reset	0	0	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::clear	3522	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::full	73158	3	3
+src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::is_empty	4456	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::push	2216198	5	5
+src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::take	22487	19	19
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch	15869	123	134
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch::{closure#0}	2228589	7	8
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch::{closure#1}	36	2	2
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch::{closure#2}	134	2	2
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::reset	2653	9	9
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::new	5300	7	7
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range	134	68	74
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#0}	103	2	2
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#1}	43	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#2}	12	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#3}	98	8	8
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#4}	0	0	2
+src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#5}	31	2	2
+src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::held	22	4	4
+src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::next_batch	1760	63	67
+src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::next_batch::{closure#0}	16245	27	27
+src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::next_batch::{closure#0}::{closure#0}	0	0	1
+src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::reset	3	9	9
+src/query/exec/ops.rs	lpg::query::exec::ops::build	41557	142	142
+src/query/exec/ops.rs	lpg::query::exec::ops::build::{closure#0}	36217	3	3
+src/query/exec/ops.rs	lpg::query::exec::ops::build::{closure#1}	36217	2	2
+src/query/exec/ops.rs	lpg::query::exec::ops::build::{closure#2}	36	2	2
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled as lpg::query::exec::Operator>::held	1050	4	4
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled as lpg::query::exec::Operator>::next_batch	6025	74	74
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled as lpg::query::exec::Operator>::reset	1413	4	4
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled>::new	34	3	3
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::annotate	5	8	8
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::annotate::walk	29	11	11
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::max_running	1004	3	3
+src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::register	34	6	6
+src/query/exec/profile.rs	<lpg::query::exec::profile::Totals>::add	4975	7	7
+src/query/exec/profile.rs	<lpg::query::exec::profile::Totals>::sub	12050	16	16
+src/query/exec/profile.rs	lpg::query::exec::profile::now	12050	11	11
+src/query/exec/write.rs	<lpg::query::exec::write::Catalog as lpg::query::exec::Operator>::next_batch	20	11	12
+src/query/exec/write.rs	<lpg::query::exec::write::Catalog as lpg::query::exec::Operator>::reset	0	0	3
+src/query/exec/write.rs	<lpg::query::exec::write::Write as lpg::query::exec::Operator>::held	11	4	4
+src/query/exec/write.rs	<lpg::query::exec::write::Write as lpg::query::exec::Operator>::next_batch	69	60	63
+src/query/exec/write.rs	<lpg::query::exec::write::Write as lpg::query::exec::Operator>::reset	0	0	9
+src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply	10033	146	161
+src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#0}	2	9	10
+src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#0}::{closure#0}	3	2	2
+src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#1}	1	3	3
+src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#2}	1	2	2
+src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#2}::{closure#0}	1	2	2
+src/query/exec/write.rs	lpg::query::exec::write::catalog	20	3	3
+src/query/exec/write.rs	lpg::query::exec::write::change::<<lpg::query::exec::write::Write>::apply::{closure#0}>	2	29	40
+src/query/exec/write.rs	lpg::query::exec::write::change::<<lpg::query::exec::write::Write>::apply::{closure#1}>	1	17	40
+src/query/exec/write.rs	lpg::query::exec::write::change::<<lpg::query::exec::write::Write>::apply::{closure#2}>	1	17	40
+src/query/exec/write.rs	lpg::query::exec::write::check_closed	8	86	93
+src/query/exec/write.rs	lpg::query::exec::write::drop_named	5	34	39
+src/query/exec/write.rs	lpg::query::exec::write::drop_named::{closure#0}	1	2	2
+src/query/exec/write.rs	lpg::query::exec::write::eval_props	11320	27	30
+src/query/exec/write.rs	lpg::query::exec::write::in_directory	5	18	19
+src/query/exec/write.rs	lpg::query::exec::write::in_directory::{closure#0}	1	3	3
+src/query/exec/write.rs	lpg::query::exec::write::in_schema	15	15	16
+src/query/exec/write.rs	lpg::query::exec::write::in_schema::{closure#0}	1	3	3
+src/query/exec/write.rs	lpg::query::exec::write::inline_type_name	4	3	3
+src/query/exec/write.rs	lpg::query::exec::write::insert	28	5	5
+src/query/exec/write.rs	lpg::query::exec::write::invalid_reference	2	10	10
+src/query/exec/write.rs	lpg::query::exec::write::key_token	426	9	10
+src/query/exec/write.rs	lpg::query::exec::write::named_props	14	6	6
+src/query/exec/write.rs	lpg::query::exec::write::named_props::{closure#0}	9	4	4
+src/query/exec/write.rs	lpg::query::exec::write::named_props::{closure#0}::{closure#0}	9	2	2
+src/query/exec/write.rs	lpg::query::exec::write::names	16	6	6
+src/query/exec/write.rs	lpg::query::exec::write::names::{closure#0}	16	4	4
+src/query/exec/write.rs	lpg::query::exec::write::null_element	1	3	3
+src/query/exec/write.rs	lpg::query::exec::write::property_value	427	15	15
+src/query/exec/write.rs	lpg::query::exec::write::property_value::{closure#0}	428	3	4
+src/query/exec/write.rs	lpg::query::exec::write::property_value::{closure#1}	2	4	4
+src/query/exec/write.rs	lpg::query::exec::write::remove	2	5	5
+src/query/exec/write.rs	lpg::query::exec::write::resolve	19	13	14
+src/query/exec/write.rs	lpg::query::exec::write::resolve::{closure#1}	17	2	2
+src/query/exec/write.rs	lpg::query::exec::write::run_catalog	20	128	172
+src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#0}	1	2	2
+src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#1}	0	0	3
+src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#2}	0	0	3
+src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#4}	0	0	2
+src/query/exec/write.rs	lpg::query::exec::write::set	4	5	5
+src/query/exec/write.rs	lpg::query::exec::write::violation	6	4	4
+src/query/exec/write.rs	lpg::query::exec::write::write	34	7	7
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::conjuncts	4025	16	16
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold	25098	54	91
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold::{closure#0}	16955	3	3
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold::{closure#1}	0	0	4
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold::{closure#2}	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::has_subquery	41510	7	7
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::has_subquery::{closure#0}	120006	2	2
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::is_constant	19717	7	7
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::is_constant::{closure#0}	1	9	9
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::slots	58926	7	7
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::slots::{closure#0}	189975	9	9
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::walk	361405	29	51
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::walk::{closure#0}	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::Expr>::walk::{closure#1}	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::LabelTest>::matches	60008	8	32
+src/query/expr/mod.rs	<lpg::query::expr::LabelTest>::matches::{closure#0}	60008	3	3
+src/query/expr/mod.rs	<lpg::query::expr::LabelTest>::required	21727	6	17
+src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::exists	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::now	74	3	3
+src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::param	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::principal	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::property	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::token	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::tokens	0	0	3
+src/query/expr/mod.rs	<lpg::query::expr::Tok>::resolve	134971	4	4
+src/query/expr/mod.rs	<lpg::query::expr::Tok>::resolve::{closure#0}	2	4	4
+src/query/expr/mod.rs	<lpg::types::Value>::is_null	33571	4	4
+src/query/expr/mod.rs	lpg::query::expr::and3	301	7	7
+src/query/expr/mod.rs	lpg::query::expr::arith	28	52	55
+src/query/expr/mod.rs	lpg::query::expr::arith::{closure#0}	4	2	2
+src/query/expr/mod.rs	lpg::query::expr::as_f64	18	7	8
+src/query/expr/mod.rs	lpg::query::expr::compare	39342	17	17
+src/query/expr/mod.rs	lpg::query::expr::compare::{closure#0}	5809	1	1
+src/query/expr/mod.rs	lpg::query::expr::compare::{closure#1}	8822	4	4
+src/query/expr/mod.rs	lpg::query::expr::compare::{closure#1}::{closure#0}	8821	6	7
+src/query/expr/mod.rs	lpg::query::expr::concat	2	5	27
+src/query/expr/mod.rs	lpg::query::expr::division_by_zero	4	3	3
+src/query/expr/mod.rs	lpg::query::expr::equals	28313	36	59
+src/query/expr/mod.rs	lpg::query::expr::equals::{closure#0}	0	0	2
+src/query/expr/mod.rs	lpg::query::expr::eval	4799723	256	327
+src/query/expr/mod.rs	lpg::query::expr::eval::{closure#0}	3742	1	1
+src/query/expr/mod.rs	lpg::query::expr::finite	17	6	6
+src/query/expr/mod.rs	lpg::query::expr::holds_null	3	8	8
+src/query/expr/mod.rs	lpg::query::expr::internal	0	0	4
+src/query/expr/mod.rs	lpg::query::expr::invalid_type	5	4	4
+src/query/expr/mod.rs	lpg::query::expr::is_true	102626	4	4
+src/query/expr/mod.rs	lpg::query::expr::negate	3	9	24
+src/query/expr/mod.rs	lpg::query::expr::negate::{closure#0}	1	2	2
+src/query/expr/mod.rs	lpg::query::expr::negate::{closure#1}	0	0	1
+src/query/expr/mod.rs	lpg::query::expr::negate_d2s	1	6	6
+src/query/expr/mod.rs	lpg::query::expr::negate_d2s::{closure#0}	1	3	3
+src/query/expr/mod.rs	lpg::query::expr::negate_d2s::{closure#1}	0	0	1
+src/query/expr/mod.rs	lpg::query::expr::of_truth	46112	5	5
+src/query/expr/mod.rs	lpg::query::expr::or3	1468	7	7
+src/query/expr/mod.rs	lpg::query::expr::order	11031	23	30
+src/query/expr/mod.rs	lpg::query::expr::out_of_range	6	4	4
+src/query/expr/mod.rs	lpg::query::expr::sort_cmp	18802	10	10
+src/query/expr/mod.rs	lpg::query::expr::truth	9359	10	10
+src/query/expr/mod.rs	lpg::query::expr::type_name	7	6	22
+src/query/features/mod.rs	lpg::query::features::features	307	3	3
+src/query/features/mod.rs	lpg::query::features::gate	410	6	6
+src/query/features/mod.rs	lpg::query::features::is_supported	515	5	5
+src/query/features/mod.rs	lpg::query::features::unsupported	306	11	11
+src/query/features/mod.rs	lpg::query::features::unsupported::{closure#0}	32917	2	2
+src/query/functions.rs	lpg::query::functions::abs_kernel	3	9	19
+src/query/functions.rs	lpg::query::functions::between_kernel	4	39	63
+src/query/functions.rs	lpg::query::functions::between_kernel::{closure#0}	0	0	8
+src/query/functions.rs	lpg::query::functions::between_kernel::{closure#1}	0	0	1
+src/query/functions.rs	lpg::query::functions::call	77	13	13
+src/query/functions.rs	lpg::query::functions::cut_kernel	5	35	42
+src/query/functions.rs	lpg::query::functions::d2s_nanos	2	4	4
+src/query/functions.rs	lpg::query::functions::d2s_of	2	9	9
+src/query/functions.rs	lpg::query::functions::d2s_of_nanos	4	11	12
+src/query/functions.rs	lpg::query::functions::d2s_of_nanos::{closure#0}	0	0	1
+src/query/functions.rs	lpg::query::functions::datetime_overflow	1	3	3
+src/query/functions.rs	lpg::query::functions::duration_record	1	31	51
+src/query/functions.rs	lpg::query::functions::duration_record::{closure#0}	3	2	2
+src/query/functions.rs	lpg::query::functions::duration_record::{closure#1}	0	0	1
+src/query/functions.rs	lpg::query::functions::int_field	26	11	11
+src/query/functions.rs	lpg::query::functions::int_field::{closure#0}	67	2	2
+src/query/functions.rs	lpg::query::functions::interval_overflow	1	3	3
+src/query/functions.rs	lpg::query::functions::invalid_field	1	5	7
+src/query/functions.rs	lpg::query::functions::invalid_value	1	4	4
+src/query/functions.rs	lpg::query::functions::is_instant	3	3	4
+src/query/functions.rs	lpg::query::functions::like	11	8	8
+src/query/functions.rs	lpg::query::functions::narrow::<i16>	2	5	5
+src/query/functions.rs	lpg::query::functions::narrow::<i16>::{closure#0}	0	0	2
+src/query/functions.rs	lpg::query::functions::narrow::<i32>	3	5	5
+src/query/functions.rs	lpg::query::functions::narrow::<i32>::{closure#0}	0	0	2
+src/query/functions.rs	lpg::query::functions::narrow::<i8>	13	5	5
+src/query/functions.rs	lpg::query::functions::narrow::<i8>::{closure#0}	0	0	2
+src/query/functions.rs	lpg::query::functions::now_kernel	8	13	14
+src/query/functions.rs	lpg::query::functions::parse_duration	6	43	44
+src/query/functions.rs	lpg::query::functions::parse_duration::{closure#0}	5	5	5
+src/query/functions.rs	lpg::query::functions::point_of	8	6	15
+src/query/functions.rs	lpg::query::functions::row	78	6	6
+src/query/functions.rs	lpg::query::functions::row::{closure#0}	1025	2	2
+src/query/functions.rs	lpg::query::functions::session_zone	9	3	3
+src/query/functions.rs	lpg::query::functions::shift	3	52	69
+src/query/functions.rs	lpg::query::functions::shift::{closure#0}	0	0	1
+src/query/functions.rs	lpg::query::functions::shift::{closure#1}	0	0	1
+src/query/functions.rs	lpg::query::functions::shift::{closure#2}	2	7	7
+src/query/functions.rs	lpg::query::functions::shift::{closure#2}::{closure#0}	1	3	3
+src/query/functions.rs	lpg::query::functions::shift::{closure#2}::{closure#1}	1	1	1
+src/query/functions.rs	lpg::query::functions::shift::{closure#3}	1	3	3
+src/query/functions.rs	lpg::query::functions::shift::{closure#4}	0	0	1
+src/query/functions.rs	lpg::query::functions::signed	3	5	5
+src/query/functions.rs	lpg::query::functions::string_kernel	13	19	21
+src/query/functions.rs	lpg::query::functions::string_of	18	5	11
+src/query/functions.rs	lpg::query::functions::temporal_arith	6	35	83
+src/query/functions.rs	lpg::query::functions::temporal_arith::{closure#0}	1	10	13
+src/query/functions.rs	lpg::query::functions::temporal_kernel	21	25	31
+src/query/functions.rs	lpg::query::functions::temporal_kernel::{closure#0}	1	4	4
+src/query/functions.rs	lpg::query::functions::temporal_kernel::{closure#1}	1	4	4
+src/query/functions.rs	lpg::query::functions::temporal_kernel::{closure#2}	17	3	3
+src/query/functions.rs	lpg::query::functions::temporal_record	5	100	133
+src/query/functions.rs	lpg::query::functions::temporal_record::{closure#0}	0	0	2
+src/query/functions.rs	lpg::query::functions::temporal_record::{closure#1}	0	0	2
+src/query/functions.rs	lpg::query::functions::temporal_record::{closure#2}	0	0	2
+src/query/functions.rs	lpg::query::functions::zone_field	3	9	26
+src/query/functions.rs	lpg::query::functions::zone_field::{closure#0}	12	2	2
+src/query/functions.rs	lpg::query::functions::zone_field::{closure#1}	0	0	2
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::decode	11	54	68
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::decode::{closure#0}	17	18	22
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::edge_matches	2	4	4
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::edge_matches::{closure#0}	2	8	8
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::encode	5	36	36
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::encode::{closure#0}	6	13	13
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::node_type	12	4	4
+src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::node_type::{closure#0}	12	4	4
+src/query/graph_type.rs	<lpg::query::graph_type::PropType>::accepts	7	5	5
+src/query/graph_type.rs	<lpg::query::graph_type::PropType>::from_byte	23	5	15
+src/query/graph_type.rs	<lpg::query::graph_type::Reader>::byte	136	8	9
+src/query/graph_type.rs	<lpg::query::graph_type::Reader>::string	40	18	23
+src/query/graph_type.rs	<lpg::query::graph_type::Reader>::varint	102	14	17
+src/query/graph_type.rs	lpg::query::graph_type::props_match	10	4	4
+src/query/graph_type.rs	lpg::query::graph_type::props_match::{closure#0}	8	5	5
+src/query/graph_type.rs	lpg::query::graph_type::props_match::{closure#0}::{closure#0}	10	2	2
+src/query/graph_type.rs	lpg::query::graph_type::props_match::{closure#0}::{closure#1}	7	3	3
+src/query/graph_type.rs	lpg::query::graph_type::string	11	8	8
+src/query/graph_type.rs	lpg::query::graph_type::varint	34	10	14
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::card_from	223462	25	25
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::cost_of	97973	25	25
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::nodes_of	252247	13	13
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::start_cost	109768	5	5
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::starts	6598	12	12
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::starts::{closure#0}	13073	1	1
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::steps	6882	8	8
+src/query/plan/join.rs	<lpg::query::plan::join::Graph>::steps::{closure#0}	10258	18	18
+src/query/plan/join.rs	lpg::query::plan::join::exact	4703	101	102
+src/query/plan/join.rs	lpg::query::plan::join::exact::{closure#0}	52740	2	2
+src/query/plan/join.rs	lpg::query::plan::join::exact::{closure#1}	5633	2	2
+src/query/plan/join.rs	lpg::query::plan::join::exact::{closure#2}	5199	2	2
+src/query/plan/join.rs	lpg::query::plan::join::greedy	2	53	54
+src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#0}	1088	1	1
+src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#1}	612	7	7
+src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#2}	162	11	11
+src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#3}	15	2	2
+src/query/plan/join.rs	lpg::query::plan::join::order	6598	26	26
+src/query/plan/join.rs	lpg::query::plan::join::order::{closure#0}	0	0	5
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::all_nodes	17179	10	10
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::all_nodes::{closure#0}	34204	4	4
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::all_nodes::{closure#1}	34200	1	1
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges	6414	9	9
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#0}	62752	13	13
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#0}::{closure#0}	17796	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#0}::{closure#1}	11047	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#1}	10817	1	1
+src/query/plan/mod.rs	<lpg::query::plan::Estimates>::nodes	17944	6	6
+src/query/plan/mod.rs	<lpg::query::plan::Plan>::describe	18	5	5
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access	5312	134	136
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#0}	3913	4	4
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#10}	203	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#11}	13	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#12}	49	7	8
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#13}	5127	5	5
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#1}	3913	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#1}::{closure#0}	0	0	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#2}	1399	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#3}	14503	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#4}	3352	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#5}	657	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#6}	362	7	7
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#6}::{closure#0}	177	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#7}	592	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#8}	190	2	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#9}	45	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability	6414	38	39
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#0}	12828	7	7
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#1}	12828	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#1}::{closure#0}	5975	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#1}::{closure#1}	6853	4	4
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::independent	3352	5	5
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::independent::{closure#0}	0	0	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::known	7	8	11
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate	11726	28	29
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#0}	7048	4	4
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#1}	7048	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#1}::{closure#0}	0	0	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#2}	4678	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::parts	5333	92	99
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern	6563	168	172
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#0}	19550	12	12
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#0}::{closure#0}	38158	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#0}::{closure#0}::{closure#0}	41178	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#1}	26113	6	6
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#1}::{closure#0}	14504	12	12
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#2}	13009	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#3}	6414	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#4}	19242	4	4
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#4}::{closure#0}	35044	2	2
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#5}	12987	11	11
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#6}	12987	3	3
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#7}	6414	10	10
+src/query/plan/mod.rs	<lpg::query::plan::Planner>::project	5304	41	41
+src/query/plan/mod.rs	lpg::query::plan::describe	125	116	120
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#0}	196	3	3
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#10}	1	2	3
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#11}	3	1	1
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#1}	19	2	2
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#2}	2	2	2
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#3}	1	2	3
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#4}	3	2	2
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#5}	22	2	2
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#6}	107	3	3
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#7}	8	1	1
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#8}	1	1	1
+src/query/plan/mod.rs	lpg::query::plan::describe::{closure#9}	2	2	2
+src/query/plan/mod.rs	lpg::query::plan::leaf	12101	4	4
+src/query/plan/mod.rs	lpg::query::plan::name_of	196	6	6
+src/query/plan/mod.rs	lpg::query::plan::name_of::{closure#0}	0	0	1
+src/query/plan/mod.rs	lpg::query::plan::name_of::{closure#1}	196	2	2
+src/query/plan/mod.rs	lpg::query::plan::op_name	125	22	31
+src/query/plan/mod.rs	lpg::query::plan::op_name::{closure#0}	0	0	1
+src/query/plan/mod.rs	lpg::query::plan::over	33760	5	5
+src/query/plan/mod.rs	lpg::query::plan::plan	5333	60	60
+src/query/plan/mod.rs	lpg::query::plan::plan::{closure#0}	12	3	3
+src/query/plan/mod.rs	lpg::query::plan::plan::{closure#1}	33742	2	2
+src/query/plan/mod.rs	lpg::query::plan::plan_catalog	20	9	9
+src/query/plan/mod.rs	lpg::query::plan::prop_cmp	14503	21	23
+src/query/plan/mod.rs	lpg::query::plan::prop_cmp::{closure#0}	3938	9	9
+src/query/plan/mod.rs	lpg::query::plan::prop_cmp::{closure#1}	0	0	3
+src/query/plan/mod.rs	lpg::query::plan::required_labels	35178	7	7
+src/query/plan/mod.rs	lpg::query::plan::required_labels::{closure#0}	48570	9	9
+src/query/plan/mod.rs	lpg::query::plan::sub_declares	12	4	4
+src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}	21	13	13
+src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}::{closure#0}	24	2	2
+src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}::{closure#1}	10	2	2
+src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}::{closure#2}	4	2	2
+src/query/unicode/mod.rs	lpg::query::unicode::canonical_order	20	19	19
+src/query/unicode/mod.rs	lpg::query::unicode::ccc	79	8	8
+src/query/unicode/mod.rs	lpg::query::unicode::compatibility	37	4	4
+src/query/unicode/mod.rs	lpg::query::unicode::compose	14	36	37
+src/query/unicode/mod.rs	lpg::query::unicode::compose_pair	18	32	32
+src/query/unicode/mod.rs	lpg::query::unicode::compose_pair::{closure#0}	165	2	2
+src/query/unicode/mod.rs	lpg::query::unicode::compose_pair::{closure#1}	8	1	1
+src/query/unicode/mod.rs	lpg::query::unicode::composes	20	4	4
+src/query/unicode/mod.rs	lpg::query::unicode::decompose_char	37	38	38
+src/query/unicode/mod.rs	lpg::query::unicode::decomposition	35	18	18
+src/query/unicode/mod.rs	lpg::query::unicode::is_normalized	7	8	8
+src/query/unicode/mod.rs	lpg::query::unicode::normalize	28	28	28
+src/query/unicode/mod.rs	lpg::query::unicode::tests::a_blocked_mark_does_not_reach_the_starter	1	10	10
+src/query/unicode/mod.rs	lpg::query::unicode::tests::a_hangul_syllable_is_arithmetic_in_both_directions	1	18	18
+src/query/unicode/mod.rs	lpg::query::unicode::tests::a_letter_and_its_accent_are_one_character_composed_and_two_decomposed	1	17	17
+src/query/unicode/mod.rs	lpg::query::unicode::tests::an_excluded_composition_stays_apart	1	10	10
+src/query/unicode/mod.rs	lpg::query::unicode::tests::ascii_is_already_in_every_form	1	14	14
+src/query/unicode/mod.rs	lpg::query::unicode::tests::compatibility_is_the_only_form_that_loses_the_formatting	1	14	14
+src/query/unicode/mod.rs	lpg::query::unicode::tests::marks_sort_by_combining_class_and_keep_their_order_inside_a_class	1	13	13

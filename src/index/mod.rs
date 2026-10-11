@@ -1176,6 +1176,26 @@ impl Transaction<'_> {
         lo: &[u8],
         hi: Option<&[u8]>,
     ) -> Result<Vec<u64>> {
+        self.index_scan_chunk(g, id, lo, hi, usize::MAX)
+            .map(|(v, _)| v)
+    }
+
+    /// [`Transaction::index_scan`] that reads at most `limit` committed
+    /// index entries ([`Transaction::scan_chunk`]): the elements of the keys
+    /// up to the last one read, and the key (without the index's prefix)
+    /// to resume from, `None` when the range is done (rmp #45).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::index_scan`].
+    pub(crate) fn index_scan_chunk(
+        &mut self,
+        g: &Graph,
+        id: u64,
+        lo: &[u8],
+        hi: Option<&[u8]>,
+        limit: usize,
+    ) -> Result<(Vec<u64>, Option<Vec<u8>>)> {
         let (def, t) = self.online_index(g, id)?;
         let prefix = def.key_prefix();
         let flo = [&prefix[..], lo].concat();
@@ -1183,12 +1203,13 @@ impl Transaction<'_> {
             Some(h) => Some([&prefix[..], h].concat()),
             None => crate::tx::conflict::Interval::prefix(&prefix).hi,
         };
-        let in_range = |k: &[u8]| k >= flo.as_slice() && fhi.as_deref().is_none_or(|h| k < h);
         let mut keys: BTreeSet<Vec<u8>> = BTreeSet::new();
-        self.scan_range(t, &flo, fhi.as_deref(), |k, _| {
+        let resume = self.scan_chunk(t, &flo, fhi.as_deref(), limit, |k, _| {
             keys.insert(k.to_vec());
             true
         })?;
+        let chunk_hi = resume.clone().or(fhi);
+        let in_range = |k: &[u8]| k >= flo.as_slice() && chunk_hi.as_deref().is_none_or(|h| k < h);
         // This transaction's record changes, which no index entry holds
         // until it commits.
         let elements = match def.entity {
@@ -1219,7 +1240,11 @@ impl Transaction<'_> {
                 }
             }
         }
-        Ok(keys.iter().filter_map(|k| element_of_key(k)).collect())
+        let resume = resume.map(|r| r[prefix.len()..].to_vec());
+        Ok((
+            keys.iter().filter_map(|k| element_of_key(k)).collect(),
+            resume,
+        ))
     }
 
     /// The elements of graph `g` whose property of point index `id` is a

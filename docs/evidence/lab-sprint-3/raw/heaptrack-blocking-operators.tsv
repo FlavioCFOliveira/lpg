@@ -1,0 +1,5 @@
+test	peak_heap	peak_reservation_bytes	rows
+query::exec::tests::memory::blocking_sort_peak	3.32M	1703936	10000
+query::exec::tests::memory::blocking_aggregate_peak	4.60M	2097152	10000
+query::exec::tests::memory::blocking_distinct_peak	2.66M	786432	10000
+query::exec::tests::memory::blocking_insert_peak	20.80M	1310720	10000

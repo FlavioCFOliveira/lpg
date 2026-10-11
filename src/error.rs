@@ -94,6 +94,13 @@ impl Error {
         self
     }
 
+    /// The error with `cause` as its cause (IA002: a cause to any depth).
+    #[must_use]
+    pub(crate) fn caused_by(mut self, cause: Error) -> Self {
+        self.cause = Some(Box::new(cause));
+        self
+    }
+
     /// The GQLSTATUS of the error.
     #[must_use]
     pub fn status(&self) -> GqlStatus {

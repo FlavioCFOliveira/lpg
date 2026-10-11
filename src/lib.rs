@@ -37,7 +37,7 @@ pub mod ops;
     not(test),
     allow(
         dead_code,
-        reason = "the query module's first non-test callers come with rmp #43-#47"
+        reason = "the query module's first non-test callers come with rmp #47"
     )
 )]
 pub(crate) mod query;

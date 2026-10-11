@@ -136,6 +136,9 @@ pub(crate) struct Transaction<'e> {
     pub(crate) charge: Option<Reservation>,
     trees: HashMap<u64, TreeUse>,
     state: State,
+    /// B+tree entries this transaction's reads received (PROFILE's
+    /// independent check, rmp #45).
+    pub(crate) entries_read: u64,
 }
 
 impl std::fmt::Debug for Transaction<'_> {
@@ -192,6 +195,7 @@ impl Engine {
             ),
             trees: HashMap::new(),
             state: State::Active,
+            entries_read: 0,
         })
     }
 }
@@ -311,6 +315,10 @@ impl<'e> Transaction<'e> {
             Ok(s) => s,
             Err(e) => return Err(self.fail(e)),
         };
+        if status.is_some() && tree.id() != DIRECTORY.id() {
+            // The directory entry read (PROFILE's independent count).
+            self.entries_read += 1;
+        }
         match status {
             Some((t, dropped)) if t.root() == tree.root() => {
                 if dropped != 0 && dropped <= self.snapshot {
@@ -357,7 +365,12 @@ impl<'e> Transaction<'e> {
             return Ok(Tree::pending(id));
         }
         match self.engine.store().tree(id) {
-            Ok(Some(t)) => Ok(t),
+            Ok(Some(t)) => {
+                if id != DIRECTORY.id() {
+                    self.entries_read += 1;
+                }
+                Ok(t)
+            }
             Ok(None) => Err(Error::TreeDropped(id)),
             Err(e) => Err(self.fail(e)),
         }
@@ -444,6 +457,7 @@ impl<'e> Transaction<'e> {
         let Some(stamps) = stamps else {
             return Ok(None);
         };
+        self.entries_read += 1;
         Ok(match visible(stamps, self.snapshot) {
             Some(true) => Some(v),
             Some(false) => None,
@@ -524,29 +538,46 @@ impl<'e> Transaction<'e> {
         tree: Tree,
         lo: &[u8],
         hi: Option<&[u8]>,
-        mut f: impl FnMut(&[u8], &[u8]) -> bool,
+        f: impl FnMut(&[u8], &[u8]) -> bool,
     ) -> Result<()> {
+        self.scan_chunk(tree, lo, hi, usize::MAX, f).map(drop)
+    }
+
+    /// [`Transaction::scan_range`] that stops after `limit` committed
+    /// entries: the read of `[lo, k]`, `k` the last committed key it
+    /// returned, with this transaction's writes in that interval merged.
+    /// Returns the key to resume from (the smallest key above `k`), or
+    /// `None` when the range is done. A query scan reads in chunks this
+    /// way, so it holds and reads only what one batch needs (rmp #45,
+    /// FR-API-010).
+    ///
+    /// # Errors
+    ///
+    /// As [`Transaction::get`].
+    pub(crate) fn scan_chunk(
+        &mut self,
+        tree: Tree,
+        lo: &[u8],
+        hi: Option<&[u8]>,
+        limit: usize,
+        mut f: impl FnMut(&[u8], &[u8]) -> bool,
+    ) -> Result<Option<Vec<u8>>> {
         self.active()?;
         self.use_tree(tree, false)?;
-        self.record(
-            tree,
-            Interval {
-                lo: lo.to_vec(),
-                hi: hi.map(<[u8]>::to_vec),
-            },
-        )?;
         // Committed entries visible at the snapshot, copied first: the scan
         // calls back without page latches, and the old-version store is
         // read for entries newer than the snapshot.
         let mut committed: Vec<(Vec<u8>, Option<Vec<u8>>)> = Vec::new();
         let core = self.engine.core();
         let s = self.snapshot;
+        let mut delivered = 0u64;
         let r = if tree.is_pending() {
             Ok(())
         } else {
             self.engine
                 .store()
                 .scan_range_stamped(tree, lo, hi, |k, v, st| {
+                    delivered += 1;
                     let value = match visible(st, s) {
                         Some(true) => Some(v.to_vec()),
                         Some(false) => None,
@@ -558,23 +589,48 @@ impl<'e> Transaction<'e> {
                     if let Some(v) = value {
                         committed.push((k.to_vec(), Some(v)));
                     }
-                    true
+                    committed.len() < limit
                 })
         };
+        self.entries_read += delivered;
         if let Err(e) = r {
             return Err(self.fail(e));
         }
-        // Merge the write set's entries of the range over them.
+        // The interval read: up to the last committed key returned when the
+        // chunk is full, else the whole range.
+        let resume = if committed.len() >= limit {
+            committed.last().map(|(k, _)| {
+                let mut r = k.clone();
+                r.push(0);
+                r
+            })
+        } else {
+            None
+        };
+        let read_hi: Option<Vec<u8>> = match &resume {
+            Some(r) => Some(r.clone()),
+            None => hi.map(<[u8]>::to_vec),
+        };
+        self.record(
+            tree,
+            Interval {
+                lo: lo.to_vec(),
+                hi: read_hi.clone(),
+            },
+        )?;
+        // Merge the write set's entries of the interval over them.
         let own: Vec<(&Vec<u8>, &Pending)> = self
             .writes
             .range((tree.id(), lo.to_vec())..)
-            .take_while(|((t, k), _)| *t == tree.id() && hi.is_none_or(|h| k.as_slice() < h))
+            .take_while(|((t, k), _)| {
+                *t == tree.id() && read_hi.as_deref().is_none_or(|h| k.as_slice() < h)
+            })
             .map(|((_, k), p)| (k, p))
             .collect();
         let (mut i, mut j) = (0, 0);
         loop {
             let next = match (committed.get(i), own.get(j)) {
-                (None, None) => return Ok(()),
+                (None, None) => return Ok(resume),
                 (Some((ck, cv)), None) => {
                     i += 1;
                     (ck.as_slice(), cv.as_deref())
@@ -599,7 +655,7 @@ impl<'e> Transaction<'e> {
             if let (k, Some(v)) = next
                 && !f(k, v)
             {
-                return Ok(());
+                return Ok(resume);
             }
         }
     }

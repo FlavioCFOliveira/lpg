@@ -37,5 +37,12 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "binder"
+path = "fuzz_targets/binder.rs"
+test = false
+doc = false
+bench = false
+
 # Standalone: never a member of the lpg workspace.
 [workspace]

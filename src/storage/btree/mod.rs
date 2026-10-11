@@ -623,6 +623,9 @@ impl<'e> Store<'e> {
                 }
             })
         })?;
+        if hit.is_some() {
+            super::counters::entry();
+        }
         match hit {
             None => Ok(None),
             Some((st, None)) => Ok(Some(st)),
@@ -701,7 +704,11 @@ impl<'e> Store<'e> {
         prefix: &[u8],
         f: impl FnMut(&[u8], &[u8], Stamps) -> bool,
     ) -> Result<()> {
-        self.scan_from(tree, prefix, prefix, f)
+        let mut f = f;
+        self.scan_from(tree, prefix, prefix, |k, v, st| {
+            super::counters::entry();
+            f(k, v, st)
+        })
     }
 
     /// [`Store::scan_prefix_stamped`] over the keys `k` with `lo <= k`
@@ -723,6 +730,7 @@ impl<'e> Store<'e> {
             if hi.is_some_and(|h| k >= h) {
                 return false;
             }
+            super::counters::entry();
             f(k, v, st)
         })
     }

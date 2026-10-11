@@ -342,6 +342,39 @@ pub(crate) fn tokenize(text: &str) -> Result<Vec<Token>, LexError> {
     }
 }
 
+/// The comment kinds `text` uses that are optional features: `--`
+/// comments (GB02) and `//` comments (GB03). Lexically valid text only;
+/// a lexical error stops the scan.
+pub(crate) fn comment_features(text: &str) -> Vec<&'static str> {
+    let mut lexer = Lexer {
+        text,
+        bytes: text.as_bytes(),
+        pos: 0,
+        line: 1,
+        column: 1,
+    };
+    let mut out = Vec::new();
+    while let Ok(Some((len, kind))) = lexer.next_match() {
+        if kind.is_none() {
+            let rest = &text[lexer.pos..];
+            let code = if rest.starts_with("--") {
+                Some("GB02")
+            } else if rest.starts_with("//") {
+                Some("GB03")
+            } else {
+                None
+            };
+            if let Some(c) = code
+                && !out.contains(&c)
+            {
+                out.push(c);
+            }
+        }
+        lexer.advance(len);
+    }
+    out
+}
+
 struct Lexer<'a> {
     text: &'a str,
     bytes: &'a [u8],

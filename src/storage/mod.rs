@@ -41,6 +41,14 @@ pub(crate) mod checkpoint;
 pub(crate) mod control;
 #[cfg_attr(
     not(test),
+    allow(
+        dead_code,
+        reason = "read by PROFILE, whose first non-test callers come with rmp #47"
+    )
+)]
+pub(crate) mod counters;
+#[cfg_attr(
+    not(test),
     allow(dead_code, reason = "first non-test callers come with #14-#16")
 )]
 pub(crate) mod datafile;
