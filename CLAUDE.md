@@ -55,6 +55,8 @@ Profiling tooling:
 ## Build output in RAM
 
 - **Location.** Cargo build output goes to `/dev/shm/lpg-target/`, a RAM-backed `tmpfs`, set by a local `.cargo/config.toml` (`[build] target-dir`) that is excluded from git (user authorisation, 2026-10-11). Never put build output in `/tmp/lpgram/`.
+- **Scope.** It applies to every cargo workspace in the repository (`.`, `fuzz/`, `tools/gql-oracle/`), and so to every build, test, coverage, fuzz and `loom` run.
+- **Transient tool output.** Intermediate files of tools (coverage JSON and `profraw`, `heaptrack` recordings, perf and flame-graph data, logs) go to the session scratchpad or `/tmp`, both `tmpfs`, never to the repository on disk. Only the final evidence is written to `docs/evidence/`.
 - **Purpose.** It only speeds up builds. The same limits as `/tmp/lpgram` apply: it is not persistent and says nothing about production behaviour.
 
 ## RAM space discipline (mandatory)
