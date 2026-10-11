@@ -1,0 +1,2 @@
+MATCH (p:Person)-[k:KNOWS]->(q:Person), (k:Person)
+RETURN p.name AS name

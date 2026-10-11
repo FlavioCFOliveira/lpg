@@ -1,0 +1,2 @@
+MATCH (person)
+RETURN $age + avg(person.age) - 1000

@@ -1,0 +1,2 @@
+MATCH (p:Person WHERE p.age > 40)
+RETURN p.name AS name

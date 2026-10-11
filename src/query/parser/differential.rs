@@ -173,8 +173,13 @@ fn corpora() -> Vec<PathBuf> {
         manifest_dir().join("src/query/testdata/samples"),
         manifest_dir().join("src/query/testdata/minigu"),
         manifest_dir().join(TEST_TEXTS),
+        manifest_dir().join(SCENARIO_TEXTS),
     ]
 }
+
+/// The corpus of the GQL texts of the conformance scenarios
+/// (`tests/tck/`, `crate::tck::scenario_texts`).
+const SCENARIO_TEXTS: &str = "src/query/testdata/scenarios";
 
 /// The corpus of the GQL texts of lpg's tests.
 const TEST_TEXTS: &str = "src/query/testdata/tests";
@@ -288,30 +293,25 @@ fn test_text_file(text: &str) -> String {
     format!("{h:016x}.gql")
 }
 
-/// The corpus of test texts holds exactly the texts the tests use now,
-/// each with a stored oracle label.
-/// `LPG_UPDATE_TEST_TEXTS=1` rewrites the corpus files; the labels then
-/// come from `differential_stored_labels_are_current` with
-/// `LPG_UPDATE_LABELS=1`.
-#[test]
-fn test_texts_match_the_oracle_labels() {
-    let dir = manifest_dir().join(TEST_TEXTS);
-    let texts = collect_test_texts();
-    assert!(
-        texts.len() > 50,
-        "the collector found {} texts",
-        texts.len()
-    );
+/// The corpus in `dir` holds exactly `texts`, each with a stored oracle
+/// label. With `update` set in the environment the corpus files are
+/// rewritten; the labels then come from
+/// `differential_stored_labels_are_current` with `LPG_UPDATE_LABELS=1`.
+fn check_text_corpus(dir: &str, texts: &std::collections::BTreeSet<String>, update: &str) {
+    let dir = manifest_dir().join(dir);
     let wanted: std::collections::BTreeMap<String, String> = texts
         .iter()
         .map(|t| (test_text_file(t), t.clone()))
         .collect();
     let stored: std::collections::BTreeSet<String> = std::fs::read_dir(&dir)
-        .expect("the test-text corpus")
-        .map(|e| e.expect("entry").file_name().to_string_lossy().into_owned())
-        .filter(|n| n.ends_with(".gql"))
-        .collect();
-    if std::env::var_os("LPG_UPDATE_TEST_TEXTS").is_some() {
+        .map(|d| {
+            d.map(|e| e.expect("entry").file_name().to_string_lossy().into_owned())
+                .filter(|n| n.ends_with(".gql"))
+                .collect()
+        })
+        .unwrap_or_default();
+    if std::env::var_os(update).is_some() {
+        std::fs::create_dir_all(&dir).expect("create the corpus directory");
         for name in stored.iter().filter(|n| !wanted.contains_key(*n)) {
             std::fs::remove_file(dir.join(name)).expect("remove a stale text");
         }
@@ -323,7 +323,7 @@ fn test_texts_match_the_oracle_labels() {
     let names: std::collections::BTreeSet<String> = wanted.keys().cloned().collect();
     assert_eq!(
         stored, names,
-        "the test texts changed: rerun with LPG_UPDATE_TEST_TEXTS=1, then relabel"
+        "the texts changed: rerun with {update}=1, then relabel"
     );
     // `stored_corpora_match_the_oracle_labels` compares lpg with the
     // labels; here every text must have one.
@@ -332,6 +332,29 @@ fn test_texts_match_the_oracle_labels() {
         names.len(),
         "one label per text: relabel"
     );
+}
+
+/// The corpus of test texts holds exactly the texts the tests use now,
+/// each with a stored oracle label (`LPG_UPDATE_TEST_TEXTS=1` rewrites it).
+#[test]
+fn test_texts_match_the_oracle_labels() {
+    let texts = collect_test_texts();
+    assert!(
+        texts.len() > 50,
+        "the collector found {} texts",
+        texts.len()
+    );
+    check_text_corpus(TEST_TEXTS, &texts, "LPG_UPDATE_TEST_TEXTS");
+}
+
+/// The corpus of scenario texts holds exactly the GQL texts of the
+/// conformance scenarios, each with a stored oracle label
+/// (`LPG_UPDATE_SCENARIO_TEXTS=1` rewrites it).
+#[test]
+fn scenario_texts_match_the_oracle_labels() {
+    let texts = crate::tck::scenario_texts();
+    assert!(texts.len() > 500, "{} scenario texts", texts.len());
+    check_text_corpus(SCENARIO_TEXTS, &texts, "LPG_UPDATE_SCENARIO_TEXTS");
 }
 
 #[test]

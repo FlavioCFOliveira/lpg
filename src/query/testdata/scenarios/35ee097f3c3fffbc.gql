@@ -1,0 +1,9 @@
+RETURN true AND true AS tt,
+       true AND false AS tf,
+       true AND null AS tn,
+       false AND true AS ft,
+       false AND false AS ff,
+       false AND null AS fn,
+       null AND true AS nt,
+       null AND false AS nf,
+       null AND null AS nn

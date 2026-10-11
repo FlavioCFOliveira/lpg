@@ -1,7 +1,7 @@
 ---
 title: Query engine
 status: draft
-last-reviewed: 2026-10-09
+last-reviewed: 2026-10-11
 related:
   - architecture.md
   - catalog-and-indexes.md
@@ -79,7 +79,7 @@ related:
     | IW023 (510) | A regular identifier's canonical form is its text as written; a delimited identifier's is its characters after escapes are resolved. Neither is case-folded or trimmed. | Neo4j: names are case-sensitive (Cypher Manual, "Naming rules and recommendations"); a backtick name is its inner text with each doubled backtick made single (R-NEO `ExpressionBuilder.scala:1102-1105`). |
 
     Not reached by the supported codes: IL018 (374), the upper bound of a general quantifier (G060, G061).
-  - **Narrowing.** `GQL.g4` states that it is "more permissive than a GQL implementation would be" and leaves invalid type and function combinations to the implementation. The binder therefore rejects those combinations ([TS-20](#ts-20-binder-planner-and-execution)).
+  - **Narrowing.** `GQL.g4` states that it is "more permissive than a GQL implementation would be" and leaves invalid type and function combinations to the implementation. The binder therefore rejects those combinations ([TS-20](#ts-20-binder-planner-and-execution)). A rejection made when the statement is compiled is a syntax rule violation, 42000: a non-boolean literal or a node or edge reference as an operand of `NOT`, `AND`, `OR`, `IS` or as a search condition (opengql/tck `Boolean1`, `Boolean2`, `Boolean4.feature`; rmp #52). The same operands met at run time raise the data exception 22G03, as does a search condition whose value is not a boolean (gql-compat `condition/22g03/non-boolean-search-condition`).
   - **Test oracle.** The ANTLR-generated parser from the same `GQL.g4` ([TS-30](quality-and-testing.md#ts-30-testing-and-conformance)).
   - **Syntax errors.** Input that `GQL.g4` does not accept fails with GQLSTATUS 42001 "syntax error or access rule violation – invalid syntax" (ISO conditions insert, class 42 subclass 001), reported with the position and the expected tokens.
   - **Nesting limit** (rmp #41). Each recursive rule entered, and each operator of a left-deep chain (`a + b + c`, `a.b.c`, label and type unions, query conjunctions), takes one level; more than 256 levels, or more than 1 MiB of stack used by the parse (measured from the address of a local variable, as PostgreSQL's `stack_is_too_deep` does, `src/backend/utils/misc/stack_depth.c` @ `1b5dd3a`), fails with 42001. The AST is therefore at most 256 levels deep, and recursive walks of it cannot overflow the stack. Texts that `GQL.g4` accepts but nest deeper fail. Measured on a 2 MiB stack (`docs/evidence/lab-sprint-3/raw/nesting-depth.txt`): chains admit 251 to 254 operators in any build; the costliest recursive shape, nested `EXISTS { MATCH … }`, admits 50 levels at opt-level 1 (the test profile) and 23 at opt-level 0; nested parentheses 126 and 61. The reference parsers count nesting only (datafusion-sqlparser-rs 50, zu 64, Grafeo 128) and bound no chain.
@@ -160,7 +160,7 @@ related:
     | Item (line) | Choice | Source |
     |---|---|---|
     | IA017 (106) | Several assignments to one property of one element in one `SET` raise no condition: they apply in order and the last one stays. | Neo4j applies each `SET` item as its own operation on each row (R-NEO `SetPipe.scala:26-36`), and states that Cypher's `SET` is order-dependent (Cypher Manual, "Supported mandatory GQL features", 13.3). zu raises 22G0M instead. |
-    | ID086 (266) | `DIFFERENT EDGES`: an edge is not matched twice within one graph-pattern match. | Neo4j: "By default, Cypher does not allow relationships to be re-traversed in the same graph pattern match" (Cypher Manual, "Match modes"). |
+    | ID086 (266) | `DIFFERENT EDGES`: an edge is not matched twice within one graph-pattern match. An edge variable declared by two edge patterns of one graph pattern could never bind and fails with 42000, as in Neo4j (openCypher TCK `Match3.feature` [29]; rmp #52). | Neo4j: "By default, Cypher does not allow relationships to be re-traversed in the same graph pattern match" (Cypher Manual, "Match modes"). |
     | IW011 (470) | An element variable of a graph pattern has the open node or edge reference type (`NODE`, `RELATIONSHIP`). | Neo4j's structural types `NODE` and `RELATIONSHIP` (Cypher Manual, "Property, structural, and constructed values"). |
     | IW012 (474) | A node variable of an insert node pattern has the open node reference type. | As IW011. |
     | IE006 (322) | No restriction on transactions that mix catalog and data statements. | FR-CAT-004 (user decision overriding Neo4j, which forbids the mix). |

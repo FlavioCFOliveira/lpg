@@ -1,0 +1,1 @@
+RETURN UPPER('aB') AS u, LOWER('aB') AS l

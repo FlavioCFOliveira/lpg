@@ -1,0 +1,2 @@
+MATCH (p:Person)
+RETURN p.city AS city, COUNT(*) AS n

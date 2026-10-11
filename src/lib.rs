@@ -45,4 +45,6 @@ mod lab;
 #[cfg(test)]
 mod suites;
 #[cfg(test)]
+mod tck;
+#[cfg(test)]
 mod test_support;

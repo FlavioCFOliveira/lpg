@@ -1,0 +1,29 @@
+# cargo +nightly fuzz run binder -- -runs=10000000 (base 92c0529 + working tree, 2026-10-11T08:17:51Z)
+# corpus files at start: 30350
+   Compiling lpg v0.1.0 (/data/dev/xumiga/lpg)
+   Compiling lpg-fuzz v0.0.0 (/data/dev/xumiga/lpg/fuzz)
+    Finished `release` profile [optimized + debuginfo] target(s) in 42.35s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.01s
+     Running `target/x86_64-unknown-linux-gnu/release/binder -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/binder/ -runs=10000000 /data/dev/xumiga/lpg/fuzz/corpus/binder`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 1881369161
+INFO: Loaded 1 modules   (126776 inline 8-bit counters): 126776 [0x5676f6d05f90, 0x5676f6d24ec8), 
+INFO: Loaded 1 PC tables (126776 PCs): 126776 [0x5676f6d24ec8,0x5676f6f14248), 
+INFO:    30350 files found in /data/dev/xumiga/lpg/fuzz/corpus/binder
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 30350 min: 1b max: 4052b total: 7136284b rss: 64Mb
+#30352	INITED cov: 12091 ft: 58881 corp: 8493/2095Kb exec/s: 357 rss: 729Mb
+	NEW_FUNC[1/3]: 0x5676f6657e40  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x61be40) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[2/3]: 0x5676f6853390  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x817390) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f66706a0  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x6346a0) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/2]: 0x5676f69c94d0  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x98d4d0) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[2/2]: 0x5676f6a135a0  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x9d75a0) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f66faa10  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x6bea10) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f6abe540  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0xa82540) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f681b9f0  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x7df9f0) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f6904300  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x8c8300) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f6a12ba0  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x9d6ba0) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f6aacb50  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0xa70b50) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f69044e0  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x8c84e0) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+	NEW_FUNC[1/1]: 0x5676f6674ff0  (/data/dev/xumiga/lpg/fuzz/target/x86_64-unknown-linux-gnu/release/binder+0x638ff0) (BuildId: 7a3ab89e37a8421492663ac1b2359d926b2cb975)
+# stopped by the operator at 2026-10-11T12:23:06Z after about 3h32 of fuzzing: no crash, no artifact in fuzz/artifacts/binder; superseded by the 10M-run binder fuzz on the final code (fuzz-binder-final.txt)

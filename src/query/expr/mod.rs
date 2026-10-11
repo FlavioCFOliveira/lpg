@@ -295,6 +295,25 @@ pub(crate) fn is_true(v: &Value) -> bool {
     matches!(v, Value::Bool(true))
 }
 
+/// The truth of a search condition's value: TRUE keeps the row, FALSE and
+/// NULL (unknown) drop it.
+///
+/// # Errors
+///
+/// 22G03, invalid value type, for a value that is not a boolean
+/// (gql-compat `condition/22g03/non-boolean-search-condition`, ISO
+/// subclauses 19.1 and 16.13).
+pub(crate) fn condition(v: &Value) -> Result<bool, Error> {
+    match v {
+        Value::Bool(b) => Ok(*b),
+        Value::Null => Ok(false),
+        other => Err(invalid_type(&format!(
+            "a search condition of {}",
+            type_name(other)
+        ))),
+    }
+}
+
 /// A truth value: `Some(b)`, or `None` for UNKNOWN (NULL).
 fn truth(v: Value, op: &str) -> Result<Option<bool>, Error> {
     match v {

@@ -1,0 +1,5 @@
+MATCH (n) WHERE exists {
+  MATCH (n)-->(m)
+  SET m.prop='fail'
+}
+RETURN n

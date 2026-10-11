@@ -1,0 +1,2 @@
+MATCH (x:Person&Employee)
+RETURN x.name AS name

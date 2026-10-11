@@ -1,0 +1,1645 @@
+file	function	count	regions_covered	regions
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::add	1025	39	51
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::add::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::finish	13578	28	45
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::finish::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::held	174460	10	10
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::held::{closure#0}	58910	4	4
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::held::{closure#0}::{closure#0}	10007383	2	2
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::new	53810	6	6
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::update	87276	60	64
+/data/dev/xumiga/lpg/src/query/aggregate.rs	<lpg::query::aggregate::Accumulator>::wrong	1	5	5
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog	89	111	141
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#0}	32	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#1}	4	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#2}	10	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#3}	4	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#4}	16	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#5}	1	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#6}	15	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::bind_catalog::{closure#7}	3	3	3
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type	25	54	58
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#0}	24	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#1}	1	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#2}	6	4	4
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::graph_type::{closure#3}	0	0	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::object_path	74	20	27
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::path_of	64	9	11
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::resolve_graph_expr	45	27	41
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::resolve_path	41	21	24
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::resolve_schema	5	11	11
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	<lpg::query::binder::Binder>::schema_path	41	28	33
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::absolute	68	9	9
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::absolute::{closure#0}	20	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type	6	40	48
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}	12	39	43
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}::{closure#0}	6	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}::{closure#2}	1	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::edge_type::{closure#0}::{closure#3}	4	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::filler	35	34	37
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::filler::{closure#0}	35	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::filler::{closure#1}	35	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::filler::{closure#2}	22	2	2
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::invalid_reference	5	4	4
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::node_type	24	16	17
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::prop_type	34	60	111
+/data/dev/xumiga/lpg/src/query/binder/catalog.rs	lpg::query::binder::catalog::prop_type::{closure#0}	31	5	5
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_aggregate	3062	53	53
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_aggregate::{closure#0}	2374	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case	15	111	123
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case::{closure#0}	1	2	2
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case::{closure#1}	9	5	5
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_case::{closure#2}	7	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_condition	3214	12	12
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_condition::{closure#0}	3201	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists	7	27	27
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}	7	44	51
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#0}	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#1}	3	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#2}	1	3	3
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_expr	52383	204	219
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_function	80	120	142
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_value	7354	10	10
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::bind_value::{closure#0}	7354	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::boolean	7867	16	17
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::label	3382	11	11
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::label_test	11270	46	52
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::literal	8564	41	45
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::literal::{closure#0}	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::prop_key	2071	7	7
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::sub	30467	8	8
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::sub::{closure#0}	30467	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::temporal_arg	49	22	24
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::temporal_arg::{closure#0}	23	4	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::tok	28081	8	8
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::Binder>::when_operand	9	25	45
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::expr::ExprCtx>::aggregating	12158	3	3
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	<lpg::query::binder::expr::ExprCtx>::plain	7354	3	3
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::integer	6455	10	10
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::integer::{closure#0}	8264	1	1
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::integer::{closure#1}	3	2	2
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::is_min_magnitude	22	11	11
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::is_min_magnitude::{closure#0}	76	1	1
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::numeric	6484	46	50
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::numeric::{closure#0}	109	1	1
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::numeric::{closure#1}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::temporal_literal	17	32	46
+/data/dev/xumiga/lpg/src/query/binder/expr.rs	lpg::query::binder::expr::temporal_literal::{closure#0}	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_condition::{closure#0}>	3201	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_condition::{closure#0}>::{closure#0}	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#0}>	238	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#0}>::{closure#0}	11	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#1}>	14	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#2}>	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_data::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#2}>	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_graph_pattern::{closure#2}>	6769	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_graph_pattern::{closure#2}>::{closure#0}	13	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#0}>	11	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#0}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#1}>	10	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#2}>	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#3}>	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#3}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#4}>	6735	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#4}>::{closure#0}	58	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#5}>	5714	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#5}>::{closure#0}	90	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#6}>	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_linear_query::{closure#6}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#0}>	5506	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#0}>::{closure#0}	46	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#1}>	1241	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#2}>	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_match::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_nested::{closure#0}>	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_nested::{closure#0}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_result::{closure#0}>	5737	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_result::{closure#0}>::{closure#0}	81	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#0}>	8	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#0}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#1}>	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#2}>	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_select::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_statement::{closure#0}>	10	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::bind_statement::{closure#0}>::{closure#0}	3	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::use_graph::{closure#0}>	34	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), <lpg::query::binder::Binder>::use_graph::{closure#0}>::{closure#0}	3	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#1}>	9	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#3}>	8	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(), lpg::query::binder::bind::{closure#3}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_result::{closure#1}>	1031	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_result::{closure#1}>::{closure#0}	7	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_select::{closure#4}>	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_select::{closure#4}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_simple_query::{closure#0}>	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(lpg::query::expr::Expr, bool), <lpg::query::binder::Binder>::bind_simple_query::{closure#0}>::{closure#0}	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(usize, lpg::query::bound::Name), <lpg::query::binder::Binder>::bind_modifying::{closure#1}>	6	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<(usize, lpg::query::bound::Name), <lpg::query::binder::Binder>::bind_modifying::{closure#1}>::{closure#0}	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#0}>	32	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#0}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#1}>	4	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#3}>	4	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#3}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#4}>	16	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#4}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#5}>	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#5}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#7}>	3	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<alloc::vec::Vec<alloc::boxed::Box<str>>, <lpg::query::binder::Binder>::bind_catalog::{closure#7}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, <lpg::query::binder::Binder>::bind_procedure::{closure#0}>	6095	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, <lpg::query::binder::Binder>::bind_procedure::{closure#0}>::{closure#0}	181	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, lpg::query::binder::bind::{closure#2}>	6098	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Body, lpg::query::binder::bind::{closure#2}>::{closure#0}	184	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::CatalogOp, <lpg::query::binder::Binder>::bind_statement::{closure#2}>	89	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::CatalogOp, <lpg::query::binder::Binder>::bind_statement::{closure#2}>::{closure#0}	12	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::IEdge, <lpg::query::binder::Binder>::bind_insert::{closure#2}>	1547	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::IEdge, <lpg::query::binder::Binder>::bind_insert::{closure#2}>::{closure#0}	4	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#0}>	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#0}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#1}>	3	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::bind_exists::{closure#0}::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::match_table::{closure#0}>	6746	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::Pattern, <lpg::query::binder::Binder>::match_table::{closure#0}>::{closure#0}	45	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SessionCmd, lpg::query::binder::bind::{closure#0}>	10	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SessionCmd, lpg::query::binder::bind::{closure#0}>::{closure#0}	4	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SetItem, <lpg::query::binder::Binder>::bind_modifying::{closure#0}>	24	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::bound::SetItem, <lpg::query::binder::Binder>::bind_modifying::{closure#0}>::{closure#0}	3	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_aggregate::{closure#0}>	2374	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_aggregate::{closure#0}>::{closure#0}	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#1}>	9	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#2}>	7	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_case::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#12}>	3214	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#12}>::{closure#0}	15	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#7}>	2039	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#7}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#8}>	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#8}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#1}>	12156	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#1}>::{closure#0}	76	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#2}>	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_projection::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_select::{closure#3}>	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_select::{closure#3}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_set_item::{closure#0}>	5	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_set_item::{closure#0}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_value::{closure#0}>	7354	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::bind_value::{closure#0}>::{closure#0}	15	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::insert_props::{closure#1}>	2044	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::insert_props::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::sub::{closure#0}>	30467	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::sub::{closure#0}>::{closure#0}	8	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::temporal_arg::{closure#0}>	23	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::Expr, <lpg::query::binder::Binder>::temporal_arg::{closure#0}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::LabelTest, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#5}>	11255	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::expr::LabelTest, <lpg::query::binder::Binder>::bind_graph_pattern::{closure#5}>::{closure#0}	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::EdgeType, <lpg::query::binder::Binder>::graph_type::{closure#2}>	6	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::EdgeType, <lpg::query::binder::Binder>::graph_type::{closure#2}>::{closure#0}	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#2}>	10	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#2}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#6}>	15	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::GraphType, <lpg::query::binder::Binder>::bind_catalog::{closure#6}>::{closure#0}	7	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::NodeType, <lpg::query::binder::Binder>::graph_type::{closure#0}>	24	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<lpg::query::graph_type::NodeType, <lpg::query::binder::Binder>::graph_type::{closure#0}>::{closure#0}	5	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#0}>	5	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#0}>::{closure#0}	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#1}>	3	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<u64, <lpg::query::binder::Binder>::bind_session_set::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#0}>	3352	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#0}>::{closure#0}	1	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#1}>	1548	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::at::<usize, <lpg::query::binder::Binder>::bind_insert::{closure#1}>::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_procedure	6098	33	35
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_procedure::{closure#0}	6095	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_session_set	10	25	28
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_session_set::{closure#0}	5	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_session_set::{closure#1}	3	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_statement	6095	48	50
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_statement::{closure#0}	10	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_statement::{closure#1}	7	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::bind_statement::{closure#2}	89	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::finish	5842	19	19
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::graph_index	6990	10	10
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::graph_index::{closure#0}	1275	2	2
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::hidden	5769	17	17
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::locate	920	11	11
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::lookup	35306	5	5
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::lookup::{closure#0}	43428	2	2
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::new	6126	13	13
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::param	419	11	11
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::param::{closure#0}	388	2	2
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::slot	36681	10	10
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::Binder>::text_of	116	6	6
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	<lpg::query::binder::SessionCtx>::new	5562	4	4
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	lpg::query::binder::bind	6136	75	90
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	lpg::query::binder::bind::{closure#0}	10	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	lpg::query::binder::bind::{closure#1}	9	2	2
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	lpg::query::binder::bind::{closure#2}	6098	3	3
+/data/dev/xumiga/lpg/src/query/binder/mod.rs	lpg::query::binder::bind::{closure#3}	8	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern	6751	279	353
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#0}	6772	8	8
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#10}	4	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#11}	3	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#12}	3214	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#1}	13	4	4
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#2}	6769	16	19
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#3}	1659	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#5}	11255	4	4
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#6}	6320	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#7}	2039	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_graph_pattern::{closure#8}	2	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert	184	50	55
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert::{closure#0}	3352	9	9
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert::{closure#1}	1548	9	9
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::bind_insert::{closure#2}	1547	9	9
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::element_var	19365	51	51
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::element_var::{closure#0}	22824	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::element_var::{closure#2}	19266	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_edge	1547	52	53
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_edge::{closure#0}	1545	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_edge::{closure#1}	3	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node	4900	77	80
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node::{closure#0}	230962	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node::{closure#1}	1820	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_node::{closure#2}	1838	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_props	3392	24	29
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_props::{closure#0}	1195	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::binder::Binder>::insert_props::{closure#1}	2044	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	<lpg::query::bound::Degree>::max_of	27	6	7
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::degrees	24131	75	75
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::degrees::{closure#0}	8	10	10
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::degrees::{closure#1}	42	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::elements	24044	10	11
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::elements::{closure#0}	17288	2	2
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::gates	24064	31	31
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::kind_name	14	5	6
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::merge	19363	9	9
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::merge::{closure#0}	15	3	3
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::node_index	13055	12	12
+/data/dev/xumiga/lpg/src/query/binder/pattern.rs	lpg::query::binder::pattern::node_index::{closure#0}	7983	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_call	40	140	155
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_call::{closure#0}	2	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_call::{closure#2}	8	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_call::{closure#3}	55	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_call::{closure#4}	0	0	7
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_composite	5798	11	11
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_composite_inner	5798	22	24
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data	205	26	32
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data::{closure#0}	238	10	10
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data::{closure#1}	14	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_data::{closure#2}	0	0	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query	5794	40	63
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#0}	11	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#1}	10	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#2}	0	0	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#3}	0	0	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#4}	6735	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#5}	5714	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_linear_query::{closure#6}	0	0	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match	6749	27	28
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match::{closure#0}	5506	4	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match::{closure#1}	1241	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_match::{closure#2}	1	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying	209	58	60
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying::{closure#0}	24	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying::{closure#1}	6	12	13
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_modifying::{closure#2}	1	1	1
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_nested	2	14	29
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_nested::{closure#0}	2	6	11
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection	5744	134	137
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#0}	10863	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#1}	12156	4	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#2}	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#4}	3053	6	6
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_projection::{closure#5}	3051	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result	5738	39	40
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result::{closure#0}	5737	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result::{closure#1}	1031	4	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key	1031	36	38
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#0}	1037	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#1}	2	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#2}	2	5	6
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_result_sort_key::{closure#2}::{closure#0}	2	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_return	5737	22	22
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_scope_sort_key	2	17	25
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select	9	52	101
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#0}	8	8	9
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#1}	0	0	7
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#2}	1	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#3}	0	0	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_select::{closure#4}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_set_item	24	46	48
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_set_item::{closure#0}	5	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_simple_query	6775	33	35
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::bind_simple_query::{closure#0}	2	3	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::element	28	10	11
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::items	5745	28	29
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::items::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::items::{closure#1}	12158	16	16
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::match_table	6747	24	24
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::match_table::{closure#0}	6746	4	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::page	1031	17	17
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::use_graph	34	5	5
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	<lpg::query::binder::Binder>::use_graph::{closure#0}	34	9	10
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::has_aggregate	10	11	15
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::map_slots	3066	32	112
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#0}	13	4	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#1}	0	0	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#2}	0	0	3
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#3}	0	0	9
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::map_slots::{closure#4}	0	0	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::regroup	3053	10	10
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::regroup::{closure#0}	3054	11	13
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::regroup::{closure#0}::{closure#0}	1	2	2
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::rule	69	4	4
+/data/dev/xumiga/lpg/src/query/binder/statements.rs	lpg::query::binder::statements::undefined	8	4	4
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::a_parameter_stays_a_parameter_in_the_bound_form	1	34	36
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::a_parameter_stays_a_parameter_in_the_bound_form::{closure#0}	2	4	4
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::a_parameter_stays_a_parameter_in_the_bound_form::{closure#0}::{closure#0}	7	9	9
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::a_parameter_stays_a_parameter_in_the_bound_form::{closure#1}	1	2	2
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::bind_text	34	16	16
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::bind_text::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::each_approved_construct_binds	1	17	17
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::each_approved_construct_binds::{closure#0}	46	18	20
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::each_approved_construct_binds::{closure#0}::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::each_unsupported_construct_class_fails_with_feature_not_supported	1	30	36
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::each_unsupported_construct_class_fails_with_feature_not_supported::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::each_unsupported_construct_class_fails_with_feature_not_supported::{closure#1}	91	23	28
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::each_unsupported_construct_class_fails_with_feature_not_supported::{closure#1}::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::no_statement_creates_a_directory	1	58	62
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::no_statement_creates_a_directory::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail	1	54	54
+/data/dev/xumiga/lpg/src/query/binder/tests.rs	lpg::query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail::{closure#0}	24	5	6
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::is_empty	11435	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::is_full	2237879	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::len	2278528	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::new	41801	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::push	110109	9	9
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::push_owned	8673687	9	9
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::row	6798215	5	5
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::rows	31311	4	4
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::rows::{closure#0}	6733932	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Batch>::width	15808	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor as core::fmt::Debug>::fmt	0	0	9
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::columns	1749	5	5
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::control	984	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::counters	465	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::is_catalog	462	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::iterations	0	0	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::kind	441	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::max_running	1912	5	5
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::next_batch	11493	40	41
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::next_batch::{closure#0}	4157698	2	2
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::peak_memory	908	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::profile	468	13	13
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::requests	491	7	7
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::scan_rows	2	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::set_check	492	4	4
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cursor>::type_checks	2	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::exists	15	27	31
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::exists::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::now	55	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::param	7352	7	7
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::principal	2	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::property	61402	27	32
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::property::{closure#0}	76359	2	2
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::property::{closure#2}	1262	2	2
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::token	15	6	6
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Cx as lpg::query::expr::Env>::tokens	58710	14	26
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Held as core::ops::drop::Drop>::drop	3809	4	4
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Held>::grow	135595	40	41
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Held>::grow::{closure#0}	2109	2	2
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Held>::peak	869	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::Held>::release	8419	13	13
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::State>::argument	12671	5	5
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::State>::argument::{closure#0}	7316	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::State>::tick	4734252	10	11
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::held	1074	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::ops::Argument as lpg::query::exec::Operator>::held	734	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::held	125	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::ops::Filter as lpg::query::exec::Operator>::held	413	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::ops::Project as lpg::query::exec::Operator>::held	3048	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::held	3034	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	<lpg::query::exec::write::Catalog as lpg::query::exec::Operator>::held	100	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::collect	5370	14	14
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::explain	13	8	11
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::fail	148	8	8
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::graph_type_of	5602	23	29
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::graph_type_of::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::prepare	5965	58	60
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::profile	580	8	8
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::profile::{closure#0}	83	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::row_bytes	183047	5	5
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::run	5372	8	8
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::run::{closure#0}	4	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::run_nested	0	0	65
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::start	5952	14	14
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::start_prepared	5865	48	50
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::start_prepared::{closure#0}	4	3	3
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::value_bytes	453769	6	19
+/data/dev/xumiga/lpg/src/query/exec/mod.rs	lpg::query::exec::value_bytes::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::held	138	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::next_batch	2630	158	172
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::next_batch::{closure#0}	53188	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::next_batch::{closure#1}	603	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Aggregate as lpg::query::exec::Operator>::reset	3	9	9
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::next_batch	3999	69	76
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::next_batch::{closure#0}	5335	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Apply as lpg::query::exec::Operator>::reset	0	0	13
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Argument as lpg::query::exec::Operator>::next_batch	6173	14	14
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Argument as lpg::query::exec::Operator>::reset	2685	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Call as lpg::query::exec::Operator>::held	67	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Call as lpg::query::exec::Operator>::next_batch	55	86	94
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Call as lpg::query::exec::Operator>::next_batch::{closure#0}	52	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Call as lpg::query::exec::Operator>::reset	0	0	11
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::held	34	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::next_batch	1610	39	43
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::next_batch::{closure#0}	25342	2	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Distinct as lpg::query::exec::Operator>::reset	3	8	8
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::next_batch	12319	79	85
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::next_batch::{closure#0}	15381	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Expand as lpg::query::exec::Operator>::reset	2688	13	13
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Filter as lpg::query::exec::Operator>::next_batch	23231	28	31
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Filter as lpg::query::exec::Operator>::reset	27	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Project as lpg::query::exec::Operator>::next_batch	8490	33	34
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Project as lpg::query::exec::Operator>::reset	0	0	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::clear	2694	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::full	90332	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::is_empty	4573	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::push	2238092	5	5
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Queue>::take	20891	19	19
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch	16076	131	142
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch::{closure#0}	2231259	7	8
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch::{closure#1}	36	2	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::next_batch::{closure#2}	134	2	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan as lpg::query::exec::Operator>::reset	2667	10	10
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::counting	176	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::new	5416	8	8
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range	134	68	74
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#0}	103	2	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#1}	43	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#2}	12	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#3}	98	8	8
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#4}	0	0	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Scan>::seek_range::{closure#5}	31	2	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::held	42	4	4
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::next_batch	1582	64	68
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::next_batch::{closure#0}	13958	27	27
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::next_batch::{closure#0}::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	<lpg::query::exec::ops::Sort as lpg::query::exec::Operator>::reset	3	9	9
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	lpg::query::exec::ops::build	42764	168	168
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	lpg::query::exec::ops::build::{closure#0}	36895	3	3
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	lpg::query::exec::ops::build::{closure#1}	36895	2	2
+/data/dev/xumiga/lpg/src/query/exec/ops.rs	lpg::query::exec::ops::build::{closure#2}	36	2	2
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled as lpg::query::exec::Operator>::held	1958	4	4
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled as lpg::query::exec::Operator>::next_batch	9397	74	74
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled as lpg::query::exec::Operator>::reset	1483	4	4
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiled>::new	1736	3	3
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::annotate	467	8	8
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::annotate::walk	1643	11	11
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::max_running	1912	3	3
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Profiler>::register	1736	6	6
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Totals>::add	7439	7	7
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	<lpg::query::exec::profile::Totals>::sub	18794	16	16
+/data/dev/xumiga/lpg/src/query/exec/profile.rs	lpg::query::exec::profile::now	18794	11	11
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	<lpg::query::exec::tests::reference::Query>::text	5000	101	101
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	<lpg::query::exec::tests::reference::Query>::text::{closure#0}	7073	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	<lpg::query::exec::tests::reference::Query>::text::{closure#1}	3268	1	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	<lpg::query::exec::tests::reference::Query>::text::{closure#2}	6628	1	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	<lpg::query::exec::tests::reference::Query>::text::{closure#3}	1942	1	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	<lpg::query::exec::tests::reference::Query>::text::{closure#4}	799	1	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::a_closed_graph_type_rejects_what_it_does_not_describe	1	78	78
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::a_failed_closed_type_check_leaves_none_of_the_statement_writes	1	34	34
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::a_rolled_back_transaction_leaves_neither_the_graph_nor_its_nodes	1	54	54
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::catalog_objects_created_in_one_transaction_survive_reopen	1	66	66
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::catalog_objects_created_in_one_transaction_survive_reopen::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::catalog_objects_created_in_one_transaction_survive_reopen::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::drop_statements_and_their_errors	1	52	52
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::one_query_reads_two_graphs	1	28	28
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::catalog::one_query_reads_two_graphs::{closure#0}	1	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::conformance::a_non_boolean_search_condition_raises_22g03	1	16	16
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::conformance::a_set_on_a_null_element_counts_no_property	1	26	26
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::conformance::incompatible_temporal_units_raise_22g14	1	18	18
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::conformance::iso_8601_date_forms_are_dates	1	41	41
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::conformance::two_assignments_to_one_property_raise_22g0m	1	17	17
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::cursor::a_failing_status_check_fails_the_statement_and_aborts_the_transaction	1	48	48
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::cursor::a_failing_status_check_fails_the_statement_and_aborts_the_transaction::{closure#0}	2	6	6
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::cursor::assert_send::<lpg::query::exec::Cursor>	1	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::cursor::the_cursor_is_send_and_reports_columns_kind_control_and_counters	1	50	50
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::execution::a_sort_and_an_aggregation_beyond_the_cap_fail_and_abort	1	48	50
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::execution::across_a_thousand_batches_at_most_one_operator_runs_at_once	1	35	35
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::execution::insert_nodes	5	33	33
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::execution::profile_reports_rows_and_entries_read_per_operator	1	83	83
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::execution::profile_reports_rows_and_entries_read_per_operator::walk	6	9	9
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::execution::profile_reports_rows_and_entries_read_per_operator::{closure#0}	4	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::execution::the_first_batch_comes_after_at_most_one_batch_of_scanned_rows	1	81	81
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::blocking_aggregate_peak	1	9	9
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::blocking_distinct_peak	1	9	9
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::blocking_insert_peak	1	9	9
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::blocking_sort_peak	1	9	9
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::find	9	7	7
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::find::{closure#0}	5	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::peak	4	65	65
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::memory::peak::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::col_text	10322	13	13
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump	5	38	38
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#0}	354	4	4
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#1}	205	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#1}::{closure#0}	219	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#1}::{closure#1}	158	4	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#2}	61	10	10
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#3}	61	11	11
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#4}	83	10	10
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::dump::{closure#5}	83	6	6
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::eval3	19968	47	47
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::eval3::{closure#0}	13660	7	7
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::eval3::{closure#1}	2042	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::eval3::{closure#2}	2202	1	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::five_thousand_seeded_queries_equal_the_reference_evaluator	1	71	71
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::five_thousand_seeded_queries_equal_the_reference_evaluator::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_pred	5840	42	42
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query	5000	39	39
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#0}	9929	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#1}	6154	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#2}	1225	4	4
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#3}	13277	16	16
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#4}	1487	12	12
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#4}::{closure#0}	899	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#4}::{closure#1}	2997	8	8
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#5}	9929	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#6}	9929	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#6}::{closure#0}	1942	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#7}	4929	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#8}	2973	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::gen_query::{closure#9}	10028	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::graph	5	67	68
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::graph::{closure#0}	205	9	9
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::graph::{closure#1}	122	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle	5000	91	91
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::walk	47845	74	75
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::walk::{closure#0}	21949	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::walk::{closure#1}	150480	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#0}	83215	6	6
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#0}::{closure#0}	55818	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#0}::{closure#0}::{closure#0}	42970	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#0}::{closure#1}	9867	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#1}	17396	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#1}::{closure#0}	10152	4	4
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#2}	46118	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#2}::{closure#0}	2574	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#3}	2678	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#3}::{closure#0}	18515	2	2
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#4}	8213	3	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#4}::{closure#0}	16372	6	6
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#5}	2223	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#6}	1727	37	37
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#6}::{closure#0}	2752	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::oracle::{closure#6}::{closure#0}::{closure#0}	5799	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::pred_text	5840	37	37
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::sorted	11038	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::sorted::{closure#0}	32264	18	18
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::v	18912	5	5
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::value	24394	14	14
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::reference::value::{closure#0}	795	1	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::smoke_insert_match_return	1	76	76
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::statements::set_remove_session_user_clock_and_select_run_end_to_end	1	107	108
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::statements::set_remove_session_user_clock_and_select_run_end_to_end::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::support::error	28	12	14
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::support::rows	65	17	17
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::support::rows::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::support::rows_in	5357	12	12
+/data/dev/xumiga/lpg/src/query/exec/tests.rs	lpg::query::exec::tests::support::session	5390	4	4
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Catalog as lpg::query::exec::Operator>::next_batch	72	11	12
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Catalog as lpg::query::exec::Operator>::reset	0	0	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write as lpg::query::exec::Operator>::held	588	4	4
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write as lpg::query::exec::Operator>::next_batch	377	60	63
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write as lpg::query::exec::Operator>::reset	0	0	9
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply	10190	162	176
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#0}	8	9	10
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#0}::{closure#0}	12	2	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#1}	2	3	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#2}	2	2	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	<lpg::query::exec::write::Write>::apply::{closure#2}::{closure#0}	3	2	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::catalog	72	3	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::change::<<lpg::query::exec::write::Write>::apply::{closure#0}>	10	32	42
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::change::<<lpg::query::exec::write::Write>::apply::{closure#1}>	4	19	42
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::change::<<lpg::query::exec::write::Write>::apply::{closure#2}>	2	18	42
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::check_closed	11	86	93
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::drop_named	8	36	39
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::drop_named::{closure#0}	1	2	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::eval_props	13373	27	30
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::in_directory	26	18	19
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::in_directory::{closure#0}	9	3	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::in_schema	35	15	16
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::in_schema::{closure#0}	1	3	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::inline_type_name	9	3	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::insert	173	5	5
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::invalid_reference	11	10	10
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::key_token	2038	9	10
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::named_props	17	6	6
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::named_props::{closure#0}	10	4	4
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::named_props::{closure#0}::{closure#0}	10	2	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::names	19	6	6
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::names::{closure#0}	19	4	4
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::null_element	1	3	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::once	18	15	15
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::once::{closure#0}	5	6	6
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::property_value	2039	15	15
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::property_value::{closure#0}	2040	3	4
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::property_value::{closure#1}	2	4	4
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::remove	4	5	5
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::resolve	50	13	14
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::resolve::{closure#1}	44	2	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::run_catalog	61	143	172
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#0}	1	2	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#1}	0	0	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#2}	0	0	3
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::run_catalog::{closure#4}	0	0	2
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::set	14	5	5
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::violation	8	4	4
+/data/dev/xumiga/lpg/src/query/exec/write.rs	lpg::query::exec::write::write	191	7	7
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::conjuncts	4080	16	16
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold	26933	54	91
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold::{closure#0}	17218	3	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold::{closure#1}	0	0	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::fold::{closure#2}	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::has_subquery	40862	7	7
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::has_subquery::{closure#0}	118512	2	2
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::is_constant	19911	7	7
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::is_constant::{closure#0}	1	9	9
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::slots	57858	7	7
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::slots::{closure#0}	187035	9	9
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::walk	357838	29	51
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::walk::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Expr>::walk::{closure#1}	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::LabelTest>::matches	58737	32	32
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::LabelTest>::matches::{closure#0}	58710	3	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::LabelTest>::required	21830	17	17
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::exists	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::now	74	3	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::param	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::principal	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::property	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::token	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::NoEnv as lpg::query::expr::Env>::tokens	0	0	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Tok>::resolve	120399	4	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::query::expr::Tok>::resolve::{closure#0}	15	4	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	<lpg::types::Value>::is_null	58682	4	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::and3	492	7	7
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::arith	135	52	55
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::arith::{closure#0}	4	2	2
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::as_f64	23	7	8
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::compare	92557	17	17
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::compare::{closure#0}	62663	1	1
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::compare::{closure#1}	7175	4	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::compare::{closure#1}::{closure#0}	7174	6	7
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::concat	3	21	27
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::condition	154505	10	10
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::division_by_zero	5	3	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::equals	83851	36	59
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::equals::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::eval	4963770	279	327
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::eval::{closure#0}	3252	1	1
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::finite	23	6	6
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::holds_null	3	8	8
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::internal	0	0	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::invalid_type	7	4	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::is_true	15	4	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::negate	20	11	24
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::negate::{closure#0}	1	2	2
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::negate::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::negate_d2s	2	6	6
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::negate_d2s::{closure#0}	2	3	3
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::negate_d2s::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::of_truth	98430	5	5
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::or3	1338	7	7
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::order	8708	23	30
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::out_of_range	6	4	4
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::sort_cmp	15621	10	10
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::truth	9032	10	10
+/data/dev/xumiga/lpg/src/query/expr/mod.rs	lpg::query::expr::type_name	58	10	22
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::accumulators_ignore_nulls_widen_sums_and_deduplicate	1	89	89
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::agg	19	14	14
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::call	26	8	8
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::constant_folding_replaces_constant_calls_and_keeps_failing_ones	1	34	36
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::each_operator_and_function_returns_null_for_a_null_argument	1	119	119
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::each_operator_and_function_returns_null_for_a_null_argument::{closure#0}	31	2	2
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::each_operator_and_function_returns_null_for_a_null_argument::{closure#1}	20	2	2
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::each_operator_and_function_returns_null_for_a_null_argument::{closure#2}	24	1	1
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::each_operator_and_function_returns_null_for_a_null_argument::{closure#3}	24	1	1
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::ev	172	6	6
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::integer_equals_float_cross_group_order_is_null_and_null_sorts_last	1	67	67
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::integer_equals_float_cross_group_order_is_null_and_null_sorts_last::{closure#0}	8	6	6
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::integer_equals_float_cross_group_order_is_null_and_null_sorts_last::{closure#1}	13	3	3
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::integer_equals_float_cross_group_order_is_null_and_null_sorts_last::{closure#2}	15	3	3
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::integer_overflow_and_division_by_zero_fail_with_class_22_codes	1	69	69
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::integer_overflow_and_division_by_zero_fail_with_class_22_codes::{closure#0}	12	5	5
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::integer_overflow_and_division_by_zero_fail_with_class_22_codes::{closure#1}	11	2	2
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::lit	167	4	4
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::now	176	4	4
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::record	4	7	7
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::record::{closure#0}	10	3	3
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::sample	19	33	33
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::string_functions_follow_the_approved_choices	1	82	82
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::t3	78	5	5
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::temporal_functions_return_what_jiff_computes	1	280	288
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::temporal_functions_return_what_jiff_computes::{closure#0}	4	3	3
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::temporal_functions_return_what_jiff_computes::{closure#1}	2	3	3
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::tok	2	4	4
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::truth_tables_hold_for_every_combination_of_true_false_and_unknown	1	81	81
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::truth_tables_hold_for_every_combination_of_true_false_and_unknown::{closure#0}	9	6	6
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::truth_tables_hold_for_every_combination_of_true_false_and_unknown::{closure#1}	9	6	6
+/data/dev/xumiga/lpg/src/query/expr/tests.rs	lpg::query::expr::tests::truth_tables_hold_for_every_combination_of_true_false_and_unknown::{closure#2}	2	1	1
+/data/dev/xumiga/lpg/src/query/features/mod.rs	lpg::query::features::features	335	3	3
+/data/dev/xumiga/lpg/src/query/features/mod.rs	lpg::query::features::gate	769	6	6
+/data/dev/xumiga/lpg/src/query/features/mod.rs	lpg::query::features::is_supported	1102	5	5
+/data/dev/xumiga/lpg/src/query/features/mod.rs	lpg::query::features::unsupported	317	11	11
+/data/dev/xumiga/lpg/src/query/features/mod.rs	lpg::query::features::unsupported::{closure#0}	33717	2	2
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::elements	457	28	28
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::every_code_is_supported_or_a_gate_and_the_supported_codes_exist	1	37	39
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::every_code_is_supported_or_a_gate_and_the_supported_codes_exist::{closure#0}	1839	2	2
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::generated_table_matches_the_insert	1	12	12
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::insert	1	7	7
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::published_feature_list_matches_the_gate_table	1	19	19
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::render	1	17	17
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::render_feature_list	1	20	20
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::render_feature_list::{closure#0}	1839	2	2
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::rows	1	16	16
+/data/dev/xumiga/lpg/src/query/features/tests.rs	lpg::query::features::tests::rows::{closure#0}	228	17	17
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::abs_kernel	3	9	19
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::between_kernel	4	39	63
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::between_kernel::{closure#0}	0	0	8
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::between_kernel::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::call	129	13	13
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::cut_kernel	6	35	42
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::d2s_nanos	2	4	4
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::d2s_of	2	9	9
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::d2s_of_nanos	15	11	12
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::d2s_of_nanos::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::datetime_overflow	2	3	3
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::duration_record	7	35	51
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::duration_record::{closure#0}	59	2	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::duration_record::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::int_field	54	11	11
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::int_field::{closure#0}	139	2	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::interval_overflow	2	3	3
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::invalid_field	3	7	7
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::invalid_value	1	4	4
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::is_instant	9	3	4
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::like	43	8	8
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::narrow::<i16>	2	5	5
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::narrow::<i16>::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::narrow::<i32>	3	5	5
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::narrow::<i32>::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::narrow::<i8>	13	5	5
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::narrow::<i8>::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::now_kernel	8	13	14
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::parse_duration	21	44	44
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::parse_duration::{closure#0}	20	5	5
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::point_of	8	6	15
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::row	130	6	6
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::row::{closure#0}	1885	2	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::session_zone	9	3	3
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift	9	67	84
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift::{closure#2}	4	7	7
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift::{closure#2}::{closure#0}	3	3	3
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift::{closure#2}::{closure#1}	2	1	1
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift::{closure#3}	1	3	3
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::shift::{closure#4}	0	0	1
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::signed	5	5	5
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::string_kernel	19	19	21
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::string_of	25	5	11
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_arith	14	42	83
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_arith::{closure#0}	2	10	13
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_kernel	66	25	31
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_kernel::{closure#0}	6	4	4
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_kernel::{closure#1}	9	4	4
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_kernel::{closure#2}	36	3	3
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_record	5	100	133
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_record::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_record::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::temporal_record::{closure#2}	0	0	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::zone_field	3	9	26
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::zone_field::{closure#0}	12	2	2
+/data/dev/xumiga/lpg/src/query/functions.rs	lpg::query::functions::zone_field::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::decode	15	54	68
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::decode::{closure#0}	21	18	22
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::edge_matches	2	4	4
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::edge_matches::{closure#0}	2	8	8
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::encode	13	36	36
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::encode::{closure#0}	16	13	13
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::node_type	15	4	4
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::GraphType>::node_type::{closure#0}	15	4	4
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::PropType>::accepts	8	5	5
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::PropType>::from_byte	26	5	15
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::Reader>::byte	166	8	9
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::Reader>::string	47	18	23
+/data/dev/xumiga/lpg/src/query/graph_type.rs	<lpg::query::graph_type::Reader>::varint	125	14	17
+/data/dev/xumiga/lpg/src/query/graph_type.rs	lpg::query::graph_type::props_match	11	4	4
+/data/dev/xumiga/lpg/src/query/graph_type.rs	lpg::query::graph_type::props_match::{closure#0}	9	5	5
+/data/dev/xumiga/lpg/src/query/graph_type.rs	lpg::query::graph_type::props_match::{closure#0}::{closure#0}	11	2	2
+/data/dev/xumiga/lpg/src/query/graph_type.rs	lpg::query::graph_type::props_match::{closure#0}::{closure#1}	8	3	3
+/data/dev/xumiga/lpg/src/query/graph_type.rs	lpg::query::graph_type::string	39	8	8
+/data/dev/xumiga/lpg/src/query/graph_type.rs	lpg::query::graph_type::varint	100	10	14
+/data/dev/xumiga/lpg/src/query/lexer/keywords.rs	<lpg::query::lexer::keywords::Keyword>::is_non_reserved	1730	4	4
+/data/dev/xumiga/lpg/src/query/lexer/keywords.rs	<lpg::query::lexer::keywords::Keyword>::text	13800	50	307
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::advance	11114148	11	11
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::byte	6637593	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::byte_string	4177	29	32
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::byte_string::{closure#0}	20	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::char_at	18601680	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::char_at::{closure#0}	18601680	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::decimal_integer	597514	26	26
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::decimal_integer::{closure#0}	8	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::hex_digits	9	5	5
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::hex_digits::{closure#0}	41	4	4
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::hex_digits::{closure#0}::{closure#0}	41	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::location	29111249	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::next_match	11128748	38	38
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::next_match::{closure#0}	7308249	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period	466646	99	107
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#0}	466979	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#0}::{closure#0}	333	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#1}	19	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#2}	13	3	3
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#3}	13	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#4}	336075	17	17
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#5}	336335	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::number_or_period::{closure#6}	466646	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::other	3889628	64	66
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::other::{closure#0}	161640685	3	3
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::other::{closure#1}	104275	1	1
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::other::{closure#2}	149970898	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::other::{closure#3}	3785248	3	3
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::parameter_name	920	32	33
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::parameter_name::{closure#0}	916	3	3
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::parameter_name::{closure#0}::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::parameter_name::{closure#1}	2665	2	2
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::quoted	103357	36	36
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::word	3115030	43	44
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Lexer>::word::{closure#0}	8740006	3	3
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::Token>::text	147470	4	4
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	<lpg::query::lexer::TokenKind>::describe	15562	40	74
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::comment_features	6136	35	35
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::is_identifier_extend	10541860	11	11
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::is_identifier_start	7004667	11	11
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::is_whitespace	18422415	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::keyword	2811654	20	20
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::keyword::{closure#0}	28116490	3	3
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::keyword::{closure#1}	2013978	1	1
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::string_kind	103345	6	6
+/data/dev/xumiga/lpg/src/query/lexer/mod.rs	lpg::query::lexer::tokenize	8464	34	34
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::an_unknown_character_is_an_error_at_its_position	1	16	16
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::camel	1263	6	6
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::camel::{closure#0}	1399	9	9
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::camel::{closure#0}::{closure#0}	1399	5	5
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::grammar_keywords	2	55	56
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::grammar_keywords::{closure#0}	608	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::identifier_sets	2	18	18
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::identifier_sets_have_the_measured_sizes	1	32	32
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::identifier_sets_have_the_measured_sizes::{closure#0}	3	6	6
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::identifier_sets_have_the_measured_sizes::{closure#0}::{closure#0}	2092	1	1
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::identifier_tables_match_the_ucd	1	13	13
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::keyword_table_matches_the_grammar	1	11	11
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::kinds	18	8	8
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::kinds::{closure#1}	91	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::longest_match_and_rule_order	1	59	59
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::manifest_dir	10	3	3
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::merge	5	21	21
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::render_keywords	1	60	60
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::render_keywords::{closure#0}	2497	3	3
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::render_keywords::{closure#1}	304	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::render_keywords::{closure#2}	47	3	3
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::render_table	2	35	35
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::render_table::{closure#0}	1433	1	1
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::render_unicode	1	18	18
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records	1	74	74
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#0}	3	3	3
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#0}::{closure#0}	912	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#1}	304	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#2}	304	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#3}	651	3	3
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#4}	336	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#5}	304	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#6}	47	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::the_grammar_has_the_keyword_shape_ts19_records::{closure#7}	1824	2	2
+/data/dev/xumiga/lpg/src/query/lexer/tests.rs	lpg::query::lexer::tests::ucd_ranges	7	47	47
+/data/dev/xumiga/lpg/src/query/lexer/unicode.rs	lpg::query::lexer::unicode::in_table	17	8	8
+/data/dev/xumiga/lpg/src/query/lexer/unicode.rs	lpg::query::lexer::unicode::in_table::{closure#0}	187	7	7
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::at_record_literal	3	7	8
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::binding_table_expression	14	57	75
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::binding_table_expression::{closure#0}	12	2	2
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::binding_table_expression::{closure#1}	4	2	2
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::build_graph_ref	53	13	13
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::build_object	371	8	8
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::build_object::{closure#0}	252	14	14
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::build_object::{closure#0}::{closure#0}	131	10	10
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::build_schema	233	29	29
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::catalog_object_parent_and_name	191	33	33
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::catalog_schema_parent_and_name	81	23	30
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::catalog_schema_parent_and_name::{closure#0}	192	1	1
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::choose::<lpg::query::parser::catalog::ObjectPlan>	191	19	19
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::choose::<lpg::query::parser::catalog::ObjectPlan>::{closure#0}	279	7	7
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::choose::<lpg::query::parser::catalog::RefPlan>	306	19	19
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::choose::<lpg::query::parser::catalog::RefPlan>::{closure#0}	547	7	7
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::choose::<lpg::query::parser::catalog::SchemaPlan>	102	18	19
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::choose::<lpg::query::parser::catalog::SchemaPlan>::{closure#0}	138	7	7
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::commit_to	465	9	9
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::create_graph_statement	250	25	26
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::create_graph_type_statement	170	14	16
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::create_graph_type_statement::{closure#0}	2	1	1
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::create_kind	420	43	46
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::create_schema_statement	60	15	19
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::drop_graph_statement	13	24	26
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::drop_graph_type_statement	6	26	30
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::drop_schema_statement	21	15	19
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::fail_path::<lpg::query::span::Spanned<lpg::query::ast::reference::CatalogObjectRef>>	6	21	21
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::fail_path::<lpg::query::span::Spanned<lpg::query::ast::reference::GraphTypeRef>>	62	21	21
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::fail_path::<lpg::query::span::Spanned<lpg::query::ast::reference::ProcedureRef>>	3	21	21
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::fail_path::<lpg::query::span::Spanned<lpg::query::ast::reference::SchemaPath>>	0	0	21
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::fail_path::<lpg::query::span::Spanned<lpg::query::ast::reference::SchemaRef>>	0	0	21
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_expression	111	47	55
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_expression::{closure#0}	38	2	2
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_reference_plans	91	24	24
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_reference_plans::{closure#0}	80	2	2
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_source	9	14	17
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_type_like_graph	4	8	9
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_type_reference	74	32	39
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_type_reference::{closure#0}	87	2	2
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::graph_type_source	32	38	42
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::if_exists	36	10	11
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::if_not_exists	227	13	15
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::kind_at	8157	4	4
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::name_at	3650	6	6
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::name_from	808	16	16
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::name_slash_count	1370	12	12
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::names_from	420	5	5
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::names_from::{closure#0}	265	3	3
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::object_expression_primary	42	15	21
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::object_plans	497	27	27
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::of_graph_type	142	67	73
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::parameter_from	9	11	11
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::parent_reference_plans	497	48	48
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::primitive_catalog_modifying_statement	344	41	46
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::primitive_catalog_modifying_statement::{closure#0}	87	5	5
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::primitive_catalog_modifying_statement::{closure#1}	250	8	10
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::primitive_catalog_modifying_statement::{closure#2}	13	8	10
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::procedure_reference	127	35	42
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::procedure_reference::{closure#0}	351	2	2
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::procedure_reference::{closure#1}	351	2	2
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::schema_reference	21	22	24
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::schema_reference_plans	599	69	73
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	<lpg::query::parser::Parser>::span_of	869	9	9
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_at_schema	20	8	8
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_binding_definition	8	5	5
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_catalog_statement	313	5	6
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_expression	12	6	10
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_of_graph_type	89	6	6
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_select_graph	0	0	4
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_session	21	3	4
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::follows_use	76	7	7
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::starts_binding_definition	20	9	9
+/data/dev/xumiga/lpg/src/query/parser/catalog.rs	lpg::query::parser::catalog::starts_of_graph_type	215	6	6
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::check_text_corpus	2	32	53
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::check_text_corpus::{closure#0}	1456	4	4
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::check_text_corpus::{closure#1}	2	6	6
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::check_text_corpus::{closure#1}::{closure#0}	1459	3	3
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::check_text_corpus::{closure#1}::{closure#1}	1459	2	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::check_text_corpus::{closure#2}	0	0	3
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::collect_test_texts	1	61	61
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::collect_test_texts::{closure#0}	1791	2	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::collect_test_texts::{closure#1}	279	4	4
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::corpora	1	7	7
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::count	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::count::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::debug_parse_file	0	0	18
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differences	0	0	14
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differences::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differences::{closure#1}	0	0	3
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differential_generated_sentences_and_mutants	0	0	42
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differential_input_file	0	0	27
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differential_stored_labels_are_current	0	0	33
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differential_stored_labels_are_current::{closure#0}	0	0	11
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::differential_stored_labels_are_current::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::labelled_dir	6	11	11
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::labelled_dir::{closure#0}	3075	25	25
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::lpg_accepts	1619	6	6
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::lpg_labels	0	0	12
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::lpg_labels::{closure#0}	0	0	13
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::lpg_labels::{closure#0}::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::lpg_labels::{closure#0}::{closure#0}::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::lpg_labels::{closure#0}::{closure#0}::{closure#0}::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::lpg_labels::{closure#0}::{closure#1}	0	0	4
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::manifest_dir	7	3	3
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle	0	0	4
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle_labels	0	0	12
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle_labels::{closure#0}	0	0	13
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle_labels::{closure#0}::{closure#0}	0	0	4
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle_labels::{closure#0}::{closure#0}::{closure#0}	0	0	20
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle_labels::{closure#0}::{closure#0}::{closure#0}::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::oracle_labels::{closure#0}::{closure#1}	0	0	4
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::report	0	0	34
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::run_oracle	0	0	55
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::run_oracle::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::scenario_texts_match_the_oracle_labels	1	10	12
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::seeds	0	0	9
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::stored_corpora_match_the_oracle_labels	1	18	20
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::stored_corpora_match_the_oracle_labels::{closure#0}	1619	3	3
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::stored_corpora_match_the_oracle_labels::{closure#1}	0	0	3
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::string_literal	105	56	85
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::test_text_file	1456	11	11
+/data/dev/xumiga/lpg/src/query/parser/differential.rs	lpg::query::parser::differential::test_texts_match_the_oracle_labels	1	10	12
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::aggregate_function	3198	61	67
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::case_expression	188	54	65
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::character_string_literal	2498	23	23
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::datetime_function	92	38	41
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::else_clause	45	9	10
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::exists_predicate	92	56	74
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::is_tail	59852	22	24
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::keyword_predicate	95	47	62
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::non_parenthesized_value_expression_primary	34	9	12
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::normal_form	11	11	13
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::normalized_predicate_part2	7	16	18
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::numeric_value_expression	9	4	4
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::numeric_value_expression_bp	12	35	83
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::predicate_tail	59545	73	91
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::primary_or_predicate	60289	13	14
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::record_constructor	267	42	44
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::searched_case	157	28	31
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::simple_case	15	56	63
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::spanned_label_expression	5	11	12
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::starts_body_at	2	16	17
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::temporal_function_parameters	128	30	32
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::trim_function	5	51	73
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::truth_value	2790	15	16
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::unary_function	305	18	20
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::unsigned_literal	35459	113	120
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::unsigned_literal::{closure#0}	346	6	7
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::unsigned_literal::{closure#1}	2	1	1
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_expression	52364	4	4
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_expression_bp	62545	102	105
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_expression_prefix	62542	73	84
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_expression_prefix::{closure#0}	8	9	13
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_expression_prefix::{closure#1}	8	23	25
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_expression_primary	60382	40	41
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_expression_primary_atom	60373	100	141
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_function	457	133	194
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::value_function::{closure#0}	303	1	1
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	<lpg::query::parser::Parser>::when_operand	23	21	85
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	lpg::query::parser::expr::comparison	61680	10	10
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	lpg::query::parser::expr::match_block	36	18	21
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	lpg::query::parser::expr::match_block::{closure#0}	39	8	9
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	lpg::query::parser::expr::numeric_unary	5601	6	22
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	lpg::query::parser::expr::starts_numeric_function	60755	9	9
+/data/dev/xumiga/lpg/src/query/parser/expr.rs	lpg::query::parser::expr::starts_value_function	60746	9	9
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::at	1134501	8	8
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::at_identifier	28	13	13
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::at_kw	279749	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::at_regular_identifier	151580	10	10
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::bump	215548	8	8
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::decide	778	14	14
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::decide::{closure#0}	39	3	3
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::eat	478506	8	8
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::eat_kw	164930	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::error	842	39	39
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::error::{closure#0}	15603	7	7
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::expect	146522	9	9
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::expect_here	1524245	10	10
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::expect_kw	41913	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<()>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::expr::Expr>	5	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::expr::Function>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::expr::WhenOperand>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::pattern::PathSearch>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::query::CreateGraphStatement>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::query::DropStatement>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::reference::ObjectExpr>	38	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::types::EdgeTypeSpec>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::types::NodeTypeRef>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::types::NodeTypeSpec>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::ast::types::ValueType>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<alloc::boxed::Box<str>>>	37	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::expr::Expr>>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::query::UnsignedInteger>>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::reference::BindingTableExpr>>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::reference::CatalogObjectRef>>	6	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::reference::GraphExpr>>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::reference::GraphTypeRef>>	62	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::reference::ProcedureRef>>	3	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::reference::SchemaPath>>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail::<lpg::query::span::Spanned<lpg::query::ast::reference::SchemaRef>>	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::expr::Expr>	5	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::expr::Function>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::expr::WhenOperand>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::query::CreateGraphStatement>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::query::DropStatement>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::reference::ObjectExpr>	38	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::types::EdgeTypeSpec>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::types::NodeTypeRef>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::types::NodeTypeSpec>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::ast::types::ValueType>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::expr::Expr>>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::reference::BindingTableExpr>>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::reference::CatalogObjectRef>>	6	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::reference::GraphExpr>>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::reference::GraphTypeRef>>	62	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::reference::ProcedureRef>>	3	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::reference::SchemaPath>>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::fail_rule::<lpg::query::span::Spanned<lpg::query::ast::reference::SchemaRef>>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::identifier	52927	23	23
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::is_identifier	19555	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::is_regular_identifier	309794	8	8
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::nest	186891	16	16
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::new	8459	10	10
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::peek	1853323	4	4
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::peek_nth	320446	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::regular_identifier	108768	11	11
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::span_from	456166	11	12
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<alloc::vec::Vec<lpg::query::span::Spanned<alloc::boxed::Box<str>>>>	5556	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<alloc::vec::Vec<lpg::query::span::Spanned<lpg::query::ast::query::YieldItem>>>	82	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<alloc::vec::Vec<lpg::query::span::Spanned<lpg::query::ast::types::ElementTypeSpec>>>	56	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::expr::BinaryOp>	8488	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::expr::Expr>	144898	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::expr::Field>	167	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::expr::SimpleWhen>	19	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::expr::UnaryOp>	1696	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::expr::WhenOperand>	23	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::ElementPatternPredicate>	2067	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::GraphPattern>	7485	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::GraphPatternBindingTable>	7483	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::InsertEdge>	2964	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::InsertElement>	8432	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::InsertPathPattern>	5468	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::LabelExpr>	12302	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::MatchMode>	2	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::PathMode>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::PathPattern>	7744	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::PathPatternExpr>	98118	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::PathPatternPrefix>	3	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::PatternQuantifier>	4	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::PropertyKeyValuePair>	5864	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::pattern::SimplifiedExpr>	2276	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::BindingVariableDef>	19	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::EndTransaction>	18	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::NextStatement>	10003	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::Procedure>	7802	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::ProgramActivity>	7774	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::SessionReset>	7	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::SessionResetArgs>	5	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::SessionSet>	35	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::SessionSetParameter>	6	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::StartTransaction>	20	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::TransactionMode>	4	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::TypedBindingTableInitializer>	8	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::TypedGraphInitializer>	4	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::program::TypedValueInitializer>	13	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::CatalogModifyingStatement>	204	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::CreateKind>	176	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::DataModifyingStatement>	428	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::ForOrdinalityOrOffset>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::GraphTypeSource>	32	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::LetVariableDef>	2	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::MatchStatement>	25	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::NullOrdering>	3	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::OfGraphType>	80	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::OptionalOperand>	1294	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::OrderByAndPage>	1068	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::Ordering>	25	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::ProcedureCall>	145	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::QueryConjunction>	278	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::RemoveItem>	19	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::ResultStatement>	17343	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::ReturnItem>	24397	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::ReturnItems>	17343	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::ReturnStatement>	17322	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::SelectFrom>	20	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::SelectGraphMatch>	20	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::SelectStatement>	21	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::SetItem>	54	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::SetQuantifier>	1055	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::SimpleQueryStatement>	7638	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::SortSpec>	1089	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::query::YieldItem>	132	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::reference::BindingTableExpr>	2	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::reference::GraphExpr>	22	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::types::EdgeTypeSpec>	0	0	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::types::ElementTypeSpec>	75	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::types::FieldType>	92	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::types::NodeTypeRef>	22	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::types::NodeTypeSpec>	2	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::types::TypeFiller>	71	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::spanned::<lpg::query::ast::types::ValueType>	947	5	5
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::start	713432	4	4
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::token_at	3717035	6	6
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::try_parse::<lpg::query::ast::expr::Expr, <lpg::query::parser::Parser>::value_expression_prefix::{closure#1}>	8	11	20
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::try_parse::<lpg::query::ast::expr::Predicate, <lpg::query::parser::Parser>::value_expression_prefix::{closure#0}>	8	16	20
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::try_parse::<lpg::query::ast::query::CreateGraphStatement, <lpg::query::parser::Parser>::primitive_catalog_modifying_statement::{closure#1}>	250	18	20
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::try_parse::<lpg::query::ast::query::DropStatement, <lpg::query::parser::Parser>::primitive_catalog_modifying_statement::{closure#2}>	13	18	20
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::try_parse::<lpg::query::ast::reference::ObjectExpr, <lpg::query::parser::Parser>::binding_table_expression::{closure#1}>	4	18	20
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::try_parse::<lpg::query::ast::reference::ObjectExpr, <lpg::query::parser::Parser>::graph_expression::{closure#0}>	38	18	20
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::unquote	2378	71	82
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::Parser>::unquote::{closure#0}	6	12	12
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::recursion::DepthGuard as core::ops::drop::Drop>::drop	186869	7	7
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::recursion::RecursionCounter>::new	8459	4	4
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	<lpg::query::parser::recursion::RecursionCounter>::try_decrease	186891	9	9
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	lpg::query::parser::parse_program	8440	81	102
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	lpg::query::parser::parse_program::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	lpg::query::parser::parse_program::{closure#1}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	lpg::query::parser::parse_program::{closure#2}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	lpg::query::parser::parse_program::{closure#3}	62	2	2
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	lpg::query::parser::position	854	4	4
+/data/dev/xumiga/lpg/src/query/parser/mod.rs	lpg::query::parser::stack_address	195297	7	7
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::edge_pattern	16779	48	53
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::element_pattern_filler	31308	53	56
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::element_property_specification	4347	12	15
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::graph_pattern	7600	29	40
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::graph_pattern_binding_table	7598	29	39
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::graph_pattern_quantifier	41859	43	59
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::insert_edge_pattern	8432	30	32
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::insert_element_pattern_filler	11396	36	39
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::insert_graph_pattern	363	20	21
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::insert_node_pattern	8432	17	20
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::insert_path_pattern	5468	17	20
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::label_expression	11676	4	4
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::label_expression_bp	12523	106	108
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::label_set_specification	5554	14	16
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::match_mode	7599	40	51
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::match_mode::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::node_pattern	24539	14	15
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::opt_path_mode	274	9	15
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::parenthesized_path_pattern_expression	272	37	54
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_factor	41597	26	27
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_or_paths	3	6	7
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_pattern	7803	43	45
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_pattern_expression	8075	49	50
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_pattern_list	7599	24	24
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_pattern_prefix	3	13	14
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_primary	41597	29	33
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_search_prefix	2	18	75
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::path_term	8078	33	33
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::property_key_value_pair_list	4357	26	29
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_contents	269	25	50
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_factor_high	812	22	27
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_factor_low	540	40	41
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_path_pattern_expression	7	26	31
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_primary	812	30	32
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_secondary	812	8	19
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_term	268	39	40
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_tertiary	812	29	43
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::simplified_tertiary::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::starts_path_pattern	207	16	16
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	<lpg::query::parser::Parser>::starts_simplified_factor	297	9	9
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	lpg::query::parser::pattern::path_mode	32622	5	8
+/data/dev/xumiga/lpg/src/query/parser/pattern.rs	lpg::query::parser::pattern::starts_path_primary	66308	4	4
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::at_end_transaction	16089	7	7
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::at_session_close	16239	6	6
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::binding_table_variable_definition	6	16	19
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::binding_variable_definition	8806	35	38
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::binding_variable_definition_block	8787	10	11
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::end_transaction_command	18	11	12
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::general_parameter	469	14	15
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::gql_program	8459	30	31
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::graph_variable_definition	4	16	19
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::nested_procedure_specification	413	22	23
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::next_statement	10003	14	26
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::opt_typed_binding_table_initializer	8	21	28
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::opt_typed_graph_initializer	4	21	28
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::opt_typed_value_initializer	13	25	28
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::parameter_name	478	10	17
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::procedure_body	8790	25	27
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::program_activity	8453	11	12
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_activity	42	45	52
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_activity::{closure#0}	126	4	4
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_close_command	6	9	11
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_reset_arguments	7	55	66
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_reset_command	7	16	19
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_reset_command::{closure#0}	5	4	4
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_set_command	35	63	76
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_set_parameter_clause	6	36	66
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::session_set_parameter_name	6	17	20
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::start_transaction_command	20	16	19
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::starts_procedure_body	20	14	16
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::statement_block	8787	24	25
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::transaction_access_mode	4	14	16
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::transaction_activity	8411	55	58
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::transaction_characteristics	3	20	21
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::typed	238	8	8
+/data/dev/xumiga/lpg/src/query/parser/program.rs	<lpg::query::parser::Parser>::value_variable_definition	9	12	15
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::call_procedure_statement	242	20	21
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::delete_statement	5	22	27
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::expect_statement	18347	5	5
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::filter_statement	5	10	11
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::for_statement	21	21	48
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::group_by_clause	2	27	32
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::inline_procedure_call	115	13	32
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::is_or_colon	3	9	12
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::let_statement	1	7	8
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::let_variable_definition	2	16	22
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::let_variable_definition_list	2	19	21
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::limit_clause	5	7	8
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::match_statement	7600	20	20
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::match_statement_block	4	26	30
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::named_procedure_call	127	42	45
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::non_negative_integer_specification	10	10	16
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::offset_clause	5	10	11
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::optional_match_statement	1299	24	28
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::order_by_and_page_statement	1074	37	41
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::order_by_clause	1073	10	12
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::primitive_data_modifying_statement	430	14	15
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::primitive_result_statement	17616	45	46
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::procedure_call	242	16	16
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::query_conjunction	278	15	15
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::remove_statement	17	35	40
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::return_items	17616	41	41
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::return_statement	17595	25	27
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::return_statement::{closure#0}	1052	4	4
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::select_statement	21	66	85
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::select_statement::{closure#0}	3	4	4
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::select_statement_body	20	62	75
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::set_quantifier	20349	11	11
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::set_statement	45	62	71
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::simple_match_statement	7598	15	16
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::simple_query_statement	7850	20	24
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::sort_specification	1089	41	43
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::sort_specification::{closure#0}	25	8	8
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::sort_specification_list	1073	20	21
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::statement	18790	56	79
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::statement_item	44782	69	72
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::unsigned_decimal_integer	0	0	8
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::unsigned_integer	17	17	24
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::Parser>::yield_clause	84	31	33
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::query::Item>::is_call	562	4	4
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::query::Item>::is_query	25256	4	4
+/data/dev/xumiga/lpg/src/query/parser/query.rs	<lpg::query::parser::query::Item>::span	24513	13	19
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_catalog	232	6	6
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_catalog::{closure#0}	54	7	8
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_data	508	35	40
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_linear_query	17089	80	85
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_linear_query::{closure#0}	7424	3	3
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_linear_query::{closure#1}	1	3	3
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_linear_query::{closure#2}	21	3	3
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_query	17065	50	50
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_query::{closure#0}	24513	3	3
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::build_query::{closure#1}	0	0	4
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::classify_catalog	740	7	7
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::classify_catalog::{closure#0}	562	4	4
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::classify_data	508	29	32
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::classify_query	17805	20	21
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::classify_query::{closure#0}	0	0	2
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::classify_query::{closure#1}	740	2	2
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::linear_query_shape	17829	52	55
+/data/dev/xumiga/lpg/src/query/parser/query.rs	lpg::query::parser::query::starts_statement	26019	6	7
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::a_misspelt_keyword_fails_with_42001_its_position_and_the_expected_tokens	1	34	34
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::a_pattern_keeps_its_labels_directions_and_variables	1	46	53
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::ambient	12	7	8
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::ambiguous_decisions_found_by_generation_take_the_lowest_alternative	1	59	59
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::an_unknown_character_fails_with_42001_at_its_position	1	12	12
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::ast_contains	19	8	8
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::binary	10	8	9
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::columns_count_characters_and_offsets_count_bytes	1	21	22
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::compact	19	28	28
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::compact::{closure#0}	219	1	1
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::deep_texts	2	154	154
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::deep_texts_fail_with_42001_on_a_2_mib_stack	1	31	31
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::deep_texts_fail_with_42001_on_a_2_mib_stack::{closure#0}	1	6	6
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::deep_texts_fail_with_42001_on_a_2_mib_stack::{closure#0}::{closure#0}	28	4	4
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::endpoint_pair_to_is_directed	1	14	14
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::every_node_keeps_the_span_of_its_text	1	64	68
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::exists_a_match_block_in_braces_is_the_match_block	1	10	12
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::graph_pattern_takes_the_where_clause	1	19	22
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::index_management_and_permission_statements_fail_with_42001	1	30	30
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::integer	4	4	4
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::items	10	10	12
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::label_and_property_set_and_insert_filler_keep_every_part	1	16	16
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::linear	14	5	6
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::literals_keep_their_kind_and_text	1	11	11
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::literals_keep_their_kind_and_text::{closure#0}	7	8	10
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::operators_bind_by_precedence_and_associate_left	1	80	81
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::parameters_are_never_inlined	1	47	52
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::parse	41	5	7
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::procedure	21	9	10
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::result_and_cast_operand_null_is_an_expression	1	10	10
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::returned	9	5	5
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::slice	12	4	4
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::statement	21	3	3
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::statement_a_catalog_call_is_catalog_modifying	1	6	8
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::statement_a_query_that_is_also_data_modifying_is_a_query	1	6	8
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::syntax_error	9	8	10
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::texts_within_the_limits_parse	1	26	28
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::third_edge_direction	2	11	15
+/data/dev/xumiga/lpg/src/query/parser/tests.rs	lpg::query::parser::tests::value_function_abs_is_the_numeric_function	1	12	13
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::any_value_type	2	27	67
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::at_label_phrase	89	5	9
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::at_type_angle	277	6	6
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::binding_table_reference_value_type	0	0	12
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::binding_table_type_value	0	0	17
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::closed_element_reference_type	0	0	26
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::edge_type_pattern_rest	11	52	59
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::edge_type_specification	6	58	130
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::element_type_specification	75	42	48
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::endpoint_pair	6	34	43
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::endpoint_pair::{closure#0}	12	2	2
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::field_types_specification	50	35	39
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::graph_reference_value_type	0	0	42
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::list_value_type_name	547	8	9
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::nested_graph_type_specification	56	32	35
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::node_type_reference	22	8	10
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::node_type_specification	13	52	68
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::not_null	671	10	11
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::numeric_type	295	64	151
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::numeric_type::{closure#0}	1	1	1
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::opt_bracketed_max_length	294	6	15
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::opt_label_set_phrase	101	22	42
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::opt_parenthesized_precision	291	6	15
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::opt_type_filler	99	37	40
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::parenthesized_node_type	70	22	26
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::predefined_type	378	44	102
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::record_type	2	14	22
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::starts_edge_type_after_synonym	0	0	6
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::starts_node_type_after_synonym	4	10	10
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::starts_type_filler	8	3	4
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::string_type	56	21	46
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::temporal_duration_qualifier	1	12	27
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::temporal_type	20	24	91
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::type_keyword	19	13	14
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::value_type	385	4	4
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::value_type_bp	659	70	73
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::value_type_primary	657	37	50
+/data/dev/xumiga/lpg/src/query/parser/types.rs	<lpg::query::parser::Parser>::verbose_binary_exact_numeric_type	0	0	42
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::card_from	220338	25	25
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::cost_of	111038	25	25
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::nodes_of	248172	13	13
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::start_cost	122830	5	5
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::starts	6686	12	12
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::starts::{closure#0}	13037	1	1
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::steps	6865	8	8
+/data/dev/xumiga/lpg/src/query/plan/join.rs	<lpg::query::plan::join::Graph>::steps::{closure#0}	10092	18	18
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::exact	4672	101	102
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::exact::{closure#0}	56368	2	2
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::exact::{closure#1}	5235	2	2
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::exact::{closure#2}	5108	2	2
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::greedy	2	53	54
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#0}	768	1	1
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#1}	432	7	7
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#2}	87	11	11
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::greedy::{closure#3}	10	2	2
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::order	6686	26	26
+/data/dev/xumiga/lpg/src/query/plan/join.rs	lpg::query::plan::join::order::{closure#0}	0	0	5
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::all_nodes	17147	10	10
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::all_nodes::{closure#0}	34000	4	4
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::all_nodes::{closure#1}	33994	1	1
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges	6282	9	9
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#0}	61563	13	13
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#0}::{closure#0}	17152	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#0}::{closure#1}	10153	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::edges::{closure#1}	10303	1	1
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Estimates>::nodes	17917	6	6
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Plan>::describe	480	5	5
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access	5428	135	136
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#0}	4013	4	4
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#10}	203	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#11}	13	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#12}	49	7	8
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#13}	5243	5	5
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#1}	4013	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#1}::{closure#0}	1	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#2}	1410	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#3}	14403	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#4}	3360	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#5}	657	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#6}	362	7	7
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#6}::{closure#0}	177	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#7}	592	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#8}	190	2	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::access::{closure#9}	45	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability	6282	38	39
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#0}	12564	7	7
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#1}	12564	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#1}::{closure#0}	5858	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::edge_probability::{closure#1}::{closure#1}	6706	4	4
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::independent	3360	5	5
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::independent::{closure#0}	0	0	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::known	7	8	11
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate	11709	29	29
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#0}	7068	4	4
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#1}	7068	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#1}::{closure#0}	1	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::node_estimate::{closure#2}	4636	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::parts	5810	111	118
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern	6649	168	172
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#0}	19592	12	12
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#0}::{closure#0}	37502	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#0}::{closure#0}::{closure#0}	40399	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#1}	26241	6	6
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#1}::{closure#0}	14403	12	12
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#2}	12969	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#3}	6282	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#4}	18846	4	4
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#4}::{closure#0}	34063	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#5}	12943	11	11
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#6}	12943	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::pattern::{closure#7}	6282	10	10
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	<lpg::query::plan::Planner>::project	5623	41	41
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe	1739	126	126
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#0}	2075	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#10}	3	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#11}	33	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#12}	658	1	1
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#1}	575	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#2}	3	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#3}	10	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#4}	658	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#5}	615	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#6}	41	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#7}	1259	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#8}	8	1	1
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::describe::{closure#9}	24	1	1
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::leaf	12727	4	4
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::name_of	2075	6	6
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::name_of::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::name_of::{closure#1}	2075	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::op_name	1739	32	32
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::op_name::{closure#0}	3	1	1
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::over	34470	5	5
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::plan	5808	60	60
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::plan::{closure#0}	20	3	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::plan::{closure#1}	36442	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::plan_catalog	72	9	9
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::prop_cmp	14403	22	23
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::prop_cmp::{closure#0}	3889	9	9
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::prop_cmp::{closure#1}	0	0	3
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::required_labels	35129	7	7
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::required_labels::{closure#0}	47831	9	9
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::sub_declares	20	4	4
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}	29	13	13
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}::{closure#0}	40	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}::{closure#1}	16	2	2
+/data/dev/xumiga/lpg/src/query/plan/mod.rs	lpg::query::plan::sub_declares::{closure#0}::{closure#2}	4	2	2
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::brute_min	24	12	12
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::brute_min::perms	301714	33	33
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::component	25	46	46
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::component::{closure#0}	94	3	3
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::equality_and_range_use_an_online_index_and_not_a_populating_one	1	137	137
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::equality_and_range_use_an_online_index_and_not_a_populating_one::{closure#0}	5	2	2
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::equality_and_range_use_an_online_index_and_not_a_populating_one::{closure#1}	1	3	3
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::equality_and_range_use_an_online_index_and_not_a_populating_one::{closure#2}	4	8	8
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::equality_and_range_use_an_online_index_and_not_a_populating_one::{closure#3}	5	2	2
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::explain_of_an_insert_returns_a_plan_and_inserts_nothing	1	25	25
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::has	5	4	4
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::has::{closure#0}	21	2	2
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::index	7	31	31
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::index::{closure#0}	6	5	5
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::join_order_is_exact_up_to_seven_expansions_and_greedy_at_eight	1	74	74
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::join_order_is_exact_up_to_seven_expansions_and_greedy_at_eight::{closure#1}	39	2	2
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::nodes	101	11	11
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::plan_of	13	18	18
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::plan_of::{closure#0}	0	0	1
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::point	15	6	6
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind	1	201	201
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind::{closure#0}	6	30	30
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind::{closure#0}::{closure#0}	1260	3	3
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind::{closure#0}::{closure#1}	0	0	1
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind::{closure#1}	15	2	2
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind::{closure#2}	25	3	3
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind::{closure#3}	26	6	6
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::results_are_equal_with_and_without_each_index_kind::{closure#4}	1	2	2
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::sorted	252	5	5
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::sorted::{closure#0}	1880	15	16
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::the_label_scan_estimate_reads_the_statistics	1	39	39
+/data/dev/xumiga/lpg/src/query/plan/tests.rs	lpg::query::plan::tests::the_label_scan_estimate_reads_the_statistics::{closure#0}	4	2	2
+/data/dev/xumiga/lpg/src/query/span.rs	<lpg::query::span::Location as core::fmt::Debug>::fmt	478	4	4
+/data/dev/xumiga/lpg/src/query/span.rs	<lpg::query::span::Span as core::fmt::Debug>::fmt	239	4	4
+/data/dev/xumiga/lpg/src/query/span.rs	<lpg::query::span::Span>::new	7682039	3	3
+/data/dev/xumiga/lpg/src/query/span.rs	<lpg::query::span::Span>::union	7494	8	10
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::canonical_order	20	19	19
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::ccc	79	8	8
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::compatibility	37	4	4
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::compose	14	36	37
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::compose_pair	18	32	32
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::compose_pair::{closure#0}	165	2	2
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::compose_pair::{closure#1}	8	1	1
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::composes	20	4	4
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::decompose_char	37	38	38
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::decomposition	35	18	18
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::is_normalized	9	8	8
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::normalize	29	28	28
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::tests::a_blocked_mark_does_not_reach_the_starter	1	10	10
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::tests::a_hangul_syllable_is_arithmetic_in_both_directions	1	18	18
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::tests::a_letter_and_its_accent_are_one_character_composed_and_two_decomposed	1	17	17
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::tests::an_excluded_composition_stays_apart	1	10	10
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::tests::ascii_is_already_in_every_form	1	14	14
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::tests::compatibility_is_the_only_form_that_loses_the_formatting	1	14	14
+/data/dev/xumiga/lpg/src/query/unicode/mod.rs	lpg::query::unicode::tests::marks_sort_by_combining_class_and_keep_their_order_inside_a_class	1	13	13

@@ -1,0 +1,2 @@
+MATCH (x:Peer)-[:FRIEND]->(y:Peer)
+RETURN x.name AS source, y.name AS target

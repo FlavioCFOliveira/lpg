@@ -1,0 +1,1 @@
+RETURN CHARACTER_LENGTH('\t\n\r\f\b') AS n

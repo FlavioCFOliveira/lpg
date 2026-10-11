@@ -1,7 +1,7 @@
 ---
 title: Sprint 3 correctness laboratory
 status: living record
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - ../README.md
   - ../lab-sprint-2/report.md
@@ -136,3 +136,100 @@ Measured on 2026-10-09 on the working tree of round A (commit `25cae08` plus the
 | Error module coverage | `cargo llvm-cov nextest -p lpg -E 'test(/^(error\|gqlstatus\|storage::error)::/)' --summary-only` | [raw](raw/coverage-error-module.txt) |
 
 The fuzz logs keep the libFuzzer header, the final status and the recommended dictionary; the `NEW` and `REDUCE` progress lines were dropped. The fuzz corpora under `fuzz/corpus/` were seeded with the three stored corpora and are not checked in.
+
+## Round D: conformance and exit verification (rmp #52, #53)
+
+Run on 2026-10-11 on commit `44c2dcb` plus the round-D working tree. The last code change, the per-process database directory of the binder fuzz target in `src/fuzz.rs` (for fork mode), came after the test runs; `src/fuzz.rs` is compiled only under `cfg(fuzzing)`, so no test build contains it, and the `--cfg fuzzing` clippy and `cargo fmt --check` were rerun on it (clean). Correctness only (sprint UPDATE 55): the seconds printed by nextest are run durations, not performance claims. Graph data of the default suite in `/tmp/lpgram` (tmpfs: no durability or I/O claim rests on it); the flush-dependent suites on ext4 (`LPG_LAB_EXT4=/data/tmp/lpg-lab`, NVMe).
+
+### Conformance runner
+
+`src/tck/` runs the scenarios of [`tests/tck/`](../../../tests/tck/README.md) through `Session`, one new database each, every statement under PROFILE. The selection is not the engine's: [`tck_manifest.py`](tck_manifest.py) applies the TS-30 rule (the ANTLR parse of `GQL.g4` and the round-S anchors) and writes `tests/tck/selection.tsv` ([raw](raw/tck-manifest.txt)). The gql-compat cases are translated by [`gqlcompat_translate.py`](gqlcompat_translate.py) ([raw](raw/gqlcompat-translate.txt)). One line per scenario with its verdict and reason: [raw/tck-results.tsv](raw/tck-results.tsv); totals: [raw/tck-summary.txt](raw/tck-summary.txt).
+
+**Counts per artefact.** Whole artefacts as the TS-30 rule counts them (reproduces TS-30): opengql/tck 206 instances, 45 selected; openCypher TCK 3 897, 200 selected; gql-compat 107 mandatory cases, 106 selected, and 69 condition cases, 24 selected.
+
+| Artefact | Selected | Passed | Gate (code) | Not GQL | Disputed | Not translated |
+|---|---|---|---|---|---|---|
+| opengql/tck @ `e0700a7` | 45 | 33 | 0 | 0 | 12 | – |
+| openCypher TCK @ `677cbaf` | 200 | 183 | 10 (GB02 8, GF20 2) | 6 | 1 | – |
+| gql-compat @ `9de1991` (translated) | 130 | 120 | 1 (GQ14) | 0 | 3 | 6 |
+| lpg's own (`approved-features.feature`) | 14 | 14 | 0 | 0 | 0 | – |
+
+* **Gate**: an engine gate whose code has no `GQL.g4` construct, so the TS-30 rule cannot see it; the runner checks 42001 with the cause 51N26 naming the code. GB02: `(a)--(b)` is a `--` comment in GQL; GF20: an aggregate in a sort key; GQ14: a sort key that is not a result column (gql-compat places it in the mandatory surface; TS-20 reads GQ14 more strictly; unverified, needs the ISO text).
+* **Not GQL**: duration strings with weeks, fractions outside seconds or mixed year-month and day-time parts (ISO BNF insert, lines 2639-2670), and a duration record with years and days (no GV41 type holds it); the runner checks 22G0H or 22G07.
+* **Disputed** (reported for a decision; the runner pins the current behaviour): opengql/tck expects 42000 where `interfaces.md` gives 42N11, 42002 or G1000 (7); opengql/tck needs `CREATE SCHEMA` to create directories, which FR-CAT-005 forbids (4); `Aggregation3.feature` [1] is defective (1); openCypher `Call1.feature` [12] against DECISION 360 on rmp #50 (1); gql-compat `SESSION SET SCHEMA /`, redeclared variable 42002, and `1 < 'a'` 22G04 against TS-17, DECISION 326 on rmp #43 and IV002/IV010 (3).
+* **Not translated**: 6 gql-compat cases whose condition cannot arise in lpg (`unless GP18`, `unless GT03`, `limit IL001` for nodes, `limit IW014`, 2 `fault cut-after-send`).
+* **Unselected** instances of the vendored files, by excluding code (one instance may need several): opengql/tck GV50 47, GV45 32, GL04 17, GQ10 8, GQ23 8, GQ08 4, GG05 3, GC02 2, GG04 1, GQ20 1, GT02 1, rejected by `GQL.g4` 6; openCypher rejected by `GQL.g4` 652, G043 100, GV50 50, GL04 50, GV45 48, G004 38, GE07 4.
+
+| Check (rmp #52 AC) | Test or evidence | Result |
+|---|---|---|
+| Every selected scenario runs; each names its clause or feature code | `tck::{opengql_tck,opencypher_tck,lpg}_*_pass`; `tck::every_scenario_names_its_clause_or_feature_code` (feature-code tag, `@clause-N.N`, or `tests/tck/clauses.tsv`, each a `GQL.g4` subclause heading); `tck::the_selection_manifest_matches_the_vendored_files` | pass; 0 failed |
+| Published feature list equals the gate table | `query::features::tests::published_feature_list_matches_the_gate_table` → [`docs/supported-features.md`](../../supported-features.md) | pass |
+| Oracle differential on every scenario text | `query::parser::differential::scenario_texts_match_the_oracle_labels`, `stored_corpora_match_the_oracle_labels`; labels from `gql-oracle label` (745 ACCEPT, 641 REJECT) | 1 386 scenario texts, 0 differences |
+| A wrong expected row fails the runner | `Literals2.feature` [1] edited `1` → `2`: `opencypher_tck_selected_scenarios_pass` failed ("rows [[Int(1)]], expected [[Int(2)]]"); file restored, `cmp` identical to upstream, test passes ([raw](raw/tck-mutation.txt)); permanent check `tck::a_wrong_expected_row_fails_the_runner` | pass |
+
+**Engine defects found and fixed** (regression tests in `query::binder::tests` and `query::exec::tests::conformance`; each fix reverted at once made its tests and scenarios fail, [raw](raw/mutations-round-d.txt)): a static type error raised 22G03 instead of 42000, and an element reference was accepted as a boolean condition; an edge variable of two edge patterns of one graph pattern bound; a non-boolean search condition dropped rows; a double assignment in one `SET` passed (22G0M); a date shifted by hours, or a time by months, passed (22G14); a `SET` on a NULL element counted a property; ISO 8601 week, ordinal, basic and reduced-precision dates were rejected; and, found by the binder fuzz target, the new date parser panicked on a multi-byte character (`DATE '1\u{19}\u{fffd}-9'`).
+
+### Micro-workloads (NFR-PERF-002)
+
+Defined in `src/lab/micro.rs` and checked in the default suite (`lab::micro::*`, 2 tests, pass). Timing is Sprint 6. PROFILE counters, summed over the operators (peak memory: the largest operator's reservation, bytes), one run each ([raw](raw/micro-workloads.tsv)); buffer hits and misses depend on the pool state of that run.
+
+| Id | GQL text (parameters) | Expected | Rows | Batches | Entries read | Hits | Misses | Peak memory |
+|---|---|---|---|---|---|---|---|---|
+| L1 | `MATCH (a:N {id: $s})-[]->(b) RETURN COUNT(*) AS c` (hub, $s = 47) | 95 | 1 | 6 | 697 | 405 | 0 | 131 072 |
+| L2 | `MATCH (a:N {id: $s})-[:T2]->(b) RETURN COUNT(*) AS c` (47) | 27 | 1 | 6 | 629 | 405 | 0 | 131 072 |
+| L3 | `MATCH (a:N {id: $s})-[]->()-[]->(c) RETURN COUNT(DISTINCT c) AS c` (47) | 140 | 1 | 10 | 1 933 | 595 | 0 | 131 072 |
+| L4 | `MATCH (a:N {id: $s})-[]->()-[]->()-[]->(c) RETURN COUNT(DISTINCT c) AS c` (47) | 180 | 1 | 94 | 30 049 | 3 067 | 0 | 131 072 |
+| L1-low | L1 ($s = 0, out-degree 1) | 1 | 1 | 6 | 603 | 405 | 0 | 131 072 |
+| L2-low | L2 (0) | 0 | 1 | 5 | 602 | 405 | 0 | 0 |
+| L3-low | L3 (0) | 7 | 1 | 8 | 611 | 407 | 0 | 131 072 |
+| L4-low | L4 (0) | 84 | 1 | 11 | 859 | 423 | 0 | 131 072 |
+| L5 | `MATCH (a:N {id: $s}), (b:N {id: $t}) INSERT (a)-[:T0]->(b)` (0, 47) | 1 edge created; L1 from 0 then 2 | 0 | 9 | 1 207 | 821 | 0 | 131 072 |
+| IS1 | profile of a person (`personId` 3) | 1 row: Cy, Ng, 1985-07-07, … | 1 | 7 | 46 | 32 | 0 | 0 |
+| IS2 | recent posts of a person (1), `ORDER BY messageCreationDate DESC, messageId ASC` | posts 101, 100 | 2 | 8 | 55 | 40 | 0 | 131 072 |
+| IS3 | friends of a person (4), `ORDER BY friendshipCreationDate DESC, personId ASC` | 2 (220), 3 (205) | 2 | 8 | 49 | 34 | 0 | 131 072 |
+| IS4 | content of a message (101) | 310, `photo.jpg` | 1 | 5 | 40 | 26 | 0 | 0 |
+| IS5 | creator of a message (202) | 3, Cy, Ng | 1 | 7 | 43 | 29 | 0 | 0 |
+| IS6 | forum of a post (102) | 51, Wall of Bo, moderator 2 | 1 | 10 | 44 | 30 | 0 | 0 |
+| IS7 | replies of a message (100), knows-flag | 201 (Di, false), 200 (Bo, true) | 2 | 20 | 66 | 49 | 0 | 131 072 |
+
+The full GQL texts of IS1–IS7 are in `src/lab/micro.rs` and in the raw file. Layout graph: M-LAYOUT generator, Zipf α = 0.8, 200 nodes, 1 000 edges, four types, seed 20261011; expected values from a reference evaluation of the edge list (trail ends under `DIFFERENT EDGES`, ID086). SNB graph: 4 persons, 3 cities, 6 messages, 2 forums; expected rows from a reference evaluation of its data. Adaptations forced by gates: right-pointing edges only (G043), no `LIMIT` (GQ13), no `REPLY_OF*0..` (G035).
+
+### Full run and gates (rmp #53)
+
+| Run or gate | Command | Result | Raw |
+|---|---|---|---|
+| Full suite, ext4 lab directory | `LPG_LAB_EXT4=/data/tmp/lpg-lab cargo nextest run -p lpg --no-fail-fast` | exit 0; 508 passed (2 slow), 28 skipped | [log](raw/nextest-full-round-d.log) |
+| XFS lab directory | `LPG_LAB_XFS=/mnt/lpg-xfs` | **not run**: `/mnt/lpg-xfs` is not mounted (root needed) | – |
+| Stress profile | `LPG_LAB_EXT4=/data/tmp/lpg-lab cargo nextest run -p lpg --profile stress --no-fail-fast` | exit 0; 69 passed, 16 copies each | [log](raw/stress-round-d.log) |
+| loom | `RUSTFLAGS="--cfg loom" cargo test -p lpg --lib --release --target-dir /dev/shm/lpg-target/loom loom_` | exit 0; 13 passed | [log](raw/loom-round-d.log) |
+| shuttle | `RUSTFLAGS="--cfg shuttle" cargo test -p lpg --lib --target-dir /dev/shm/lpg-target/shuttle shuttle_` | exit 0; 4 passed | [log](raw/shuttle-round-d.log) |
+| Differential, generated and stored | `cargo nextest run -p lpg --run-ignored all -E 'test(/differential::/)' --no-capture` | exit 0; seeds 20261008, 1, 12648430: 100 000 sentences and 100 000 mutants each, 0 differences; samples 21, miniGU 142, test texts 70, scenario texts 1 386: 0 differences | [raw](raw/differential-round-d.txt) |
+| MSRV | `cargo +1.89 build` | exit 0 | [raw](raw/cargo-1.89-build-round-d.txt) |
+| Licences | `cargo deny check licenses` | exit 0, "licenses ok" | [raw](raw/cargo-deny-licenses-round-d.txt) |
+| Lints | `cargo fmt --all -- --check`; `cargo clippy --all-targets -- -D warnings`; the same clippy of the library with `--cfg fuzzing` | exit 0 each | [raw](raw/gates-round-d.txt) |
+| `forbid(unsafe_code)` | `grep -rn 'forbid(unsafe_code)' src/lib.rs` | `src/lib.rs:9` | [raw](raw/gates-round-d.txt) |
+| FR-STO-002 grep | `grep -rnE 'std::fs\|OpenOptions\|File::(open\|create)' src --include=*.rs` | product code matches only `src/storage/fs.rs`; every other match is test code (`src/tck/`, `src/lab/`, `*/tests.rs`, `differential.rs`, `suites/`, `test_support/`), and, after the fork-mode change, `src/fuzz.rs` (compiled only under `cfg(fuzzing)`) | [raw](raw/gates-round-d.txt) |
+| NFR-PERF-007 over every scenario | the operator counter of #45, read for each statement the runner profiles | 429 statements profiled to completion (26 + 137 + 266), at most 1 operator running at once | [raw](raw/tck-summary.txt) |
+| Coverage, query engine | `cargo llvm-cov nextest -p lpg --json -E 'test(/^(query\|tck\|lab::micro)::/)'`, `cov-functions.py`, `cov-rules.py` | executor (`src/query/exec/`): 288 functions and closures, 22 never executed (`reset` of 5 operators, `Debug`, `run_nested`, closures); rule functions without the generated sentences: 151 of 155 executed. The parser is unchanged in round D, so round A's 155 of 155 with the generated sentences stands | [raw](raw/coverage-query-round-d.tsv) |
+| Peak heap per blocking operator | round B, not rerun (the operators are unchanged in round D) | see [engine-round-b.md](engine-round-b.md) | [raw](raw/heaptrack-blocking-operators.tsv) |
+| Fuzz, lexer | `cargo +nightly fuzz run --target-dir /dev/shm/lpg-target/fuzz-final lexer fuzz/corpus/lexer -- -runs=10000000` | exit 0, "Done 10000000 runs in 876 second(s)", no artifact | [raw](raw/fuzz-lexer-final.txt) |
+| Fuzz, parser | the same with `parser`, `-fork=4 -ignore_timeouts=0 -ignore_ooms=0` (libFuzzer fork mode, coordinator's request) | exit 0, "fuzzed for 10111794 iterations", `oom/timeout/crash: 0/0/0` in every stats line, no artifact; wall clock 3 575 s | [raw](raw/fuzz-parser-final.txt) |
+| Fuzz, binder | the same with `binder` on a copy of `fuzz/corpus/binder`, `-fork=10 -ignore_timeouts=0 -ignore_ooms=0`, `LPG_FUZZ_DIR=/tmp/lpgram/fuzz-binder-final` (one database per child process, dead children's directories removed every 3 s, the directory removed at the end) | exit 0, "fuzzed for 10038368 iterations", crash 0, no artifact; wall clock 2 279 s. Its first run (single process) crashed on a seed input in the new date parser, fixed before this run (above) | [raw](raw/fuzz-binder-final.txt) |
+| Fuzz, record_decode | `cargo +nightly fuzz run --target-dir /dev/shm/lpg-target/fuzz-final record_decode fuzz/corpus/record_decode -- -runs=1000000` | exit 0, "Done 1000000 runs in 10 second(s)", no artifact | [raw](raw/fuzz-record_decode-final.txt) |
+
+### Exit criteria of sprint DECISION 12 (timing excluded)
+
+| Criterion | Passing tests | State |
+|---|---|---|
+| The parser accepts and rejects as the ANTLR oracle on the samples, every GQL text of the tests and the generated sentences | `query::parser::differential::*` (above), now with the 1 386 scenario texts | met |
+| Every scenario of the approved feature set passes and names its clause or feature code | `tck::*` | **not fully met**: 350 pass, 11 gate and 6 not-GQL exclusions are verified, **16 disputed scenarios await a user decision** |
+| FR-API-001..010 (Rust API part), FR-SES-001..004, FR-AUTH-001/002, FR-PROC-001..004, FR-LIM-001/002/006, FR-OBS-002..006 through the Rust API | `api::tests::{api,auth,limits,procs,obs}::*` (rmp #47–#51 TEST entries), in the full run | met |
+| FR-CAT-001, FR-IDX-001, FR-TYPE-005, FR-LIM-003/005/007, FR-GQL-004, FR-OPS-001/002/008/010, FR-REC-004/010 through a statement, a procedure or the API | `api::tests::procs::the_show_procedures_list_their_objects_with_the_specified_columns`, `…point_searches_return_the_same_rows_with_and_without_the_index`, `…no_built_in_backs_up_restores_or_creates_a_directory`; `api::tests::auth::every_index_and_constraint_kind_is_managed_through_the_api`, `…a_restored_backup_holds_graphs_index_and_constraint`; `api::tests::limits::{a_statement_over_the_memory_limit_fails_and_earlier_writes_vanish, writes_and_old_versions_at_the_cap_fail_with_51n72}`; `api::tests::api::backup_restore_integrity_check_and_migration_through_the_api`; scenarios `Create2.feature` [1]–[3], `approved-features.feature` [13], [14] (FR-GQL-004) | met; the FR-OPS-001 load half cannot run through the API before Sprint 4 (FINDING 353 on rmp #47) |
+| A query uses at most one thread at a time (NFR-PERF-007) | `query::exec::tests::…across_a_thousand_batches_at_most_one_operator_runs_at_once`; the runner's counter over every scenario statement | met |
+| Micro-workloads defined (and measured); point 8 closed; point 1 restated | `lab::micro::*`; `quality-and-testing.md` unverified points 1 and 8 | defined and checked; point 1 restated; measurement and point 8 deferred to Sprint 6 |
+
+### Deferred to Sprint 6 (timing, sprint UPDATE 55)
+
+* Timing of the micro-workloads above and the LDBC SNB baseline against Neo4j and Memgraph (NFR-PERF-002), and unverified point 8 (parse speed).
+* The laboratory timing items of sprint DECISION 13: flame graphs per phase, parse time against M-PARSE, `spawn_blocking` hand-off cost against M-TOKIO, tokio runtime metrics, cancellation latency, and PROFILE's time per batch.
+* The parser fuzz throughput drop (FINDING 317 on rmp #41).

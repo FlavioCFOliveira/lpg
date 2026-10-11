@@ -1,0 +1,1 @@
+MATCH (n) WHERE (a)-[r]->(n) RETURN n

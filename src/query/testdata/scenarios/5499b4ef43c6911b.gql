@@ -1,0 +1,2 @@
+CALL test.my.proc(null) YIELD a AS b, b AS a
+RETURN b, a

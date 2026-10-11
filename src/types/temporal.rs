@@ -149,11 +149,63 @@ fn split_offset(text: &str) -> Option<(&str, Offset)> {
     ))
 }
 
+/// A date from its ISO 8601 text (TS-21): a calendar date (`2015-07-21`,
+/// `20150721`), a week date (`2015-W30-2`, `2015W302`), an ordinal date
+/// (`2015-202`, `2015202`), or a calendar or week date of reduced
+/// precision (`2015-07`, `201507`, `2015-W30`, `2015W30`, `2015`), whose
+/// omitted components take their lowest value. These are the ISO 8601
+/// forms of Neo4j's date strings (Cypher Manual, "Temporal values",
+/// "Specifying dates"; openCypher TCK `Temporal2.feature` [1]); Neo4j's
+/// quarter dates are not ISO 8601 and are not accepted. Any other text is
+/// read by `jiff`.
+fn parse_date(text: &str) -> Option<Date> {
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    let num = |s: &str| -> Option<i16> { if digits(s) { s.parse().ok() } else { None } };
+    // The year: four ASCII digits (`get` is `None` inside a multi-byte
+    // character, found by the binder fuzz target).
+    let Some(year) = text.get(..4).filter(|y| digits(y)) else {
+        return text.parse::<Date>().ok();
+    };
+    let year = num(year)?;
+    let rest = &text[4..];
+    let rest_basic = rest.strip_prefix('-');
+    let body = rest_basic.unwrap_or(rest);
+    if let Some(w) = body.strip_prefix('W') {
+        // Week date: `Www` then an optional day, `-D` (extended) or `D`.
+        let week = num(w.get(..2)?)?;
+        let day = match (w.get(2..)?, rest_basic.is_some()) {
+            ("", _) => 1,
+            (d, true) => num(d.strip_prefix('-')?)?,
+            (d, false) => num(d)?,
+        };
+        if !(1..=7).contains(&day) {
+            return None;
+        }
+        let weekday = jiff::civil::Weekday::from_monday_one_offset(i8::try_from(day).ok()?).ok()?;
+        return jiff::civil::ISOWeekDate::new(year, i8::try_from(week).ok()?, weekday)
+            .ok()
+            .map(jiff::civil::ISOWeekDate::date);
+    }
+    match (body.len(), rest_basic.is_some()) {
+        (0, false) => Date::new(year, 1, 1).ok(),
+        // `YYYY-MM` or `YYYYMM`.
+        (2, _) => Date::new(year, i8::try_from(num(body)?).ok()?, 1).ok(),
+        // `YYYY-DDD` or `YYYYDDD`.
+        (3, _) => Date::new(year, 1, 1)
+            .ok()?
+            .with()
+            .day_of_year(num(body)?)
+            .build()
+            .ok(),
+        _ => text.parse::<Date>().ok(),
+    }
+}
+
 /// Parses the lexical form of a value of the same kind as `like` (TS-21).
 /// `None` if `text` is not one.
 pub(crate) fn parse(like: &Value, text: &str) -> Option<Value> {
     Some(match like {
-        Value::Date(_) => Value::Date(text.parse::<Date>().ok()?),
+        Value::Date(_) => Value::Date(parse_date(text)?),
         Value::LocalTime(_) => Value::LocalTime(text.parse::<Time>().ok()?),
         Value::LocalDateTime(_) => Value::LocalDateTime(text.parse::<DateTime>().ok()?),
         Value::ZonedTime(_) => {

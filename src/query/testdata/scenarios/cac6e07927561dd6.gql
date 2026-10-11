@@ -1,0 +1,1 @@
+USE /public/fresh MATCH (n:B) RETURN COUNT(*) AS c

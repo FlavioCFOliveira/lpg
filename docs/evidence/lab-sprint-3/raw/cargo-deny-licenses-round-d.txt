@@ -1,0 +1,3 @@
+$ cargo deny check licenses
+licenses ok
+exit 0

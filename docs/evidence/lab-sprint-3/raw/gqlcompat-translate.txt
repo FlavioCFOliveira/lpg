@@ -1,0 +1,7 @@
+translated 124 of 130 selected cases
+  not translated: condition/22g0n/node-with-no-labels: limit IL001: unreachable under lpg's approved value
+  not translated: condition/42004/two-identifiers-that-look-the-same: limit IW014: unreachable under lpg's approved value
+  not translated: condition/25g02/data-statement-after-a-catalog-statement: unless GP18: lpg supports GP18
+  not translated: condition/25g04/two-graphs-in-one-transaction: unless GT03: lpg supports GT03
+  not translated: condition/08007/commit-whose-outcome-never-came-back: fault cut-after-send: needs a transport
+  not translated: condition/40003/statement-whose-completion-is-unknown: fault cut-after-send: needs a transport

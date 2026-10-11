@@ -1,0 +1,2 @@
+MATCH (p:Person)-[:KNOWS]->(q:Person), (q)-[:KNOWS]->(r:Person)
+RETURN p.name AS origin, r.name AS target

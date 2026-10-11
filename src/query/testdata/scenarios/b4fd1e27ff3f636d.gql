@@ -1,0 +1,3 @@
+RETURN null AND null IS NULL AS a,
+       null AND (null IS NULL) AS b,
+       (null AND null) IS NULL AS c

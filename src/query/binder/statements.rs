@@ -650,7 +650,7 @@ impl Binder<'_> {
                 }
             }
             if let Some(w) = &body.where_clause {
-                let e = self.at(w.1, |b| b.bind_value(w))?;
+                let e = self.at(w.1, |b| b.bind_condition(w))?;
                 self.parts.push(Part::Filter(e));
             }
             if let Some(Spanned(_, span)) = &body.group_by {

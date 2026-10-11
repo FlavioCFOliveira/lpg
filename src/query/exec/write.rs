@@ -204,6 +204,9 @@ impl Write {
                 }
             }
             Kind_::Set(items) => {
+                // The properties this SET has assigned in this row, by
+                // element; `None` stands for all of them (`SET n = {…}`).
+                let mut assigned: Vec<(Value, Option<u64>)> = Vec::new();
                 for item in items {
                     match item {
                         SetItem::Prop(s, k, e) => {
@@ -212,20 +215,28 @@ impl Write {
                                 property_value(&v)?;
                             }
                             let key = key_token(cx, k)?;
-                            change(cx, g, &row[*s], |props| {
+                            once(&mut assigned, &row[*s], Some(key))?;
+                            // A NULL element is left alone and counts no
+                            // property set (openCypher TCK `Set1.feature`
+                            // [8]: no side effects).
+                            if change(cx, g, &row[*s], |props| {
                                 props.retain(|(x, _)| *x != key);
                                 if !v.is_null() {
                                     props.push((key, v.clone()));
                                 }
-                            })?;
-                            cx.st.counters.properties_set += 1;
+                            })? {
+                                cx.st.counters.properties_set += 1;
+                            }
                             written.push(row[*s].clone());
                         }
                         SetItem::All(s, ps) => {
                             let props = eval_props(cx, ps, &row)?;
                             let n = props.len() as u64;
-                            change(cx, g, &row[*s], move |old| *old = props.clone())?;
-                            cx.st.counters.properties_set += n;
+                            once(&mut assigned, &row[*s], None)?;
+                            // As above (`Set4.feature` [5]).
+                            if change(cx, g, &row[*s], move |old| *old = props.clone())? {
+                                cx.st.counters.properties_set += n;
+                            }
                             written.push(row[*s].clone());
                         }
                     }
@@ -244,29 +255,62 @@ impl Write {
     }
 }
 
-/// Changes the properties of the node or edge `el` of `g` with `f`; a NULL
-/// element is left alone (a `SET` on an optional match's NULL).
+/// Records that one SET assigns property `key` (all properties if `None`)
+/// of the element `el` in the current row.
+///
+/// # Errors
+///
+/// 22G0M, multiple assignments to a graph element property, when the SET
+/// has already assigned that property of that element (gql-compat
+/// `condition/22g0m/multiple-assignments-to-one-property`, ISO subclause
+/// 13.3). A NULL element is not recorded.
+fn once(
+    assigned: &mut Vec<(Value, Option<u64>)>,
+    el: &Value,
+    key: Option<u64>,
+) -> Result<(), Error> {
+    if el.is_null() {
+        return Ok(());
+    }
+    if assigned
+        .iter()
+        .any(|(e, k)| e == el && (k.is_none() || key.is_none() || *k == key))
+    {
+        return Err(Error::new(
+            codes::C22G0M,
+            "multiple assignments to a graph element property",
+        ));
+    }
+    assigned.push((el.clone(), key));
+    Ok(())
+}
+
+/// Changes the properties of the node or edge `el` of `g` with `f`, and
+/// tells whether there was an element to change: a NULL element (a `SET`
+/// on an optional match's NULL) is left alone.
 fn change(
     cx: &mut Cx<'_>,
     g: &Graph,
     el: &Value,
     f: impl FnOnce(&mut Vec<(u64, Value)>),
-) -> Result<(), Error> {
+) -> Result<bool, Error> {
     match *el {
-        Value::Null => Ok(()),
+        Value::Null => Ok(false),
         Value::Node(id) => {
             let Some((labels, mut props)) = cx.tx.node(g, id)? else {
-                return Ok(());
+                return Ok(false);
             };
             f(&mut props);
-            Ok(cx.tx.set_node(g, id, &labels, &props)?)
+            cx.tx.set_node(g, id, &labels, &props)?;
+            Ok(true)
         }
         Value::Edge(id) => {
             let Some(mut e) = cx.tx.edge(g, id)? else {
-                return Ok(());
+                return Ok(false);
             };
             f(&mut e.props);
-            Ok(cx.tx.set_edge(g, id, &e.props)?)
+            cx.tx.set_edge(g, id, &e.props)?;
+            Ok(true)
         }
         ref other => Err(invalid_type(&format!("a write to {}", type_name(other)))),
     }

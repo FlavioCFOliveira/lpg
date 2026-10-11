@@ -1,0 +1,3 @@
+MATCH (p:Person {name: 'Ada'})
+SET p.age = 1, p.age = 2
+RETURN p.age AS age

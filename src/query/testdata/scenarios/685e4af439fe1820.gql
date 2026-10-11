@@ -1,0 +1,3 @@
+MATCH (n:X)
+SET n = {name: 'A', name2: 'B', num: 5}
+RETURN n

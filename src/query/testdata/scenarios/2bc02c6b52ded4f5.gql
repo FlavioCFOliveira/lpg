@@ -1,0 +1,4 @@
+INSERT (q1:Peer {name: 'left'}),
+       (q2:Peer {name: 'right'}),
+       (q1)-[:FRIEND {rank: 1}]->(q2),
+       (q1)-[:FRIEND {rank: 2}]->(q2)

@@ -1,0 +1,2 @@
+MATCH (p:Person)
+RETURN SUM(p.age) AS total, MIN(p.age) AS youngest, MAX(p.age) AS oldest

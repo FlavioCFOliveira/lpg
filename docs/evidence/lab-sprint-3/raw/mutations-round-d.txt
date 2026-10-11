@@ -1,0 +1,70 @@
+# Round D fix-mutations, applied together, then restored (cmp identical):
+# M1 element references not rejected as boolean operands (binder/expr.rs)
+# M2 repeated edge variable check off (binder/pattern.rs)
+# M3 search condition back to is_true (exec/ops.rs)
+# M4 22G0M check off (exec/write.rs once)
+# M5 SET on NULL counted (exec/write.rs change)
+# M6 22G14 check off (functions.rs shift)
+# M7 ISO date forms off (types/temporal.rs)
+# Command: cargo nextest run -p lpg -E 'test(/^query::(binder::tests::(undefined_variables|each_approved)|exec::tests::conformance)/) | test(/^tck::/)' --no-fail-fast
+PASS [   0.029s] ( 1/13) lpg tck::every_scenario_names_its_clause_or_feature_code
+PASS [   0.035s] ( 2/13) lpg query::binder::tests::each_approved_construct_binds
+FAIL [   0.040s] ( 3/13) lpg query::exec::tests::conformance::iso_8601_date_forms_are_dates
+thread 'query::exec::tests::conformance::iso_8601_date_forms_are_dates' (1190472) panicked at src/query/exec/tests.rs:34:73:
+FAIL [   0.042s] ( 4/13) lpg query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail
+thread 'query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail' (1190465) panicked at src/query/binder/tests.rs:265:5:
+FAIL [   0.043s] ( 5/13) lpg query::exec::tests::conformance::a_set_on_a_null_element_counts_no_property
+thread 'query::exec::tests::conformance::a_set_on_a_null_element_counts_no_property' (1190461) panicked at src/query/exec/tests.rs:1328:13:
+FAIL [   0.043s] ( 6/13) lpg query::exec::tests::conformance::two_assignments_to_one_property_raise_22g0m
+thread 'query::exec::tests::conformance::two_assignments_to_one_property_raise_22g0m' (1190473) panicked at src/query/exec/tests.rs:43:22:
+FAIL [   0.046s] ( 7/13) lpg query::exec::tests::conformance::incompatible_temporal_units_raise_22g14
+thread 'query::exec::tests::conformance::incompatible_temporal_units_raise_22g14' (1190463) panicked at src/query/exec/tests.rs:43:22:
+PASS [   0.049s] ( 8/13) lpg tck::the_selection_manifest_matches_the_vendored_files
+FAIL [   0.087s] ( 9/13) lpg query::exec::tests::conformance::a_non_boolean_search_condition_raises_22g03
+thread 'query::exec::tests::conformance::a_non_boolean_search_condition_raises_22g03' (1190501) panicked at src/query/exec/tests.rs:43:22:
+PASS [   0.448s] (10/13) lpg tck::a_wrong_expected_row_fails_the_runner
+PASS [   0.560s] (11/13) lpg tck::opengql_tck_selected_scenarios_pass
+FAIL [   0.667s] (12/13) lpg tck::lpg_scenarios_pass
+FAIL lpg/gql-compat/30-conditions.feature: Scenario: [condition/22g03/non-boolean-search-condition] A search condition that is not a boolean raises invalid value type
+step 4 "an exception condition should be raised: 22G03": succeeded with [], expected ["22G03"]
+FAIL lpg/gql-compat/30-conditions.feature: Scenario: [condition/22g0m/multiple-assignments-to-one-property] Assigning the same property twice in one statement is a multiple assignment
+step 4 "an exception condition should be raised: 22G0M": succeeded with [[Int(2)]], expected ["22G0M"]
+FAIL lpg/gql-compat/31-conditions-value.feature: Scenario: [condition/22014/incompatible-temporal-units] Adding hours to a date raises incompatible temporal instant unit groups
+step 4 "an exception condition should be raised: 22G14": succeeded with [[Date(2024-01-01)]], expected ["22G14"]
+thread 'tck::lpg_scenarios_pass' (1190471) panicked at src/tck/mod.rs:373:5:
+FAIL [   0.946s] (13/13) lpg tck::opencypher_tck_selected_scenarios_pass
+FAIL opencypher/clauses/match/Match3.feature: Scenario: [29] Fail when re-using a relationship in the same pattern
+step 3 "a SyntaxError should be raised at compile time: RelationshipUniquenessViolation": succeeded with [], expected ["42000"]
+FAIL opencypher/clauses/set/Set1.feature: Scenario: [8] Ignore null when setting property
+step 4 "no side effects": side effects Counters { nodes_created: 0, nodes_deleted: 0, edges_created: 0, edges_deleted: 0, properties_set: 1, labels_added: 0, labels_removed: 0, catalog_updates: 0 }, e
+FAIL opencypher/clauses/set/Set4.feature: Scenario: [5] Ignore null when setting properties using an overriding map
+step 4 "no side effects": side effects Counters { nodes_created: 0, nodes_deleted: 0, edges_created: 0, edges_deleted: 0, properties_set: 1, labels_added: 0, labels_removed: 0, catalog_updates: 0 }, e
+FAIL opencypher/expressions/pattern/Pattern1.feature: Scenario: [11] Fail on checking self pattern
+step 3 "a SyntaxError should be raised at compile time: InvalidArgumentType": succeeded with [], expected ["42000", "22G03"]
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-07' | '2015-07-01']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015-07'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['201507' | '2015-07-01']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '201507'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-W30-2' | '2015-07-21']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015-W30-2'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015W302' | '2015-07-21']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015W302'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-W30' | '2015-07-20']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015-W30'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015W30' | '2015-07-20']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015W30'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015-202' | '2015-07-21']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015-202'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015202' | '2015-07-21']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015202'
+FAIL opencypher/expressions/temporal/Temporal2.feature: Scenario Outline: [1] Should parse date from string ['2015' | '2015-01-01']
+step 3 "the result should be, in any order:": the statement failed: 22007: invalid date, time, or datetime format: '2015'
+thread 'tck::opencypher_tck_selected_scenarios_pass' (1190504) panicked at src/tck/mod.rs:366:5:
+FAIL [   0.040s] ( 3/13) lpg query::exec::tests::conformance::iso_8601_date_forms_are_dates
+FAIL [   0.042s] ( 4/13) lpg query::binder::tests::undefined_variables_duplicate_bindings_and_conditional_joins_fail
+FAIL [   0.043s] ( 5/13) lpg query::exec::tests::conformance::a_set_on_a_null_element_counts_no_property
+FAIL [   0.043s] ( 6/13) lpg query::exec::tests::conformance::two_assignments_to_one_property_raise_22g0m
+FAIL [   0.046s] ( 7/13) lpg query::exec::tests::conformance::incompatible_temporal_units_raise_22g14
+FAIL [   0.087s] ( 9/13) lpg query::exec::tests::conformance::a_non_boolean_search_condition_raises_22g03
+FAIL [   0.667s] (12/13) lpg tck::lpg_scenarios_pass
+FAIL [   0.946s] (13/13) lpg tck::opencypher_tck_selected_scenarios_pass

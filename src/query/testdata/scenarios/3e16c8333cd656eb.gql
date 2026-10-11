@@ -1,0 +1,1 @@
+RETURN datetime({year: 1984, week: 10, dayOfWeek: 3, hour: 12, minute: 31}) AS result

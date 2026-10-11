@@ -1,0 +1,1 @@
+MATCH (n) WHERE (n)-[r:REL*0..2]->(a {num: 5}) RETURN n

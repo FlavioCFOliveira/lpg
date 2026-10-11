@@ -689,6 +689,26 @@ fn shift(instant: &Value, duration: &Value, minus: bool) -> Result<Value, Error>
     } else {
         (months, d2s)
     };
+    // A date has no time-of-day units and a time no year or month units:
+    // a shift by them raises 22G14, incompatible temporal instant unit
+    // groups (gql-compat `condition/22014/incompatible-temporal-units`,
+    // ISO subclauses 20.26, 20.28).
+    let sub_day = d2s.seconds % 86_400 != 0 || d2s.nanos != 0;
+    let incompatible = match instant {
+        Value::Date(_) => sub_day,
+        Value::LocalTime(_) | Value::ZonedTime(_) => months != 0,
+        _ => false,
+    };
+    if incompatible {
+        return Err(Error::new(
+            codes::C22G14,
+            format!(
+                "incompatible temporal instant unit groups: {} and {}",
+                type_name(instant),
+                type_name(duration)
+            ),
+        ));
+    }
     let months: i32 = i32::try_from(months).map_err(|_| datetime_overflow())?;
     let span = Span::new()
         .try_months(months)

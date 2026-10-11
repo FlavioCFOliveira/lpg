@@ -1,0 +1,1 @@
+RETURN localtime({hour: 12, minute: 31, second: 14, microsecond: 645876}) AS result

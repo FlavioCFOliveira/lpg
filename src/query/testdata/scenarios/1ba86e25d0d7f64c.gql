@@ -1,0 +1,2 @@
+MATCH (n:X)
+RETURN n, n.prop Is noT nULl AS b

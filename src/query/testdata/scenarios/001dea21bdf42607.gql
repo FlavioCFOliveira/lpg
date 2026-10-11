@@ -1,0 +1,2 @@
+MATCH (m:Maybe)
+RETURN COUNT(m.note) AS n

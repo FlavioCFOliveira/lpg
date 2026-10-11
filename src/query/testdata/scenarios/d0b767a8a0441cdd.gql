@@ -1,0 +1,4 @@
+INSERT (v1:Datum {n: 1, x: 0.5e0, flag: TRUE, tag: 'alpha'}),
+       (v2:Datum {n: 2, x: 1.5e0, flag: FALSE, tag: 'beta'}),
+       (v3:Datum {n: 3, x: 2.5e0, flag: TRUE, tag: 'gamma'}),
+       (v4:Datum {n: 4, x: 3.5e0, flag: FALSE, tag: 'delta'})

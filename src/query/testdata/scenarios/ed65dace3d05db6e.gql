@@ -1,0 +1,5 @@
+UNWIND [true, false, null] AS a
+UNWIND [true, false, null] AS b
+WITH collect((a XOR b IS NOT NULL) = (a XOR (b IS NOT NULL))) AS eq,
+     collect((a XOR b IS NOT NULL) <> ((a XOR b) IS NOT NULL)) AS neq
+RETURN all(x IN eq WHERE x) AND any(x IN neq WHERE x) AS result

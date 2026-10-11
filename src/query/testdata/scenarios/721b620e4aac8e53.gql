@@ -1,0 +1,2 @@
+WITH [123, true] AS nonGraphElement
+RETURN nonGraphElement.num

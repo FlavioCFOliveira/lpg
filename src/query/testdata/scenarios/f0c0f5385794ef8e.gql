@@ -1,0 +1,2 @@
+OPTIONAL MATCH ()-[r]->()
+RETURN r.missing

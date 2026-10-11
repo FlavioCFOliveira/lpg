@@ -1,0 +1,1 @@
+RETURN TRIM('  ab  ') AS v

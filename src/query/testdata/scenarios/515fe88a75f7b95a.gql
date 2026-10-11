@@ -1,0 +1,3 @@
+MATCH (p:Person)
+WHERE p.city = 'Lisbon'
+RETURN p.name AS name, p.age AS age

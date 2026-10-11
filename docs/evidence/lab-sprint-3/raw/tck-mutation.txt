@@ -1,0 +1,16 @@
+# Mutation: tests/tck/opencypher/features/expressions/literals/Literals2.feature scenario [1], expected row 1 -> 2
+9:      | 1       |
+41c41
+<       | 1       |
+---
+>       | 2       |
+FAIL [   0.553s] (1/1) lpg tck::opencypher_tck_selected_scenarios_pass
+FAIL opencypher/expressions/literals/Literals2.feature: Scenario: [1] Return a short positive integer
+step 3 "the result should be, in any order:": rows [[Int(1)]], expected [[Int(2)]]
+opencypher: 1091 instances; Counts { passed: 182, failed: 1, unselected: 891, gate: 10, not_gql: 6, disputed: 1 }
+test tck::opencypher_tck_selected_scenarios_pass ... FAILED
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 528 filtered out; finished in 0.54s
+Summary [   0.554s] 1 test run: 0 passed, 1 failed, 528 skipped
+FAIL [   0.553s] (1/1) lpg tck::opencypher_tck_selected_scenarios_pass
+restored: identical to upstream
+Summary [   0.544s] 1 test run: 1 passed, 528 skipped

@@ -1,0 +1,1 @@
+RETURN duration({days: 14, hours: 16, minutes: 12}) AS result

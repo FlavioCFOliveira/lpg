@@ -1,0 +1,1 @@
+RETURN CASE WHEN 1 > 2 THEN 'no' WHEN 1 < 2 THEN 'yes' ELSE 'neither' END AS v

@@ -1,0 +1,3 @@
+MATCH (m:Maybe)
+WHERE m.note = 'present'
+RETURN m.id AS id

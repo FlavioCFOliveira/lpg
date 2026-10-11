@@ -1,0 +1,3 @@
+FOR a IN [true, false]
+FOR b IN [true, false]
+RETURN a, b, (a AND b) = (b AND a) AS result

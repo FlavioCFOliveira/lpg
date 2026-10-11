@@ -1,0 +1,1 @@
+RETURN localtime('2140') AS result

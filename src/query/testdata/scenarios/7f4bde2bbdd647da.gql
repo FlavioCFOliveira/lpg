@@ -1,0 +1,1 @@
+RETURN datetime({year: 1984, ordinalDay: 202, timezone: 'Europe/Stockholm'}) AS result

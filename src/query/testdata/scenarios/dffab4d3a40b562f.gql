@@ -1,0 +1,2 @@
+WITH {name: 'Mats', name2: null} AS map
+RETURN map.name2 IS NOT NULL AS result

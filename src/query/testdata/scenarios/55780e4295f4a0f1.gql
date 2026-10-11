@@ -1,0 +1,3 @@
+RETURN null IS NULL <> null IS NOT NULL AS a,
+       (null IS NULL) <> (null IS NOT NULL) AS b,
+       (null IS NULL <> null) IS NOT NULL AS c

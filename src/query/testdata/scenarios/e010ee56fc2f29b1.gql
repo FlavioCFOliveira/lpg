@@ -1,0 +1,1 @@
+RETURN date('2015W302') AS result

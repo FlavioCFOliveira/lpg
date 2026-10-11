@@ -1,0 +1,1 @@
+USE /public/tg MATCH (n:P) RETURN n.name AS name

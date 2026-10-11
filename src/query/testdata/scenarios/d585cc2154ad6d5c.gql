@@ -1,0 +1,1 @@
+RETURN time('2140-02') AS result

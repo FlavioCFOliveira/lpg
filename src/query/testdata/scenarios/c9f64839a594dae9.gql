@@ -1,0 +1,3 @@
+CREATE GRAPH TYPE mygraphtype {
+  (Person :Person {lastname STRING, firstname STRING,joined DATE})
+}

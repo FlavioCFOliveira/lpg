@@ -1,0 +1,3 @@
+INSERT (p:Person {name: 'a', age: 33})
+INSERT (p:Person {name: 'a'})
+INSERT (p:Person {name: 'a', age: 42})

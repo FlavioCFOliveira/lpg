@@ -1,0 +1,1 @@
+RETURN CASE 3 WHEN > 1 THEN 'yes' ELSE 'no' END AS v

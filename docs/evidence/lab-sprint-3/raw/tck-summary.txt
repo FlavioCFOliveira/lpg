@@ -1,0 +1,7 @@
+lpg: 138 instances; Counts { passed: 134, failed: 0, unselected: 0, gate: 1, not_gql: 0, disputed: 3 }
+NFR-PERF-007: 266 statements profiled to completion, at most 1 operator(s) running at once
+opencypher: 1091 instances; Counts { passed: 183, failed: 0, unselected: 891, gate: 10, not_gql: 6, disputed: 1 }
+NFR-PERF-007: 137 statements profiled to completion, at most 1 operator(s) running at once
+opengql-tck: 139 instances; Counts { passed: 33, failed: 0, unselected: 94, gate: 0, not_gql: 0, disputed: 12 }
+NFR-PERF-007: 26 statements profiled to completion, at most 1 operator(s) running at once
+     Summary [   1.186s] 6 tests run: 6 passed, 530 skipped

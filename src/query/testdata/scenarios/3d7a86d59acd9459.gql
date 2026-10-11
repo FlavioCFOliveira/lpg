@@ -1,0 +1,1 @@
+RETURN duration('P12Y5M14DT16H12M70S') AS result

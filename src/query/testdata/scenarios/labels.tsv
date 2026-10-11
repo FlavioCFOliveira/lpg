@@ -1,0 +1,1386 @@
+REJECT	00016d65948a7d3a.gql	1:15 no viable alternative at input 'datetime('
+REJECT	00122c3d777a5596.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	001dea21bdf42607.gql
+ACCEPT	0056f7917a0dc3ee.gql
+ACCEPT	005a260441f3a762.gql
+REJECT	00689850c6d3865c.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	00e5ffe77458df82.gql
+ACCEPT	012806b6bd3a82f5.gql
+ACCEPT	015594e9abb22d08.gql
+ACCEPT	0181d29019c588f0.gql
+ACCEPT	018698993f0c335c.gql
+ACCEPT	020050f21545975c.gql
+REJECT	0231c298a99eb0f1.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	02584e0990b40fb6.gql
+ACCEPT	02764220de851f9a.gql
+ACCEPT	02919a7ef2295f51.gql
+REJECT	02a4d0650527e238.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	02cc6af215f329ee.gql
+ACCEPT	02da28dd4fdc896f.gql
+REJECT	0306081137be4edb.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	03388af2164e7f2e.gql
+ACCEPT	03772931de8378e7.gql
+REJECT	037d2b7114ba141a.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	039e0d1f1668f762.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	03d6e8a8cfe50795.gql	2:34 no viable alternative at input 'OPTIONAL MATCH ()-[r]->() RETURN r.missing, r.missingToo, r.existing'
+ACCEPT	03d94ed62c0421b4.gql
+REJECT	03e09a1acf5469f0.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	045e23b4c91c5504.gql	1:15 no viable alternative at input 'datetime('
+REJECT	04760185cb53db79.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	0487ca331e45fe14.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	04a1a81a4b87b718.gql
+ACCEPT	053e99a989a29630.gql
+REJECT	055b7ca7a46a8dc9.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	0566992fc8ca48fc.gql
+ACCEPT	056f6cbdd9eaa972.gql
+ACCEPT	0580e467f7af3294.gql
+ACCEPT	058aa78cf312b3fb.gql
+ACCEPT	0643b82e2e7d186e.gql
+REJECT	0680ba79fb576292.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	071210cb961e1b05.gql
+REJECT	0718d9aafbdb426a.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	075b32abecd4900d.gql
+ACCEPT	075fc204eb33716d.gql
+ACCEPT	076e999f0372fdc8.gql
+REJECT	077ff29a7d7e071e.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	090055ae73380711.gql
+ACCEPT	091cd7a2f8633bcb.gql
+REJECT	09406208e588e34a.gql	1:15 no viable alternative at input 'datetime('
+REJECT	095ec681ae5d6450.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	096cf350abbc6baf.gql
+ACCEPT	09b77d005a6bd47b.gql
+ACCEPT	09c61e1d1bd24406.gql
+REJECT	09ca56ed167046e0.gql	2:20 no viable alternative at input 'MATCH (a:Single), (x:C) OPTIONAL MATCH (a)-[*'
+REJECT	0a85e245c72b70e5.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	0ab286f1f1f76fa3.gql
+REJECT	0adc1bc9dc1c9eb2.gql	3:16 mismatched input '(' expecting {'AND', 'IS', 'OR', 'XOR', '||', '>=', '<=', '<>', '*', '=', '>', '<', '-', '.', '+', ')', '/'}
+REJECT	0b35ebe381935798.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	0b6061654205724d.gql	1:15 no viable alternative at input 'datetime('
+REJECT	0b98238e0f60da30.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	0bb172ed589a8eff.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	0bb62710ace452fa.gql
+ACCEPT	0bf027e162059100.gql
+ACCEPT	0c95c6a81fd98fc3.gql
+ACCEPT	0cf0571c1fc53806.gql
+ACCEPT	0d6395851a00760a.gql
+REJECT	0d8d20b35b306c08.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	0dff85d66c7e60bf.gql
+ACCEPT	0e2f2be150aafb29.gql
+REJECT	0e3623369f810523.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	0e4c29c3717cee93.gql
+REJECT	0e9ac0199c939859.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	0ea7f94bb2a7f14c.gql
+REJECT	0edd1bde44e777f4.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	0ef1bc08d016bdf5.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	0f2b7cc419c55085.gql
+REJECT	0f46acc6324a4448.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	0fdc37dc4f2a5e86.gql
+REJECT	10193d7dd350219d.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	101aa8fba22ab303.gql
+REJECT	105d9fa4057e0ab2.gql	1:14 no viable alternative at input 'MATCH r = ()-[*'
+ACCEPT	10aa9c8f3859a896.gql
+ACCEPT	10b24f959a718ca3.gql
+ACCEPT	10e3bd4b2af2f529.gql
+REJECT	10ffb9f1a50481d8.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	1151e71a6604f810.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	11a22c4d25088516.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	12270a9f47117608.gql
+REJECT	12aef78a12241636.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	131271f078af8af1.gql
+REJECT	135fdfd88e34b3cd.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	1376ba27f958ae48.gql	1:15 no viable alternative at input 'datetime('
+REJECT	137918d16c04fe96.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	1398bf66ac6942d3.gql
+REJECT	13b0c343dff50ce7.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	13c84121bc7ca04c.gql	2:4 extraneous input '(' expecting {'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER}
+REJECT	1410c567a9ba4e5b.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	145e2227918934f0.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	146bc21820a130b5.gql
+ACCEPT	148d227795b1184f.gql
+ACCEPT	1491a1f3e7bd54e7.gql
+REJECT	14f52ae8b61ba195.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	14fae58cb34229f6.gql
+ACCEPT	154fd82ea22e356b.gql
+REJECT	16646d4b2252035e.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	1679af384f632df8.gql
+REJECT	16c19c187e46a29b.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	16f1856ec9cee3e0.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	172d9e56d510c973.gql	1:14 no viable alternative at input 'MATCH r = ()-[*'
+ACCEPT	1743871a3f145f98.gql
+ACCEPT	1772076d558a7391.gql
+ACCEPT	17c6da73ef74ff86.gql
+REJECT	17c71af77aaaae6c.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	17e203868190e112.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	184089021de2ad6e.gql	1:15 no viable alternative at input 'datetime.'
+ACCEPT	1855aad093034f61.gql
+REJECT	1874b831fa14d285.gql	1:9 mismatched input '%' expecting {<EOF>, 'SESSION'}
+REJECT	18ad4fba5dda21c7.gql	1:16 no viable alternative at input 'MATCH ()-[r:FOO $param'
+REJECT	18b6999410244304.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	18be758084ffeae6.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	18c3aa33bcb1956a.gql
+REJECT	18cdf0dfff6eb5d0.gql	1:35 no viable alternative at input 'MATCH (a)-[p]-(s)-[]-(b), r = (s)-[*'
+ACCEPT	18e6d0257f58dbd8.gql
+ACCEPT	18fe2e6106175ec7.gql
+REJECT	19143484f1d5dbaa.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	1934df5d92ab1e7f.gql
+ACCEPT	1950dd8869a3c5ba.gql
+ACCEPT	19b4d375b93664b6.gql
+ACCEPT	1a7ac8d6356cb4f8.gql
+REJECT	1a9e812d1726e0fa.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	1aca29f73f50f638.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	1b1de1f79afadc7e.gql
+ACCEPT	1ba86e25d0d7f64c.gql
+ACCEPT	1bbd2a9f70cf4ae5.gql
+REJECT	1c2b505c150d1a02.gql	2:51 no viable alternative at input 'MATCH (a {name: 'Andres'})<-[:FATHER]-(child) RETURN a.name, {foo: a.name='Andres', kids: collect('
+ACCEPT	1c4a134d0ff068c2.gql
+ACCEPT	1c4a144d0ff06a75.gql
+REJECT	1c53830e041618e1.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	1c54ab2e2032c6e5.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	1c6cc6af2b8f2001.gql
+ACCEPT	1cec9f899c920911.gql
+ACCEPT	1d0c331a51cb708f.gql
+ACCEPT	1d54ae520913edd7.gql
+ACCEPT	1d56d2cb70919872.gql
+REJECT	1d584175b0c15583.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	1d8ec2217cdc6d20.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	1da9dd2e69a424c2.gql
+ACCEPT	1da9fd63d803fea6.gql
+ACCEPT	1dbdc44da5624ef7.gql
+ACCEPT	1e571c7b7b48f8a7.gql
+ACCEPT	1e7e84b693e8f5d0.gql
+ACCEPT	1e9e552dd5259fcf.gql
+REJECT	1e9e66ace5934db1.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	1ef7c82ead444a18.gql
+ACCEPT	1effc187c88307fa.gql
+ACCEPT	1f283ebe88cfc828.gql
+REJECT	1f5e80020e46b022.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	1ff835a9adae8bba.gql
+ACCEPT	2011458351f1e259.gql
+REJECT	201a3e08593f4cb7.gql	1:27 mismatched input 'value' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER}
+REJECT	201a4622d8b189a1.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	204fad21ea25c9c9.gql	1:15 no viable alternative at input 'datetime('
+REJECT	2050b31d0647ae1d.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	20815ed1ea2f3776.gql
+ACCEPT	20ac044d5612e9b8.gql
+ACCEPT	210cc641ee199248.gql
+ACCEPT	211e3f598f2f61ec.gql
+ACCEPT	213b59ddf02b742f.gql
+REJECT	218683e1ce49c0cd.gql	1:15 no viable alternative at input 'datetime('
+REJECT	21b61de3a4437875.gql	1:9 token recognition error at: '^'
+ACCEPT	21c0c372af27ffe9.gql
+REJECT	21cafe84c5845558.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	2225363c82d1c0c2.gql
+REJECT	223d918a094a5f1b.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	224b704b236bea8a.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	22833f7d7338e254.gql
+ACCEPT	22ab3b8ac0c63256.gql
+REJECT	22b5d273722591aa.gql	1:10 no viable alternative at input 'MATCH (n:A:'
+ACCEPT	22b6afb4ab50b02a.gql
+REJECT	232357d172d13724.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	2337ea12a332044b.gql
+REJECT	2351430db0b8f238.gql	1:9 mismatched input '%' expecting {<EOF>, 'SESSION'}
+ACCEPT	23ef0b36e25bed87.gql
+REJECT	23f790e2de874400.gql	1:15 no viable alternative at input 'datetime('
+REJECT	241031d1ca60f76b.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	241921cad3c83027.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	244fdec008a4d53c.gql	1:11 no viable alternative at input 'time('
+ACCEPT	24588b04356c0ced.gql
+ACCEPT	24fa87bd38bb1439.gql
+ACCEPT	250688f862d9ec54.gql
+REJECT	253ab4a3a3b988cf.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	257d8b86019a5301.gql
+ACCEPT	25accf9698d00ed1.gql
+REJECT	25c7728bea64291e.gql	1:10 no viable alternative at input 'MATCH ()-[*'
+ACCEPT	25ceb0549ec6fa0c.gql
+ACCEPT	25f76c1f0a1f8beb.gql
+ACCEPT	25fa701f0a21c88e.gql
+REJECT	26076e5123566088.gql	2:34 no viable alternative at input 'OPTIONAL MATCH (n) RETURN n.missing, n.missingToo, n.existing'
+ACCEPT	26a4e426bb376747.gql
+ACCEPT	26b1e0a93283070e.gql
+ACCEPT	26e91b6f382f1e31.gql
+REJECT	2765115099f98035.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	278fd832bf65c00a.gql
+ACCEPT	278ff3b0ec8c6f84.gql
+REJECT	27dbd361f86818bb.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	2859c17e34b1a6d9.gql
+ACCEPT	2859fbaf49ebafa9.gql
+ACCEPT	2861bd4afbc35e8c.gql
+ACCEPT	28739dc000b97159.gql
+ACCEPT	28756bbee762a10c.gql
+REJECT	28986e2d8d3f68db.gql	3:9 no viable alternative at input 'MATCH (n) RETURN n.missing IS NULL,        n.exists'
+REJECT	29014986cdbf095a.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	290f61fa8d93ecda.gql	2:13 mismatched input 'IN' expecting {<EOF>, 'SESSION'}
+ACCEPT	291725039a94a434.gql
+ACCEPT	294e99c0f4061383.gql
+REJECT	2956245f5576ecf9.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	29e458591047b8bd.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	29f4d53574efe124.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	2a7a6c62faaf7c7d.gql
+ACCEPT	2a8f918c20f8a172.gql
+REJECT	2a9166ac67753905.gql	1:11 no viable alternative at input 'time('
+REJECT	2aba6aacd840a5c8.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	2af5430e7e23ee39.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	2b1e7931cc249e4c.gql	1:19 mismatched input '<-[' expecting {<EOF>, 'SESSION'}
+REJECT	2b3debdd34703c16.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	2b6617dc4cd7c508.gql
+ACCEPT	2b7fa007b42e691d.gql
+REJECT	2b853a39e8e6b395.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	2bc02c6b52ded4f5.gql
+ACCEPT	2be0c497670c3750.gql
+REJECT	2bf34a457c50c209.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	2c020e6a31b20f5a.gql
+ACCEPT	2c1182273d264f37.gql
+ACCEPT	2c13c1e93840b5f1.gql
+REJECT	2c4ddba16eb149b3.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	2c8eda46d64620f8.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	2caa8c6df3d81c14.gql	1:15 no viable alternative at input 'datetime('
+REJECT	2d4358b38711e21b.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	2d4b8feea40d3c71.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	2d7a6d3a87634662.gql
+ACCEPT	2d8cd17c372af7cd.gql
+REJECT	2de1c5153d43caf8.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	2de2df8f99b916c3.gql
+REJECT	2deea647a6b4a516.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	2e2f04fb5ef75f71.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	2e650a310da4e3fe.gql	1:15 no viable alternative at input 'datetime('
+REJECT	2e7ceac41d23851e.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	2e894a69799e0d79.gql
+REJECT	2f147a54a99fd894.gql	1:15 no viable alternative at input 'datetime('
+REJECT	2f334ce9f493e352.gql	3:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	2f53fb4e9ce9c866.gql
+ACCEPT	2f6029a64af3f897.gql
+ACCEPT	2f78b44e40b80c05.gql
+ACCEPT	2f7f01859c955c47.gql
+ACCEPT	2fa17938faf9169e.gql
+ACCEPT	2fc71d39a3720d8d.gql
+REJECT	2fe323da49a5327d.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	3010b36ece094b4f.gql
+ACCEPT	301e4b752eb32969.gql
+REJECT	30275fd9e878e985.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	303a66799bcc5aa1.gql
+ACCEPT	304c2f33794b5cc7.gql
+REJECT	304d0037f283bb6f.gql	3:9 no viable alternative at input 'OPTIONAL MATCH (n) RETURN n.missing IS NOT NULL,        n.exists'
+ACCEPT	319964affb6b4e20.gql
+REJECT	31a9c4ef6b94bba4.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	31e47bcb211a6593.gql
+ACCEPT	3291b7574fd9e46f.gql
+ACCEPT	3299a38fcc93ce92.gql
+REJECT	33040bd2bc311d46.gql	1:9 token recognition error at: '^'
+ACCEPT	331f09e47d86f1b6.gql
+ACCEPT	332396d4ea61eb11.gql
+ACCEPT	3378949186c7bd0e.gql
+ACCEPT	33b80e54d2238e11.gql
+ACCEPT	343d9cfc0f1c4abc.gql
+REJECT	34504db6aeb0bae7.gql	1:17 mismatched input '%' expecting {<EOF>, 'SESSION'}
+ACCEPT	345a2bbb03371c7e.gql
+ACCEPT	34b2b1bf0123a2c5.gql
+ACCEPT	34bb9c386f741b80.gql
+REJECT	34d6c3ed74cf8c9b.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	34d94dc5d0570098.gql
+REJECT	34f6833b8ace6392.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	358eb20a7b08f1f6.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	35ee097f3c3fffbc.gql
+ACCEPT	368b554323dac977.gql
+ACCEPT	36dc0666f44cfb40.gql
+REJECT	36ecaf6e5b992dcb.gql	1:12 no viable alternative at input '{bool'
+REJECT	3742b6f5a0de91d4.gql	1:15 no viable alternative at input 'datetime('
+REJECT	374f520db4d40515.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	37501f740d9fa4b2.gql
+REJECT	375858c15fb36b91.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	37843c261a4d3dcc.gql
+ACCEPT	38598e4caf9869bb.gql
+ACCEPT	387a9533b66e50fa.gql
+REJECT	387e23c19e55a418.gql	1:11 no viable alternative at input 'time('
+ACCEPT	3898dd935a5b2fdf.gql
+REJECT	38cdfb1f1114a3c4.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	38e2411f302dad7e.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	3950d98f335a165b.gql
+REJECT	395a137f009ab55e.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	39a635119c91e514.gql
+ACCEPT	39b97f34a2aa7669.gql
+ACCEPT	3a1516318972145a.gql
+ACCEPT	3a2b9d3be35b13bd.gql
+ACCEPT	3a4253687e9cd139.gql
+ACCEPT	3ac9677c145bbecd.gql
+ACCEPT	3b48d96f409556b6.gql
+REJECT	3b5157a23511b02e.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	3b7c856eff4aca48.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	3bb941dec399e0c1.gql
+REJECT	3be40915f1ccf082.gql	1:24 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	3bf0ec222194d41d.gql
+REJECT	3c07ffd28d195cc1.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	3c32961f64d4a510.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	3c5483a4298f6fd2.gql
+ACCEPT	3c5a5387a417bd50.gql
+ACCEPT	3c6eb9205aea0047.gql
+ACCEPT	3c89a81421b6b115.gql
+ACCEPT	3c9556a5f9e49f82.gql
+ACCEPT	3cc250ad60ddd51c.gql
+ACCEPT	3cc89cd36e45e724.gql
+REJECT	3cebc887e863984f.gql	1:11 no viable alternative at input 'time('
+ACCEPT	3d4e374b643f6ae5.gql
+ACCEPT	3d7a86d59acd9459.gql
+ACCEPT	3d8191fb1f8bee0e.gql
+ACCEPT	3dab73b8d3103a84.gql
+ACCEPT	3db54adc12286395.gql
+REJECT	3e014b6ba5718c89.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	3e16c8333cd656eb.gql	1:15 no viable alternative at input 'datetime('
+REJECT	3e2bed8b5d75b372.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	3e31183dee988064.gql
+ACCEPT	3e86cd51250d5a08.gql
+REJECT	3eaf1eb7a17d790a.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	3f6c3afae2a05325.gql
+REJECT	3fa980a371861e6b.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	3fd951f915098e63.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	401d71c50eb2b1f8.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	406c596824b32547.gql	1:34 no viable alternative at input 'MATCH (x), (a)-[q]-(b), r = (s)-[p*'
+REJECT	40782fa09f8e1377.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	409361fb22b31954.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	409eb989686c7120.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	4121dda0e510cbb9.gql
+ACCEPT	416d7a8162bcf721.gql
+ACCEPT	418541e3c17fb800.gql
+ACCEPT	41a28a3337cac3bf.gql
+ACCEPT	41d02f9001cce6ed.gql
+REJECT	41dce7e6ac99909a.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	4216a77bae830d70.gql
+REJECT	42313057581c8fef.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	42380226b8bf437d.gql
+REJECT	426331c5875a6f95.gql	1:15 no viable alternative at input 'datetime('
+REJECT	428f2712ac14fcb2.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	429e2c179e5eef78.gql
+ACCEPT	42b456d5197d2071.gql
+ACCEPT	42d37c40677c9773.gql
+ACCEPT	432d6d912b6ba2b9.gql
+ACCEPT	4331d3a2fc082866.gql
+REJECT	43543f8616ac4cc6.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	439256184501bf0a.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	4399a97078ff7613.gql
+REJECT	43a2137ab2556668.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	43ef85b77788f34d.gql
+REJECT	44105be58a64585a.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	4467e668ea1f8e41.gql
+ACCEPT	446820034529942c.gql
+ACCEPT	44b62ce4ddb30e41.gql
+ACCEPT	44cd9ea01e8e0d95.gql
+ACCEPT	44d8dbc546c675f0.gql
+REJECT	44f054c45c7658cb.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	4500589924e267db.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	452df1532dc3ec71.gql
+ACCEPT	4547e0032e5e5eb6.gql
+ACCEPT	455ccd71f96286c0.gql
+ACCEPT	460b96b46e4ad32f.gql
+ACCEPT	463773073911846a.gql
+REJECT	4669fecdecdebc81.gql	1:15 no viable alternative at input 'datetime('
+REJECT	46b60bd318475b60.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	46c350237bee707b.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	46cba3fe8e3f6f4c.gql
+REJECT	46dfe5229498c1b9.gql	1:15 no viable alternative at input 'datetime('
+REJECT	4732f9339e25e16d.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	474ab385bf7cc025.gql
+REJECT	474b68649d27143a.gql	1:14 mismatched input 'h54775808' expecting {<EOF>, 'SESSION'}
+REJECT	476cfbbdf45c5ec4.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	47c9f3463c437c53.gql
+REJECT	47cf4251e3f03b8d.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	47dd9ccc6769fac5.gql
+REJECT	48015b69801a21e2.gql	1:15 no viable alternative at input 'MATCH p=(a:L)-[*'
+REJECT	482d84c9310490d1.gql	1:15 no viable alternative at input 'datetime('
+REJECT	489723d706f809da.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	48b494325434f07f.gql
+ACCEPT	48c79d5ad0f2dc67.gql
+ACCEPT	48eddd948e3754c5.gql
+REJECT	494c18a35f11f3f3.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	496047be1582692d.gql
+REJECT	499ab7cff541a7ee.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	49dc0ee30c5bead6.gql
+ACCEPT	49f54f6de347610a.gql
+REJECT	4a47e389e384b7d8.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	4a829bfb8b10ea91.gql
+ACCEPT	4aadcb404d928401.gql
+ACCEPT	4abf405987e99e51.gql
+ACCEPT	4af14dab8bf96c6a.gql
+REJECT	4b24e4eef0df8abd.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	4b6a78385fc1ab6e.gql	1:24 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	4bba582b54b6f7b4.gql
+REJECT	4bc261f52f1fb356.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	4bf1fdf4f3661a18.gql
+ACCEPT	4c1603f7056ace98.gql
+ACCEPT	4c19e7999649c06c.gql
+REJECT	4c88927801068c40.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	4cb95a587dc25035.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	4ccf43961a27dc63.gql
+REJECT	4cf3ddfa0a057423.gql	1:15 no viable alternative at input 'datetime('
+REJECT	4d06e35511947a6f.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	4d2da08ce2c37332.gql
+REJECT	4d369d3ea33e0b49.gql	1:31 no viable alternative at input 'MATCH p = (a:T {name: 'a'})-[:R*'
+ACCEPT	4d5f80f3a85fbba2.gql
+REJECT	4d6c5284e2266572.gql	1:11 no viable alternative at input 'time('
+ACCEPT	4d820f2c01bd82dd.gql
+REJECT	4da519493d7a81e2.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	4de7b72bd4c7ee6d.gql
+ACCEPT	4e09d494c24e4481.gql
+REJECT	4e3596fdf5a98931.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	4e67d3309986c521.gql
+ACCEPT	4e7215d7322a4351.gql
+ACCEPT	4e92669e822266ea.gql
+REJECT	4ea8ae1b684b608c.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	4ebb2d507dc41f2d.gql
+REJECT	4ed2d7bfb82ad1a2.gql	1:17 no viable alternative at input 'MATCH ()-[]-()-[r*'
+REJECT	4ee13be690e1c113.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	4f45cf9bf2272e7c.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	4f6f3b7f8e6114f3.gql
+REJECT	4fb9a08ecf825caf.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	4fe1340d568f2fb6.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	5063de3a45759803.gql
+ACCEPT	50b35b4025528210.gql
+REJECT	50c108dff1a966d1.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	5117afaaaa09a998.gql
+REJECT	511de4f0f3bd1351.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	512d2297734b20f9.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	515fe88a75f7b95a.gql
+ACCEPT	518bbfd498c05804.gql
+ACCEPT	518f7323d1d51ab1.gql
+ACCEPT	51e853997338119c.gql
+ACCEPT	521ebacd3396c56d.gql
+ACCEPT	52254933b728a38e.gql
+REJECT	52764dae7af0b59f.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	52f8fbc018005016.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	53118391c750c9d0.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	531d18734273414f.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	53642639872f305a.gql
+ACCEPT	53a6a4b4a78a830d.gql
+ACCEPT	53d036eded9005da.gql
+REJECT	53d83eb8f52aab9e.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	53f04bb06fd46f4a.gql	2:10 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	53fab9703cc7e40f.gql
+REJECT	541ca4c6f25c01b5.gql	1:14 token recognition error at: '#'
+ACCEPT	542b6bf98c4d157a.gql
+REJECT	54683ea2e4042277.gql	1:9 token recognition error at: '^'
+REJECT	54854b51d8afe146.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	5499b4ef43c6911b.gql
+ACCEPT	54a4a36bf2565575.gql
+REJECT	55542e98e4398033.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	55780e4295f4a0f1.gql
+ACCEPT	5580175e4266b9b8.gql
+ACCEPT	55878744a75a545e.gql
+REJECT	5646be255fe1f8de.gql	1:13 mismatched input 'date' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	566b7a6af83fb601.gql	1:18 no viable alternative at input 'MATCH (), r = ()-[*'
+REJECT	56fbe9a5e7f41268.gql	1:15 no viable alternative at input 'datetime('
+REJECT	5730d5e0a6948039.gql	1:15 no viable alternative at input 'datetime('
+REJECT	57345311782ddfc6.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	57522a57032758fc.gql
+ACCEPT	57740bea33ad6e8f.gql
+REJECT	57bf9ec531ec85d4.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	57f2b41e8731238d.gql
+REJECT	5855886db6387d56.gql	1:15 no viable alternative at input 'datetime('
+REJECT	58689610e6fa5191.gql	4:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	5885a7e6f50c1a14.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	58af11dbb0523dc2.gql
+REJECT	58dfd185b1d397dc.gql	1:17 mismatched input '%' expecting {<EOF>, 'SESSION'}
+ACCEPT	591c9bad6d012120.gql
+REJECT	59651d6cb6dc66a5.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	598935003d693b92.gql
+ACCEPT	599cf0f70293ab37.gql
+ACCEPT	59a0a5154ac07e58.gql
+ACCEPT	59b8c3df43ab0c9b.gql
+REJECT	59d3e4be48a926bb.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	59e578f5bf4ebba0.gql
+REJECT	5a0fd51a539b7385.gql	1:15 no viable alternative at input 'datetime('
+REJECT	5a6b0482698b6832.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	5abdb57d78f1b775.gql
+ACCEPT	5b1a518f8b41e14e.gql
+ACCEPT	5b20a46295d2d881.gql
+ACCEPT	5b65a6c15ee25c4f.gql
+ACCEPT	5b6ebc2c9289870a.gql
+ACCEPT	5b894caef8e934dd.gql
+ACCEPT	5bda31eae40cbc47.gql
+ACCEPT	5bf70fea891a6376.gql
+REJECT	5c4da4581f3f3408.gql	1:18 no viable alternative at input 'MATCH (), r = ()-[*'
+ACCEPT	5c81faf5f11e6b57.gql
+ACCEPT	5c870a4ddddcf7c8.gql
+REJECT	5cd1ca1eaffce67e.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	5ce5f2842288012c.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	5d34c6bc840ef797.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	5d40037a42253eb5.gql	2:10 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	5d9345416ef748ed.gql
+ACCEPT	5ddf684f046d59e8.gql
+REJECT	5de43c88c20cd797.gql	1:19 no viable alternative at input 'CALL test.doNothing'
+REJECT	5deaff8acf0055d5.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	5e679a13730c9ec6.gql
+REJECT	5e69baaca2d98c1f.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	5f03cd015b59f40a.gql	1:11 no viable alternative at input 'time('
+ACCEPT	5f076a942ecb5a69.gql
+REJECT	5f5de5af08f242ef.gql	1:11 no viable alternative at input 'time('
+REJECT	5f7bb506e1e34725.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	60cb15857e7ffb9f.gql
+REJECT	60d5e8c8148579af.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	612177063721472d.gql	1:10 token recognition error at: '^'
+REJECT	6121c3f7ce043112.gql	1:11 no viable alternative at input 'time('
+ACCEPT	61731a03456eb7dd.gql
+REJECT	61b0ab8e2ab12af8.gql	1:11 no viable alternative at input 'time('
+ACCEPT	61ba60a755599b99.gql
+REJECT	61c5ee67afd28751.gql	2:12 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	61e7e11b146a36e4.gql
+REJECT	623c1c83f8df1224.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	62775842785042ff.gql
+ACCEPT	627ef92c40c5f789.gql
+ACCEPT	62c5207e093f3e3a.gql
+ACCEPT	635975616ea07326.gql
+ACCEPT	639a87b93bce0b4b.gql
+ACCEPT	63baa1654c227664.gql
+ACCEPT	63c5e02bba32fda5.gql
+ACCEPT	63d9cbe9af423033.gql
+ACCEPT	63e1343df1fa2c3c.gql
+REJECT	640bd6e5222f0245.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	6419c4525d8e0d85.gql
+ACCEPT	641b39856d084c72.gql
+ACCEPT	6478ceeee44d0b2d.gql
+REJECT	64be806356a8c73d.gql	1:20 mismatched input 'IN' expecting {<EOF>, 'SESSION'}
+REJECT	6528d755f0a3aa61.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	6532b4155bf110e0.gql
+REJECT	655cdc21281c368a.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	656a659c052c5f6f.gql
+REJECT	6584f251afc05ad5.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	65963484893b3104.gql
+ACCEPT	6599548d6ba37c31.gql
+ACCEPT	65cebf929c2f1c50.gql
+ACCEPT	65d554d6709b2658.gql
+ACCEPT	65db32693827b0ca.gql
+ACCEPT	65f22128108df50c.gql
+REJECT	65fdc4237b55ba98.gql	2:31 no viable alternative at input 'MATCH (n) RETURN n.num AS n, count(n) AS count'
+ACCEPT	6621f1f70fc4ac46.gql
+REJECT	6689f70d8170e794.gql	2:24 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	66a4436d334cb036.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	66ad4f5ce0e39f65.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	66d329be93c8f48d.gql
+ACCEPT	66ddab93812c05ad.gql
+REJECT	672aa327fd541117.gql	1:11 no viable alternative at input 'MATCH ()-[r*'
+REJECT	677de6c89554a11c.gql	1:11 no viable alternative at input 'time('
+ACCEPT	685e4af439fe1820.gql
+ACCEPT	68ba7f54f1ea5fec.gql
+REJECT	68e627d9f43e4ba7.gql	2:24 no viable alternative at input 'MATCH (a:A), (b:B) OPTIONAL MATCH p = (a)-[*'
+ACCEPT	68f57c5d05675afa.gql
+REJECT	691ece966e2420c2.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	693049aa65057f1a.gql	1:53 no viable alternative at input 'MATCH (a)-[p]-(s)-[]-(b), r = (s)-[]-(t), (t), (t)-[r*'
+ACCEPT	695857bdf26799f9.gql
+ACCEPT	6963eab2c57b559f.gql
+ACCEPT	69a4f05a904be0e2.gql
+REJECT	69b0e624ef133c72.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	6a2f6b8aec66ec01.gql
+ACCEPT	6a3e8a09c2b821dd.gql
+ACCEPT	6a51768f8557dabd.gql
+REJECT	6abbfeff7b4d3f31.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	6afa2a70ddbaed25.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	6b1b2896343c06a8.gql
+ACCEPT	6b3a043e9f9b469a.gql
+ACCEPT	6b636c0ed347504d.gql
+ACCEPT	6bbbf5a5696429bb.gql
+ACCEPT	6bdd75a37a96b692.gql
+ACCEPT	6cad2af95fe2d20a.gql
+REJECT	6cf8af9d16f3470c.gql	1:18 no viable alternative at input 'MATCH (), r = ()-[*'
+ACCEPT	6d055c40c16dc46b.gql
+ACCEPT	6d1c6e4d580fcbb8.gql
+ACCEPT	6d2181d310dde042.gql
+ACCEPT	6d3f93390bc4fbd4.gql
+REJECT	6d42f0ca47f03f1d.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	6d643a4e989ab7ee.gql
+ACCEPT	6dc76ae4eccd590c.gql
+REJECT	6deb7cdac5fce48c.gql	1:15 no viable alternative at input 'datetime('
+REJECT	6e268041ca79f91b.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	6e4f44ea75263a35.gql
+REJECT	6ec48a7a20101416.gql	1:24 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	6f2ff4df753c098a.gql
+ACCEPT	6f6115339a95b495.gql
+REJECT	6f626b73139e2b0a.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	6f87b62d4af19e86.gql	2:34 no viable alternative at input 'MATCH (n) RETURN n.missing, n.missingToo, n.existing'
+ACCEPT	6fa2d76f68895c2b.gql
+REJECT	6fc738c8c3c4a8af.gql	1:22 mismatched input 'IN' expecting {<EOF>, 'SESSION'}
+ACCEPT	6fe52c69e2e61fee.gql
+REJECT	6fe5fc95972ea89f.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	6feba4cb2aa0e26d.gql	2:11 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	700d817d6a338bcf.gql
+REJECT	701cf4d98b320724.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	70b9746869df3b81.gql
+ACCEPT	70c9eed0fbf55449.gql
+REJECT	70f549b8b3c0e79f.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	70fdcb05800477b3.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	711e7f4a4beb0c8e.gql
+ACCEPT	7122091b603a6263.gql
+ACCEPT	71742d68737a34a6.gql
+REJECT	71fbb307b08c4d87.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	71fd6163ac98e828.gql
+ACCEPT	7218f87f43c0748a.gql
+REJECT	721b620e4aac8e53.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	72a47826b46c6854.gql
+ACCEPT	72adfd3b67d9d8da.gql
+ACCEPT	72eeea223ebe4967.gql
+ACCEPT	72f4265e04c21966.gql
+REJECT	732e2e881155f5e5.gql	1:37 no viable alternative at input 'CALL test.my.proc('Stefan', 1) YIELD *'
+ACCEPT	73e58519b95cc73e.gql
+ACCEPT	73e687b39bab77f9.gql
+REJECT	73fccaf5893f6d32.gql	2:20 no viable alternative at input 'MATCH (a:Single) OPTIONAL MATCH (a)-[*'
+ACCEPT	740a01625eca3a31.gql
+ACCEPT	741a3b354298500e.gql
+ACCEPT	74d1ae8ffeee485f.gql
+REJECT	74fd970ad155776c.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	751c3ea37a0ed46f.gql
+ACCEPT	752c474253bbfcc9.gql
+ACCEPT	75336a8645a0b80a.gql
+ACCEPT	7564670525e332bd.gql
+ACCEPT	75704607c89cc450.gql
+ACCEPT	7589b254e6064f32.gql
+ACCEPT	75a74c8b570cdd0d.gql
+ACCEPT	75b44b8cd2abd8ec.gql
+REJECT	75cfa2b9efffc5ba.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	760317ea450e3e35.gql
+REJECT	762392cb10a766c0.gql	1:15 no viable alternative at input 'datetime('
+REJECT	762e4eb991d5c292.gql	1:23 mismatched input 'value' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER}
+ACCEPT	7635ef0c3d5cd6e1.gql
+REJECT	76484efa2e08f86a.gql	1:15 no viable alternative at input 'datetime('
+REJECT	765114e9ddf25443.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	766ed65d0159ca1d.gql
+REJECT	76771676e191c393.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	7696d1108e5f08b2.gql
+ACCEPT	76c726ae96e10cd7.gql
+ACCEPT	76efd29a0db7852e.gql
+REJECT	76f41a0cd651ec35.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	7721bfb818b1d942.gql	1:19 mismatched input '<-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	7771efcec7b058d7.gql
+REJECT	7793c08fed9a0d2c.gql	1:23 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	77b7fef83cb027ed.gql
+ACCEPT	77e9e145e6a73ea5.gql
+REJECT	783743af54976ec3.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	784ec4bd793a6227.gql
+ACCEPT	78867a66370dce0a.gql
+ACCEPT	78d097c3b797052f.gql
+ACCEPT	78d307d4c690e278.gql
+REJECT	79375eb608a43bd1.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	793f3d7917f304c9.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	793fd8f2855500e7.gql
+ACCEPT	797408b7c5c9c7aa.gql
+ACCEPT	799d38b510db5ad5.gql
+ACCEPT	79a4d21f97268673.gql
+ACCEPT	7a2f852788046faa.gql
+REJECT	7a66aac2aa0b0b60.gql	1:18 no viable alternative at input 'CALL test.my.proc YIELD'
+ACCEPT	7a6a6c1a84f5291d.gql
+ACCEPT	7ac9b77d23b67f44.gql
+ACCEPT	7ad6bb7571be0bcc.gql
+ACCEPT	7adc4514d42ab4a3.gql
+REJECT	7af43eb4d810c59f.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	7b6715e329a608f0.gql
+ACCEPT	7b94aa45c6c17157.gql
+REJECT	7b958a21f1615a77.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	7bef5a32bf44f446.gql
+ACCEPT	7c387fccd293071b.gql
+REJECT	7c47b99d84b42bfa.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	7c4bb0365ca742ee.gql
+ACCEPT	7c598e75878019f9.gql
+ACCEPT	7c6c695759f863c2.gql
+REJECT	7cbdf82418b9c72e.gql	1:15 no viable alternative at input 'datetime('
+REJECT	7cc5a4340ddf3fd5.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	7d5d8cc80febc25c.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	7daf4e3abe2e140f.gql
+ACCEPT	7db2523abe3050b2.gql
+ACCEPT	7de0d29d016e9929.gql
+REJECT	7de2648369fafcc2.gql	3:13 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	7e16eccac08cb1ae.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	7e23cd61ccd9ee0d.gql
+REJECT	7e72f2f107194bfe.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	7eb3ec0e24f01aa7.gql	1:11 no viable alternative at input 'time('
+ACCEPT	7eb3edaeb732009f.gql
+ACCEPT	7edeadcd9913be7a.gql
+REJECT	7ee110892424d0c0.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	7f09e94dbb12ce53.gql
+REJECT	7f1ac6eb19c09010.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	7f22c048c3656755.gql
+ACCEPT	7f45d6e336674ef6.gql
+REJECT	7f4bde2bbdd647da.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	7f52370516abf199.gql
+REJECT	806c40c620255dde.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	80cdb3e18b448504.gql
+REJECT	8129524b2e268d93.gql	1:15 no viable alternative at input 'datetime('
+REJECT	8166c4db0353ed07.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	81676d8484a0977e.gql
+ACCEPT	818f06aac240abb3.gql
+REJECT	8193177d28fdb237.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	8201b36ea8cc6a69.gql	1:15 no viable alternative at input 'datetime('
+REJECT	820857b91dc926e1.gql	1:17 no viable alternative at input 'CALL test.my.proc'
+ACCEPT	823d3fe3bda42782.gql
+ACCEPT	8252c46657b29c30.gql
+REJECT	82ca117bb52c49d7.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	82fe04eba3ed288c.gql
+ACCEPT	83292238ccc0aebc.gql
+REJECT	83581c550e614a15.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	838dcf77051f732f.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	83913b2ec5fa7766.gql
+REJECT	83d4d0f9762088f2.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	8400ee5dc71e536c.gql	1:12 no viable alternative at input '{bool'
+REJECT	84093b7d1b51f690.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	84128aeaed306c1e.gql
+REJECT	8431ecca81deebe0.gql	3:20 no viable alternative at input 'sum(size(keys('
+ACCEPT	846779d138eed801.gql
+REJECT	8477be0c4fc80471.gql	1:22 mismatched input 'value' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER}
+ACCEPT	847819f2080edb5e.gql
+ACCEPT	84cfd447d7902797.gql
+ACCEPT	84db3f80b363b24f.gql
+ACCEPT	84fb913133653ddc.gql
+ACCEPT	8508131af30f153c.gql
+REJECT	8522433e798806ea.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	857e0c2287e276f3.gql	1:29 token recognition error at: '^'
+REJECT	8590cec319f88696.gql	1:11 no viable alternative at input 'time('
+ACCEPT	863853fc54791b09.gql
+ACCEPT	86712ebb36c29126.gql
+REJECT	867eb4833fac7191.gql	3:9 no viable alternative at input 'MATCH (n) RETURN n.missing IS NOT NULL,        n.exists'
+ACCEPT	869b024232fe51ff.gql
+REJECT	86beef360b5f9663.gql	1:11 no viable alternative at input 'time('
+REJECT	86cebcaa2443c864.gql	1:15 no viable alternative at input 'datetime('
+REJECT	86d71a0f0bfa27f7.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	86fb345d890bc706.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	874af8bb0d35e8e1.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	878ace0782730727.gql
+ACCEPT	87f169b6949d861a.gql
+ACCEPT	8832e6c7f0026c4b.gql
+REJECT	8840c200ddf2dd7c.gql	1:19 mismatched input '<-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	884148682c48048c.gql
+ACCEPT	8887ee9a1c5112e0.gql
+ACCEPT	889f364e1d6d5475.gql
+ACCEPT	889fc77e2e40593e.gql
+ACCEPT	88e485527b650466.gql
+REJECT	88f7771e95ac2c2f.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	88fa716c582f647e.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	8910a3186547b1a4.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	8921fa7e2068f54a.gql
+REJECT	892c33b12b26e07b.gql	2:4 extraneous input '(' expecting {'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER}
+REJECT	8934f02f21c60407.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	897ae0b9af21718c.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	897fab1226db11ac.gql
+ACCEPT	8990b44fd3688c18.gql
+ACCEPT	89ff51c562372d4c.gql
+ACCEPT	89ffe4601d1e4199.gql
+ACCEPT	8a4525baa3c21afa.gql
+REJECT	8a52d53a27bb654e.gql	1:16 mismatched input 'IN' expecting {<EOF>, 'SESSION'}
+ACCEPT	8ae6686980589a1d.gql
+REJECT	8aff8dca1fc69dd8.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	8b20f0db0616a2d8.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	8b76df41a336d0c5.gql
+ACCEPT	8b78d259813e9d85.gql
+REJECT	8c0b9c7a81faffbc.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	8c2f9fef203c5136.gql
+ACCEPT	8c41644059e78562.gql
+ACCEPT	8c481d7a42028691.gql
+ACCEPT	8c95b2e5e793beb7.gql
+REJECT	8ce84e63e09641ec.gql	1:14 no viable alternative at input 'MATCH r = ()-[*'
+REJECT	8d19c706875c2873.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	8d8700e223a89f76.gql	1:12 no viable alternative at input '{false'
+REJECT	8db6f62f8ef89bcb.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	8db8fe413240549c.gql
+REJECT	8e1ec1c0fda57689.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	8e2d0cff26101618.gql	1:10 no viable alternative at input 'MATCH ()-[*'
+ACCEPT	8e3d1ba946fa5523.gql
+ACCEPT	8e9826e943b32f77.gql
+REJECT	8eaea8838a308e2d.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	8ee724e4bcfa272d.gql	1:9 token recognition error at: '^'
+REJECT	8f199b6e8156c5c0.gql	1:15 no viable alternative at input 'datetime('
+REJECT	8f70b7309684167a.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	8fb16bf1c440b8a2.gql
+ACCEPT	8fcd1c6620f2f619.gql
+ACCEPT	90aefa80c3566054.gql
+REJECT	910422e465a2feac.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	91320b3c997249dd.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	914ac34c6d662a5b.gql
+ACCEPT	91a6cbfd150c6d1d.gql
+REJECT	91bbc30f64437d83.gql	1:9 mismatched input '%' expecting {<EOF>, 'SESSION'}
+REJECT	91d2cb76a8ef766e.gql	1:53 no viable alternative at input 'MATCH r = (a)-[p]-(s)-[]-(b), (s)-[]-(t), (t), (t)-[r*'
+ACCEPT	91edbdc014124eda.gql
+ACCEPT	9205c3a7a452ef02.gql
+REJECT	9225ff3aa3401968.gql	1:15 no viable alternative at input 'MATCH r = ()-[p*'
+ACCEPT	92389d1ea869911c.gql
+ACCEPT	92656b578d18e449.gql
+ACCEPT	9284526d5cda2f20.gql
+ACCEPT	929e32ff827cac45.gql
+ACCEPT	92b650992ae4856a.gql
+ACCEPT	92b94212e44b7e04.gql
+REJECT	9311afc445d40676.gql	1:27 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	9362290e2a10c9b9.gql
+REJECT	93822e6e8ef59086.gql	1:24 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	93da7e858d2cf5bd.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	93eed4775d3cf447.gql
+REJECT	942178506fe0789d.gql	1:20 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	9432979dde05105a.gql
+REJECT	943a09e048817f29.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	946873eeeacbd85e.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	946ea761dcc000f3.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	9475b615cd32576a.gql
+REJECT	94bf592e81525828.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	94cd4372ae12390c.gql	3:11 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	94d143bca57d7a58.gql
+REJECT	94e091b71ddb3725.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	9536e3b51d808c61.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	9555896cad83641c.gql
+REJECT	95935794ad62d16a.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	95bf52468420ed59.gql
+REJECT	95fb420d3fbb2cd1.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	962191f9fa579955.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	9687b64a69003ebc.gql
+REJECT	96d4db859d2233ba.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	96fe74843def000c.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	970d1f3860607148.gql	1:17 no viable alternative at input 'MATCH (n) WHERE ()'
+ACCEPT	971d753348f8eec6.gql
+ACCEPT	97312e34486c5a7f.gql
+REJECT	98094d98b911317f.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	986e566892c0064b.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	98a474086de68e47.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	98bb168036cb8fb1.gql
+REJECT	98dbcdbffe301c79.gql	1:13 no viable alternative at input 'CREATE GRAPH ANY'
+ACCEPT	994eb60ceca730fe.gql
+ACCEPT	999042ec02469cfd.gql
+ACCEPT	99a0d6a09068622b.gql
+REJECT	99aaba26336b2410.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	99e145c24fcd91cd.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	99e2cd19e82a4085.gql
+REJECT	9aa7f3e5c6628c31.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	9b15572ed0fa09b6.gql	1:11 no viable alternative at input 'time('
+ACCEPT	9b23c6fd33a03d91.gql
+ACCEPT	9b260101bc86129e.gql
+ACCEPT	9ba35923ef5b65e3.gql
+REJECT	9bafe5542c7f12e8.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	9bc0b33d2a532206.gql
+ACCEPT	9be41ac350db4254.gql
+ACCEPT	9c4184b4b5caf27e.gql
+ACCEPT	9c5b03b3ffb18050.gql
+ACCEPT	9cab67b4aeffac53.gql
+ACCEPT	9d785b0933040c8d.gql
+ACCEPT	9d83bc02cbed688e.gql
+REJECT	9da4578a2a6079a5.gql	2:12 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	9dbab63121978c08.gql
+REJECT	9dc7d579a68a8c8e.gql	1:15 no viable alternative at input 'datetime('
+REJECT	9df96477a3a1aedf.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	9e2039db1e89e87c.gql	1:15 no viable alternative at input 'datetime('
+REJECT	9e57da9043c9379f.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	9ec196e94eb59006.gql
+REJECT	9ed6b6c5880ecb18.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	9eeac7269e1142df.gql
+ACCEPT	9ef884c52ac7f6f5.gql
+REJECT	9eff9ee0c2bde85e.gql	1:24 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	9f57fd903d0089f9.gql
+ACCEPT	9fb6449eac325610.gql
+REJECT	9fe0d4171caffe3b.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	a00ee0976e93af34.gql
+ACCEPT	a028c0d33daee80d.gql
+REJECT	a06ff660c06076e8.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	a07d1bfed5884879.gql	2:10 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	a0953b3113cd0f72.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	a0d1ed4b7af38f6f.gql
+ACCEPT	a0e2a8fea4ca5421.gql
+ACCEPT	a0f4ee3b5ee4d31a.gql
+ACCEPT	a0f7d673a858ebb3.gql
+REJECT	a10e1efb957caddf.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	a113f88194abd9a5.gql	1:11 no viable alternative at input 'time('
+REJECT	a125badbb0442c5c.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	a125f89d41291a1c.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	a20884c5de06b01b.gql
+ACCEPT	a21d514853a582c2.gql
+REJECT	a229652f33ffabc9.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	a2754d58cc9e6952.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	a2945f57ba062fc7.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	a2986e744ba1db6a.gql	1:17 no viable alternative at input 'MATCH (n) WHERE ()'
+ACCEPT	a2ba16382a65002e.gql
+ACCEPT	a2f63a1a671d5c33.gql
+REJECT	a3384a6421018f67.gql	1:15 no viable alternative at input 'datetime('
+REJECT	a369a9bbc9e11243.gql	1:18 no viable alternative at input 'MATCH (r)-[]-()-[r*'
+REJECT	a3d566bd5a8b822e.gql	1:17 no viable alternative at input 'MATCH (r)-[]-()-[*'
+REJECT	a433263f60d7307d.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	a49bb0580b059e2a.gql
+ACCEPT	a4a692dc0dd40b4e.gql
+REJECT	a4dacf8e3be6fda1.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	a4e38f06af003fa7.gql
+REJECT	a4eb65c0ac0e2c35.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	a4ece400fc01bd0d.gql
+REJECT	a566f7d7f6d912ae.gql	1:11 no viable alternative at input 'time('
+ACCEPT	a5939aa7485a47d3.gql
+REJECT	a5a824ac75fee762.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	a5af541fa744601b.gql
+REJECT	a5f8ffa3dad4cdff.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	a64a953da41c1a21.gql
+ACCEPT	a668545d063758b4.gql
+REJECT	a6aa60a6f358498c.gql	1:15 no viable alternative at input 'datetime('
+REJECT	a6b6de92e727f66b.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	a6f2b823e4eda376.gql
+ACCEPT	a6fe93ee68f27a9c.gql
+ACCEPT	a71326f94df94ae7.gql
+REJECT	a73b35eb11d04e2f.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	a7a60ee2b825a893.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	a7ce6bce8b9e4ffb.gql
+REJECT	a831855e69c5661b.gql	1:9 token recognition error at: '^'
+REJECT	a85d31e83134c8da.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	a86dff20b30cfe34.gql
+ACCEPT	a87b607156da28d9.gql
+REJECT	a8849be174e6113d.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	a89fb2d1578bac0d.gql	1:13 mismatched input 'date' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	a8c3ff815e8edfe0.gql
+ACCEPT	a8cf22c555194508.gql
+REJECT	a8fb6f127086e0c8.gql	1:13 mismatched input 'date' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	a91ec61244864575.gql
+REJECT	a93563d6c753bc38.gql	1:14 no viable alternative at input 'MATCH r = ()-[*'
+REJECT	a9791d6f71caf978.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	a9aeb55968675659.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	a9e1e1b1ec348603.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	a9f12435879d5cae.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	a9f5de19dd814664.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	a9fcb31b9be7bc86.gql	1:10 no viable alternative at input 'MATCH ()-[*'
+ACCEPT	aa35ac8fc4ab5561.gql
+ACCEPT	aa6d31d52155ddb2.gql
+REJECT	aa898acf822ca6f4.gql	1:17 no viable alternative at input 'MATCH ()-[]-(r)-[*'
+ACCEPT	aabe71774ac4a5b3.gql
+ACCEPT	ab01809f203b55ee.gql
+ACCEPT	ab7904f35f9f4778.gql
+REJECT	abf0ad46ff549610.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	ac1c07c6f5a3f4df.gql
+REJECT	ac697ae574a92a58.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	acc580f7bf94cc82.gql	1:15 no viable alternative at input 'datetime('
+REJECT	acdd31880a6d6819.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	ad33e202b8f9a339.gql	1:14 no viable alternative at input 'MATCH r = ()-[*'
+ACCEPT	ad7e1ff012047f81.gql
+REJECT	adb68e3b107076d1.gql	1:15 no viable alternative at input 'datetime('
+REJECT	ae1474717bd37db8.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	ae37aff255372dd0.gql
+REJECT	ae4a599ea525c3f3.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	ae4caea8dadfdd0e.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	ae876614a8457729.gql
+REJECT	aeb0e543bba8053c.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	aecf1ae0c1b0589e.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	aed0813d9489ebb1.gql
+REJECT	aeffa0e4ef840ecc.gql	1:23 mismatched input 'value' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER}
+REJECT	af16fb5f7a1162b5.gql	1:11 no viable alternative at input 'time('
+ACCEPT	af33a0af24b7d3ac.gql
+ACCEPT	af37a17c655be3b1.gql
+REJECT	af6300bdc35f3e72.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	aff0d221cce17783.gql
+ACCEPT	b061eefee220bb97.gql
+REJECT	b0a2d9fa9e0d0bc2.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	b0e9772155a88baf.gql
+ACCEPT	b12379417a4d772f.gql
+REJECT	b16439ef61f3e570.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	b1b0ede8a0ed6485.gql	1:25 no viable alternative at input 'MATCH r = ()-[]-(), ()-[r*'
+ACCEPT	b1b1d035232dffa7.gql
+ACCEPT	b1ee79130f618175.gql
+ACCEPT	b1f79510769cdf8b.gql
+REJECT	b2231a98b1ee3fe1.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	b294789aecba82b0.gql	1:15 no viable alternative at input 'datetime('
+REJECT	b29521588b45d8f5.gql	1:15 no viable alternative at input 'datetime('
+REJECT	b2a423a86758dc1e.gql	1:9 no viable alternative at input 'MATCH (n $param'
+ACCEPT	b2d5419273194764.gql
+REJECT	b2f3936bab30411c.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	b318302940c01894.gql
+ACCEPT	b383a834efd60562.gql
+REJECT	b3876cd1cc7f0abf.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	b3fa117f255953aa.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	b4092c5b4bc8122d.gql
+ACCEPT	b40c685b4bcaadf8.gql
+REJECT	b45d57d71ba7fdc7.gql	3:16 mismatched input '(' expecting {'AND', 'IS', 'OR', 'XOR', '||', '>=', '<=', '<>', '*', '=', '>', '<', '-', '.', '+', ')', '/'}
+ACCEPT	b4a27fd5a423b4c2.gql
+ACCEPT	b4fd1e27ff3f636d.gql
+REJECT	b52f102530909f79.gql	1:9 mismatched input '%' expecting {<EOF>, 'SESSION'}
+ACCEPT	b5a970ba18bc01ea.gql
+ACCEPT	b5c265034f94d357.gql
+ACCEPT	b5fd805f617c88e9.gql
+REJECT	b66b246713897049.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	b6875761029af9cc.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	b68a15de663a3fe4.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	b6f720c02abdd3f6.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	b70680d6e4bb012a.gql
+REJECT	b706e2844cdf6a46.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	b7891d658c44c12f.gql
+ACCEPT	b7ab62a0889119dc.gql
+ACCEPT	b7b567d8463b17a7.gql
+REJECT	b7d3e2adf422e9bf.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	b80dacc7ff070b9a.gql
+ACCEPT	b8536393666ef86e.gql
+ACCEPT	b8a050b42b026c59.gql
+ACCEPT	b8b740a32d2c2b5b.gql
+REJECT	b8c309c55acd6c4d.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	b8ff8a00ff1d467b.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	b9011cb7ecf899a9.gql
+ACCEPT	b945e2a0f93b2815.gql
+ACCEPT	b9a6e473de201ea0.gql
+REJECT	b9e00c7e77cefc2c.gql	1:24 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	ba3eb990767247cb.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	ba6256444a20a598.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	ba9a08a7d36b3c46.gql
+ACCEPT	bafc701764907495.gql
+REJECT	bb2af7ef49fab45a.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	bb366f1541d0666e.gql
+ACCEPT	bb4ab45b8b4fc6bd.gql
+REJECT	bb4e2e2052aa9c05.gql	1:19 mismatched input '<-[' expecting {<EOF>, 'SESSION'}
+REJECT	bb947020c8b450e6.gql	1:17 no viable alternative at input 'MATCH (n) WHERE ()'
+ACCEPT	bbc2c50d88b32cc7.gql
+REJECT	bbe38734bcaa9f2a.gql	1:15 no viable alternative at input 'MATCH r = ()<-[*'
+ACCEPT	bc1c1a065b5b67ed.gql
+ACCEPT	bc2a9d6a47693637.gql
+ACCEPT	bc544f7c03f95411.gql
+REJECT	bc76986a2ae60a13.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	bc82204f48379a88.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	bc8ab55614c97b92.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	bd6a2fb85a2d3f18.gql
+REJECT	bdc9cfa61ed9b74a.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	bddf51797f25bf94.gql
+ACCEPT	bde746782ff45f22.gql
+REJECT	bdf3dd4c7c7c98d6.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	bea535138ab0a138.gql
+ACCEPT	bee803bdcbe7fa07.gql
+REJECT	beea90cfb48727ed.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	bf13104d4f59ab06.gql
+REJECT	bf30dd04e32bd261.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	bf3e49a16bba44dd.gql
+REJECT	bf4021401638b368.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	bf5673718ba5e7d7.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	bf724ee629170453.gql
+REJECT	bf9d529350515852.gql	1:14 no viable alternative at input 'MATCH r = ()-[*'
+REJECT	c019797f00a530fd.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	c0343f80e326dffc.gql	1:11 no viable alternative at input 'time('
+REJECT	c128a2c382aa6f22.gql	1:15 no viable alternative at input 'datetime('
+REJECT	c1948558503779d5.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	c195c40587b66223.gql
+REJECT	c1986065ae1a235a.gql	3:25 no viable alternative at input 'MATCH (a:A) OPTIONAL MATCH (a)-[:FOO]->(b:B) OPTIONAL MATCH (b)<-[:BAR*'
+ACCEPT	c1af4c4d95a0dd2e.gql
+ACCEPT	c1cb1568a3848e2f.gql
+ACCEPT	c27e6e81cf4476cb.gql
+ACCEPT	c2c990b1c84bedb8.gql
+ACCEPT	c2ceddf685836607.gql
+REJECT	c2fc846401ba4f49.gql	1:15 no viable alternative at input 'datetime('
+REJECT	c2fcc597797ee649.gql	2:11 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	c310006ac8f2505a.gql	1:17 mismatched input '%' expecting {<EOF>, 'SESSION'}
+ACCEPT	c341e26f721788b0.gql
+REJECT	c36244b5fc8d1287.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	c3892c63bc312034.gql
+ACCEPT	c3a9caf93ce0e33e.gql
+REJECT	c3b904dcc9b963ec.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	c3fa2fba2f6d9e1a.gql	1:24 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	c3fbf40be1cb1742.gql	1:13 no viable alternative at input 'MATCH p = (a:Start'
+REJECT	c40f0bf4e8a5ca9c.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	c417f91616371ec7.gql	1:15 no viable alternative at input 'datetime('
+REJECT	c41b3efdfae61a20.gql	1:15 no viable alternative at input 'datetime('
+REJECT	c4431293d56bf62f.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	c456c51db951502b.gql
+REJECT	c48da3fb0030695a.gql	1:9 mismatched input '%' expecting {<EOF>, 'SESSION'}
+ACCEPT	c4dc29fa98036201.gql
+REJECT	c51a3da41331657c.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	c598d00694f95a0d.gql
+REJECT	c59c71d5b11da0ed.gql	1:10 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	c5a6780f4e2f7d6a.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	c5eb94f0568e33fb.gql
+REJECT	c601ed151c1eae5c.gql	1:15 no viable alternative at input 'datetime('
+REJECT	c615ad01db9eabe7.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	c6291fdb8c58ea33.gql
+REJECT	c660559d09fad236.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	c6889cba5bc14061.gql
+REJECT	c6a65c776f46ffb2.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+ACCEPT	c6aaadc1fabb6c62.gql
+REJECT	c6b1738b9ebbfd22.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	c6b96054583e7415.gql
+ACCEPT	c705aaded60386ec.gql
+REJECT	c71ddce7e7df3626.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	c7a1cdb217ef3b9d.gql
+REJECT	c7ba3a0ac51251d7.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	c7db6b93748de280.gql
+REJECT	c7e17b96e06f060b.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	c82f7f0b840a7515.gql
+ACCEPT	c834b0528f50165a.gql
+ACCEPT	c86058e50af61995.gql
+ACCEPT	c89a743c57419075.gql
+ACCEPT	c8ab8394538d6107.gql
+ACCEPT	c8c5e820bd669b12.gql
+REJECT	c930d92d038a6a4b.gql	1:17 no viable alternative at input 'count(rand('
+REJECT	c9657d73cdb0f713.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	c9f5e2f05f6aed83.gql
+ACCEPT	c9f64839a594dae9.gql
+ACCEPT	ca26c4423c2294cd.gql
+REJECT	ca7aa85f7b257f96.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	cac6e07927561dd6.gql
+ACCEPT	cacb702aeb6f7733.gql
+REJECT	caf4083859907cbf.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	cb1628c14a27bc57.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	cb267017db612e9e.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	cb26b4669af79d62.gql
+ACCEPT	cb593c1e9e4f6fe8.gql
+REJECT	cb62019862eeee84.gql	1:12 no viable alternative at input '{true'
+ACCEPT	cb647a630ccd108e.gql
+ACCEPT	cb95828630399315.gql
+REJECT	cbf29ce484222325.gql	1:0 mismatched input '<EOF>' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	cc0f676d7a20ca04.gql
+REJECT	cc1778fc2e163691.gql	1:17 mismatched input '%' expecting {<EOF>, 'SESSION'}
+REJECT	cc28dbaae30af030.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	cc3ce40a7dc5a0b5.gql
+REJECT	cc7de145382c4198.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	cc7eb938399a29b1.gql	1:15 no viable alternative at input 'datetime('
+REJECT	cd477755980fdc50.gql	1:36 no viable alternative at input 'MATCH (person:Person)<--(message)<-[like'
+ACCEPT	cd503e1ad54be905.gql
+ACCEPT	cd5c6fb74ce2cefc.gql
+REJECT	cde73246ecffaf4b.gql	1:15 no viable alternative at input 'MATCH p = (a)-[*'
+REJECT	ce05fbd741ca74ab.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	ce3edbb303b880dd.gql
+REJECT	ce9537cd49e22e1e.gql	1:11 no viable alternative at input 'time('
+ACCEPT	cecea5ff13dc73f4.gql
+ACCEPT	ced6e728500f4512.gql
+REJECT	cf0f0f664482cd96.gql	1:10 no viable alternative at input 'MATCH (a:A:'
+REJECT	cf356ffec8265c89.gql	3:9 no viable alternative at input 'OPTIONAL MATCH (n) RETURN n.missing IS NULL,        n.exists'
+REJECT	cf79d0ccbe316c41.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	cf99019d8dc0884e.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	cf9a66a04650f4ed.gql
+REJECT	cfa9d312c82e7d1d.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	cfad14a629a0a1c0.gql
+REJECT	cfcb37372fbe0608.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	cfe773bb301c6995.gql
+ACCEPT	d0b767a8a0441cdd.gql
+REJECT	d0f254ef11c6170d.gql	1:14 no viable alternative at input '('abc' STARTS'
+REJECT	d0fb977ba2059b52.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	d12df04d9022ccd7.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	d172693c1f42d9b0.gql
+ACCEPT	d18e327258ddd7d2.gql
+REJECT	d1b115faa3d196e9.gql	1:11 no viable alternative at input 'time('
+ACCEPT	d1d71a86e9f8e6a4.gql
+ACCEPT	d21d6b8787022bb5.gql
+REJECT	d29ba347b712c967.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	d29ea23c31e867ed.gql
+ACCEPT	d2a2e9a659a6d806.gql
+ACCEPT	d2ecb691095af462.gql
+REJECT	d2ee7f7629d0db1b.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	d303d3bbb591946d.gql
+REJECT	d33d367619162b5f.gql	1:15 no viable alternative at input 'datetime('
+REJECT	d364d13d56865545.gql	1:18 no viable alternative at input 'MATCH (), r = ()-[*'
+REJECT	d3f43956d0414e0b.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	d45fe489c3ae0660.gql
+REJECT	d4978cd982a64882.gql	1:19 mismatched input '<-[' expecting {<EOF>, 'SESSION'}
+REJECT	d4b39aa192e73da8.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	d4e4a864d957a4b0.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	d4ede496eafef1da.gql
+REJECT	d50571f12f5c07e7.gql	1:11 no viable alternative at input 'time('
+REJECT	d585cc2154ad6d5c.gql	1:11 no viable alternative at input 'time('
+REJECT	d58ec2d59b8d5ae0.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	d59d71f597f1ba62.gql
+ACCEPT	d600f76bc7c8bed7.gql
+REJECT	d6093db150143663.gql	1:15 no viable alternative at input 'datetime('
+REJECT	d60d820437bab23a.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	d68c2cb658fe9b2b.gql
+ACCEPT	d6c722eb2392c6e1.gql
+REJECT	d72306b433b6bfdc.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	d72708002a972871.gql
+ACCEPT	d7765639c8efde9c.gql
+REJECT	d7b309f360c242d4.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	d7ec7f3bd9d3a5f9.gql	1:11 no viable alternative at input 'time('
+ACCEPT	d7f4ed4e83fb5f9d.gql
+ACCEPT	d800d777d8c46153.gql
+REJECT	d820d0aa97876379.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	d86a243d4d15cd7f.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	d87e26b871acf627.gql
+ACCEPT	d880680a5a69dced.gql
+REJECT	d88919e04994d1f4.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	d8c5feb64d8b97b5.gql
+ACCEPT	d96c816f6b216896.gql
+ACCEPT	d972387436c7a0fc.gql
+REJECT	d99991edfefea5ae.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+ACCEPT	d9b7b5445602ece0.gql
+ACCEPT	d9ccdb8b844054d7.gql
+ACCEPT	d9dd0a67039b0ff2.gql
+ACCEPT	d9e5586329d466b3.gql
+ACCEPT	da194a815deacf0f.gql
+ACCEPT	da1bb1edcf92245d.gql
+ACCEPT	da53848aa2c43dc2.gql
+REJECT	da7b013ffebc3758.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	da8c4d1290c2d77f.gql
+REJECT	daa01854719658e8.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	dab66a58cd4c21b8.gql
+REJECT	db14935303222117.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	db9d9a76e8ba4ac9.gql
+REJECT	dbcff0ed3ee9f833.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	dbf08c0cc34c8f0a.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	dc25ad3255a76e5e.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	dc3853be86208b75.gql
+ACCEPT	dc4fd30a9091c1eb.gql
+ACCEPT	dcaa6e0b3b63e001.gql
+ACCEPT	dcda24a634b8d731.gql
+REJECT	dce7002f1774a409.gql	1:11 no viable alternative at input 'MATCH (a1:X:'
+ACCEPT	dd00363fa1dbc4e7.gql
+REJECT	dd0c227f18013b21.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	dd116914dad9dcfd.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	dd4be3a1673cdac6.gql	1:23 no viable alternative at input 'MATCH r = (a)-[p]-(s)-[*'
+REJECT	dd9bb11b4d20ff06.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+ACCEPT	dd9fd606137a6d2d.gql
+REJECT	dda120ed7e84b8ef.gql	2:12 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	dda7bb0b725f7a15.gql
+ACCEPT	ddb4edf2421fae22.gql
+ACCEPT	de48f154305a91e5.gql
+REJECT	de86a3a509c54340.gql	1:15 no viable alternative at input 'datetime('
+REJECT	dec5c69317f02425.gql	1:15 no viable alternative at input 'datetime('
+REJECT	dec7e9518d7f2a4e.gql	1:15 no viable alternative at input 'MATCH r = ()-[p*'
+REJECT	ded666d7e8f44058.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	dee1a18a864cf74a.gql
+ACCEPT	df150859bc026b16.gql
+ACCEPT	df6c1ae3080ea8a8.gql
+REJECT	dffab4d3a40b562f.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	e010ee56fc2f29b1.gql
+ACCEPT	e0158caf9b8d88bf.gql
+ACCEPT	e05259b7a78b610b.gql
+REJECT	e0b9f0d49c77d2d6.gql	1:16 no viable alternative at input 'MATCH r = ()<-[p*'
+ACCEPT	e0bd2bd846c87773.gql
+ACCEPT	e0d6a0c3b52feac1.gql
+REJECT	e132f0cb715e128b.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	e149348266d89bf7.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	e16513067b054470.gql
+REJECT	e1667053e678e4f7.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	e172affc81b20a70.gql	1:15 no viable alternative at input 'datetime('
+REJECT	e1924795d675298c.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	e2562add954920af.gql
+ACCEPT	e25b426fbf1b7bb4.gql
+ACCEPT	e26accb521477492.gql
+REJECT	e2bfb4ccceebd7f3.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	e2c7a2fe0ec44a9f.gql
+ACCEPT	e31774060c43f565.gql
+REJECT	e31e73824b4f061d.gql	2:20 no viable alternative at input 'MATCH (a:Single) OPTIONAL MATCH (a)-[*'
+REJECT	e33cdef2109fbe72.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	e41fa4042cfd8bbb.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	e476fd1ce3d797d7.gql
+ACCEPT	e48e82ea9d9b7729.gql
+REJECT	e4fa9666fa021548.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	e521b24f3f07619c.gql	2:29 no viable alternative at input 'MATCH (n) RETURN count(n) / 60 / 60 AS count'
+REJECT	e54b7aa5d1f6b044.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	e563a9845d288876.gql
+ACCEPT	e599df9a74803a53.gql
+ACCEPT	e5b7f2de187c8cb2.gql
+REJECT	e647585c16084ea3.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	e66dadffde4e431f.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	e66db8399b6baf1c.gql
+REJECT	e66fca466b876d6d.gql	1:14 no viable alternative at input 'MATCH (a)-[:T|:'
+ACCEPT	e695a46242e2cfdc.gql
+REJECT	e6c2b1ffde9689ea.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	e6e3a7261291a46c.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	e7408676b3ccb5d9.gql
+ACCEPT	e79190546e22ce4a.gql
+REJECT	e887937b1fd74562.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	e8bc3b1e5e3af3da.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	e8d4eecb35a048f0.gql
+REJECT	e92774dda778120e.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	e96ca8fab7ca173d.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	e977461447d84a76.gql	2:15 no viable alternative at input 'MATCH (n) MATCH r = (n)-[*'
+ACCEPT	e977da35e97630b5.gql
+ACCEPT	e9cbebe1ed7d2500.gql
+REJECT	e9de24dac22f87f9.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	ea4228923131cbbb.gql
+REJECT	ea538e627d9c2790.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	eabe904a02892edf.gql
+ACCEPT	eac93ef2f6dbca46.gql
+ACCEPT	eb0e21aebd3423df.gql
+ACCEPT	eb35210c2613c2b0.gql
+ACCEPT	eb8e13a2146f2986.gql
+REJECT	ebd88cee0c9abb12.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	ebea4c3f722049bf.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	ec578fee2e756fa1.gql
+REJECT	ec879b55a76afffc.gql	1:7 mismatched input ''' expecting {BOOLEAN_LITERAL, SINGLE_QUOTED_CHARACTER_SEQUENCE, DOUBLE_QUOTED_CHARACTER_SEQUENCE, BYTE_STRING_LITERAL, UNSIGNED_DECIMAL_IN_SCIENTIFIC_NOTATION_WITH_EXACT_NUMBER_SUFFIX, UNSIGNED_DECIMAL_IN_SCIENTIFIC_NOTATION_WITHOUT_SUFFIX, UNSIGNED_DECIMAL_IN_SCIENTIFIC_NOTATION_WITH_APPROXIMATE_NUMBER_SUFFIX, UNSIGNED_DECIMAL_IN_COMMON_NOTATION_WITH_EXACT_NUMBER_SUFFIX, UNSIGNED_DECIMAL_IN_COMMON_NOTATION_WITHOUT_SUFFIX, UNSIGNED_DECIMAL_IN_COMMON_NOTATION_WITH_APPROXIMATE_NUMBER_SUFFIX, UNSIGNED_DECIMAL_INTEGER_WITH_EXACT_NUMBER_SUFFIX, UNSIGNED_DECIMAL_INTEGER_WITH_APPROXIMATE_NUMBER_SUFFIX, UNSIGNED_DECIMAL_INTEGER, UNSIGNED_HEXADECIMAL_INTEGER, UNSIGNED_OCTAL_INTEGER, UNSIGNED_BINARY_INTEGER, 'ABS', 'ACOS', 'ALL', 'ALL_DIFFERENT', 'ARRAY', 'ASIN', 'ATAN', 'AVG', 'BTRIM', 'BYTE_LENGTH', 'CARDINALITY', 'CASE', 'CAST', 'CEIL', 'CEILING', 'CHAR_LENGTH', 'CHARACTER_LENGTH', 'COALESCE', 'COLLECT_LIST', 'COS', 'COSH', 'COT', 'COUNT', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP', 'DATE', 'DATETIME', 'DEGREES', 'DISTINCT', 'DURATION', 'DURATION_BETWEEN', 'ELEMENT_ID', 'EXISTS', 'EXP', 'FLOOR', 'LEFT', 'LET', 'LIST', 'LN', 'LOCAL_DATETIME', 'LOCAL_TIME', 'LOCAL_TIMESTAMP', 'LOG', 'LOG10', 'LOWER', 'LTRIM', 'MAX', 'MIN', 'MOD', 'NORMALIZE', 'NOT', 'NULL', 'NULLIF', 'OCTET_LENGTH', 'PATH', 'PATH_LENGTH', 'PERCENTILE_CONT', 'PERCENTILE_DISC', 'POWER', 'PROPERTY_EXISTS', 'RADIANS', 'RECORD', 'RIGHT', 'RTRIM', 'SAME', 'SESSION_USER', 'SIN', 'SINH', 'SIZE', 'SQRT', 'STDDEV_POP', 'STDDEV_SAMP', 'SUM', 'TAN', 'TANH', 'TIME', 'TIMESTAMP', 'TRIM', 'UPPER', 'VALUE', 'ZONED_DATETIME', 'ZONED_TIME', 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, GENERAL_PARAMETER_REFERENCE, '*', '{', '[', '(', '-', '+'}
+ACCEPT	ece2371ac5896a2e.gql
+ACCEPT	ed0f0a314ad54251.gql
+ACCEPT	ed0fe29743c9df09.gql
+REJECT	ed35dd3d0ca958cf.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	ed65dace3d05db6e.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	eda5413395502215.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	edc79453110de36d.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	edd309cd8674e782.gql
+ACCEPT	ee7607dab03d0d4a.gql
+ACCEPT	eeb38ef716943cda.gql
+REJECT	ef3b3c88c2a42b79.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	ef826e8e59709c5c.gql
+REJECT	ef8cf0b12a176560.gql	1:37 no viable alternative at input 'CALL test.my.proc('Stefan', 1) YIELD *'
+ACCEPT	efb0a4f256d66762.gql
+REJECT	efe6b01af322b322.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	f05c325d6dd30feb.gql
+ACCEPT	f05dcec2496ab9f3.gql
+ACCEPT	f05ecb8e05b287d1.gql
+REJECT	f0730e20e83c9182.gql	1:15 no viable alternative at input 'datetime('
+REJECT	f08a9b7c89842353.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	f0c0f5385794ef8e.gql
+ACCEPT	f0c3e530c9e74945.gql
+REJECT	f102210adbf31132.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	f10f0f4dadc1b096.gql	3:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	f12c4ce1343ef8ca.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	f16040463e025496.gql
+REJECT	f172cfef614ac275.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	f17b466d53c30e72.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	f1d5c63acd751ab5.gql
+ACCEPT	f20e137c7e9746e7.gql
+REJECT	f242031bc142c0e1.gql	1:18 no viable alternative at input 'MATCH ()-[]-(r)-[r*'
+ACCEPT	f25a9e24bb3dbdbb.gql
+REJECT	f25eefc33a25e3ae.gql	1:10 no viable alternative at input 'MATCH ()-[*'
+REJECT	f272141fe57e44c2.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	f27945b5c3b8f422.gql
+ACCEPT	f2b2e399a899ffc8.gql
+REJECT	f2b3ff2216b28287.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	f324ef78318af790.gql
+REJECT	f340e91329ceac81.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	f345224d59c68ed5.gql
+ACCEPT	f34b3a030690cb4e.gql
+ACCEPT	f3e547d3cb9cf021.gql
+ACCEPT	f420f115512a8255.gql
+ACCEPT	f45eaef1596c2aeb.gql
+REJECT	f48aacc989aa62b2.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	f4a0d4f2121aa6b0.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	f53a492159246c68.gql
+REJECT	f583b1e3d8bd138c.gql	1:0 extraneous input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+ACCEPT	f5fe710bf6089be8.gql
+ACCEPT	f6070c467fb61e9f.gql
+ACCEPT	f61d72690513d2bc.gql
+ACCEPT	f64a212816d418af.gql
+ACCEPT	f68d4b962438aadf.gql
+REJECT	f6a5727545704682.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	f6c13823a61145b0.gql
+ACCEPT	f6d4fa24fa082fd8.gql
+REJECT	f70c1ff33ecb5389.gql	1:15 no viable alternative at input 'datetime('
+REJECT	f76e474c674f4c9a.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	f7883177346c7bab.gql
+ACCEPT	f7947c6f7fcd20d0.gql
+REJECT	f7bfc10e0cd331d2.gql	1:20 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	f7d2251df1e647fb.gql	1:15 no viable alternative at input 'datetime('
+REJECT	f80e5e710d126883.gql	3:2 no viable alternative at input 'MATCH (n) WHERE exists {   MATCH (n)-->(m)   WITH'
+ACCEPT	f8239999bcb2d274.gql
+REJECT	f865700c59d7c501.gql	3:10 no viable alternative at input '[i IN'
+ACCEPT	f8ad0a794e2ec49f.gql
+REJECT	f8cb8e8d7fd7b317.gql	2:34 no viable alternative at input 'MATCH ()-[r]->() RETURN r.missing, r.missingToo, r.existing'
+ACCEPT	f8cd501e5acd4908.gql
+ACCEPT	f9117f8bfce56003.gql
+ACCEPT	f93f7254df16925b.gql
+REJECT	f95abc07d4122b57.gql	1:19 mismatched input '-[' expecting {<EOF>, 'SESSION'}
+REJECT	f99c2f7af27513fc.gql	1:15 no viable alternative at input 'datetime('
+ACCEPT	f9d5da871a8a055c.gql
+REJECT	fa995ba79dbae05a.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	fad6be32b60dd18c.gql	1:11 no viable alternative at input 'time('
+REJECT	fadb322e20b99b34.gql	2:0 mismatched input 'WITH' expecting {<EOF>, 'SESSION'}
+REJECT	fb0232a5380567ff.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	fb17a2b319cbbf40.gql
+REJECT	fb2b162297ee1229.gql	1:0 mismatched input 'WITH' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	fb4317420a9b4f8b.gql	1:7 no viable alternative at input 'CREATE ('
+ACCEPT	fb4f6d93c4236568.gql
+REJECT	fb61049ad864e491.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	fbca0bd406ea8083.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	fbd06d6d301afc1b.gql	1:15 no viable alternative at input 'datetime('
+REJECT	fbd490dc16c18273.gql	1:15 no viable alternative at input 'datetime('
+REJECT	fc25adb53bdf3984.gql	1:11 no viable alternative at input 'time('
+ACCEPT	fc48d44c3fb20fcb.gql
+ACCEPT	fcc77c76ec31ba8f.gql
+REJECT	fce072ad4370c3be.gql	1:7 no viable alternative at input 'CREATE ('
+REJECT	fd216b85ae3a3d18.gql	1:35 no viable alternative at input 'MATCH (a)-[p]-(s)-[]-(b), r = (s)-[*'
+ACCEPT	fd3b2fb9aea2ca11.gql
+ACCEPT	fd427f3eea14f2c7.gql
+ACCEPT	fd45dff58fc0f666.gql
+ACCEPT	fd6fbae0b9676141.gql
+REJECT	fd77a550ebfca53e.gql	1:17 no viable alternative at input 'MATCH (n) WHERE ()'
+REJECT	fd7955faebe7152b.gql	1:15 no viable alternative at input 'datetime('
+REJECT	fd9a7a04796097e7.gql	1:15 no viable alternative at input 'datetime('
+REJECT	fdc505d9359160f6.gql	1:27 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER}
+ACCEPT	fe7465e6fb675957.gql
+REJECT	fe79ad21ae6bac1b.gql	1:17 no viable alternative at input 'MATCH (x), (a)-[q*'
+REJECT	fe92c2399df0044f.gql	1:9 mismatched input '%' expecting {<EOF>, 'SESSION'}
+REJECT	fe98cbe06b0a069f.gql	1:13 mismatched input 'year' expecting {DOUBLE_QUOTED_CHARACTER_SEQUENCE, ACCENT_QUOTED_CHARACTER_SEQUENCE, 'ACYCLIC', 'BINDING', 'BINDINGS', 'CONNECTING', 'DESTINATION', 'DIFFERENT', 'DIRECTED', 'EDGE', 'EDGES', 'ELEMENT', 'ELEMENTS', 'FIRST', 'GRAPH', 'GROUPS', 'KEEP', 'LABEL', 'LABELED', 'LABELS', 'LAST', 'NFC', 'NFD', 'NFKC', 'NFKD', 'NO', 'NODE', 'NORMALIZED', 'ONLY', 'ORDINALITY', 'PROPERTY', 'READ', 'RELATIONSHIP', 'RELATIONSHIPS', 'REPEATABLE', 'SHORTEST', 'SIMPLE', 'SOURCE', 'TABLE', 'TO', 'TRAIL', 'TRANSACTION', 'TYPE', 'UNDIRECTED', 'VERTEX', 'WALK', 'WITHOUT', 'WRITE', 'ZONE', REGULAR_IDENTIFIER, '}'}
+REJECT	feb8404591cd99ae.gql	2:19 no viable alternative at input 'MATCH (a) RETURN size(collect('
+REJECT	fed5e65c62534a9c.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+REJECT	fed6c02f9825998a.gql	1:0 mismatched input 'UNWIND' expecting {'AT', 'CALL', 'COMMIT', 'CREATE', 'DELETE', 'DETACH', 'DROP', 'FILTER', 'FINISH', 'FOR', 'INSERT', 'LET', 'LIMIT', 'MATCH', 'NODETACH', 'OFFSET', 'OPTIONAL', 'ORDER', 'REMOVE', 'RETURN', 'ROLLBACK', 'SELECT', 'SESSION', 'SET', 'SKIP', 'START', 'USE', 'VALUE', 'BINDING', 'GRAPH', 'PROPERTY', 'TABLE', '{'}
+REJECT	fee095c3f57ca03a.gql	1:16 mismatched input '(' expecting {<EOF>, 'SESSION'}
+ACCEPT	ff1fdc0109c3abd3.gql
+REJECT	ff38d279a8341056.gql	1:12 no viable alternative at input 'MATCH ()<-[p*'

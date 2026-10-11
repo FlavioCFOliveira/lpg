@@ -45,8 +45,10 @@ pub fn parser(data: &[u8]) {
 /// Parses `data` (invalid UTF-8 replaced by U+FFFD) and binds every
 /// program the parser accepts, in a fresh transaction of one database
 /// created at the first call (rmp #43): the binder returns a bound program
-/// or an error, never panics. The database lives in `LPG_FUZZ_DIR` (a
-/// directory under `/tmp/lpgram` that the caller creates and deletes).
+/// or an error, never panics. The database lives in `LPG_FUZZ_DIR/<pid>`,
+/// one subdirectory per process, so that the concurrent children of
+/// libFuzzer's fork mode do not share one database; `LPG_FUZZ_DIR` is a
+/// directory under `/tmp/lpgram` that the caller creates and deletes.
 pub fn binder(data: &[u8]) {
     use crate::storage::engine::Engine;
     use std::sync::OnceLock;
@@ -56,9 +58,11 @@ pub fn binder(data: &[u8]) {
         return;
     };
     let e = ENGINE.get_or_init(|| {
-        let dir = std::env::var("LPG_FUZZ_DIR").expect("LPG_FUZZ_DIR names an empty directory");
+        let dir = std::env::var("LPG_FUZZ_DIR").expect("LPG_FUZZ_DIR names a directory");
+        let dir = std::path::Path::new(&dir).join(std::process::id().to_string());
+        std::fs::create_dir_all(&dir).expect("create the fuzz database directory");
         Engine::create(
-            std::path::Path::new(&dir),
+            &dir,
             std::sync::Arc::new(crate::storage::FsStorage),
             64 << 20,
             "fuzz",

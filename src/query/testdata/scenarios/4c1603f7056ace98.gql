@@ -1,0 +1,4 @@
+CREATE GRAPH mygraph {
+  (Person :Person {lastname STRING, firstname STRING,joined DATE}),
+  (Employer :Employer {name STRING})
+} AS COPY OF mysrcgraph

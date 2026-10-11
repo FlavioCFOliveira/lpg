@@ -160,6 +160,8 @@ fn each_approved_construct_binds() {
         "MATCH (a:L {p: 1})-[e:T]->(b) WHERE a.q > 2 RETURN a, e, b",
         "MATCH (a:L&M|!N) RETURN a",
         "MATCH (a) OPTIONAL MATCH (a)-[e]->(b) RETURN a, b",
+        // An edge variable of an earlier statement joins.
+        "MATCH ()-[r]->() MATCH ()-[r]->() RETURN r",
         "MATCH (a) OPTIONAL { MATCH (a)-[e]->(b) } RETURN a, b",
         "MATCH (a) WHERE EXISTS { (a)-[]->() } RETURN a",
         "MATCH (a) WHERE EXISTS { MATCH (a)-[]->(b) } RETURN a",
@@ -254,7 +256,18 @@ fn undefined_variables_duplicate_bindings_and_conditional_joins_fail() {
     assert_eq!(code("INSERT (a)-[:T&U]->(b)"), "42007");
     assert_eq!(code("INSERT (a)-[]->(b)"), "42006");
     assert_eq!(code("RETURN 9223372036854775808 AS x"), "22003");
-    assert_eq!(code("RETURN NOT 1"), "22G03");
+    // A static type error is a syntax rule violation (opengql/tck
+    // `Boolean4.feature` [4]: 42000), found when the statement is
+    // compiled: a non-boolean literal or an element reference as a boolean
+    // operand or search condition (openCypher TCK `Pattern1.feature` [11]).
+    assert_eq!(code("RETURN NOT 1"), "42000");
+    assert_eq!(code("RETURN 'a' AND TRUE"), "42000");
+    assert_eq!(code("MATCH (n) WHERE (n) RETURN n"), "42000");
+    assert_eq!(code("MATCH (n)-[r]->() WHERE NOT r RETURN n"), "42000");
+    // An edge variable of two edge patterns of one graph pattern
+    // (openCypher TCK `Match3.feature` [29]), in one path or in two.
+    assert_eq!(code("MATCH (a)-[r]->()-[r]->(a) RETURN r"), "42000");
+    assert_eq!(code("MATCH ()-[r]->(), ()-[r]->() RETURN r"), "42000");
     assert_eq!(code("RETURN DATE '2020-13-01'"), "22007");
     assert_eq!(
         code("CREATE GRAPH TYPE t { (x :A), (:A)-[:T]->(y) }"),

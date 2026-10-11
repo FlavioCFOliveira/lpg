@@ -34,7 +34,7 @@ use crate::query::bound::{
 };
 use crate::query::expr::{CmpOp, Expr, LabelTest, Slot};
 use crate::query::features::unsupported;
-use crate::query::span::Spanned;
+use crate::query::span::{Span, Spanned};
 
 /// A variable's declarations in one path pattern: its kind and degree.
 type Decls = BTreeMap<Box<str>, (VarKind, Degree)>;
@@ -304,6 +304,26 @@ impl Binder<'_> {
                 pending.push((e, VarKind::Edge, ef));
             }
         }
+        // Under DIFFERENT EDGES (ID086) one edge is never matched twice in
+        // one graph-pattern match, so an edge variable of two edge patterns
+        // of one graph pattern could never bind. Neo4j rejects it when the
+        // statement is compiled ("Cannot use the same relationship variable
+        // … for multiple relationships"; openCypher TCK `Match3.feature`
+        // [29], RelationshipUniquenessViolation). An edge variable of an
+        // earlier statement used by one edge pattern stays a join.
+        for (i, e) in edges.iter().enumerate() {
+            if edges[..i].iter().any(|o| o.slot == e.slot) {
+                let name = self.slots[e.slot].name.clone();
+                let span = gp.patterns.first().map_or_else(Span::default, |p| p.1);
+                return Err(self.locate(
+                    rule(&format!(
+                        "the edge variable '{name}' is declared by more than one edge \
+                         pattern of one graph pattern"
+                    )),
+                    span,
+                ));
+            }
+        }
         for (name, slot) in &local {
             self.scope.push((name.clone(), *slot));
         }
@@ -350,7 +370,7 @@ impl Binder<'_> {
             }
         }
         if let Some(w) = &gp.where_clause {
-            let e = self.at(w.1, |b| b.bind_value(w))?;
+            let e = self.at(w.1, |b| b.bind_condition(w))?;
             predicates.extend(e.conjuncts());
         }
         // Edge uniqueness (ID086).

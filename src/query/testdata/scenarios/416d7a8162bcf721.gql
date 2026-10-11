@@ -1,0 +1,2 @@
+MATCH (n {name: 'bar'})
+RETURN n

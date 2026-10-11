@@ -1,0 +1,4 @@
+SELECT p.name AS person, c.name AS company
+FROM CURRENT_PROPERTY_GRAPH MATCH (p:Person),
+     CURRENT_PROPERTY_GRAPH MATCH (c:Company)
+WHERE p.name = 'Alice' AND c.name = 'Acme'

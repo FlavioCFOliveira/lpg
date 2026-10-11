@@ -1,0 +1,2 @@
+MATCH (i:Item)
+RETURN DISTINCT i.rank AS rank

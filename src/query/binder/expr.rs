@@ -80,17 +80,33 @@ impl Binder<'_> {
         Ok(Box::new(x))
     }
 
-    /// Fails with 22G03 when `e` is a literal that is not a boolean (TS-19
-    /// Narrowing: `GQL.g4` accepts `NOT 1`).
+    /// Binds a search condition (`WHERE`): a value expression that must
+    /// be boolean ([`Binder::boolean`]).
+    pub(super) fn bind_condition(&mut self, e: &Spanned<ast::Expr>) -> Result<Expr, Error> {
+        let x = self.bind_value(e)?;
+        self.at(e.1, |b| b.boolean(&x, "WHERE"))?;
+        Ok(x)
+    }
+
+    /// Fails with 42000 when `e` cannot be a boolean by its static type: a
+    /// literal that is not a boolean, or a node or edge reference (TS-19
+    /// Narrowing: `GQL.g4` accepts `NOT 1`). The check is made when the
+    /// statement is compiled, so it is a syntax rule violation, as
+    /// opengql/tck expects (`Boolean1.feature`, `Boolean2.feature`,
+    /// `Boolean4.feature`: 42000), not the data exception 22G03 that the
+    /// same operands raise at run time.
     fn boolean(&self, e: &Expr, op: &str) -> Result<(), Error> {
-        match e {
-            Expr::Lit(Value::Bool(_) | Value::Null) => Ok(()),
-            Expr::Lit(v) => Err(invalid_type(&format!(
-                "{op} needs BOOLEAN operands, not {}",
-                crate::query::expr::type_name(v)
-            ))),
-            _ => Ok(()),
-        }
+        let what = match e {
+            Expr::Lit(Value::Bool(_) | Value::Null) => return Ok(()),
+            Expr::Lit(v) => crate::query::expr::type_name(v).to_string(),
+            Expr::Slot(s) => match self.slots[*s].ty {
+                crate::query::bound::Ty::Node => "a node reference".to_string(),
+                crate::query::bound::Ty::Edge => "an edge reference".to_string(),
+                crate::query::bound::Ty::Any => return Ok(()),
+            },
+            _ => return Ok(()),
+        };
+        Err(rule(&format!("{op} needs BOOLEAN operands, not {what}")))
     }
 
     pub(super) fn bind_expr(

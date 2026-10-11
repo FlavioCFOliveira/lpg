@@ -1,0 +1,4 @@
+CREATE SCHEMA /foo
+CREATE GRAPH TYPE /foo/mygraphtype {
+  (Person :Person {lastname STRING, firstname STRING,joined DATE})
+}

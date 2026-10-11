@@ -1,0 +1,6 @@
+UNWIND [true, false, null] AS a
+UNWIND [true, false, null] AS b
+UNWIND [[], [true], [false], [null], [true, false], [true, false, null]] AS c
+WITH collect((a XOR b IN c) = (a XOR (b IN c))) AS eq,
+     collect((a XOR b IN c) <> ((a XOR b) IN c)) AS neq
+RETURN all(x IN eq WHERE x) AND any(x IN neq WHERE x) AS result

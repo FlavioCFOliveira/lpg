@@ -1,0 +1,5 @@
+MATCH (n) WHERE exists {
+  MATCH (n)-->()
+  RETURN true
+}
+RETURN n

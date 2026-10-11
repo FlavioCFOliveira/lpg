@@ -1,0 +1,2 @@
+MATCH (x:!Company)
+RETURN COUNT(*) AS n

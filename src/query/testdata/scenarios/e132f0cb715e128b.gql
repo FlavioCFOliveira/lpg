@@ -1,0 +1,4 @@
+CREATE (a:A {prop: 1})-[:R]->(b:B {prop: 1}), 
+       (a)-[:R]->(:C {prop: 2}), 
+       (a)-[:R]->(d:D {prop: 3}), 
+       (b)-[:R]->(d)

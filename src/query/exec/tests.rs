@@ -1272,3 +1272,122 @@ mod statements {
         );
     }
 }
+
+mod conformance {
+    //! Defects found by the conformance scenarios of rmp #52; each test
+    //! names its scenario.
+
+    use super::support::{error, rows};
+    use crate::tx::tests::db;
+    use crate::types::Value;
+
+    /// gql-compat `condition/22g03/non-boolean-search-condition`: a search
+    /// condition that is not a boolean raises 22G03 when it runs.
+    #[test]
+    fn a_non_boolean_search_condition_raises_22g03() {
+        let (_d, e) = db();
+        rows(&e, "INSERT (:P {age: 3})");
+        assert_eq!(
+            error(&e, "MATCH (p:P) WHERE p.age RETURN p").code(),
+            "22G03"
+        );
+        // NULL and FALSE drop the row without an error.
+        assert!(rows(&e, "MATCH (p:P) WHERE p.missing RETURN p").is_empty());
+    }
+
+    /// gql-compat `condition/22g0m/multiple-assignments-to-one-property`.
+    #[test]
+    fn two_assignments_to_one_property_raise_22g0m() {
+        let (_d, e) = db();
+        rows(&e, "INSERT (:P {name: 'a'})");
+        for text in [
+            "MATCH (p:P) SET p.age = 1, p.age = 2",
+            "MATCH (p:P) SET p = {age: 1}, p.age = 2",
+            "MATCH (p:P), (q:P) SET p.age = 1, q.age = 2",
+        ] {
+            assert_eq!(error(&e, text).code(), "22G0M", "{text}");
+        }
+        rows(&e, "MATCH (p:P) SET p.age = 1, p.height = 2");
+    }
+
+    /// openCypher TCK `Set1.feature` [8] and `Set4.feature` [5]: a SET on
+    /// an optional match's NULL changes nothing and counts nothing.
+    #[test]
+    fn a_set_on_a_null_element_counts_no_property() {
+        let (_d, e) = db();
+        let mut tx = e.begin(crate::tx::Isolation::Serializable).unwrap();
+        for text in [
+            "OPTIONAL MATCH (a:None) SET a.num = 42 RETURN a",
+            "OPTIONAL MATCH (a:None) SET a = {num: 42} RETURN a",
+        ] {
+            let mut c = crate::query::exec::run(
+                text,
+                &mut tx,
+                &super::support::session(),
+                &crate::query::exec::Params::new(),
+            )
+            .unwrap();
+            crate::query::exec::collect(&mut c, &mut tx).unwrap();
+            assert_eq!(c.counters().properties_set, 0, "{text}");
+        }
+    }
+
+    /// gql-compat `condition/22014/incompatible-temporal-units`: a date
+    /// shifted by time-of-day units, or a time by months, raises 22G14.
+    #[test]
+    fn incompatible_temporal_units_raise_22g14() {
+        let (_d, e) = db();
+        for text in [
+            "RETURN DATE '2024-01-01' + DURATION 'PT1H' AS v",
+            "RETURN DATE '2024-01-01' - DURATION 'PT0.5S' AS v",
+            "RETURN LOCAL_TIME('10:00') + DURATION 'P1M' AS v",
+        ] {
+            assert_eq!(error(&e, text).code(), "22G14", "{text}");
+        }
+        assert_eq!(
+            rows(&e, "RETURN DATE '2024-01-01' + DURATION 'P2D' AS v"),
+            rows(&e, "RETURN DATE '2024-01-03' AS v")
+        );
+    }
+
+    /// openCypher TCK `Temporal2.feature` [1]: the ISO 8601 date forms.
+    #[test]
+    fn iso_8601_date_forms_are_dates() {
+        let (_d, e) = db();
+        for (text, want) in [
+            ("20150721", "2015-07-21"),
+            ("2015-07", "2015-07-01"),
+            ("201507", "2015-07-01"),
+            ("2015-W30-2", "2015-07-21"),
+            ("2015W302", "2015-07-21"),
+            ("2015-W30", "2015-07-20"),
+            ("2015W30", "2015-07-20"),
+            ("2015-202", "2015-07-21"),
+            ("2015202", "2015-07-21"),
+            ("2015", "2015-01-01"),
+        ] {
+            let got = rows(&e, &format!("RETURN DATE('{text}') AS d"));
+            let want: jiff::civil::Date = want.parse().unwrap();
+            assert_eq!(got, vec![vec![Value::Date(want)]], "{text}");
+        }
+        // The last two hold a multi-byte character where the year or the
+        // week would be; the first is the input of a panic the binder fuzz
+        // target found (`DATE '1\u{19}\u{fffd}-9'` after lossy decoding).
+        for bad in [
+            "2015-W54",
+            "2015-W30-8",
+            "2015-366",
+            "2015W30-2",
+            "2015-W302",
+            "2015-Q2",
+            "1\u{19}\u{fffd}-9",
+            "2015-Wé1",
+        ] {
+            assert_eq!(
+                error(&e, &format!("RETURN DATE('{bad}') AS d")).code(),
+                "22007",
+                "{bad}"
+            );
+        }
+    }
+}

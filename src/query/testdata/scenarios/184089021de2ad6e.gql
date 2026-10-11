@@ -1,0 +1,2 @@
+RETURN datetime.fromepoch(416779, 999999999) AS d1,
+       datetime.fromepochmillis(237821673987) AS d2

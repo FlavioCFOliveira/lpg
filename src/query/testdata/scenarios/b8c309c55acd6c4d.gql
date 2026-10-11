@@ -1,0 +1,5 @@
+UNWIND [true, false, null] AS a
+UNWIND [true, false, null] AS b
+UNWIND [true, false, null] AS c
+WITH collect((a OR (b >= c)) = ((a OR b) >= c)) AS eq
+RETURN all(x IN eq WHERE x) AS result

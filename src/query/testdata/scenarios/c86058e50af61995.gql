@@ -1,0 +1,2 @@
+MATCH (p:Person)-[:KNOWS]->()
+RETURN COUNT(*) AS n

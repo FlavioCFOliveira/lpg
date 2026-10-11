@@ -1,0 +1,1 @@
+MATCH (n:A) RETURN COUNT(*) AS c

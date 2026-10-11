@@ -1,0 +1,1 @@
+MATCH (n) WHERE (n)<-[:REL1*]-() RETURN n

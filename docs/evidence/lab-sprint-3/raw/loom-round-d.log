@@ -1,0 +1,63 @@
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.189
+   Compiling rustversion v1.0.23
+   Compiling once_cell v1.21.4
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.14
+   Compiling regex-syntax v0.8.11
+   Compiling rand_core v0.10.1
+   Compiling semver v1.0.28
+   Compiling getrandom v0.4.3
+   Compiling log v0.4.34
+   Compiling pin-project-lite v0.2.17
+   Compiling rustix v1.1.5
+   Compiling lazy_static v1.5.1
+   Compiling bitflags v2.13.2
+   Compiling linux-raw-sys v0.12.1
+   Compiling thread_local v1.1.10
+   Compiling cpufeatures v0.3.1
+   Compiling sharded-slab v0.1.7
+   Compiling nu-ansi-term v0.50.3
+   Compiling cc v1.6.0
+   Compiling smallvec v1.16.2
+   Compiling chacha20 v0.10.2
+   Compiling tracing-core v0.1.36
+   Compiling rustc_version v0.4.1
+   Compiling fastrand v2.5.0
+   Compiling scoped-tls v1.0.1
+   Compiling jiff-core v0.1.1
+   Compiling tokio v1.53.2
+   Compiling allocation-counter v0.8.1
+   Compiling crc32c v0.6.8
+   Compiling tracing v0.1.44
+   Compiling tracing-log v0.2.0
+   Compiling generator v0.8.10
+   Compiling regex-automata v0.4.18
+   Compiling jiff v0.2.38
+   Compiling rand v0.10.3
+   Compiling tempfile v3.27.0
+   Compiling matchers v0.2.0
+   Compiling tracing-subscriber v0.3.23
+   Compiling loom v0.7.2
+   Compiling lpg v0.1.0 (/data/dev/xumiga/lpg)
+    Finished `release` profile [optimized] target(s) in 38.36s
+     Running unittests src/lib.rs (/dev/shm/lpg-target/loom/release/deps/lpg-246a68dc4a077333)
+
+running 13 tests
+test api::status::loom_tests::loom_the_model_fails_when_the_commit_ignores_the_status ... ok
+test api::status::loom_tests::loom_a_cancel_racing_a_commit_either_aborts_or_has_no_effect ... ok
+test storage::btree::bulk::tests::loom_a_build_run_and_an_undone_batch_never_share_a_page ... ok
+test tx::lock::tests::loom_two_transaction_cycle_fails_exactly_one_request ... ok
+test catalog::tests::loom_two_creators_of_one_token_get_one_identifier ... ok
+test storage::memory::tests::loom_concurrent_charges_never_exceed_the_cap ... ok
+test tx::lock::tests::loom_lock_grants_follow_the_queue ... ok
+test tx::lock::tests::loom_cycle_through_a_waiting_request_fails_the_requester ... ok
+test index::tests::loom_side_tree_replay_and_online_switch ... ok
+test tx::mvcc::tests::loom_no_snapshot_is_below_a_horizon_computed_while_it_registers ... ok
+test tx::lock::tests::loom_three_transaction_cycle_fails_exactly_one_request ... ok
+test tx::mvcc::tests::loom_no_overflow_snapshot_is_below_a_horizon_computed_while_it_registers ... ok
+test storage::wal::tests::loom_published_timestamps_increase_and_never_exceed_the_durable_ones ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 414 filtered out; finished in 18.13s
+
+exit 0

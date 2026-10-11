@@ -107,6 +107,10 @@ struct Progress {
     hits: u64,
     misses: u64,
     peak: u64,
+    /// The highest number of the statement's operators running at once
+    /// (NFR-PERF-007), measured by PROFILE; for the conformance runner.
+    #[cfg(test)]
+    max_running: usize,
 }
 
 /// The outcome of one blocking step.
@@ -167,6 +171,10 @@ fn step(
         };
         let before = counters::current();
         let r = cursor.next_batch(tx);
+        #[cfg(test)]
+        {
+            p.max_running = p.max_running.max(cursor.max_running().unwrap_or(0));
+        }
         let after = counters::current();
         p.hits += after.hits - before.hits;
         p.misses += after.misses - before.misses;
@@ -318,6 +326,13 @@ impl ResultStream {
             stream.next().await?;
         }
         Ok(stream)
+    }
+
+    /// The highest number of operators of a profiled statement that ran at
+    /// once (NFR-PERF-007); 0 for a statement that is not profiled.
+    #[cfg(test)]
+    pub(crate) fn max_running(&self) -> usize {
+        self.progress.max_running
     }
 
     /// The result column names.

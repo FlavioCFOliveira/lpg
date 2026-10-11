@@ -1,0 +1,1 @@
+RETURN 0.0 / 0.0 > 'a' AS gt, 0.0 / 0.0 >= 'a' AS gtE, 0.0 / 0.0 < 'a' AS lt, 0.0 / 0.0 <= 'a' AS ltE

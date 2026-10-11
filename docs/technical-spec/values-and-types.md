@@ -1,7 +1,7 @@
 ---
 title: Values and types
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - query-engine.md
   - bolt.md
@@ -36,7 +36,7 @@ related:
     - **Zoned date-time.** Class 0: the instant, then the offset. Class 1: the instant, then the zone name, then the offset. The instant is the floor of its Unix seconds (zigzag varint), then nanoseconds in `0..1e9` (varint), as Neo4j's property store keeps it (R-NEO `community/record-storage-engine/.../store/TemporalType.java:418-446`, `community/values/.../utils/TemporalValueWriterAdapter.java:68-80`).
   - **Index key encoding.** Order-preserving bytes per type, separate from the record encoding.
   - **Lexical forms**, used by import, export and literals:
-    - temporal values: ISO 8601 text, with an IANA zone name in brackets for named zones;
+    - temporal values: ISO 8601 text, with an IANA zone name in brackets for named zones; a date may also be written as an ISO 8601 week date (`2015-W30-2`), ordinal date (`2015-202`), basic form (`20150721`) or reduced-precision date (`2015-07`, `2015-W30`, `2015`), as Neo4j accepts (Cypher Manual, "Temporal values"; openCypher TCK `Temporal2.feature` [1]; rmp #52); Neo4j's quarter dates are not ISO 8601 and are not accepted. A date shifted by a duration with a time-of-day part, or a time by a duration with months, raises 22G14 (gql-compat `condition/22014/incompatible-temporal-units`);
     - points: `{srid, x, y[, z]}`.
   - **Features.** The temporal types implement features GV39, GV40 and GV41, verified against the ISO features insert [S45].
   - **Implementation-defined choices** (BR-GQL-002). Each was approved by the user on 2026-10-07 (rmp task #26). Codes and line numbers are those of the ISO implementation-defined insert [S45], `docs/standards/iso-iec-39075/ed-1/ISO_IEC_39075(en)-implementation-defined.xml`.

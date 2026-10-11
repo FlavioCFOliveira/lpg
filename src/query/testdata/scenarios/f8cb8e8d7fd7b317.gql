@@ -1,0 +1,2 @@
+MATCH ()-[r]->()
+RETURN r.missing, r.missingToo, r.existing

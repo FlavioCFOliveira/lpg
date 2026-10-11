@@ -1,0 +1,1 @@
+RETURN time({hour: 12, minute: 31, second: 14, nanosecond: 3}) AS result

@@ -32,7 +32,7 @@ use super::write;
 use super::{BATCH, Batch, CHECK_EVERY, Cx, Held, Operator, row_bytes};
 use crate::error::Error;
 use crate::query::aggregate::{Accumulator, AggKind};
-use crate::query::expr::{Expr, Slot, eval, is_true, sort_cmp};
+use crate::query::expr::{Expr, Slot, condition, eval, is_true, sort_cmp};
 use crate::query::plan::{Node, Op, Seek};
 use crate::storage::graph::{Adj, element_of};
 use crate::types::{Value, key};
@@ -544,7 +544,7 @@ impl Operator for Filter {
             let mut out = Batch::new(b.width());
             for row in b.rows() {
                 cx.st.tick()?;
-                if is_true(&eval(&self.pred, row, cx)?) {
+                if condition(&eval(&self.pred, row, cx)?)? {
                     out.push(row);
                 }
             }

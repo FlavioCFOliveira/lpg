@@ -1,0 +1,2 @@
+MATCH (a:Person {name: 'Ada'}), (b:Person {name: 'Linus'})
+INSERT (a)-[]->(b)
