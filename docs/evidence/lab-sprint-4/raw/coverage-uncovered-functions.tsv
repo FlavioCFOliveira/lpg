@@ -1,0 +1,51 @@
+file:line	function	inherits	category	reason
+src/ops/bulk/csv.rs:170	ops::bulk::csv::csv_error	-	I/O error	`csv_error`: csv::Writer buffers its output (errors surface at the flush, through `io_error`) and csv::Reader over `flexible` byte records fails only on I/O; no test injects an I/O error into a CSV read or write
+src/ops/bulk/csv.rs:298	ops::bulk::csv::write_rows::{closure#0}	-	test gap	the error of a query-result row above the record size limit ("a result row too large to export"): no test exports one
+src/ops/bulk/csv.rs:314	ops::bulk::csv::write_rows::{closure#2}	-	defensive	the error of a spooled row that does not decode: every spooled row was encoded by the same function
+src/ops/bulk/csv.rs:577	ops::bulk::csv::neo4j_value::{closure#2}	-	malformed input	the error of a Neo4j `double` field that is not a number: no test
+src/ops/bulk/csv.rs:668	ops::bulk::csv::read_file::{closure#0}	-	malformed input	the error of a CSV header that is not UTF-8: no test
+src/ops/bulk/csv.rs:691	ops::bulk::csv::read_file::{closure#3}	-	malformed input	the error of a CSV record that is not UTF-8: no test
+src/ops/bulk/dump.rs:246	<ops::bulk::dump::DumpWriter>::block::{closure#0}	-	test gap	the error of a dump block payload of 4 GiB or more: no test
+src/ops/bulk/dump.rs:480	ops::bulk::dump::verify::{closure#0}	-	malformed input	the error of a catalog block that does not decode but has a valid CRC-32C: no test
+src/ops/bulk/dump.rs:499	ops::bulk::dump::verify::{closure#3}	-	malformed input	the error of a node or edge block without a graph varint but with a valid CRC-32C: no test
+src/ops/bulk/dump.rs:503	ops::bulk::dump::verify::{closure#4}	-	malformed input	the error of a node or edge block whose records do not parse but whose CRC-32C is valid: no test
+src/ops/bulk/dump.rs:512	ops::bulk::dump::verify::{closure#5}	-	malformed input	the error of a definitions block that does not decode but has a valid CRC-32C: no test
+src/ops/bulk/dump.rs:648	ops::bulk::dump::malformed	-	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs:743	ops::bulk::dump::read_all::{closure#0}	-	fuzz entry	the graph filter of the fuzz entry `read_all`: its test feeds graph-scope dumps, whose catalog holds no objects
+src/ops/bulk/dump.rs:744	ops::bulk::dump::read_all::{closure#1}	-	fuzz entry	the graph map of the fuzz entry `read_all`: its test feeds graph-scope dumps, whose catalog holds no objects
+src/ops/bulk/dump.rs:777	<ops::bulk::dump::Memory as storage::StorageFile>::write_at	-	test helper	`Memory::write_at`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing writes it
+src/ops/bulk/dump.rs:781	<ops::bulk::dump::Memory as storage::StorageFile>::sync_data	-	test helper	`Memory::sync_data`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing syncs it
+src/ops/bulk/dump.rs:785	<ops::bulk::dump::Memory as storage::StorageFile>::set_len	-	test helper	`Memory::set_len`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing resizes it
+src/ops/bulk/dump.rs:793	<ops::bulk::dump::Memory as storage::StorageFile>::reserve	-	test helper	`Memory::reserve`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing reserves space in it
+src/ops/bulk/export.rs:59	ops::bulk::export::token_name::{closure#1}	-	defensive	the error of a record naming a token the catalog lacks: stored records name catalog tokens
+src/ops/bulk/export.rs:108	ops::bulk::export::each_node::{closure#0}::{closure#0}	-	defensive	the error of a node key that does not parse: node keys are written by the engine
+src/ops/bulk/export.rs:110	ops::bulk::export::each_node::{closure#0}::{closure#1}	-	defensive	the error of a node record that does not decode: node records are written by the engine
+src/ops/bulk/export.rs:149	ops::bulk::export::each_edge_tx::{closure#0}::{closure#0}	-	defensive	the error of an edge key that does not parse: edge keys are written by the engine
+src/ops/bulk/export.rs:150	ops::bulk::export::each_edge_tx::{closure#0}::{closure#1}	-	defensive	the error of an edge record that does not decode: edge records are written by the engine
+src/ops/bulk/export.rs:249	<ops::bulk::export::ContentsMap as types::lexical::Contents>::edge	-	test gap	`ContentsMap::edge`: the lexical form of an edge in a query-result export; no test exports a query result holding an edge
+src/ops/bulk/export.rs:253	<ops::bulk::export::ContentsMap as types::lexical::Contents>::edge::{closure#0}	-	test gap	the fallback of `ContentsMap::edge` for an edge without contents; no test exports a query result holding an edge
+src/ops/bulk/export.rs:380	ops::bulk::export::stored::{closure#0}::{closure#1}	-	defensive	the error of a graph without a path: every graph the snapshot lists has a path in it
+src/ops/bulk/export.rs:529	ops::bulk::export::dump::{closure#0}::{closure#0}	-	defensive	the error of a node key that does not parse during a dump: node keys are written by the engine
+src/ops/bulk/export.rs:536	ops::bulk::export::dump::{closure#1}::{closure#0}	-	defensive	the error of an edge key that does not parse during a dump: edge keys are written by the engine
+src/ops/bulk/fast.rs:838	ops::bulk::fast::load::{closure#7}	-	defensive	the error of a missing catalog entry for the loaded graph: the load read its object and holds its X lock
+src/ops/bulk/files.rs:160	<ops::bulk::files::Outputs>::new::{closure#0}	-	invalid request	the error of an output location that cannot be listed: no test
+src/ops/bulk/graphml.rs:343	ops::bulk::graphml::encode_props::{closure#1}	-	test gap	the error of a property set above the record size limit ("a value too large to export"): no test
+src/ops/bulk/graphml.rs:608	ops::bulk::graphml::parse_document::{closure#4}	-	malformed input	the error of a GraphML `<data>` without `key`: no test
+src/ops/bulk/graphml.rs:671	ops::bulk::graphml::data_value::{closure#0}	-	malformed input	the error of an `lpg:type` attribute naming no type: no test
+src/ops/bulk/graphml.rs:672	ops::bulk::graphml::data_value::{closure#1}	-	malformed input	the error of `lpg:type`-typed data whose text does not read as its type: no test
+src/ops/bulk/graphml.rs:674	ops::bulk::graphml::data_value::{closure#2}	-	malformed input	the error of native GraphML data that does not convert (boolean, integer, double): no test
+src/ops/bulk/graphml.rs:682	ops::bulk::graphml::data_value::{closure#3}	-	malformed input	the error of a native GraphML integer data that is not an integer: no test
+src/ops/bulk/graphml.rs:688	ops::bulk::graphml::data_value::{closure#4}	-	malformed input	the error of a native GraphML double data that is not a number: no test
+src/ops/bulk/graphml.rs:743	ops::bulk::graphml::decode::{closure#3}	-	test gap	the sort key of two or more `<default>` values applied to one element: the default test has one default
+src/ops/bulk/import.rs:126	ops::bulk::import::run_with::{closure#0}::{closure#0}	-	invalid request	the error of a missing or unreadable dump file of an import: no test
+src/ops/bulk/import.rs:475	ops::bulk::import::database::{closure#3}	-	malformed input	the error of a dump object without a path: no test
+src/ops/bulk/import.rs:518	ops::bulk::import::database::{closure#5}::{closure#2}	-	malformed input	the error of a definition naming a token the catalog block lacks: no test
+src/ops/bulk/import.rs:548	ops::bulk::import::database::{closure#6}::{closure#2}	branch src/ops/bulk/import.rs:552:16 true	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs:566	ops::bulk::import::database::{closure#6}::{closure#3}	-	malformed input	the error of a dump object listed before its parent: no test
+src/ops/bulk/import.rs:577	ops::bulk::import::database::{closure#6}::{closure#4}	branch src/ops/bulk/import.rs:574:33 false	test gap	database dump holding a graph with a graph type: no test
+src/ops/bulk/import.rs:594	ops::bulk::import::database::{closure#6}::{closure#5}	-	malformed input	the error of a definition of a graph the dump lacks: no test
+src/ops/bulk/import.rs:626	ops::bulk::import::database::{closure#6}::{closure#7}	-	malformed input	the error of a definition linking a definition the dump lacks: no test
+src/ops/bulk/jsonl.rs:79	ops::bulk::jsonl::to_json::{closure#0}	-	defensive	the tagged form of a finite float `serde_json::Number::from_f64` refuses: it refuses only non-finite values, which the arm excludes
+src/ops/bulk/jsonl.rs:359	ops::bulk::jsonl::node_of::{closure#2}	-	malformed input	the error of a JSON Lines label that is not a string: no test
+src/ops/bulk/jsonl.rs:377	ops::bulk::jsonl::edge_of::{closure#0}	branch src/ops/bulk/jsonl.rs:386:9 false	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/model.rs:194	<ops::bulk::model::Report>::invalid::{closure#0}	-	I/O error	the error of a report line serde_json cannot write: the report writer is buffered and fails only on a storage error; no test injects one

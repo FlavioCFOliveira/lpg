@@ -1,0 +1,82 @@
+        PASS [   0.027s] ( 1/75) lpg api::tests::bulk::a_query_result_with_a_node_and_an_integer_column
+        PASS [   0.017s] ( 2/75) lpg api::tests::bulk::export_and_import_ask_their_actions
+        PASS [   0.005s] ( 3/75) lpg lab::generator::tests::memory_cap_for_cache_shares
+        PASS [   0.006s] ( 4/75) lpg lab::generator::tests::property_graphs_are_deterministic_and_cover_every_kind
+        PASS [   0.005s] ( 5/75) lpg lab::generator::tests::samplers_are_deterministic_and_in_range
+        PASS [   0.008s] ( 6/75) lpg lab::generator::tests::zipf_is_skewed_and_uniform_is_not
+        PASS [   0.025s] ( 7/75) lpg ops::bulk::tests::audit::a_catalog_object_created_during_a_database_import_fails_it
+        PASS [   0.058s] ( 8/75) lpg ops::bulk::tests::audit::a_dump_block_beyond_the_cap_fails_with_51n72
+        PASS [   0.005s] ( 9/75) lpg ops::bulk::tests::audit::a_dump_block_changed_after_verify_or_outside_the_scope_fails_with_22n05
+        PASS [   0.088s] (10/75) lpg ops::bulk::tests::audit::a_graph_with_sixty_four_indexes_fast_loads
+        PASS [   0.819s] (11/75) lpg ops::bulk::tests::audit::a_large_fast_load_with_a_uniqueness_constraint_fits_a_small_cap
+        PASS [   0.055s] (12/75) lpg ops::bulk::tests::audit::a_named_id_column_is_stored_typed_by_id_type
+        PASS [   0.016s] (13/75) lpg ops::bulk::tests::audit::a_point_column_with_a_non_finite_coordinate_is_an_lpg_column
+        PASS [   0.028s] (14/75) lpg ops::bulk::tests::audit::a_record_breaking_two_constraints_is_reported_once
+        PASS [   0.044s] (15/75) lpg ops::bulk::tests::audit::a_report_failure_after_the_data_commit_is_reported_beside_the_counts
+        PASS [   0.020s] (16/75) lpg ops::bulk::tests::audit::a_serializable_reader_of_the_graph_before_a_load_cannot_commit_after_it
+        PASS [   0.005s] (17/75) lpg ops::bulk::tests::audit::a_stale_temporary_file_does_not_block_an_export
+        PASS [   0.004s] (18/75) lpg ops::bulk::tests::audit::a_target_created_during_an_export_is_not_replaced
+        PASS [   0.020s] (19/75) lpg ops::bulk::tests::audit::a_writer_begun_before_an_undone_install_commits
+        PASS [   0.025s] (20/75) lpg ops::bulk::tests::audit::abort_reports_the_first_invalid_record_in_input_order_in_both_modes
+        PASS [   0.021s] (21/75) lpg ops::bulk::tests::audit::an_index_scan_from_a_snapshot_older_than_the_load_returns_nothing
+        PASS [   0.020s] (22/75) lpg ops::bulk::tests::audit::an_undone_install_restores_the_marks
+        PASS [   0.876s] (23/75) lpg ops::bulk::tests::audit::identifiers_and_the_install_survive_crashes_during_recovery
+        PASS [   0.051s] (24/75) lpg ops::bulk::tests::audit::skip_mode_keeps_the_same_records_in_both_modes
+        PASS [   0.024s] (25/75) lpg ops::bulk::tests::audit::the_install_batch_hides_the_loaded_trees_from_older_snapshots
+        PASS [   0.005s] (26/75) lpg ops::bulk::tests::audit::two_exports_of_one_name_never_mix
+        PASS [   0.019s] (27/75) lpg ops::bulk::tests::fast::a_fast_load_into_a_graph_with_one_node_fails_and_changes_nothing
+MEMORY fast load: peak=4000475 cap=33554432
+        PASS [   0.091s] (28/75) lpg ops::bulk::tests::fast::a_fast_load_with_constraints_and_indexes_equals_the_input
+        PASS [   0.023s] (29/75) lpg ops::bulk::tests::fast::a_load_requested_during_a_backup_waits_for_it
+FASTLOAD temp-file bytes: written=2033684 read=2033684; peak=871141 cap=8388608
+        PASS [   0.069s] (30/75) lpg ops::bulk::tests::fast::a_spilling_fast_load_stays_within_the_cap_and_counts_its_temporary_bytes
+        PASS [   0.065s] (31/75) lpg ops::bulk::tests::fast::during_a_load_writers_wait_backups_fail_and_older_snapshots_read_the_graph_empty
+        PASS [   0.020s] (32/75) lpg ops::bulk::tests::fast::the_invalid_records_of_a_fast_load_are_reported
+        PASS [   0.034s] (33/75) lpg ops::bulk::tests::formats::a_generated_graph_round_trips_through_every_format_and_mode
+        PASS [   0.016s] (34/75) lpg ops::bulk::tests::formats::fr_imp_006_a_date_to_json_lines
+        PASS [   0.016s] (35/75) lpg ops::bulk::tests::formats::fr_imp_006_a_non_neo4j_type_to_csv
+        PASS [   0.016s] (36/75) lpg ops::bulk::tests::formats::fr_imp_006_a_point_to_graphml
+        PASS [   0.024s] (37/75) lpg ops::bulk::tests::formats::fr_imp_006_an_integer_and_a_string_on_one_property_to_graphml_and_csv
+        PASS [   0.016s] (38/75) lpg ops::bulk::tests::formats::fr_imp_006_graphml_read_with_the_lpg_namespace_ignored
+        PASS [   0.016s] (39/75) lpg ops::bulk::tests::formats::fr_imp_006_nan_to_json_lines
+        PASS [   0.078s] (40/75) lpg ops::bulk::tests::formats::readers_during_a_load_of_a_three_level_graph_see_it_empty_then_whole
+        PASS [   0.214s] (41/75) lpg ops::bulk::tests::formats::the_readers_never_panic_on_damaged_exports
+        PASS [   1.321s] (42/75) lpg ops::bulk::tests::formats::two_hundred_generated_graphs_round_trip_through_every_format_and_mode
+        PASS [   0.021s] (43/75) lpg ops::bulk::tests::framework::a_damaged_dump_fails_and_adds_nothing
+        PASS [   0.015s] (44/75) lpg ops::bulk::tests::framework::a_database_dump_into_a_catalog_with_another_object_fails_and_changes_nothing
+        PASS [   0.033s] (45/75) lpg ops::bulk::tests::framework::a_database_with_two_graphs_an_index_and_a_constraint_round_trips_through_a_dump
+        PASS [   0.017s] (46/75) lpg ops::bulk::tests::framework::a_graph_scope_dump_holds_exactly_its_graph
+MEMORY transactional import: peak=8388096 cap=8388608
+        PASS [   0.046s] (47/75) lpg ops::bulk::tests::framework::an_import_beyond_the_memory_cap_fails_and_changes_nothing
+        PASS [   0.059s] (48/75) lpg ops::bulk::tests::framework::enospc_at_each_write_of_an_export_fails_it_and_leaves_no_file
+        PASS [   0.016s] (49/75) lpg ops::bulk::tests::framework::excluded_pairs_and_existing_targets_fail_before_any_file
+        PASS [   0.017s] (50/75) lpg ops::bulk::tests::framework::one_invalid_record_aborts_by_default_and_is_skipped_on_request
+        PASS [   0.005s] (51/75) lpg storage::fs::noreplace_tests::a_failed_unlink_after_the_link_leaves_no_target
+SORT temp-file bytes: runs=5 written=193948 read=193948 run_lengths=193948
+        PASS [   0.025s] (52/75) lpg storage::sort::tests::the_temporary_file_bytes_of_a_spilling_sort_are_counted
+SUITE fault fs=tmpfs source=tmpfs workload=BulkLoad crash_points=108 runs: drop-all 3, keep-random 3, tear-512 3 failure_runs=12 copy_failure_runs=0 seconds=0.3 (sample)
+        PASS [   0.297s] (53/75) lpg suites::fault::bulk_load
+SUITE fault fs=tmpfs source=tmpfs workload=FastLoad crash_points=296 runs: drop-all 3, keep-random 3, tear-512 3 failure_runs=10 copy_failure_runs=0 seconds=0.3 (sample)
+        PASS [   0.344s] (54/75) lpg suites::fault::fast_load
+        PASS [   0.010s] (55/75) lpg test_support::values::tests::the_generator_covers_every_type_and_is_deterministic
+        PASS [   0.089s] (56/75) lpg types::lexical::tests::every_generated_value_round_trips_through_its_lexical_form
+        PASS [   0.005s] (57/75) lpg types::lexical::tests::ts21_boolean
+        PASS [   0.005s] (58/75) lpg types::lexical::tests::ts21_bytes
+        PASS [   0.004s] (59/75) lpg types::lexical::tests::ts21_date
+        PASS [   0.005s] (60/75) lpg types::lexical::tests::ts21_durations
+        PASS [   0.005s] (61/75) lpg types::lexical::tests::ts21_edge
+        PASS [   0.005s] (62/75) lpg types::lexical::tests::ts21_float
+        PASS [   0.005s] (63/75) lpg types::lexical::tests::ts21_integer
+        PASS [   0.005s] (64/75) lpg types::lexical::tests::ts21_list
+        PASS [   0.004s] (65/75) lpg types::lexical::tests::ts21_local_datetime
+        PASS [   0.004s] (66/75) lpg types::lexical::tests::ts21_local_time
+        PASS [   0.005s] (67/75) lpg types::lexical::tests::ts21_node
+        PASS [   0.005s] (68/75) lpg types::lexical::tests::ts21_null
+        PASS [   0.004s] (69/75) lpg types::lexical::tests::ts21_path
+        PASS [   0.005s] (70/75) lpg types::lexical::tests::ts21_point
+        PASS [   0.004s] (71/75) lpg types::lexical::tests::ts21_record
+        PASS [   0.004s] (72/75) lpg types::lexical::tests::ts21_string
+        PASS [   0.005s] (73/75) lpg types::lexical::tests::ts21_zoned_datetime
+        PASS [   0.005s] (74/75) lpg types::lexical::tests::ts21_zoned_time
+        PASS [   0.004s] (75/75) lpg types::lexical::tests::type_names_are_case_sensitive_and_annotations_split_at_the_first_colon
+     Summary [   5.401s] 75 tests run: 75 passed, 535 skipped

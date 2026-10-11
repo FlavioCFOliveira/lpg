@@ -1,0 +1,16 @@
+2026.09.0
+  Import data errors / violations (JSON formatted): report.json.log
+IMPORT DONE in 1s 30ms. 
+  40 nodes
+  60 relationships
+nodes
+40
+relationships
+60
+n.uid, n.p12, n.p2, n.p1, n.p5, n.p6, n.p7, n.p8, n.p9, n.ints
+0, point({srid:9157, x:-1.0, y:1.0, z:-0.0}), 0.0, 3, NULL, 00:00, 2026-01-01T01:00, NULL, 1970-01-01T00:00:00.500Z[UTC], [0, -1]
+1, NULL, NULL, NULL, 8000-02-02, NULL, 2026-01-02T00:00:00.000000001, 00:00Z, NULL, [1, -1]
+2, point({srid:7203, x:-0.0, y:0.0}), 1.5, 9223372036854775807, NULL, NULL, 2026-01-01T00:00:00.000000001, 00:00+01:00, NULL, [2, -1]
+4, NULL, NULL, NULL, NULL, NULL, 2026-01-01T01:00, NULL, 1969-12-31T23:59:58.500Z[UTC], [4, -1]
+edge_points, edge_datetimes, edge_doubles
+16, 38, 30

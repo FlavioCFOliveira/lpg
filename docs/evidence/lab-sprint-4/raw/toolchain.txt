@@ -1,0 +1,26 @@
+info: checking for self-update (current version: 1.29.1)
+  rustup unchanged - 1.29.1
+
+info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+
+  stable-x86_64-unknown-linux-gnu unchanged - rustc 1.99.0 (b940084d7 2026-09-28)
+
+info: syncing channel updates for nightly-x86_64-unknown-linux-gnu
+
+  nightly-x86_64-unknown-linux-gnu unchanged - rustc 1.101.0-nightly (6f5da406b 2026-10-10)
+
+info: checking for self-update (current version: 1.29.1)
+===CHECK
+stable-x86_64-unknown-linux-gnu - up to date: 1.99.0 (b940084d7 2026-09-28)
+nightly-x86_64-unknown-linux-gnu - up to date: 1.101.0-nightly (6f5da406b 2026-10-10)
+1.80-x86_64-unknown-linux-gnu - up to date: 1.80.1 (3f5fd8dd4 2024-08-06)
+1.85-x86_64-unknown-linux-gnu - up to date: 1.85.1 (4eb161250 2025-03-15)
+1.89-x86_64-unknown-linux-gnu - up to date: 1.89.0 (29483883e 2025-08-04)
+rustup - up to date : 1.29.1
+===VERS
+rustup 1.29.1 (d95a37b6a 2026-08-13)
+info: This is the version for the rustup toolchain manager, not the rustc compiler.
+info: the currently active `rustc` version is `rustc 1.99.0 (b940084d7 2026-09-28)`
+rustc 1.99.0 (b940084d7 2026-09-28)
+rustc 1.101.0-nightly (6f5da406b 2026-10-10)
+rustc 1.89.0 (29483883e 2025-08-04)

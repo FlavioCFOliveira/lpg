@@ -1,0 +1,7 @@
+        SLOW [> 60.000s] (───────) lpg suites::kill::kill_and_reopen
+        SLOW [> 60.000s] (───────) lpg suites::fault::commits
+        SLOW [> 60.000s] (───────) lpg suites::fault::restore_
+        SLOW [>120.000s] (───────) lpg suites::fault::restore_
+        SLOW [>180.000s] (───────) lpg suites::fault::restore_
+        SLOW [> 60.000s] (───────) lpg suites::fault::fast_load
+     Summary [ 229.444s] 581 tests run: 581 passed (4 slow), 29 skipped

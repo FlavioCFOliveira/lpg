@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.09s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.08s
+     Running `/dev/shm/lpg-target/fuzz-s4/x86_64-unknown-linux-gnu/release/csv_read -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/csv_read/ -runs=1000000 -fork=2 -ignore_timeouts=0 -ignore_ooms=0 fuzz/corpus/csv_read`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2047152047
+INFO: Loaded 1 modules   (23912 inline 8-bit counters): 23912 [0x5a5ba519f650, 0x5a5ba51a53b8), 
+INFO: Loaded 1 PC tables (23912 PCs): 23912 [0x5a5ba51a53b8,0x5a5ba5202a38), 
+INFO: -fork=2: fuzzing in separate process(s)
+INFO: -fork=2: 1076 seed inputs, starting to fuzz in /tmp/libFuzzerTemp.FuzzWithFork3374974.dir
+INFO: fuzzed for 1023928 iterations, wrapping up soon
+INFO: exiting: 0 time: 1453s
+EXIT 0 wall 1454 s
+#1023928: cov: 4334 ft: 21272 corp: 2331 exec/s: 789 oom/timeout/crash: 0/0/0 time: 1452s job: 73 dft_time: 0

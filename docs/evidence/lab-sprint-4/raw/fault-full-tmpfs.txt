@@ -1,0 +1,5 @@
+LPG_SEED=267549946716658531
+SUITE fault fs=tmpfs source=tmpfs workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, tear-512 108 failure_runs=191 copy_failure_runs=0 seconds=11.2
+LPG_SEED=1779837626126268662
+SUITE fault fs=tmpfs source=tmpfs workload=FastLoad crash_points=296 runs: drop-all 296, keep-random 296, tear-512 296 failure_runs=564 copy_failure_runs=0 seconds=41.4
+     Summary [  52.601s] 2 tests run: 2 passed, 608 skipped

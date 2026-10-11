@@ -1,0 +1,31 @@
+summary nodes=29657 edges=42623 invalid=0 report_error=None
+report lines=0
+files nodes=29657 edges=42623; graph nodes=29657 edges=42623
+label Comment files=471 graph=471
+label Forum files=381 graph=381
+label Message files=3660 graph=3660
+label Organisation files=7955 graph=7955
+label Person files=50 graph=50
+label Place files=1460 graph=1460
+label Post files=3189 graph=3189
+label Tag files=16080 graph=16080
+label TagClass files=71 graph=71
+type CONTAINER_OF files=3189 graph=3189
+type HAS_CREATOR files=3660 graph=3660
+type HAS_INTEREST files=1256 graph=1256
+type HAS_MEMBER files=1253 graph=1253
+type HAS_MODERATOR files=381 graph=381
+type HAS_TAG files=2424 graph=2424
+type HAS_TYPE files=16080 graph=16080
+type IS_LOCATED_IN files=11665 graph=11665
+type IS_PART_OF files=1454 graph=1454
+type IS_SUBCLASS_OF files=70 graph=70
+type KNOWS files=83 graph=83
+type LIKES files=492 graph=492
+type REPLY_OF files=471 graph=471
+type STUDY_AT files=42 graph=42
+type WORK_AT files=103 graph=103
+id values=29657 int64=29657
+person 14: [[String("Hossein"), Int(1262531431499), List([String("fa"), String("ku"), String("en")])]]
+person 14 KNOWS out-degree=3
+RESULT PASS

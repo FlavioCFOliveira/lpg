@@ -87,9 +87,12 @@ Each failure and its code (rmp task #39, point 5; rule above; D-N4STATUS). ISO l
 ## TS-03 Storage abstraction
 
 - **Decision**: a synchronous, dyn-compatible trait at file level, implemented by the application or by the crate's default.
-  - Store operations: `open`, `create`, `remove`, `rename`, `list`, `sync_dir`, `try_lock`, `available_space`.
+  - Store operations: `open`, `create`, `remove`, `rename`, `rename_noreplace`, `list`, `sync_dir`, `try_lock`, `available_space`.
   - File operations: `read_at`, `write_at`, `sync_data`, `set_len`, `len`, `reserve(offset, len)`.
-  - The default uses `std::fs` with `std::os::unix::fs::FileExt`, and `rustix` for `available_space` (`fstatvfs`) and `reserve` (`fallocate`). `std` offers neither.
+  - The default uses `std::fs` with `std::os::unix::fs::FileExt`, and `rustix` for `available_space` (`fstatvfs`), `reserve` (`fallocate`) and `rename_noreplace` (`renameat_with`). `std` offers none of the three.
+  - **`rename_noreplace(from, to)`** (rmp #57 DECISIONs 464 and 476; `src/storage/mod.rs`, `src/storage/fs.rs`): renames atomically, and fails with `AlreadyExists` if `to` exists. Durable as `rename`, after `sync_dir`. Export files are committed with it ([TS-26](operations.md#ts-26-backup-restore-import-and-export) Export files).
+    - The default implementation calls `renameat2` with `RENAME_NOREPLACE`. If the file system does not support the flag (`EINVAL`) or the kernel lacks the call (`ENOSYS`), it falls back, as tempfile 3.27.0 `persist` does, to `link`, which fails with `EEXIST` if `to` exists, then `unlink` of `from`; if the unlink fails, it removes `to` again before returning the error, so a failed call leaves no `to` (rmp #57 FINDING 472).
+    - The trait's provided method fails with `Unsupported`: an implementation that cannot rename without replacing atomically must not pretend to.
   - Every file the crate touches passes through the trait: `CONTROL`, `LOCK`, data, WAL, backup, restore, import, export, migration and sort files.
 - **Satisfies**: ABS-003, FR-STO-002, NFR-VER-004, FR-REC-006, FR-REC-007, FR-DB-006, FR-OPS-011.
 - **Evidence**:
@@ -97,12 +100,15 @@ Each failure and its code (rmp task #39, point 5; rule above; D-N4STATUS). ISO l
   - turso `IO` and `File` traits (R-TURSO `core/io/mod.rs:153, 424`).
   - SQLite's crash-simulating VFS (R-SQLITE `src/test6.c`).
   - PostgreSQL reserves file space with `posix_fallocate` (R-PG `src/backend/storage/file/fd.c:2396-2425`).
-  - `rustix::fs::fstatvfs` and `rustix::fs::fallocate` are safe functions (D-RUSTIX).
+  - `rustix::fs::fstatvfs` and `rustix::fs::fallocate` are safe functions (D-RUSTIX); `rustix::fs::renameat_with` with `RenameFlags::NOREPLACE` is in rustix 1.1.5 (`src/fs/at.rs:302`).
+  - Linux man-pages 6.17, `rename(2)` (2026-02-08): `RENAME_NOREPLACE` "Don't overwrite newpath of the rename. Return an error if newpath already exists"; `EEXIST` if it exists; `EINVAL` "The filesystem does not support one of the flags in flags"; `renameat2()` since Linux 3.15; the flag is supported on ext4 since Linux 3.15, tmpfs since 3.17, XFS since 4.0. `link(2)` (2026-02-11): `EEXIST` "newpath already exists".
+  - The `tempfile` crate commits without replacing the same way: `renameat2` with `RENAME_NOREPLACE`, else `link` and `unlink` (3.27.0 `persist_noclobber`, `src/file/imp/unix.rs:111-127`).
 - **Crates**: `rustix` 1.1.5 (feature `fs`): dependency. `fs4` (which wraps `rustix` for `available_space`) and `nix`: not used.
 - **Rejected**:
   - An async trait: the engine core is synchronous ([TS-02](architecture.md#ts-02-async-api-and-threading)).
   - Block-level or memory-mapped I/O: mmap needs `unsafe` ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)).
   - Reserving space by writing zeros: twice the writes for every extent.
+  - Checking that the target is absent, then `rename`: a target created in between is replaced (measured, rmp #57 FINDING 457).
 
 ## Transport (ABS-001)
 

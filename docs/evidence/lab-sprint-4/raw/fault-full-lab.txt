@@ -1,0 +1,9 @@
+LPG_SEED=4715339832741163747
+LPG_SEED=3131381402721262756
+SUITE fault fs=xfs source=/dev/loop59 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, tear-512 108 failure_runs=191 copy_failure_runs=0 seconds=8.3
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, tear-512 108 failure_runs=191 copy_failure_runs=0 seconds=9.6
+LPG_SEED=14204449576786989222
+LPG_SEED=13322855838380032906
+SUITE fault fs=xfs source=/dev/loop59 workload=FastLoad crash_points=296 runs: drop-all 296, keep-random 296, tear-512 296 failure_runs=564 copy_failure_runs=0 seconds=38.3
+SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=FastLoad crash_points=296 runs: drop-all 296, keep-random 296, tear-512 296 failure_runs=564 copy_failure_runs=0 seconds=41.3
+     Summary [  50.871s] 2 tests run: 2 passed, 608 skipped

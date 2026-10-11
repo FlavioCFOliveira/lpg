@@ -1,0 +1,17 @@
+# scratch copy = git archive bcd5085 plus these changes only (never in the product tree)
+diff -r src/ops/bulk/tests.rs copy/src/ops/bulk/tests.rs
+21a22,23
+> mod lab60;
+> mod lab60b;
+diff -r src/suites/mod.rs copy/src/suites/mod.rs
+49c49,50
+<         (vec![(format!("{fs} source={source}"), d)], false)
+---
+>         // SCRATCH COPY ONLY (rmp #60 validation): LPG_FORCE_FULL forces the full sweep on tmpfs.
+>         (vec![(format!("{fs} source={source}"), d)], std::env::var_os("LPG_FORCE_FULL").is_some())
+diff -r src/test_support/child.rs copy/src/test_support/child.rs
+62c62
+<         .stderr(Stdio::null())
+---
+>         .stderr(Stdio::inherit())
+Only in copy: src/ops/bulk/tests/lab60.rs, src/ops/bulk/tests/lab60b.rs (= scratch-tests.rs)

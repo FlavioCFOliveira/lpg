@@ -1,0 +1,24 @@
+# LPG_LAB_EXT4=/data/tmp/lpg-lab LPG_LAB_XFS=/mnt/lpg-xfs .config/gates.sh, final tree, 2026-10-11, nothing else running
+fmt: exit 0, 6 s
+clippy: exit 0, 27 s
+cfgfuzz: exit 0, 48 s
+loom: exit 0, 211 s
+nextest: exit 0, 219 s
+shuttle: exit 0, 231 s
+concurrent gates: 231 s
+stress: exit 0, 65 s
+all gates: 296 s, 0 failed
+EXIT 0
+
+--- nextest
+        SLOW [> 60.000s] (───────) lpg suites::kill::kill_and_reopen
+        PASS [  85.394s] (497/587) lpg suites::kill::kill_and_reopen
+     Summary [ 218.512s] 587 tests run: 587 passed (4 slow), 29 skipped
+--- loom
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 494 filtered out; finished in 42.07s
+--- shuttle
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 494 filtered out; finished in 27.74s
+--- stress
+     Summary [  64.166s] 69 tests run: 69 passed, 547 skipped
+
+--- df samples every 2 s during the run (MiB used/avail): /mnt/lpg-xfs peak used 3376, lowest avail 4753 of 8 GiB; 144 samples
