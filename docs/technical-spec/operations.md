@@ -55,7 +55,12 @@ related:
       - Inside an array or `:LABEL` field, elements are separated by `;`, and `\` escapes `;` and `\`.
       - Column types are Neo4j's lower-case names `long`, `double`, `boolean`, `string`, `date`, `localtime`, `time`, `localdatetime`, `datetime`, `point` and `<type>[]`; import reads them case-insensitively (R-NEO `community/import-util/.../csv/DataFactories.java:593`; `community/csv/.../reader/Extractors.java:173-204`). Import also reads `int`, `short` and `byte` as `long`, and `float` as `double`: LDBC's Neo4j headers use `INT` (R-LDBCI `cypher/scripts/headers.txt`).
       - A `double` column writes NaN and ±infinity as `NaN`, `Infinity` and `-Infinity`. Neo4j parses a `double` with `Double.parseDouble` (`Extractors.java:611-627`); measured: Neo4j 2026.09.0 imported them and returned `NaN` and `Infinity` (M-S4 Appendix A).
-      - A `point` column writes each value in the [TS-21](values-and-types.md#ts-21-values-and-types) form, with its `srid`. Neo4j merges the header's and the value's maps, the value winning, and accepts `srid` (R-NEO `community/values/.../storable/PointValue.java:311-321, 474-478`); `crs` and `srid` together fail (`PointValue.java:336`). Measured: header `point{srid:7203}` with a value holding `srid` imported with SRID 7203 (M-S4 Appendix A).
+      - A `point` column writes each value in the [TS-21](values-and-types.md#ts-21-values-and-types) form, with its `srid`. Neo4j merges the header's and the value's maps, the value winning, and accepts `srid` (R-NEO `community/values/.../storable/PointValue.java:311-321, 474-478`); `crs` and `srid` together fail (`PointValue.java:336`). Measured: header `point{srid:7203}` with a value holding `srid` imported with SRID 7203 (M-S4 Appendix A). Measured on lpg's own CSV export: Neo4j 2026.09.0 accepted the [TS-21](values-and-types.md#ts-21-values-and-types) form, with a space after each colon, and imported 40 nodes and 60 relationships (`docs/evidence/lab-sprint-4/neo4j_import_check.sh`, rmp #59 FINDING 436).
+      - A point property that holds any point with a NaN or infinite coordinate is written as an `lpg:POINT` column instead (rmp #59 DECISION 445). Neo4j 2026.09.0 refuses such a point: "Cannot create a point with non-finite coordinate values" (measured with the same script, FINDING 436).
+      - **Named ID column** (user decision 2026-10-11, rmp #59 DECISION 444; FR-IMP-005). A node file's named ID column, `<name>:ID` or `<name>:ID(<space>)`, is also stored as the node property `<name>`. The import option `id_type` is `string` (default, STRING) or `integer` (INT64). Two details follow Neo4j's defaults (coordinator, under the rule to adopt Neo4j defaults):
+        - `id_type` governs how node ID values and edge `:START_ID` and `:END_ID` values are read and matched: Neo4j reads all three with one extractor chosen by `--id-type` (R-NEO `community/import-util/.../csv/CsvInput.java:733-738`; `DataFactories.java:223, 576-578`).
+        - With `integer`, a value that does not parse as an `i64` is an invalid record (FR-IMP-004; GQLSTATUS 22018, table below). Neo4j's integer extractor fails such a value and the import stops with "ERROR in input" (`CsvInputParser.java:235-250`); lpg applies its abort-or-skip option instead.
+        - Sources: `ImportCommand.java:266-277` (`--id-type`, default `string`); `CsvInputParser.java:202-210` and `IdValueBuilder.java:89-91` (named ID parts written as properties); all at Neo4j `54a7dcf`, studied only (FS [S61]).
       - A header field `<name>:lpg:<type name>` or `<name>:lpg:annotated` takes everything after `lpg:` as a type name of [TS-21](values-and-types.md#ts-21-values-and-types) or `annotated`. Any other field follows APOC's field grammar, `name`, `:type`, `{options}`, `(idspace)`, `[]` (R-APOC `core/src/main/java/apoc/export/csv/CsvLoaderConstants.java:28-29`, ported).
       - A property name that holds `:` fails the export with an error naming it: the field grammar's name is `[^:]*` (`CsvLoaderConstants.java:29`).
       - **Neo4j input** (user decision 2026-10-11, item A option (a), rmp #55 DECISION 399). Import also accepts id spaces (`:ID(<space>)`, `:START_ID(<space>)`, `:END_ID(<space>)`), `:IGNORE` columns, a one-byte delimiter (default `,`) and array delimiter (default `;`) that differ, and labels for a node file or an edge type for an edge file given with the file. LDBC's Neo4j load files therefore import unchanged (R-LDBCI `cypher/scripts/import-to-neo4j.sh:32-51`; R-NEO `community/import-tool/.../ImportCommand.java:372-393`). An input id is unique within its id space; a file without one uses the default space. Export writes `,`, `;` and no id space.
@@ -88,7 +93,7 @@ related:
     | 64-bit float, NaN or ±infinity | `double` column: `NaN`, `Infinity`, `-Infinity` | tagged object | `attr.type="string"` + lpg type attribute |
     | character string, uniform, never empty | `string` column | JSON string | `attr.type="string"` |
     | DATE, LOCAL TIME, ZONED TIME, LOCAL DATETIME, ZONED DATETIME, uniform | `date`, `localtime`, `time`, `localdatetime`, `datetime` column | tagged object | `attr.type="string"` + lpg type attribute |
-    | point, uniform | `point` column | tagged object | `attr.type="string"` + lpg type attribute |
+    | point, uniform | `point` column; `lpg:POINT` column if any value has a NaN or infinite coordinate | tagged object | `attr.type="string"` + lpg type attribute |
     | list of one of the above, uniform | `<type>[]` column | JSON array | `attr.type="string"` + lpg type attribute |
     | any other type (both duration kinds, byte string, record, nested list, other numerics, node, edge, path) | `lpg:<type name>` column | tagged object | `attr.type="string"` + lpg type attribute |
     | any value of a mixed property or column, or a string column that holds an empty string | `lpg:annotated` column; each value written as `<type name>:<lexical form>` | each value by its own row above | `attr.type="string"`, lpg type attribute on each `<data>` element |
@@ -113,7 +118,7 @@ related:
     | A constraint violation | as `ConstraintViolation` | [GQLSTATUS codes](interfaces.md#gqlstatus-codes) |
     | An import that aborts on an invalid record | the code of that record | Invalid records, above |
     | An excluded format and scope pair; a name a format cannot hold; an export or report file that exists; a delimiter equal to the array delimiter | 22N11 | `InvalidArgument` ([GQLSTATUS codes](interfaces.md#gqlstatus-codes)), as for a backup target that is not empty (`src/ops/backup.rs:255-256`) |
-    | A fast initial load into a graph that is not empty; a database-scope import into a catalog that holds other objects | 51N41 | Neo4j "admin operation failed" (3201), by description, as `LoadRunning` |
+    | A fast initial load into a graph that is not empty or has a POPULATING index; a database-scope import into a catalog that holds other objects | 51N41 | Neo4j "admin operation failed" (3201), by description, as `LoadRunning` |
     | Storage full, or any other I/O failure | 50N00 | `Io` ([GQLSTATUS codes](interfaces.md#gqlstatus-codes)); neither the ISO insert nor `GqlStatusInfoCodes.java` has a code for a full device (searched 2026-10-11) |
     | The memory cap; the transaction memory limit | 51N72; 51N73 | [GQLSTATUS codes](interfaces.md#gqlstatus-codes) |
     | A refusal of the authoriser | 42NFF | [GQLSTATUS codes](interfaces.md#gqlstatus-codes) |
@@ -126,7 +131,7 @@ related:
   - **Memory.** The transactional import's id map is charged to the memory cap. Parse and write buffers, the report's included, have fixed sizes outside the cap, as the 1 MiB copy buffer has ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). The fast initial load's memory is its sort reservations (FR-LIM-003, FR-LIM-007).
   - **Transactional import** runs as one transaction. It adds all records or none (FR-IMP-004), and its writes with their old versions must fit the memory cap (FR-LIM-007).
   - **Fast initial load** targets an empty graph.
-    1. Wait for a running backup to end. Take the X graph lock ([TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)), so writers of the graph wait; readers keep reading the empty graph. If the graph is not empty, fail.
+    1. Wait for a running backup to end. Take the X graph lock ([TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)), so writers of the graph wait; readers keep reading the empty graph. If the graph is not empty, fail. If an index of the graph is POPULATING, fail: its builder would install, after the load, a tree built from the empty graph (`src/ops/bulk/fast.rs:349-359`; rmp #58 DECISION 433).
     2. External merge sort of the input into temporary files through the storage trait, in the database location ([TS-05](storage.md#ts-05-files-and-pages)):
        - nodes by (id space, input id), which assigns identifiers in order and finds duplicate input ids;
        - edges by start input id, merged with the sorted nodes to resolve starts, then by end input id to resolve ends;
@@ -142,7 +147,7 @@ related:
     7. Release the graph lock.
 
     If the load fails or crashes before step 6, the graph stays empty and its pages stay owned by its build record, whose release runs at once after a failure (again at close or the next open if that release fails) and at the next open after a crash ([TS-05](storage.md#ts-05-files-and-pages) Build pages). ENOSPC during reservation fails the load.
-  - **Element identifiers.** Both import modes assign new identifiers; input identifiers only connect edges to nodes.
+  - **Element identifiers.** Both import modes assign new identifiers; input identifiers connect edges to nodes, and a CSV named ID column is also stored as a property (CSV, Named ID column, above).
 - **Satisfies**: FR-OPS-001, FR-OPS-002, FR-OPS-003, FR-OPS-007, FR-OPS-008, FR-OPS-009, FR-OPS-010, FR-REC-003, FR-REC-004, FR-IMP-001, FR-IMP-002, FR-IMP-003, FR-IMP-004, FR-IMP-005, FR-IMP-006, FR-IDX-001, FR-LIM-003, FR-LIM-007, FR-AUTH-001, BR-TYPE-002, NFR-PERF-002, NFR-PERF-005.
 - **Evidence**:
   - PostgreSQL base backup: checkpoint, file copy while running, then the WAL from start to stop replayed at restore. Neo4j full backup copies the store and recovers ([P-STO](../evidence/research/research-01-storage.md) §Q7).
@@ -175,8 +180,6 @@ related:
   - Loaded entries left visible to snapshots older than the install: a snapshot taken before the load would see the graph change, against serializable isolation (README) and step 1.
   - serde_json's `arbitrary_precision` feature, to read every JSON integer outside the `i64` range as invalid: Cargo builds a dependency with the union of the features every package enables (D-CARGOFEAT), so it would change serde_json for the application's own uses.
   - ISO G1003, "endpoint node not in current working graph", for an edge with an unknown endpoint: G1003 names a node that exists elsewhere, while no node has that input id.
-
-Unverified: whether `neo4j-admin database import` accepts the point form of [TS-21](values-and-types.md#ts-21-values-and-types), which has a space after each colon; the measured probe had none ([unverified point 12](quality-and-testing.md#unverified-points)).
 
 ## TS-28 Format versioning and migration
 
