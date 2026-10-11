@@ -1,0 +1,46 @@
+2026.09.0
+  Import data errors / violations (JSON formatted): report.json.log
+Error importing csv file.
+ERROR in input
+  original error: Cannot create a point with non-finite coordinate values: [NaN, 4.0]
+IMPORT FAILED with exit status 70:
+  Detailed progress reporting (JSON formatted): progress.json.log
+  Import data errors / violations (JSON formatted): report.json.log
+
+NOTE this directory will be cleared on the completion of a successful import.
+
+Neo4j version: 2026.09.0
+Importing the contents of these files into /data/databases/neo4j:
+Nodes:
+  /import/nodes.csv
+
+Relationships:
+  /import/edges.csv
+
+
+Available resources:
+  Total machine memory: 30.26GiB
+  Free machine memory: 6.353GiB
+  Max heap memory : 6.726GiB
+  Max worker threads: 16
+  Configured max memory: 2.913GiB
+  High parallel IO: true
+
+WARN: file group with header file /import/nodes.csv specifies no node labels, which could be a mistake
+
+IMPORT FAILED in 268ms. 
+Data statistics is not available.
+Peak memory usage: 0B
+WARNING Import failed. The store files in /data/databases/neo4j are left as they are, although they are likely in an unusable state. Starting a database on these store files will likely fail or observe inconsistent records so start at your own risk or delete the store manually.
+
+-----------------------------------------------------
+Command Failed
+Error importing csv file.
+
+ERROR in input
+  data source: BufferedCharSeeker[source:/import/nodes.csv, position:126, line:3]
+  in field: pts:point[]:2
+  for header: [:ID, pts:point[]]
+  raw field value: {srid: 7203, x: 1.0, y: 2.0};{srid: 7203, x: NaN, y: 4.0}
+  original error: Cannot create a point with non-finite coordinate values: [NaN, 4.0]
+-----------------------------------------------------

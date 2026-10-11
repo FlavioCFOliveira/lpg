@@ -485,7 +485,7 @@ fn iteration(
         env.push((FILL_VAR, OsStr::new("1")));
     }
     let mut c = child::spawn(&test, "work", &env);
-    let stdout = c.stdout.take().unwrap();
+    let stdout = c.child.stdout.take().unwrap();
     let (tx, rx) = crate::sync::mpsc::channel::<Line>();
     let reader = std::thread::spawn(move || {
         for line in BufReader::new(stdout).lines() {
@@ -538,11 +538,18 @@ fn iteration(
     // falls in the middle of the workload.
     let mut lines = Vec::new();
     loop {
-        let l = rx
-            .recv_timeout(Duration::from_secs(60))
-            .expect("the child commits");
+        let l = match rx.recv_timeout(Duration::from_secs(60)) {
+            Ok(l) => l,
+            Err(err) => panic!(
+                "the child commits: {err:?}\nchild standard error:\n{}",
+                c.kill()
+            ),
+        };
         if let Line::FillFailed(m) = l {
-            panic!("the child's filler step failed: {m}");
+            panic!(
+                "the child's filler step failed: {m}\nchild standard error:\n{}",
+                c.kill()
+            );
         }
         let commit = matches!(l, Line::Commit(..));
         lines.push(l);
@@ -552,10 +559,11 @@ fn iteration(
     }
     let started = Instant::now();
     std::thread::sleep(delay);
-    c.kill().unwrap();
-    c.wait().unwrap();
+    let stderr = c.kill();
     let elapsed = started.elapsed().as_secs_f64();
-    reader.join().unwrap();
+    if reader.join().is_err() {
+        panic!("the child's output could not be read\nchild standard error:\n{stderr}");
+    }
     lines.extend(rx.try_iter());
     let mut n = 0;
     let mut last = BTreeMap::new();
@@ -591,7 +599,9 @@ fn iteration(
             Line::Catalog(id) => txs.graphs.push(id),
             Line::Token(id) => txs.token = Some(id),
             Line::Drop(id) => fig.drops.push(id),
-            Line::FillFailed(m) => panic!("the child's filler step failed: {m}"),
+            Line::FillFailed(m) => {
+                panic!("the child's filler step failed: {m}\nchild standard error:\n{stderr}")
+            }
         }
     }
     fig.in_checkpoint += u64::from(checkpointing);

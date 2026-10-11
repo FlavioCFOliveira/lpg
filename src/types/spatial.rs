@@ -148,22 +148,26 @@ impl Point {
             })
     }
 
-    /// The lexical form `{srid: S, x: X, y: Y[, z: Z]}` (TS-21).
-    #[cfg(test)]
+    /// The lexical form `{srid: S, x: X, y: Y[, z: Z]}` (TS-21), each
+    /// coordinate in the float form of [`super::lexical`].
     pub(crate) fn lexical(&self) -> String {
-        let c = self.coords();
-        match c {
-            [x, y] => format!("{{srid: {}, x: {x:?}, y: {y:?}}}", self.srid.code()),
+        let f = super::lexical::float_text;
+        match self.coords() {
+            [x, y] => format!("{{srid: {}, x: {}, y: {}}}", self.srid.code(), f(*x), f(*y)),
             [x, y, z] => format!(
-                "{{srid: {}, x: {x:?}, y: {y:?}, z: {z:?}}}",
-                self.srid.code()
+                "{{srid: {}, x: {}, y: {}, z: {}}}",
+                self.srid.code(),
+                f(*x),
+                f(*y),
+                f(*z)
             ),
             _ => unreachable!("2 or 3 dimensions"),
         }
     }
 
-    /// Parses a lexical form of [`Point::lexical`].
-    #[cfg(test)]
+    /// Parses a lexical form of [`Point::lexical`]: `srid`, `x`, `y` and,
+    /// in 3D, `z`, each once, in any order, the coordinates in the float
+    /// form; spaces around each part are ignored. `None` otherwise.
     pub(crate) fn parse(text: &str) -> Option<Point> {
         let body = text.trim().strip_prefix('{')?.strip_suffix('}')?;
         let mut srid = None;
@@ -171,13 +175,23 @@ impl Point {
         for part in body.split(',') {
             let (k, v) = part.split_once(':')?;
             let v = v.trim();
-            match k.trim() {
-                "srid" => srid = Srid::from_code(v.parse().ok()?),
-                "x" => c[0] = Some(v.parse().ok()?),
-                "y" => c[1] = Some(v.parse().ok()?),
-                "z" => c[2] = Some(v.parse().ok()?),
+            let slot = match k.trim() {
+                "srid" => {
+                    if srid.is_some() {
+                        return None;
+                    }
+                    srid = Some(Srid::from_code(v.parse().ok()?)?);
+                    continue;
+                }
+                "x" => &mut c[0],
+                "y" => &mut c[1],
+                "z" => &mut c[2],
                 _ => return None,
+            };
+            if slot.is_some() {
+                return None;
             }
+            *slot = Some(super::lexical::parse_float(v)?);
         }
         let srid = srid?;
         let coords: Vec<f64> = c[..srid.dims()].iter().copied().collect::<Option<_>>()?;

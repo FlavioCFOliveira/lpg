@@ -1,0 +1,8 @@
+Transactional: nodes=2 edges=1 invalid=0
+  [Point(Point { srid: Cartesian2D, coords: [-1.0, 0.25, 0.0] }), Point(Point { srid: Wgs84_3D, coords: [1.0, 2.0, 3.0] }), Float(inf)]
+  [Point(Point { srid: Cartesian2D, coords: [1.5, 2.0, 0.0] }), Point(Point { srid: Wgs84_3D, coords: [1.0, 2.0, 3.0] }), Float(NaN)]
+  edges [Int(1)]
+FastLoad: nodes=2 edges=1 invalid=0
+  [Point(Point { srid: Cartesian2D, coords: [-1.0, 0.25, 0.0] }), Point(Point { srid: Wgs84_3D, coords: [1.0, 2.0, 3.0] }), Float(inf)]
+  [Point(Point { srid: Cartesian2D, coords: [1.5, 2.0, 0.0] }), Point(Point { srid: Wgs84_3D, coords: [1.0, 2.0, 3.0] }), Float(NaN)]
+  edges [Int(1)]

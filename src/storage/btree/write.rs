@@ -323,7 +323,7 @@ impl Store<'_> {
         batch: &[Write<'_>],
         create: &[NewTree],
     ) -> Result<Vec<Tree>> {
-        self.apply_batch_installing(st, wal, batch, create, None)
+        self.apply_batch_installing(st, wal, batch, create, &[])
     }
 
     /// [`Store::apply_batch_new`] that, first in the same batch, installs
@@ -339,7 +339,7 @@ impl Store<'_> {
         wal: Option<&Wal>,
         batch: &[Write<'_>],
         create: &[NewTree],
-        install: Option<&Install>,
+        installs: &[(Install, Option<Tree>)],
     ) -> Result<Vec<Tree>> {
         self.health.check()?;
         if batch.iter().any(|w| w.key.len() > MAX_KEY) {
@@ -353,8 +353,11 @@ impl Store<'_> {
         }
         let mut created: Vec<Tree> = Vec::with_capacity(create.len());
         self.run(st, wal, |a| {
-            if let Some(i) = install {
-                a.install(i.id, i.root)?;
+            for (i, old) in installs {
+                match old {
+                    Some(old) => a.install_into(*old, i.root)?,
+                    None => a.install(i.id, i.root)?,
+                }
                 a.set_build_record(i.id, &i.tail)?;
             }
             for &t in create {

@@ -1,0 +1,42 @@
+# suites::kill::kill_and_reopen reruns after the gates failure (child stderr inherited in the scratch copy for runs 4-14)
+## 1-2: unmodified tree, XFS only, the two seeds of the failed run
+SUITE kill fs=xfs source=/dev/loop59 dir=/mnt/lpg-xfs iterations=200 printed_commits=11122 recovery_ms_p50=25.8 recovery_ms_p99=43.1 replaye
+SUITE kill fs=xfs source=/dev/loop59 dir=/mnt/lpg-xfs iterations=200 printed_commits=6035 recovery_ms_p50=34.2 recovery_ms_p99=102.3 replaye
+## 3: unmodified tree, full lab run (ext4+XFS)
+     Summary [ 229.444s] 581 tests run: 581 passed (4 slow), 29 skipped
+## 4: unmodified tree, XFS with 5 GiB filler (2.8 GiB free)
+SUITE kill fs=xfs source=/dev/loop59 dir=/mnt/lpg-xfs iterations=200 printed_commits=12734 recovery_ms_p50=25.0 recovery_ms_p99=36.9 replaye
+## 5-10: scratch copy, kill only, ext4+XFS
+run 1 exit 0
+run 2 exit 0
+run 3 exit 0
+run 4 exit 0
+run 5 exit 0
+run 6 exit 0
+## 11-15: scratch copy, all suites::, ext4+XFS
+run 1 exit 0 22:36:51
+run 2 exit 0 22:40:35
+run 3 exit 0 22:44:20
+run 4 exit 0 22:48:02
+run 5 exit 0 22:51:47
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=Transactions crash_points=168 runs: drop-all 168, keep-random 1
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=Restore crash_points=169 runs: drop-all 169, keep-random 169, t
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, keep-ra
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, tear-
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=FastLoad crash_points=296 runs: drop-all 296, keep-random 296, 
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=Commits crash_points=152 runs: drop-all 152, keep-random 152, t
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=Checkpoint crash_points=34 runs: drop-all 34, keep-random 34, t
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 108, 
+      5 SUITE fault fs=xfs source=/dev/loop59 workload=Backup crash_points=109 runs: drop-all 109, keep-random 109, te
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Transactions crash_points=168 runs: drop-all 168, keep-rand
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Restore crash_points=169 runs: drop-all 169, keep-random 16
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=RecoveryCheckpoint crash_points=149 runs: drop-all 149, kee
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Migration crash_points=9 runs: drop-all 9, keep-random 9, t
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=FastLoad crash_points=296 runs: drop-all 296, keep-random 2
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Commits crash_points=152 runs: drop-all 152, keep-random 15
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Checkpoint crash_points=34 runs: drop-all 34, keep-random 3
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=BulkLoad crash_points=108 runs: drop-all 108, keep-random 1
+      5 SUITE fault fs=ext4 source=/dev/nvme0n1p1 workload=Backup crash_points=109 runs: drop-all 109, keep-random 109
+      1 SUITE kill fs=xfs source=/dev/loop59 dir=/mnt/lpg-xfs iterations=200 printed_commits=7473 recovery_ms_p50=29.0
+      1 SUITE kill fs=xfs source=/dev/loop59 dir=/mnt/lpg-xfs iterations=200 printed_commits=7148 recovery_ms_p50=29.3
+child stderr in runs 5-15: no panic or error line from any kill child; the only 'panicked' line per suites run is a panic that the passing test suites::fault::the_oracle_sees_an_undone_batch_that_came_back provokes on purpose (src/suites/fault.rs:516)

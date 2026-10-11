@@ -405,6 +405,13 @@ impl ResultStream {
         }
     }
 
+    /// The statement's transaction: between two pulls no batch holds its
+    /// slot, so a query-result export reads the contents of the nodes and
+    /// edges of a row in it ([`crate::ops::bulk::export`]).
+    pub(crate) fn shared(&self) -> &Arc<TxShared> {
+        &self.tx
+    }
+
     /// The summary, once the last row is pulled.
     #[must_use]
     pub fn summary(&self) -> Option<&Summary> {

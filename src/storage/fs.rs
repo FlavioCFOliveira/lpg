@@ -53,6 +53,22 @@ impl Storage for FsStorage {
         fs::rename(from, to)
     }
 
+    /// `renameat2(RENAME_NOREPLACE)` (Linux 3.15; rustix
+    /// `renameat_with`); on a file system that does not support the flag
+    /// (`EINVAL`) or a kernel without the call (`ENOSYS`), `link(2)`, which
+    /// fails with `EEXIST` if `to` exists, then `unlink(2)` of `from`, as
+    /// tempfile 3.27.0 `src/file/imp/unix.rs` `persist` does (MIT/Apache-2.0).
+    fn rename_noreplace(&self, from: &Path, to: &Path) -> io::Result<()> {
+        use rustix::fs::{CWD, RenameFlags, renameat_with};
+        match renameat_with(CWD, from, CWD, to, RenameFlags::NOREPLACE) {
+            Ok(()) => Ok(()),
+            Err(rustix::io::Errno::INVAL | rustix::io::Errno::NOSYS) => {
+                link_then_unlink(from, to, &|p| fs::remove_file(p))
+            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
     fn list(&self, dir: &Path) -> io::Result<Vec<OsString>> {
         let mut names = fs::read_dir(dir)?
             .map(|entry| entry.map(|e| e.file_name()))
@@ -74,6 +90,49 @@ impl Storage for FsStorage {
     fn available_space(&self, dir: &Path) -> io::Result<u64> {
         let stat = fstatvfs(File::open(dir)?)?;
         Ok(stat.f_bavail.saturating_mul(stat.f_frsize))
+    }
+}
+
+/// The fallback of [`FsStorage::rename_noreplace`]: `link(2)`, which
+/// fails with `EEXIST` if `to` exists, then `unlink` of `from` through
+/// `unlink`. If the unlink fails, the link is removed again before the
+/// error returns, so a failed call leaves no `to` (rmp #57 FINDING 472).
+fn link_then_unlink(
+    from: &Path,
+    to: &Path,
+    unlink: &dyn Fn(&Path) -> io::Result<()>,
+) -> io::Result<()> {
+    fs::hard_link(from, to)?;
+    if let Err(e) = unlink(from) {
+        let _ = fs::remove_file(to);
+        return Err(e);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod noreplace_tests {
+    use super::*;
+
+    /// FINDING 472: when the unlink of the fallback fails after the link,
+    /// the call fails and leaves no target; the source stays.
+    #[test]
+    fn a_failed_unlink_after_the_link_leaves_no_target() {
+        let d = crate::test_support::graph_dir();
+        let (from, to) = (d.path().join("a.tmp"), d.path().join("a"));
+        fs::write(&from, b"x").unwrap();
+        let err = link_then_unlink(&from, &to, &|_| Err(io::ErrorKind::Other.into())).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::Other);
+        assert!(!to.exists() && from.exists());
+        // And it never replaces: an existing target fails with EEXIST.
+        fs::write(&to, b"y").unwrap();
+        let err = link_then_unlink(&from, &to, &|p| fs::remove_file(p)).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::AlreadyExists);
+        assert_eq!(fs::read(&to).unwrap(), b"y");
+        // The success path moves the file.
+        fs::remove_file(&to).unwrap();
+        link_then_unlink(&from, &to, &|p| fs::remove_file(p)).unwrap();
+        assert!(to.exists() && !from.exists());
     }
 }
 

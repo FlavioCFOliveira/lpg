@@ -1,7 +1,7 @@
 ---
 title: Storage
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - architecture.md
   - transactions-and-recovery.md
@@ -15,7 +15,7 @@ Graphs far larger than memory are a primary target. Efficiency is judged with th
 
 ## TS-04 Own storage engine
 
-- **Decision**: lpg implements its own page file, buffer pool, B+tree, WAL, checkpoint and recovery, on `std`, with `rustix` for the two file-system calls that `std` lacks ([TS-03](interfaces.md#ts-03-storage-abstraction)).
+- **Decision**: lpg implements its own page file, buffer pool, B+tree, WAL, checkpoint and recovery, on `std`, with `rustix` for the file-system calls that `std` lacks ([TS-03](interfaces.md#ts-03-storage-abstraction)).
 - **Satisfies**: FR-STO-001, FR-STO-002, FR-STO-003, FR-TX-002, FR-REC-002, FR-REC-005, FR-REC-007, FR-REC-008, FR-LIM-003, FR-OPS-001, NFR-SAFE-001, NFR-PERF-003.
 - **Evidence**: assessment of each embedded store as a dependency ([P-STO](../evidence/research/research-01-storage.md) §Q1, with file and line references):
 

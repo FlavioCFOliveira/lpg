@@ -6,6 +6,7 @@
 
 mod api;
 mod auth;
+mod bulk;
 mod limits;
 mod obs;
 mod procs;

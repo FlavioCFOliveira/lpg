@@ -1,0 +1,160 @@
+file:line	col	side_not_taken	condition	category	reason
+src/ops/bulk/csv.rs:113	8	true	name.is_empty()	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs:113	27	true	name.contains(':')	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs:153	17	false	Value::List(items)	defensive	a Neo4j array column is chosen only when every value is a list
+src/ops/bulk/csv.rs:286	16	false	*v != Value::Null	test gap	query-result CSV export of a row with a NULL cell: no test
+src/ops/bulk/csv.rs:292	34	true	!es.is_empty()	test gap	query-result CSV export of an edge column: no test
+src/ops/bulk/csv.rs:382	14	false	!k.is_empty()	malformed input	a header option or point map entry with an empty key or value (`{:x}`, `{srid:}`), which `options` drops: no test
+src/ops/bulk/csv.rs:439	12	true	space.is_empty()	malformed input	malformed header field (empty id space, array of a special field, id space on a typed column): no test
+src/ops/bulk/csv.rs:442	55	true	b == b'_'	test gap	id space name with '_': no test
+src/ops/bulk/csv.rs:455	12	true	array	malformed input	malformed header field (empty id space, array of a special field, id space on a typed column): no test
+src/ops/bulk/csv.rs:458	12	true	!space.is_empty()	malformed input	malformed header field (empty id space, array of a special field, id space on a typed column): no test
+src/ops/bulk/csv.rs:743	23	false	end == 1	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:743	35	false	id == 0	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:743	46	false	label == 0	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:745	9	false	start == 0	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:745	23	false	end == 0	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:745	35	false	ty == 0	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:745	46	false	id <= 1	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:758	14	false	names.len() == n	malformed input	header structure refusals (counts of :ID/:START_ID/:END_ID/:LABEL/:TYPE, duplicate names): no test
+src/ops/bulk/csv.rs:817	20	false	!v.is_empty()	test gap	node row with an empty :ID value: no test
+src/ops/bulk/csv.rs:866	28	false	!v.is_empty()	test gap	edge row with an empty :TYPE value (file type used): no test
+src/ops/bulk/csv.rs:870	9	false	Some(ty)	malformed input	edge with no type: no test
+src/ops/bulk/csv.rs:947	31	true	edges	fuzz entry	fuzz-only reader entry (read_all); fuzz runs are not instrumented
+src/ops/bulk/dump.rs:271	48	true	self.payload.len() >= BLOCK_TARGET	test gap	a node or edge block reaching `BLOCK_TARGET` (several blocks of one kind in one graph): the test dumps are smaller than one block
+src/ops/bulk/dump.rs:375	8	true	n < buf.len()	defensive	block lengths are checked against the file length before the read
+src/ops/bulk/dump.rs:451	8	true	version != VERSION	malformed input	dump of another dump or crate format version: no test (a flipped byte fails the header CRC first)
+src/ops/bulk/dump.rs:451	30	true	format != FORMAT_VERSION	malformed input	dump of another dump or crate format version: no test (a flipped byte fails the header CRC first)
+src/ops/bulk/dump.rs:472	24	false	stage == 0	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:492	30	false	stage >= CATALOG	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:492	50	false	stage <= b.kind	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:510	28	false	(CATALOG..=EDGES).contains(&stage)	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:514	24	false	stage == DEFINITIONS	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:516	20	true	t.len() != 48	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:520	20	true	(0..4).any(|i| u(i) != counts[i])	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:520	57	true	u(4) != nodes	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:520	74	true	u(5) != edges	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:523	20	true	at != len	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs:588	15	false	at < self.len	defensive	the block loop returns before reaching the end condition
+src/ops/bulk/dump.rs:611	29	false	*k == kind	malformed input	record naming a token of another kind: no test
+src/ops/bulk/dump.rs:708	21	false	(Some(v), Some(rec))	test gap	edge block changed after verify (TOCTOU): only the node-block case is tested
+src/ops/bulk/dump.rs:714	58	false	labels.is_empty()	malformed input	edge record carrying labels: no test
+src/ops/bulk/export.rs:265	20	both	i % 2 == 0	test gap	query-result export holding a path: no test
+src/ops/bulk/export.rs:303	8	true	nodes.is_empty()	test gap	query-result GraphML export with no node and no edge: no test
+src/ops/bulk/export.rs:303	28	both	edges.is_empty()	test gap	query-result GraphML export with no node and no edge: no test
+src/ops/bulk/export.rs:312	12	true	into.nodes.contains_key(&id)	test gap	query-result GraphML export naming one node twice: no test
+src/ops/bulk/export.rs:316	20	false	Some((labels, props))	defensive	a node of the result missing from every graph
+src/ops/bulk/export.rs:327	12	both	into.edges.contains_key(&id)	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs:331	20	both	Some(e)	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs:537	16	true	v.len() < 24	defensive	on-disk edge record shorter than 24 bytes
+src/ops/bulk/fast.rs:112	16	false	Some(t)	defensive	graph tree missing
+src/ops/bulk/fast.rs:320	12	true	self.rejected.contains(&id)	test gap	second rejection of an already-rejected record in fast.rs reject(): not reached; why the FINDING 455 test does not reach it was not traced
+src/ops/bulk/fast.rs:353	28	false	Some(f)	test gap	a group of three or more records with one unique value: no test
+src/ops/bulk/fast.rs:376	21	false	Some((k, v))	defensive	conflicting ordinal without candidate record
+src/ops/bulk/fast.rs:393	20	false	self.reject(id)?	test gap	record already rejected that also conflicts on a taken value: no test
+src/ops/bulk/fast.rs:456	9	false	Some(object)	defensive	graph dropped between resolution and load
+src/ops/bulk/fast.rs:473	12	true	schema … .any(|d| d.graph == graph && d.kind.is_index() && d.state == State::Populating)	test gap	fast load refused by a POPULATING index (51N41): no test
+src/ops/bulk/fast.rs:526	12	true	key.len() > MAX_KEY	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs:534	12	true	record::encode(&r.tokens, &r.props, &mut v).is_err()	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs:561	16	false	has_id	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs:571	16	false	has_id	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs:580	20	false	has_id	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs:595	16	false	has_id	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs:633	12	true	key.len() > MAX_KEY	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs:633	35	true	end.len() + 8 > MAX_KEY	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs:643	12	true	record::encode(&[], &r.props, &mut v).is_err()	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs:704	20	true	Err(e)	test gap	an edge failing an existence or property-type constraint in a fast load: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/fast.rs:951	32	false	Some(l)	defensive	optional tree-source parts absent only when not needed
+src/ops/bulk/fast.rs:964	28	false	Some(a)	defensive	optional tree-source parts absent only when not needed
+src/ops/bulk/fast.rs:987	24	true	key.len() > MAX_KEY	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs:1044	16	false	Some((node, ls))	defensive	adjacency merge: a node whose first key differs from the current node; not traced
+src/ops/bulk/fast.rs:1076	35	false	!self.done	defensive	optional tree-source parts absent only when not needed
+src/ops/bulk/files.rs:37	12	true	n.is_empty()	invalid request	export or import file names that are empty, '.', '..', '*.tmp' or repeated: no test
+src/ops/bulk/files.rs:37	55	true	*n == "."	invalid request	export or import file names that are empty, '.', '..', '*.tmp' or repeated: no test
+src/ops/bulk/files.rs:37	68	true	*n == ".."	invalid request	export or import file names that are empty, '.', '..', '*.tmp' or repeated: no test
+src/ops/bulk/files.rs:37	82	true	n.ends_with(TMP)	invalid request	export or import file names that are empty, '.', '..', '*.tmp' or repeated: no test
+src/ops/bulk/files.rs:40	12	true	names[..i].contains(n)	invalid request	export or import file names that are empty, '.', '..', '*.tmp' or repeated: no test
+src/ops/bulk/files.rs:66	23	both	e.kind() == io::ErrorKind::NotFound	test gap	import of an input file that does not exist: no test
+src/ops/bulk/files.rs:110	12	true	data.len() >= BUFFER	test gap	single write of 64 KiB or more (a record over the buffer size): no test
+src/ops/bulk/files.rs:196	27	true	e.kind() == io::ErrorKind::AlreadyExists	defensive	collision of a random 64-bit temporary name
+src/ops/bulk/files.rs:196	71	both	tries < 8	defensive	collision of a random 64-bit temporary name
+src/ops/bulk/files.rs:250	27	true	self.renamed.contains(name)	test gap	failure after some renames of a multi-file export: no committed test (audit probe only)
+src/ops/bulk/graphml.rs:137	8	true	name.chars().any(xml_excluded)	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs:229	13	false	Some((id, kind))	defensive	property without a GraphML key
+src/ops/bulk/graphml.rs:360	16	false	b < 0x80	test gap	multi-byte length in the GraphML query-result spool: no element large enough
+src/ops/bulk/graphml.rs:426	17	both	Some((ty, src, dst, props))	defensive	edge of the result without contents
+src/ops/bulk/graphml.rs:452	12	true	last.as_deref() == Some(k)	test gap	duplicate element in the GraphML query-result spool: no test
+src/ops/bulk/graphml.rs:458	12	false	k[0] == 0	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs:729	31	false	!el.edge	test gap	GraphML 'labels' key on an edge or 'label' key on a node: no test
+src/ops/bulk/graphml.rs:731	37	false	el.edge	test gap	GraphML 'labels' key on an edge or 'label' key on a node: no test
+src/ops/bulk/graphml.rs:746	12	true	id == "labels"	test gap	a `<default>` on the `labels` key (node labels by default): no test
+src/ops/bulk/graphml.rs:746	30	both	!el.edge	test gap	a `<default>` on the `labels` key (`!el.edge` is evaluated only for it): no test
+src/ops/bulk/graphml.rs:748	19	true	id == "label"	test gap	a `<default>` on the `label` key (edge type by default): no test
+src/ops/bulk/graphml.rs:748	36	both	el.edge	test gap	a `<default>` on the `label` key (`el.edge` is evaluated only for it): no test
+src/ops/bulk/graphml.rs:750	19	false	id != "labels"	test gap	a `<default>` on the `labels` key reaching an edge: no test
+src/ops/bulk/graphml.rs:750	37	false	id != "label"	test gap	a `<default>` on the `label` key reaching a node: no test
+src/ops/bulk/graphml.rs:750	54	false	!props.iter().any(|(n, _)| *n == k.name)	test gap	a `<default>` for a property the element already holds under another key of the same `attr.name`: no test
+src/ops/bulk/graphml.rs:792	9	false	(Some(s), Some(t))	malformed input	GraphML edge without source, target or type: no test
+src/ops/bulk/graphml.rs:797	9	false	Some(ty)	malformed input	GraphML edge without source, target or type: no test
+src/ops/bulk/import.rs:64	20	false	o.kind == Kind::Graph	invalid request	import target path naming a non-graph object: no test
+src/ops/bulk/import.rs:134	12	true	d.scope != Scope::Database	invalid request	dump scope that does not match the import target: no test
+src/ops/bulk/import.rs:141	9	false	ImportTarget::Graph(path)	defensive	unreachable: database target handled above
+src/ops/bulk/import.rs:174	16	true	d.scope != Scope::Graph	invalid request	dump scope that does not match the import target: no test
+src/ops/bulk/import.rs:266	20	false	Some(k)	test gap	transactional import of nodes without an input id: no test
+src/ops/bulk/import.rs:267	20	false	!st.map.contains_key(k)	test gap	transactional import of nodes without an input id: no test
+src/ops/bulk/import.rs:268	20	false	!st.skipped.contains(k)	test gap	transactional import of nodes without an input id: no test
+src/ops/bulk/import.rs:281	16	false	Some(k)	test gap	transactional import of nodes without an input id: no test
+src/ops/bulk/import.rs:282	43	true	st.skipped.contains(k)	test gap	duplicate of a skipped input id in a transactional import: no test
+src/ops/bulk/import.rs:315	16	false	Some(k)	test gap	transactional import of nodes without an input id: no test
+src/ops/bulk/import.rs:364	16	true	Err(err)	test gap	an edge failing an existence or property-type constraint in a transactional import: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/import.rs:399	12	true	steps > objects.len()	defensive	catalog parent cycle guard
+src/ops/bulk/import.rs:461	8	true	!core.catalog.schema().is_empty()	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs:461	45	true	!super::fast::is_empty(engine, DEFAULT_GRAPH_ID)?	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs:539	12	true	root != [DEFAULT_SCHEMA_ID]	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs:539	43	true	public != [DEFAULT_GRAPH_ID]	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs:542	12	true	!tx.schema_defs(DEFAULT_GRAPH_ID)?.is_empty()	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs:552	16	true	any	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs:574	33	false	o.graph_type == 0	test gap	database dump holding a graph with a graph type: no test
+src/ops/bulk/import.rs:604	27	false	s.token == 0	test gap	database dump holding a label lookup index: no test
+src/ops/bulk/import.rs:604	43	true	s.kind == crate::index::SchemaKind::Lookup	test gap	database dump holding a label lookup index: no test
+src/ops/bulk/jsonl.rs:112	23	true	n.is_u64()	test gap	JSON number above i64::MAX (22003): no test
+src/ops/bulk/jsonl.rs:165	8	false	!n.props.is_empty()	test gap	JSON Lines export of a node without properties: no test
+src/ops/bulk/jsonl.rs:304	12	true	text.iter().all(u8::is_ascii_whitespace)	test gap	blank line in a JSON Lines input: no test
+src/ops/bulk/jsonl.rs:386	9	false	(Some(start), Some(stop))	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs:391	9	false	Some(Json::String(ty))	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/mod.rs:318	16	true	r.nodes.is_empty()	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs:318	38	both	r.edges.is_empty()	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs:326	16	true	[r.delimiter, r.array_delimiter] … .any(|d| matches!(d, b'"' | b'\\' | b'\r' | b'\n'))	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs:334	16	true	r.nodes.len() != 1	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs:334	38	true	!r.edges.is_empty()	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/model.rs:318	12	true	!is_property_value(v)	test gap	input value outside IV011 property values (22G03): no test
+src/ops/bulk/model.rs:399	24	false	Some(ix)	defensive	constraint of the other entity or without its owned index
+src/types/lexical.rs:342	60	false	start == 0	defensive	path edge with contents always has a type
+src/types/lexical.rs:342	74	false	end == 0	defensive	path edge with contents always has a type
+src/types/lexical.rs:372	5	false	b.next() … .is_some_and(|f| f.is_ascii_alphabetic() || f == b'_')	test gap	record field name that is empty or starts with a non-letter (written quoted): no test
+src/types/lexical.rs:373	26	false	f.is_ascii_alphabetic()	test gap	record field name that is empty or starts with a non-letter (written quoted): no test
+src/types/lexical.rs:402	12	true	i > 0	test gap	node form with two or more labels: no test
+src/types/lexical.rs:439	16	false	text.eq_ignore_ascii_case("NULL")	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:591	13	false	Value::Record(fields)	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:604	12	true	self.peek() != Some(q)	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:649	12	true	!digits.bytes().all(|b| b.is_ascii_hexdigit())	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:659	14	false	self.eat("X'")	test gap	byte string written with a lower-case x: no test
+src/types/lexical.rs:659	32	both	self.eat("x'")	test gap	byte string written with a lower-case x: no test
+src/types/lexical.rs:685	34	true	!self.eat("[")	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:700	16	true	!self.eat(",")	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:708	12	true	depth >= MAX_DEPTH	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:708	34	true	!self.eat_word("RECORD")	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:712	12	true	!self.eat("{")	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:733	20	true	!bare_name(n)	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:743	16	true	!self.eat(":")	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:753	16	true	!self.eat(",")	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:764	28	false	self.s.get(self.at + 1) == Some(&b'\'')	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:800	20	true	t.self_describing()	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs:837	22	false	!matches!(v, Value::List(_))	test gap	nested list as a property value (IV011 refusal): no test
+src/types/lexical.rs:848	45	false	y.is_nan()	test helper	bit_eq false outcome: reached only when a round trip fails
+src/types/lexical.rs:852	13	false	x.srid() == y.srid()	test helper	bit_eq false outcome: reached only when a round trip fails
+src/types/lexical.rs:855	13	false	x.zoned.timestamp() == y.zoned.timestamp()	test helper	bit_eq false outcome: reached only when a round trip fails
+src/types/lexical.rs:856	20	false	x.zoned.offset() == y.zoned.offset()	test helper	bit_eq false outcome: reached only when a round trip fails
+src/types/lexical.rs:860	13	false	x.len() == y.len()	test helper	bit_eq false outcome: reached only when a round trip fails
+src/types/lexical.rs:863	13	false	x.len() == y.len()	test helper	bit_eq false outcome: reached only when a round trip fails
+src/types/lexical.rs:866	45	false	k == l	test helper	bit_eq false outcome: reached only when a round trip fails

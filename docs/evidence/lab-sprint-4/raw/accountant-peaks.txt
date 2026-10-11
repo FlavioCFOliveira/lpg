@@ -1,0 +1,12 @@
+LAB60 export format=Csv bytes=1724716 peak_before_export=854016 peak=1591296 cap=33554432
+LAB60 export format=Dump bytes=756215 peak_before_export=854016 peak=1591296 cap=33554432
+LAB60 export format=GraphMl bytes=4300934 peak_before_export=854016 peak=1591296 cap=33554432
+LAB60 export format=JsonLines bytes=4997904 peak_before_export=854016 peak=1591296 cap=33554432
+LAB60 import format=Csv mode=FastLoad peak_before_import=854016 peak=3476197 cap=33554432
+LAB60 import format=Csv mode=Transactional peak_before_import=854016 peak=9455899 cap=33554432
+LAB60 import format=Dump mode=FastLoad peak_before_import=854016 peak=3476475 cap=33554432
+LAB60 import format=Dump mode=Transactional peak_before_import=854016 peak=9456177 cap=33554432
+LAB60 import format=GraphMl mode=FastLoad peak_before_import=854016 peak=3476197 cap=33554432
+LAB60 import format=GraphMl mode=Transactional peak_before_import=854016 peak=9455899 cap=33554432
+LAB60 import format=JsonLines mode=FastLoad peak_before_import=854016 peak=3476197 cap=33554432
+LAB60 import format=JsonLines mode=Transactional peak_before_import=854016 peak=9455899 cap=33554432

@@ -1,0 +1,10 @@
+LAB60B edge-form RECORD {id: 7, type: 'R', start: 1, end: 2, properties: RECORD {s: 'a', w: 1.5}}
+LAB60B edge-unique mode=Transactional on=Skip ok (2, 3, 2) report=[("e.csv", 3, "22N79"), ("e.csv", 5, "22N79")] graph_nodes_edges=(2, 3)
+LAB60B edge-unique mode=FastLoad on=Skip ok (2, 3, 2) report=[("e.csv", 3, "22N79"), ("e.csv", 5, "22N79")] graph_nodes_edges=(2, 3)
+LAB60B edge-unique mode=Transactional on=Abort err 22N79 report=[("e.csv", 3, "22N79")] graph_nodes_edges=(0, 0)
+LAB60B edge-unique mode=FastLoad on=Abort err 22N79 report=[("e.csv", 3, "22N79")] graph_nodes_edges=(0, 0)
+LAB60B graphml-default mode=Transactional nodes=2 w=[(0, Some(Float(1.5))), (1, Some(Float(2.5)))]
+LAB60B graphml-default mode=FastLoad nodes=2 w=[(0, Some(Float(1.5))), (1, Some(Float(2.5)))]
+LAB60B invalid mode=Transactional abort_code=22N05 abort=[("n.csv", 3, "22N05")] skip_counts=(2, 1, 8) skip=[("e.csv", 2, "22N05"), ("e.csv", 3, "22N05"), ("e.csv", 4, "22N05"), ("e.csv", 5, "22N05"), ("n.csv", 3, "22N05"), ("n.csv", 4, "22N77"), ("n.csv", 5, "22N79"), ("n.csv", 6, "22N78")]
+LAB60B invalid mode=FastLoad abort_code=22N05 abort=[("n.csv", 3, "22N05")] skip_counts=(2, 1, 8) skip=[("e.csv", 2, "22N05"), ("e.csv", 3, "22N05"), ("e.csv", 4, "22N05"), ("e.csv", 5, "22N05"), ("n.csv", 3, "22N05"), ("n.csv", 4, "22N77"), ("n.csv", 5, "22N79"), ("n.csv", 6, "22N78")]
+     Summary [   0.106s] 4 tests run: 4 passed, 623 skipped

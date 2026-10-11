@@ -154,6 +154,22 @@ pub trait Storage: Send + Sync {
     /// Fails with any I/O error of the implementation.
     fn rename(&self, from: &Path, to: &Path) -> io::Result<()>;
 
+    /// Renames `from` to `to` only if `to` does not exist, atomically: an
+    /// export commits its files with it, so a file created at `to` in the
+    /// meantime is never replaced (TS-26 Export files). Durable as
+    /// [`Storage::rename`]. The default fails with
+    /// [`io::ErrorKind::Unsupported`]: an implementation that cannot do it
+    /// atomically must not pretend to.
+    ///
+    /// # Errors
+    ///
+    /// [`io::ErrorKind::AlreadyExists`] if `to` exists; any other I/O error
+    /// of the implementation.
+    fn rename_noreplace(&self, from: &Path, to: &Path) -> io::Result<()> {
+        let _ = (from, to);
+        Err(io::ErrorKind::Unsupported.into())
+    }
+
     /// Returns the names of the entries of a directory, sorted.
     ///
     /// # Errors

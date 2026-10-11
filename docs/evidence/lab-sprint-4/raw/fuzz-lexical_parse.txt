@@ -1,0 +1,26 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.09s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.08s
+     Running `/dev/shm/lpg-target/fuzz-s4/x86_64-unknown-linux-gnu/release/lexical_parse -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/lexical_parse/ -runs=1000000 fuzz/corpus/lexical_parse`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2065073613
+INFO: Loaded 1 modules   (20341 inline 8-bit counters): 20341 [0x574df9c9f330, 0x574df9ca42a5), 
+INFO: Loaded 1 PC tables (20341 PCs): 20341 [0x574df9ca42a8,0x574df9cf39f8), 
+INFO:     3055 files found in fuzz/corpus/lexical_parse
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 3055 min: 1b max: 3559b total: 333543b rss: 36Mb
+#3058	INITED cov: 3924 ft: 9396 corp: 1516/123Kb exec/s: 0 rss: 94Mb
+#1000000	DONE   cov: 3933 ft: 9465 corp: 1540/124Kb lim: 4096 exec/s: 62500 rss: 468Mb
+###### Recommended dictionary. ######
+"\001\000\000\000\000\000\000\002" # Uses: 20117
+"\001\000\000\000\000\000\000S" # Uses: 19173
+"Infinity" # Uses: 15896
+"f\000\000\000" # Uses: 12805
+"LOCAL" # Uses: 4128
+"INTEGER" # Uses: 3713
+"\377\020\000\000" # Uses: 2735
+"{\000\000\000\000\000\000\000" # Uses: 2418
+"LIST<ANY>" # Uses: 1386
+"\001\000\000\\" # Uses: 79
+###### End of recommended dictionary. ######
+Done 1000000 runs in 16 second(s)
+EXIT 0 wall 18 s

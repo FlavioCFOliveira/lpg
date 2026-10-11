@@ -1,0 +1,3 @@
+t.graphml: networkx=read nodes=2 edges=1; graphml.xsd=invalid ('{https://crates.io/crates/lpg/graphml}type' attribute not allowed for element); graphml-lpg.xsd=invalid ('labels' attribute not allowed for element)
+t2.graphml: networkx=read nodes=2 edges=1; graphml.xsd=invalid ('{https://crates.io/crates/lpg/graphml}type' attribute not allowed for element); graphml-lpg.xsd=valid
+t3.graphml: networkx=read nodes=2 edges=1; graphml.xsd=valid; graphml-lpg.xsd=valid

@@ -1,0 +1,786 @@
+file	line	col	end_line	end_col	text	inherits	category	reason
+src/ops/bulk/csv.rs	114	9	116	12	return Err(invalid_argument(&format!( … )))	branch src/ops/bulk/csv.rs:113:8 true	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs	114	20	114	36	invalid_argument	branch src/ops/bulk/csv.rs:113:8 true	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs	154	17	154	40	return neo4j_text(v, c)	branch src/ops/bulk/csv.rs:153:17 false	defensive	a Neo4j array column is chosen only when every value is a list
+src/ops/bulk/csv.rs	154	24	154	34	neo4j_text	branch src/ops/bulk/csv.rs:153:17 false	defensive	a Neo4j array column is chosen only when every value is a list
+src/ops/bulk/csv.rs	170	1	170	39	fn csv_error(e: ::csv::Error) -> Error	function src/ops/bulk/csv.rs:170 ops::bulk::csv::csv_error	I/O error	`csv_error`: csv::Writer buffers its output (errors surface at the flush, through `io_error`) and csv::Reader over `flexible` byte records fails only on I/O; no test injects an I/O error into a CSV read or write
+src/ops/bulk/csv.rs	171	11	171	24	e.into_kind()	function src/ops/bulk/csv.rs:170 ops::bulk::csv::csv_error	I/O error	`csv_error`: csv::Writer buffers its output (errors surface at the flush, through `io_error`) and csv::Reader over `flexible` byte records fails only on I/O; no test injects an I/O error into a CSV read or write
+src/ops/bulk/csv.rs	172	36	172	47	io_error(e)	function src/ops/bulk/csv.rs:170 ops::bulk::csv::csv_error	I/O error	`csv_error`: csv::Writer buffers its output (errors surface at the flush, through `io_error`) and csv::Reader over `flexible` byte records fails only on I/O; no test injects an I/O error into a CSV read or write
+src/ops/bulk/csv.rs	173	14	173	56	crate::api::internal("a CSV write failed")	function src/ops/bulk/csv.rs:170 ops::bulk::csv::csv_error	I/O error	`csv_error`: csv::Writer buffers its output (errors surface at the flush, through `io_error`) and csv::Reader over `flexible` byte records fails only on I/O; no test injects an I/O error into a CSV read or write
+src/ops/bulk/csv.rs	175	1	175	2	}	function src/ops/bulk/csv.rs:170 ops::bulk::csv::csv_error	I/O error	`csv_error`: csv::Writer buffers its output (errors surface at the flush, through `io_error`) and csv::Reader over `flexible` byte records fails only on I/O; no test injects an I/O error into a CSV read or write
+src/ops/bulk/csv.rs	213	44	213	45	?	branch src/ops/bulk/csv.rs:113:8 true	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs	218	51	218	52	?	branch src/ops/bulk/csv.rs:113:8 true	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs	218	70	218	71	?	branch src/ops/bulk/csv.rs:113:8 true	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs	223	49	223	50	?	-	I/O error	`?` on the node file's header write: csv::Writer buffers, so an I/O error of the output surfaces at the flush (`io_error`), never at `write_record`; `csv_error` never runs
+src/ops/bulk/csv.rs	234	11	234	12	?	-	I/O error	`?` on `each_node` in a CSV graph export: a storage read error or a buffered CSV write error; no test injects either during this scan
+src/ops/bulk/csv.rs	244	45	244	46	?	-	I/O error	`?` on the edge file's header write: csv::Writer buffers, so an I/O error of the output surfaces at the flush, never at `write_record`; `csv_error` never runs
+src/ops/bulk/csv.rs	255	7	255	8	?	-	I/O error	`?` on `each_edge` in a CSV graph export: a storage read error or a buffered CSV write error; no test injects either during this scan
+src/ops/bulk/csv.rs	278	42	278	43	?	-	memory cap	`?` on `engine.sorter` for a query-result CSV export: fails only if the spool's reservation (cap/64, clamped) does not fit the memory cap; no test exports a query result near the cap
+src/ops/bulk/csv.rs	281	55	281	56	?	-	test gap	`?` on `rows.next_row`: a query that fails while its rows are read during a CSV export; no test exports a failing query
+src/ops/bulk/csv.rs	288	13	288	14	}	branch src/ops/bulk/csv.rs:286:16 false	test gap	query-result CSV export of a row with a NULL cell: no test
+src/ops/bulk/csv.rs	298	26	298	42	invalid_argument	function src/ops/bulk/csv.rs:298 ops::bulk::csv::write_rows::{closure#0}	test gap	the error of a query-result row above the record size limit ("a result row too large to export"): no test exports one
+src/ops/bulk/csv.rs	298	43	298	77	"a result row too large to export"	function src/ops/bulk/csv.rs:298 ops::bulk::csv::write_rows::{closure#0}	test gap	the error of a query-result row above the record size limit ("a result row too large to export"): no test exports one
+src/ops/bulk/csv.rs	298	79	298	80	?	-	test gap	`?` on the row encoding: a query-result row above the record size limit ("a result row too large to export"); no test exports one
+src/ops/bulk/csv.rs	299	41	299	42	?	-	I/O error	`?` on `spool.push`: a storage write error while the spool spills a run, or a row above the arena; no test injects either in a query-result export
+src/ops/bulk/csv.rs	309	40	309	41	?	branch src/ops/bulk/csv.rs:113:8 true	test gap	export of a property named '' or holding ':' (22N11): no test
+src/ops/bulk/csv.rs	310	46	310	47	?	-	I/O error	`?` on the query-result header write: csv::Writer buffers, so an I/O error surfaces at the flush; `csv_error` never runs
+src/ops/bulk/csv.rs	311	36	311	37	?	-	I/O error	`?` on `spool.finish`: a run cannot be written or read, or two read buffers do not fit; no test injects storage faults in a query-result export
+src/ops/bulk/csv.rs	312	50	312	51	?	-	I/O error	`?` on `next_record` of the spool: a run cannot be read; no test injects storage faults in a query-result export
+src/ops/bulk/csv.rs	314	28	314	48	crate::api::internal	function src/ops/bulk/csv.rs:314 ops::bulk::csv::write_rows::{closure#2}	defensive	the error of a spooled row that does not decode: every spooled row was encoded by the same function
+src/ops/bulk/csv.rs	314	49	314	80	"a spooled row does not decode"	function src/ops/bulk/csv.rs:314 ops::bulk::csv::write_rows::{closure#2}	defensive	the error of a spooled row that does not decode: every spooled row was encoded by the same function
+src/ops/bulk/csv.rs	314	82	314	83	?	-	defensive	`?` on the decode of a spooled row: every spooled row was encoded by the same function above, so it always decodes
+src/ops/bulk/csv.rs	327	30	327	34	None	-	defensive	the second cell of a column is always written as `Value::string` (the lexical form), so the non-string arm is unreachable
+src/ops/bulk/csv.rs	330	50	330	63	String::new()	branch src/ops/bulk/csv.rs:286:16 false	test gap	query-result CSV export of a row with a NULL cell: no test
+src/ops/bulk/csv.rs	332	40	332	47	format!	-	test gap	a query-result column holding element values of more than one type (annotated column with a rendered lexical form): no test
+src/ops/bulk/csv.rs	332	53	332	56	pre	-	test gap	a query-result column holding element values of more than one type (annotated column with a rendered lexical form): no test
+src/ops/bulk/csv.rs	332	60	332	75	TypeName::of(v)	-	test gap	a query-result column holding element values of more than one type (annotated column with a rendered lexical form): no test
+src/ops/bulk/csv.rs	338	49	338	50	?	-	I/O error	`?` on a query-result row write: csv::Writer buffers, so an I/O error surfaces at the flush; `csv_error` never runs
+src/ops/bulk/csv.rs	380	44	380	45	?	-	malformed input	`?` in `options`: a header option without `:` is dropped; no test feeds one
+src/ops/bulk/csv.rs	431	52	431	53	?	-	malformed input	`?` on the closing `}` of header options: a header field with `{` and no `}`; no test
+src/ops/bulk/csv.rs	455	20	455	30	Err(bad())	branch src/ops/bulk/csv.rs:455:12 true	malformed input	malformed header field (empty id space, array of a special field, id space on a typed column): no test
+src/ops/bulk/csv.rs	459	13	459	30	return Err(bad())	branch src/ops/bulk/csv.rs:458:12 true	malformed input	malformed header field (empty id space, array of a special field, id space on a typed column): no test
+src/ops/bulk/csv.rs	473	27	473	44	Ok(Field::Ignore)	-	test gap	a `:IGNORE` header field: no test
+src/ops/bulk/csv.rs	513	45	513	46	?	-	malformed input	`?` in `neo4j_point`: a point value without `{` or `}`; no test feeds one
+src/ops/bulk/csv.rs	513	64	513	65	?	-	malformed input	`?` in `neo4j_point`: a point value without `{` or `}`; no test feeds one
+src/ops/bulk/csv.rs	533	26	533	34	f64::NAN	-	test gap	`NaN`, `Infinity`, `-Infinity` as Neo4j point map coordinates (Neo4j itself refuses non-finite coordinates); no test
+src/ops/bulk/csv.rs	534	31	534	44	f64::INFINITY	-	test gap	`NaN`, `Infinity`, `-Infinity` as Neo4j point map coordinates (Neo4j itself refuses non-finite coordinates); no test
+src/ops/bulk/csv.rs	535	32	535	49	f64::NEG_INFINITY	-	test gap	`NaN`, `Infinity`, `-Infinity` as Neo4j point map coordinates (Neo4j itself refuses non-finite coordinates); no test
+src/ops/bulk/csv.rs	536	36	536	37	?	-	malformed input	`?` on a Neo4j point map coordinate that is not a number; no test
+src/ops/bulk/csv.rs	541	21	541	22	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	541	42	541	43	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	541	44	541	45	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	542	21	542	22	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	542	41	542	42	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	542	43	542	44	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	543	21	543	22	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	543	39	543	40	?	-	malformed input	`?` in `neo4j_point`: a coordinate that is not a number, or a map with neither `x` nor `longitude` (neither `y` nor `latitude`); no test
+src/ops/bulk/csv.rs	545	31	545	42	return None	-	malformed input	a Neo4j point map with both `srid` and `crs` (Neo4j `PointValue` refuses it); no test
+src/ops/bulk/csv.rs	546	58	546	59	?	-	malformed input	`?` on a `srid` that is not an integer or not a known SRID; no test
+src/ops/bulk/csv.rs	546	60	546	61	?	-	malformed input	`?` on a `srid` that is not an integer or not a known SRID; no test
+src/ops/bulk/csv.rs	547	34	547	65	c.to_ascii_lowercase().as_str()	-	test gap	the `crs` key of a Neo4j point map or header option (`cartesian`, `cartesian-3d`, `wgs-84`, `wgs-84-3d`): no test
+src/ops/bulk/csv.rs	548	28	548	45	Srid::Cartesian2D	-	test gap	the `crs` key of a Neo4j point map or header option (`cartesian`, `cartesian-3d`, `wgs-84`, `wgs-84-3d`): no test
+src/ops/bulk/csv.rs	549	31	549	48	Srid::Cartesian3D	-	test gap	the `crs` key of a Neo4j point map or header option (`cartesian`, `cartesian-3d`, `wgs-84`, `wgs-84-3d`): no test
+src/ops/bulk/csv.rs	550	25	550	39	Srid::Wgs84_2D	-	test gap	the `crs` key of a Neo4j point map or header option (`cartesian`, `cartesian-3d`, `wgs-84`, `wgs-84-3d`): no test
+src/ops/bulk/csv.rs	551	28	551	42	Srid::Wgs84_3D	-	test gap	the `crs` key of a Neo4j point map or header option (`cartesian`, `cartesian-3d`, `wgs-84`, `wgs-84-3d`): no test
+src/ops/bulk/csv.rs	552	18	552	29	return None	-	malformed input	an unknown `crs` name in a Neo4j point map; no test
+src/ops/bulk/csv.rs	554	31	554	49	(geo, z.is_some())	-	test gap	a Neo4j point map with neither `srid` nor `crs`, whose SRID follows from its keys: no test (the probe test gives `srid` in the header)
+src/ops/bulk/csv.rs	555	31	555	48	Srid::Cartesian2D	-	test gap	a Neo4j point map with neither `srid` nor `crs`, whose SRID follows from its keys: no test (the probe test gives `srid` in the header)
+src/ops/bulk/csv.rs	556	30	556	47	Srid::Cartesian3D	-	test gap	a Neo4j point map with neither `srid` nor `crs`, whose SRID follows from its keys: no test (the probe test gives `srid` in the header)
+src/ops/bulk/csv.rs	557	30	557	44	Srid::Wgs84_2D	-	test gap	a Neo4j point map with neither `srid` nor `crs`, whose SRID follows from its keys: no test (the probe test gives `srid` in the header)
+src/ops/bulk/csv.rs	558	29	558	43	Srid::Wgs84_3D	-	test gap	a Neo4j point map with neither `srid` nor `crs`, whose SRID follows from its keys: no test (the probe test gives `srid` in the header)
+src/ops/bulk/csv.rs	577	43	577	46	err	function src/ops/bulk/csv.rs:577 ops::bulk::csv::neo4j_value::{closure#2}	malformed input	the error of a Neo4j `double` field that is not a number: no test
+src/ops/bulk/csv.rs	577	49	577	50	?	-	malformed input	`?` on a Neo4j `double` field that is not a number; no test
+src/ops/bulk/csv.rs	590	21	590	38	return Err(err())	-	malformed input	a Neo4j `point` field that is neither the TS-21 form nor a Neo4j map; no test
+src/ops/bulk/csv.rs	609	48	609	49	?	-	malformed input	`?` on a Neo4j array element that does not convert to the column type; no test
+src/ops/bulk/csv.rs	661	64	661	65	?	-	I/O error	`?` on the header read: with `flexible` byte records the csv reader fails only on an I/O error of the input; no test injects one
+src/ops/bulk/csv.rs	668	26	668	39	invalid_input	function src/ops/bulk/csv.rs:668 ops::bulk::csv::read_file::{closure#0}	malformed input	the error of a CSV header that is not UTF-8: no test
+src/ops/bulk/csv.rs	668	40	668	72	"a CSV header that is not UTF-8"	function src/ops/bulk/csv.rs:668 ops::bulk::csv::read_file::{closure#0}	malformed input	the error of a CSV header that is not UTF-8: no test
+src/ops/bulk/csv.rs	668	74	668	75	?	-	malformed input	`?` on a CSV header that is not UTF-8; no test
+src/ops/bulk/csv.rs	672	61	672	62	?	-	I/O error	`?` on a record read: with `flexible` byte records the csv reader fails only on an I/O error of the input; no test injects one
+src/ops/bulk/csv.rs	691	30	691	33	bad	function src/ops/bulk/csv.rs:691 ops::bulk::csv::read_file::{closure#3}	malformed input	the error of a CSV record that is not UTF-8: no test
+src/ops/bulk/csv.rs	691	34	691	66	"a CSV record that is not UTF-8"	function src/ops/bulk/csv.rs:691 ops::bulk::csv::read_file::{closure#3}	malformed input	the error of a CSV record that is not UTF-8: no test
+src/ops/bulk/csv.rs	824	17	824	18	}	branch src/ops/bulk/csv.rs:817:20 false	test gap	node row with an empty :ID value: no test
+src/ops/bulk/csv.rs	864	89	864	90	?	-	malformed input	`?` on a `:START_ID` value that does not convert to the request's id type (integer ids); no test
+src/ops/bulk/csv.rs	871	9	871	69	return Err(invalid(invalid_input("an edge without a type")))	branch src/ops/bulk/csv.rs:870:9 false	malformed input	edge with no type: no test
+src/ops/bulk/csv.rs	871	20	871	27	invalid	branch src/ops/bulk/csv.rs:870:9 false	malformed input	edge with no type: no test
+src/ops/bulk/csv.rs	873	64	873	65	?	-	malformed input	`?` on an edge property field that does not convert to its column type; no test
+src/ops/bulk/csv.rs	890	42	890	43	?	branch src/ops/bulk/files.rs:66:23 both	test gap	import of an input file that does not exist: no test
+src/ops/bulk/csv.rs	898	48	898	49	?	-	malformed input	`?` on `check_header` of a node file: a header with the wrong counts of `:ID`, `:LABEL` or duplicate names (branches 743-758); no test
+src/ops/bulk/csv.rs	911	42	911	43	?	branch src/ops/bulk/files.rs:66:23 both	test gap	import of an input file that does not exist: no test
+src/ops/bulk/csv.rs	919	47	919	48	?	-	malformed input	`?` on `check_header` of an edge file: a header with the wrong counts of `:START_ID`, `:END_ID`, `:TYPE` or duplicate names (branches 743-758); no test
+src/ops/bulk/csv.rs	948	21	948	32	edge_record	branch src/ops/bulk/csv.rs:947:31 true	fuzz entry	fuzz-only reader entry (read_all); fuzz runs are not instrumented
+src/ops/bulk/csv.rs	948	21	948	88	edge_record(&file, &name, fields, line, &values, FUZZ_OPTS).is_ok()	branch src/ops/bulk/csv.rs:947:31 true	fuzz entry	fuzz-only reader entry (read_all); fuzz runs are not instrumented
+src/ops/bulk/csv.rs	948	33	948	38	&file	branch src/ops/bulk/csv.rs:947:31 true	fuzz entry	fuzz-only reader entry (read_all); fuzz runs are not instrumented
+src/ops/bulk/csv.rs	948	40	948	45	&name	branch src/ops/bulk/csv.rs:947:31 true	fuzz entry	fuzz-only reader entry (read_all); fuzz runs are not instrumented
+src/ops/bulk/csv.rs	948	47	948	53	fields	branch src/ops/bulk/csv.rs:947:31 true	fuzz entry	fuzz-only reader entry (read_all); fuzz runs are not instrumented
+src/ops/bulk/csv.rs	948	55	948	59	line	branch src/ops/bulk/csv.rs:947:31 true	fuzz entry	fuzz-only reader entry (read_all); fuzz runs are not instrumented
+src/ops/bulk/dump.rs	92	14	92	29	Kind::Directory	-	test gap	a database dump whose catalog holds a directory object (kind byte 1): no test dumps a database with a directory
+src/ops/bulk/dump.rs	94	14	94	29	Kind::GraphType	-	test gap	a database dump whose catalog holds a graph type (kind byte 3): no test dumps a database with a graph type
+src/ops/bulk/dump.rs	96	14	96	25	return None	-	malformed input	an unknown catalog object kind byte in a catalog block with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	105	14	105	25	return None	-	malformed input	an unknown token kind byte in a catalog block with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	138	31	138	32	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	139	32	139	33	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	140	46	140	47	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	140	48	140	49	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	141	48	141	49	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	143	31	143	32	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	145	31	145	32	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	146	35	146	36	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	147	39	147	40	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	147	41	147	42	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	148	33	148	34	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	149	39	149	40	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	150	38	150	39	?	-	malformed input	`?` in `DumpCatalog::decode`: a catalog payload that ends early or holds a bad kind byte or non-UTF-8 name, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	179	9	179	13	None	-	malformed input	a varint longer than ten bytes in a payload with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	183	53	183	54	?	-	malformed input	`?` in `Cursor::bytes`: a length beyond the payload or above `usize`, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	184	59	184	60	?	-	malformed input	`?` in `Cursor::bytes`: a length beyond the payload or above `usize`, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	184	61	184	62	?	-	malformed input	`?` in `Cursor::bytes`: a length beyond the payload or above `usize`, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	190	39	190	40	?	-	malformed input	`?` in `Cursor::string`: a name field that ends early, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	231	26	231	27	?	-	I/O error	`?` on writing the dump header: the export's `Writer` buffers 64 KiB and test dumps are smaller, so the first storage write, where an injected ENOSPC fails, is the commit's flush
+src/ops/bulk/dump.rs	240	44	240	45	?	-	I/O error	`?` on writing the catalog block: buffered as above, so no storage write fails here in any test
+src/ops/bulk/dump.rs	246	26	246	40	io::Error::new	function src/ops/bulk/dump.rs:246 <ops::bulk::dump::DumpWriter>::block::{closure#0}	test gap	the error of a dump block payload of 4 GiB or more: no test
+src/ops/bulk/dump.rs	246	41	246	68	io::ErrorKind::InvalidInput	function src/ops/bulk/dump.rs:246 <ops::bulk::dump::DumpWriter>::block::{closure#0}	test gap	the error of a dump block payload of 4 GiB or more: no test
+src/ops/bulk/dump.rs	246	70	246	95	"a dump block over 4 GiB"	function src/ops/bulk/dump.rs:246 <ops::bulk::dump::DumpWriter>::block::{closure#0}	test gap	the error of a dump block payload of 4 GiB or more: no test
+src/ops/bulk/dump.rs	246	97	246	98	?	-	test gap	a dump block payload of 4 GiB or more: node and edge blocks close at `BLOCK_TARGET`, and no test has a catalog or definitions block that large
+src/ops/bulk/dump.rs	251	34	251	35	?	-	I/O error	`?` on a block write: the export's `Writer` buffers 64 KiB and test dumps are smaller, so an injected ENOSPC fails at the commit's flush, not here
+src/ops/bulk/dump.rs	252	36	252	37	?	-	I/O error	`?` on a block write: the export's `Writer` buffers 64 KiB and test dumps are smaller, so an injected ENOSPC fails at the commit's flush, not here
+src/ops/bulk/dump.rs	253	47	253	48	?	-	I/O error	`?` on a block write: the export's `Writer` buffers 64 KiB and test dumps are smaller, so an injected ENOSPC fails at the commit's flush, not here
+src/ops/bulk/dump.rs	264	33	264	34	?	-	I/O error	`?` on writing a closed node or edge block: buffered as above, so no storage write fails here in any test
+src/ops/bulk/dump.rs	272	25	272	26	?	-	I/O error	`?` on closing a full or finished block when the next opens: buffered as above, so no storage write fails here in any test
+src/ops/bulk/dump.rs	286	32	286	33	?	-	I/O error	`?` on `room` before a node record: its only error is a block write, buffered as above
+src/ops/bulk/dump.rs	306	32	306	33	?	-	I/O error	`?` on `room` before an edge record: its only error is a block write, buffered as above
+src/ops/bulk/dump.rs	321	21	321	22	?	-	I/O error	`?` on closing the last node or edge block: buffered as above, so no storage write fails here in any test
+src/ops/bulk/dump.rs	329	36	329	37	?	-	I/O error	`?` on writing the definitions block: buffered as above, so no storage write fails here in any test
+src/ops/bulk/dump.rs	374	66	374	67	?	-	I/O error	`?` on `read_at` of a dump: no test injects a read error into a dump import
+src/ops/bulk/dump.rs	376	9	376	41	return Err(damaged("truncated"))	branch src/ops/bulk/dump.rs:375:8 true	defensive	block lengths are checked against the file length before the read
+src/ops/bulk/dump.rs	393	37	393	38	?	-	I/O error	`?` on reading a block head: the length was checked against the file, so only a read error fails it; no test injects one
+src/ops/bulk/dump.rs	408	44	408	45	?	-	I/O error	`?` on reading a block payload: the length was checked against the file, so only a read error fails it; no test injects one
+src/ops/bulk/dump.rs	410	44	410	45	?	-	I/O error	`?` on reading a block CRC: the length was checked against the file, so only a read error fails it; no test injects one
+src/ops/bulk/dump.rs	439	57	439	58	?	-	I/O error	`?` on the dump file's length: no test makes `len` fail
+src/ops/bulk/dump.rs	444	32	444	33	?	-	I/O error	`?` on reading the header: the length was checked first, so only a read error fails it; no test injects one
+src/ops/bulk/dump.rs	452	9	452	68	return Err(damaged("another dump or crate format version"))	branch src/ops/bulk/dump.rs:451:8 true	malformed input	dump of another dump or crate format version: no test (a flipped byte fails the header CRC first)
+src/ops/bulk/dump.rs	457	14	457	53	return Err(damaged("an unknown scope"))	-	malformed input	an unknown scope byte in a header with a valid CRC-32C; the damage tests flip bytes, which the header CRC catches first
+src/ops/bulk/dump.rs	476	74	476	75	?	-	memory cap	`?` on charging the catalog at twice its payload: a catalog block that fits the cap once but not twice; no test
+src/ops/bulk/dump.rs	480	67	480	74	damaged	function src/ops/bulk/dump.rs:480 ops::bulk::dump::verify::{closure#0}	malformed input	the error of a catalog block that does not decode but has a valid CRC-32C: no test
+src/ops/bulk/dump.rs	480	75	480	84	"catalog"	function src/ops/bulk/dump.rs:480 ops::bulk::dump::verify::{closure#0}	malformed input	the error of a catalog block that does not decode but has a valid CRC-32C: no test
+src/ops/bulk/dump.rs	480	86	480	87	?	-	malformed input	`?` on a catalog block that does not decode but has a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	499	50	499	57	damaged	function src/ops/bulk/dump.rs:499 ops::bulk::dump::verify::{closure#3}	malformed input	the error of a node or edge block without a graph varint but with a valid CRC-32C: no test
+src/ops/bulk/dump.rs	499	58	499	71	"block graph"	function src/ops/bulk/dump.rs:499 ops::bulk::dump::verify::{closure#3}	malformed input	the error of a node or edge block without a graph varint but with a valid CRC-32C: no test
+src/ops/bulk/dump.rs	499	73	499	74	?	-	malformed input	`?` on a node or edge block without a graph varint but with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	503	69	503	76	damaged	function src/ops/bulk/dump.rs:503 ops::bulk::dump::verify::{closure#4}	malformed input	the error of a node or edge block whose records do not parse but whose CRC-32C is valid: no test
+src/ops/bulk/dump.rs	503	77	503	92	"block records"	function src/ops/bulk/dump.rs:503 ops::bulk::dump::verify::{closure#4}	malformed input	the error of a node or edge block whose records do not parse but whose CRC-32C is valid: no test
+src/ops/bulk/dump.rs	503	94	503	95	?	-	malformed input	`?` on a node or edge block whose records do not parse but whose CRC-32C is valid; no test
+src/ops/bulk/dump.rs	512	71	512	78	damaged	function src/ops/bulk/dump.rs:512 ops::bulk::dump::verify::{closure#5}	malformed input	the error of a definitions block that does not decode but has a valid CRC-32C: no test
+src/ops/bulk/dump.rs	512	79	512	92	"definitions"	function src/ops/bulk/dump.rs:512 ops::bulk::dump::verify::{closure#5}	malformed input	the error of a definitions block that does not decode but has a valid CRC-32C: no test
+src/ops/bulk/dump.rs	512	94	512	95	?	-	malformed input	`?` on a definitions block that does not decode but has a valid CRC-32C; no test
+src/ops/bulk/dump.rs	517	21	517	51	return Err(damaged("trailer"))	branch src/ops/bulk/dump.rs:516:20 true	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs	521	21	521	87	return Err(damaged("the trailer's counts differ from the blocks"))	branch src/ops/bulk/dump.rs:520:20 true	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs	524	21	524	67	return Err(damaged("bytes after the trailer"))	branch src/ops/bulk/dump.rs:523:20 true	malformed input	dump blocks in a wrong order or a trailer that disagrees, each with a valid CRC: no test crafts them
+src/ops/bulk/dump.rs	528	18	528	61	return Err(damaged("a block out of order"))	-	malformed input	a block of an unknown kind or out of order, with a valid CRC-32C; the damage tests flip bytes, which the CRC catches first
+src/ops/bulk/dump.rs	559	23	559	24	?	-	malformed input	`?` in `count_records`: a record field that ends early, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	561	18	561	19	?	-	malformed input	`?` in `count_records`: a record field that ends early, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	570	27	570	28	?	-	malformed input	`?` in `decode_definitions`: a definition that ends early or does not decode, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	571	31	571	32	?	-	malformed input	`?` in `decode_definitions`: a definition that ends early or does not decode, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	572	28	572	29	?	-	malformed input	`?` in `decode_definitions`: a definition that ends early or does not decode, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	573	69	573	70	?	-	malformed input	`?` in `decode_definitions`: a definition that ends early or does not decode, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	573	71	573	72	?	-	malformed input	`?` in `decode_definitions`: a definition that ends early or does not decode, with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	590	81	590	82	?	-	I/O error	`?` on rereading a block after `verify`: fails (read error, CRC, memory cap) only if the file broke or changed since; the changed-block test keeps a valid CRC-32C, so it reaches the record check instead
+src/ops/bulk/dump.rs	612	18	612	22	None	branch src/ops/bulk/dump.rs:611:29 false	malformed input	record naming a token of another kind: no test
+src/ops/bulk/dump.rs	623	66	623	67	?	-	malformed input	`?` on a node or edge record whose bytes do not decode, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	627	41	627	42	?	-	malformed input	`?` on a record label naming no label token of the catalog block; no test
+src/ops/bulk/dump.rs	630	70	630	71	?	-	malformed input	`?` on a record property naming no property-key token of the catalog block; no test
+src/ops/bulk/dump.rs	631	41	631	42	?	-	malformed input	`?` on a record property naming no property-key token of the catalog block; no test
+src/ops/bulk/dump.rs	648	1	648	69	fn malformed(file: &Arc<str>, pos: Pos, id: Option<&str>) -> Invalid	function src/ops/bulk/dump.rs:648 ops::bulk::dump::malformed	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	649	5	649	17	Invalid::new	function src/ops/bulk/dump.rs:648 ops::bulk::dump::malformed	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	649	5	655	6	Invalid::new( … )	function src/ops/bulk/dump.rs:648 ops::bulk::dump::malformed	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	650	9	650	13	file	function src/ops/bulk/dump.rs:648 ops::bulk::dump::malformed	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	651	9	651	12	pos	function src/ops/bulk/dump.rs:648 ops::bulk::dump::malformed	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	652	9	652	11	id	function src/ops/bulk/dump.rs:648 ops::bulk::dump::malformed	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	656	1	656	2	}	function src/ops/bulk/dump.rs:648 ops::bulk::dump::malformed	malformed input	`malformed`: the invalid record of a dump record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	687	29	687	68	Err(malformed(&d.name, pos, Some(&id)))	-	malformed input	a node record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	687	33	687	42	malformed	-	malformed input	a node record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	687	43	687	50	&d.name	-	malformed input	a node record that does not decode or names an unknown token, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	689	24	689	25	?	-	test gap	`?` on the import sink for a dump node record: it fails on abort for an invalid record or on a storage or memory error; no test imports a dump holding an invalid node
+src/ops/bulk/dump.rs	709	21	709	80	return Err(damaged("a block changed since it was checked"))	branch src/ops/bulk/dump.rs:708:21 false	test gap	edge block changed after verify (TOCTOU): only the node-block case is tested
+src/ops/bulk/dump.rs	723	26	723	65	Err(malformed(&d.name, pos, Some(&id)))	-	malformed input	an edge record with an unknown type token, labels, or bytes that do not decode, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	723	30	723	39	malformed	-	malformed input	an edge record with an unknown type token, labels, or bytes that do not decode, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	723	40	723	47	&d.name	-	malformed input	an edge record with an unknown type token, labels, or bytes that do not decode, in a block with a valid CRC-32C; no test
+src/ops/bulk/dump.rs	725	24	725	25	?	-	test gap	`?` on the import sink for a dump edge record: it fails on abort for an invalid record or on a storage or memory error; no test imports a dump holding an invalid edge
+src/ops/bulk/dump.rs	743	21	743	27	o.kind	function src/ops/bulk/dump.rs:743 ops::bulk::dump::read_all::{closure#0}	fuzz entry	the graph filter of the fuzz entry `read_all`: its test feeds graph-scope dumps, whose catalog holds no objects
+src/ops/bulk/dump.rs	743	31	743	42	Kind::Graph	function src/ops/bulk/dump.rs:743 ops::bulk::dump::read_all::{closure#0}	fuzz entry	the graph filter of the fuzz entry `read_all`: its test feeds graph-scope dumps, whose catalog holds no objects
+src/ops/bulk/dump.rs	744	18	744	19	o	function src/ops/bulk/dump.rs:744 ops::bulk::dump::read_all::{closure#1}	fuzz entry	the graph map of the fuzz entry `read_all`: its test feeds graph-scope dumps, whose catalog holds no objects
+src/ops/bulk/dump.rs	753	11	753	12	?	-	defensive	`?` in the fuzz entry `read_all`: its sink never fails, and the in-memory file `verify` checked cannot change, so the reread cannot fail
+src/ops/bulk/dump.rs	757	11	757	12	?	-	defensive	`?` in the fuzz entry `read_all`: its sink never fails, and the in-memory file `verify` checked cannot change, so the reread cannot fail
+src/ops/bulk/dump.rs	777	5	777	59	fn write_at(&self, _: &[u8], _: u64) -> io::Result<()>	function src/ops/bulk/dump.rs:777 <ops::bulk::dump::Memory as storage::StorageFile>::write_at	test helper	`Memory::write_at`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing writes it
+src/ops/bulk/dump.rs	778	9	778	47	Err(io::ErrorKind::Unsupported.into())	function src/ops/bulk/dump.rs:777 <ops::bulk::dump::Memory as storage::StorageFile>::write_at	test helper	`Memory::write_at`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing writes it
+src/ops/bulk/dump.rs	779	5	779	6	}	function src/ops/bulk/dump.rs:777 <ops::bulk::dump::Memory as storage::StorageFile>::write_at	test helper	`Memory::write_at`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing writes it
+src/ops/bulk/dump.rs	781	5	781	42	fn sync_data(&self) -> io::Result<()>	function src/ops/bulk/dump.rs:781 <ops::bulk::dump::Memory as storage::StorageFile>::sync_data	test helper	`Memory::sync_data`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing syncs it
+src/ops/bulk/dump.rs	782	9	782	15	Ok(())	function src/ops/bulk/dump.rs:781 <ops::bulk::dump::Memory as storage::StorageFile>::sync_data	test helper	`Memory::sync_data`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing syncs it
+src/ops/bulk/dump.rs	783	5	783	6	}	function src/ops/bulk/dump.rs:781 <ops::bulk::dump::Memory as storage::StorageFile>::sync_data	test helper	`Memory::sync_data`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing syncs it
+src/ops/bulk/dump.rs	785	5	785	48	fn set_len(&self, _: u64) -> io::Result<()>	function src/ops/bulk/dump.rs:785 <ops::bulk::dump::Memory as storage::StorageFile>::set_len	test helper	`Memory::set_len`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing resizes it
+src/ops/bulk/dump.rs	786	9	786	47	Err(io::ErrorKind::Unsupported.into())	function src/ops/bulk/dump.rs:785 <ops::bulk::dump::Memory as storage::StorageFile>::set_len	test helper	`Memory::set_len`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing resizes it
+src/ops/bulk/dump.rs	787	5	787	6	}	function src/ops/bulk/dump.rs:785 <ops::bulk::dump::Memory as storage::StorageFile>::set_len	test helper	`Memory::set_len`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing resizes it
+src/ops/bulk/dump.rs	793	5	793	56	fn reserve(&self, _: u64, _: u64) -> io::Result<()>	function src/ops/bulk/dump.rs:793 <ops::bulk::dump::Memory as storage::StorageFile>::reserve	test helper	`Memory::reserve`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing reserves space in it
+src/ops/bulk/dump.rs	794	9	794	47	Err(io::ErrorKind::Unsupported.into())	function src/ops/bulk/dump.rs:793 <ops::bulk::dump::Memory as storage::StorageFile>::reserve	test helper	`Memory::reserve`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing reserves space in it
+src/ops/bulk/dump.rs	795	5	795	6	}	function src/ops/bulk/dump.rs:793 <ops::bulk::dump::Memory as storage::StorageFile>::reserve	test helper	`Memory::reserve`: `Memory` is the read-only file `verify` reads in tests and fuzzing; nothing reserves space in it
+src/ops/bulk/export.rs	59	24	59	44	crate::api::internal	function src/ops/bulk/export.rs:59 ops::bulk::export::token_name::{closure#1}	defensive	the error of a record naming a token the catalog lacks: stored records name catalog tokens
+src/ops/bulk/export.rs	59	45	59	78	"a record names an unknown token"	function src/ops/bulk/export.rs:59 ops::bulk::export::token_name::{closure#1}	defensive	the error of a record naming a token the catalog lacks: stored records name catalog tokens
+src/ops/bulk/export.rs	65	48	65	49	?	-	defensive	`?` on `token_name` for a property key: every stored record names tokens of the catalog, so the lookup cannot fail
+src/ops/bulk/export.rs	85	11	85	12	?	-	I/O error	`?` on `scan_chunk` in an export scan: a storage read error; no test injects one into an export
+src/ops/bulk/export.rs	90	24	90	30	lo = r	-	test gap	a second chunk of an export scan (more than 1 024 records in one tree): no test exports a graph that large
+src/ops/bulk/export.rs	108	46	108	66	crate::api::internal	function src/ops/bulk/export.rs:108 ops::bulk::export::each_node::{closure#0}::{closure#0}	defensive	the error of a node key that does not parse: node keys are written by the engine
+src/ops/bulk/export.rs	108	67	108	89	"a malformed node key"	function src/ops/bulk/export.rs:108 ops::bulk::export::each_node::{closure#0}::{closure#0}	defensive	the error of a node key that does not parse: node keys are written by the engine
+src/ops/bulk/export.rs	108	91	108	92	?	-	defensive	`?` on a node key that does not parse: node keys are written by the engine and always parse
+src/ops/bulk/export.rs	110	45	110	65	crate::api::internal	function src/ops/bulk/export.rs:110 ops::bulk::export::each_node::{closure#0}::{closure#1}	defensive	the error of a node record that does not decode: node records are written by the engine
+src/ops/bulk/export.rs	110	66	110	91	"a malformed node record"	function src/ops/bulk/export.rs:110 ops::bulk::export::each_node::{closure#0}::{closure#1}	defensive	the error of a node record that does not decode: node records are written by the engine
+src/ops/bulk/export.rs	110	93	110	94	?	-	defensive	`?` on a node record that does not decode: node records are written by the engine and always decode
+src/ops/bulk/export.rs	116	43	116	44	?	-	defensive	`?` on `token_name` for a label or property key of a stored node: tokens of stored records are in the catalog
+src/ops/bulk/export.rs	117	40	117	41	?	-	defensive	`?` on `token_name` for a label or property key of a stored node: tokens of stored records are in the catalog
+src/ops/bulk/export.rs	149	46	149	66	crate::api::internal	function src/ops/bulk/export.rs:149 ops::bulk::export::each_edge_tx::{closure#0}::{closure#0}	defensive	the error of an edge key that does not parse: edge keys are written by the engine
+src/ops/bulk/export.rs	149	67	149	89	"a malformed edge key"	function src/ops/bulk/export.rs:149 ops::bulk::export::each_edge_tx::{closure#0}::{closure#0}	defensive	the error of an edge key that does not parse: edge keys are written by the engine
+src/ops/bulk/export.rs	149	91	149	92	?	-	defensive	`?` on an edge key that does not parse: edge keys are written by the engine and always parse
+src/ops/bulk/export.rs	150	46	150	66	crate::api::internal	function src/ops/bulk/export.rs:150 ops::bulk::export::each_edge_tx::{closure#0}::{closure#1}	defensive	the error of an edge record that does not decode: edge records are written by the engine
+src/ops/bulk/export.rs	150	67	150	92	"a malformed edge record"	function src/ops/bulk/export.rs:150 ops::bulk::export::each_edge_tx::{closure#0}::{closure#1}	defensive	the error of an edge record that does not decode: edge records are written by the engine
+src/ops/bulk/export.rs	150	94	150	95	?	-	defensive	`?` on an edge record that does not decode: edge records are written by the engine and always decode
+src/ops/bulk/export.rs	157	45	157	46	?	-	defensive	`?` on `token_name` for the type or a property key of a stored edge: tokens of stored records are in the catalog
+src/ops/bulk/export.rs	158	46	158	47	?	-	defensive	`?` on `token_name` for the type or a property key of a stored edge: tokens of stored records are in the catalog
+src/ops/bulk/export.rs	249	5	249	72	fn edge(&self, id: u64) -> (String, u64, u64, Vec<(String, Value)>)	function src/ops/bulk/export.rs:249 <ops::bulk::export::ContentsMap as types::lexical::Contents>::edge	test gap	`ContentsMap::edge`: the lexical form of an edge in a query-result export; no test exports a query result holding an edge
+src/ops/bulk/export.rs	250	9	252	22	self.edges … .cloned()	function src/ops/bulk/export.rs:249 <ops::bulk::export::ContentsMap as types::lexical::Contents>::edge	test gap	`ContentsMap::edge`: the lexical form of an edge in a query-result export; no test exports a query result holding an edge
+src/ops/bulk/export.rs	253	33	253	46	String::new()	function src/ops/bulk/export.rs:253 <ops::bulk::export::ContentsMap as types::lexical::Contents>::edge::{closure#0}	test gap	the fallback of `ContentsMap::edge` for an edge without contents; no test exports a query result holding an edge
+src/ops/bulk/export.rs	253	48	253	49	0	function src/ops/bulk/export.rs:253 <ops::bulk::export::ContentsMap as types::lexical::Contents>::edge::{closure#0}	test gap	the fallback of `ContentsMap::edge` for an edge without contents; no test exports a query result holding an edge
+src/ops/bulk/export.rs	253	51	253	52	0	function src/ops/bulk/export.rs:253 <ops::bulk::export::ContentsMap as types::lexical::Contents>::edge::{closure#0}	test gap	the fallback of `ContentsMap::edge` for an edge without contents; no test exports a query result holding an edge
+src/ops/bulk/export.rs	253	54	253	64	Vec::new()	function src/ops/bulk/export.rs:253 <ops::bulk::export::ContentsMap as types::lexical::Contents>::edge::{closure#0}	test gap	the fallback of `ContentsMap::edge` for an edge without contents; no test exports a query result holding an edge
+src/ops/bulk/export.rs	254	5	254	6	}	function src/ops/bulk/export.rs:249 <ops::bulk::export::ContentsMap as types::lexical::Contents>::edge	test gap	`ContentsMap::edge`: the lexical form of an edge in a query-result export; no test exports a query result holding an edge
+src/ops/bulk/export.rs	262	28	262	43	edges.push(*id)	-	test gap	an edge value in a query result read for export contents: no test exports a query result holding an edge
+src/ops/bulk/export.rs	264	28	264	50	ids.iter().enumerate()	branch src/ops/bulk/export.rs:265:20 both	test gap	query-result export holding a path: no test
+src/ops/bulk/export.rs	265	20	265	30	i % 2 == 0	branch src/ops/bulk/export.rs:265:20 both	test gap	query-result export holding a path: no test
+src/ops/bulk/export.rs	266	21	266	36	nodes.push(*id)	branch src/ops/bulk/export.rs:265:20 both	test gap	query-result export holding a path: no test
+src/ops/bulk/export.rs	268	21	268	36	edges.push(*id)	branch src/ops/bulk/export.rs:265:20 both	test gap	query-result export holding a path: no test
+src/ops/bulk/export.rs	273	22	273	34	items.iter()	-	test gap	a list value in a query result read for export contents: no test exports a query result holding a list
+src/ops/bulk/export.rs	274	17	274	25	elements	-	test gap	a list value in a query result read for export contents: no test exports a query result holding a list
+src/ops/bulk/export.rs	274	17	274	42	elements(i, nodes, edges)	-	test gap	a list value in a query result read for export contents: no test exports a query result holding a list
+src/ops/bulk/export.rs	274	26	274	27	i	-	test gap	a list value in a query result read for export contents: no test exports a query result holding a list
+src/ops/bulk/export.rs	278	27	278	40	fields.iter()	-	test gap	a record value in a query result read for export contents: no test exports a query result holding a record
+src/ops/bulk/export.rs	279	17	279	25	elements	-	test gap	a record value in a query result read for export contents: no test exports a query result holding a record
+src/ops/bulk/export.rs	279	17	279	42	elements(i, nodes, edges)	-	test gap	a record value in a query result read for export contents: no test exports a query result holding a record
+src/ops/bulk/export.rs	279	26	279	27	i	-	test gap	a record value in a query result read for export contents: no test exports a query result holding a record
+src/ops/bulk/export.rs	303	28	303	44	edges.is_empty()	branch src/ops/bulk/export.rs:303:8 true	test gap	query-result GraphML export with no node and no edge: no test
+src/ops/bulk/export.rs	304	9	304	22	return Ok(())	branch src/ops/bulk/export.rs:303:8 true	test gap	query-result GraphML export with no node and no edge: no test
+src/ops/bulk/export.rs	307	21	307	22	?	-	I/O error	`?` on `graph_ids` while reading export contents: a storage read error; no test injects one
+src/ops/bulk/export.rs	310	35	310	36	?	-	I/O error	`?` on opening the graphs while reading export contents: a storage read error; no test injects one
+src/ops/bulk/export.rs	313	13	313	21	continue	branch src/ops/bulk/export.rs:312:12 true	test gap	query-result GraphML export naming one node twice: no test
+src/ops/bulk/export.rs	316	58	316	59	?	-	I/O error	`?` on reading a node while reading export contents: a storage read error; no test injects one
+src/ops/bulk/export.rs	320	47	320	48	?	-	defensive	`?` on `token_name` for a stored node's label or property key: tokens of stored records are in the catalog
+src/ops/bulk/export.rs	321	68	321	69	?	-	defensive	`?` on `token_name` for a stored node's label or property key: tokens of stored records are in the catalog
+src/ops/bulk/export.rs	323	13	323	14	}	branch src/ops/bulk/export.rs:316:20 false	defensive	a node of the result missing from every graph
+src/ops/bulk/export.rs	327	12	327	40	into.edges.contains_key(&id)	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	328	13	328	21	continue	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	329	9	329	10	}	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	330	18	330	25	&graphs	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	331	30	331	32	tx	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	331	30	331	44	tx.edge(g, id)	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	331	44	331	45	?	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	332	26	332	36	token_name	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	332	26	332	50	token_name(engine, e.ty)	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	332	50	332	51	?	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	333	17	333	27	into.edges	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	334	29	334	31	id	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	334	34	334	36	ty	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	334	38	334	43	e.src	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	334	45	334	50	e.dst	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	334	52	334	57	named	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	334	52	334	74	named(engine, e.props)	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	334	74	334	75	?	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	335	17	335	22	break	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	336	13	336	14	}	branch src/ops/bulk/export.rs:327:12 both	test gap	query-result GraphML export holding edges: no test (FR-IMP-003 'nodes and edges in the result')
+src/ops/bulk/export.rs	367	51	367	52	?	-	test gap	`?` on beginning the export's snapshot: fails only on an engine error (closed, failed, out of memory); no test exports from such an engine
+src/ops/bulk/export.rs	373	47	373	48	?	-	I/O error	`?` on `graph_ids` of a database export: a storage read error; no test injects one
+src/ops/bulk/export.rs	378	25	378	26	?	-	I/O error	`?` on the path of a graph of the export: a storage read error; no test injects one
+src/ops/bulk/export.rs	380	32	380	52	crate::api::internal	function src/ops/bulk/export.rs:380 ops::bulk::export::stored::{closure#0}::{closure#1}	defensive	the error of a graph without a path: every graph the snapshot lists has a path in it
+src/ops/bulk/export.rs	380	53	380	77	"a graph without a path"	function src/ops/bulk/export.rs:380 ops::bulk::export::stored::{closure#0}::{closure#1}	defensive	the error of a graph without a path: every graph the snapshot lists has a path in it
+src/ops/bulk/export.rs	380	79	380	80	?	-	defensive	every graph the snapshot lists has a path in the same snapshot
+src/ops/bulk/export.rs	381	37	381	38	?	-	I/O error	`?` on the catalog object of a graph of the export: a storage read error; no test injects one
+src/ops/bulk/export.rs	391	39	391	40	?	-	I/O error	`?` on creating an output file: a storage create error other than a name collision; no test injects one into an export's create
+src/ops/bulk/export.rs	410	89	410	90	?	-	I/O error	`?` on the dump writer: its errors are storage read errors and buffered writes, and test dumps are smaller than the 64 KiB buffer; no test reaches it
+src/ops/bulk/export.rs	411	34	411	46	unreachable!	-	defensive	`unreachable!`: the request check refuses a database scope in any format but the dump
+src/ops/bulk/export.rs	413	33	413	34	?	-	defensive	`?` on opening the graph of a JSON Lines export: the graph was found by `path` in the same snapshot
+src/ops/bulk/export.rs	417	33	417	34	?	-	defensive	`?` on opening the graph of a CSV export: the graph was found by `path` in the same snapshot
+src/ops/bulk/export.rs	422	15	422	16	?	-	I/O error	`?` on the analysis scans of a CSV export: a storage read error; no test injects one
+src/ops/bulk/export.rs	426	15	426	16	?	-	I/O error	`?` on the analysis scans of a CSV export: a storage read error; no test injects one
+src/ops/bulk/export.rs	430	33	430	34	?	-	defensive	`?` on opening the graph of a GraphML export: the graph was found by `path` in the same snapshot
+src/ops/bulk/export.rs	435	15	435	16	?	-	I/O error	`?` on the analysis scans of a GraphML export: a storage read error; no test injects one
+src/ops/bulk/export.rs	439	15	439	16	?	-	I/O error	`?` on the analysis scans of a GraphML export: a storage read error; no test injects one
+src/ops/bulk/export.rs	441	67	441	68	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/export.rs	450	24	450	25	?	-	I/O error	`?` on finishing the GraphML document: a buffered write; test exports are smaller than the 64 KiB buffer, so injected ENOSPC fails at the commit's flush
+src/ops/bulk/export.rs	461	32	461	33	?	-	I/O error	`?` on listing the children of a catalog object for a database dump: a storage read error; no test injects one
+src/ops/bulk/export.rs	491	37	491	38	?	-	I/O error	`?` on listing the catalog objects for a database dump: a storage read error; no test injects one
+src/ops/bulk/export.rs	494	49	494	63	(0, b.clone())	-	test gap	a graph type in a database dump: no test dumps a database holding a graph type
+src/ops/bulk/export.rs	516	72	516	73	?	-	I/O error	`?` on writing the dump header and catalog: buffered, so injected ENOSPC fails at the commit's flush in every test
+src/ops/bulk/export.rs	520	29	520	30	?	-	defensive	`?` on opening a graph of a dump: the graph was listed or found in the same snapshot
+src/ops/bulk/export.rs	522	40	522	41	?	-	I/O error	`?` on the index and constraint definitions of a dumped graph: a storage read error; no test injects one
+src/ops/bulk/export.rs	529	50	529	70	crate::api::internal	function src/ops/bulk/export.rs:529 ops::bulk::export::dump::{closure#0}::{closure#0}	defensive	the error of a node key that does not parse during a dump: node keys are written by the engine
+src/ops/bulk/export.rs	529	71	529	93	"a malformed node key"	function src/ops/bulk/export.rs:529 ops::bulk::export::dump::{closure#0}::{closure#0}	defensive	the error of a node key that does not parse during a dump: node keys are written by the engine
+src/ops/bulk/export.rs	529	95	529	96	?	-	defensive	`?` on a node key that does not parse during a dump: node keys are written by the engine and always parse
+src/ops/bulk/export.rs	532	11	532	12	?	-	I/O error	`?` on the node scan of a dump: a storage read error or a buffered write; no test reaches either
+src/ops/bulk/export.rs	536	50	536	70	crate::api::internal	function src/ops/bulk/export.rs:536 ops::bulk::export::dump::{closure#1}::{closure#0}	defensive	the error of an edge key that does not parse during a dump: edge keys are written by the engine
+src/ops/bulk/export.rs	536	71	536	93	"a malformed edge key"	function src/ops/bulk/export.rs:536 ops::bulk::export::dump::{closure#1}::{closure#0}	defensive	the error of an edge key that does not parse during a dump: edge keys are written by the engine
+src/ops/bulk/export.rs	536	95	536	96	?	-	defensive	`?` on an edge key that does not parse during a dump: edge keys are written by the engine and always parse
+src/ops/bulk/export.rs	538	17	538	76	return Err(crate::api::internal("a malformed edge record"))	branch src/ops/bulk/export.rs:537:16 true	defensive	on-disk edge record shorter than 24 bytes
+src/ops/bulk/export.rs	544	11	544	12	?	-	I/O error	`?` on the edge scan of a dump: a storage read error or a buffered write; no test reaches either
+src/ops/bulk/export.rs	579	59	579	60	?	-	test gap	`?` on the outputs of a query-result export: an existing target or a location that cannot be listed; the existing-target test covers stored exports only
+src/ops/bulk/export.rs	580	36	580	37	?	-	I/O error	`?` on creating the output file of a query-result export: a storage create error; no test injects one
+src/ops/bulk/export.rs	584	77	584	78	?	-	test gap	`?` on a JSON Lines query-result export: a failing statement or a buffered write; no test makes one fail
+src/ops/bulk/export.rs	585	77	585	78	?	-	test gap	`?` on a CSV query-result export: a failing statement, a column name CSV cannot hold, or a storage error; no test makes one fail
+src/ops/bulk/export.rs	586	85	586	86	?	-	test gap	`?` on a GraphML query-result export: a failing statement, a name XML cannot hold, or a storage error; no test makes one fail
+src/ops/bulk/export.rs	587	25	587	37	unreachable!	-	defensive	`unreachable!`: the request check refuses a query result to the dump
+src/ops/bulk/export.rs	589	17	589	18	?	-	I/O error	`?` on committing a query-result export: the ENOSPC test covers stored exports only; no test injects a storage fault here
+src/ops/bulk/fast.rs	103	13	106	15	return Err(Error::new( … ))	-	defensive	`is_empty` of a graph the catalog lacks (22N51): its only caller, the database import (import.rs:461), passes the default graph after checking that the catalog holds it
+src/ops/bulk/fast.rs	103	24	103	34	Error::new	-	defensive	`is_empty` of a graph the catalog lacks (22N51): its only caller, the database import (import.rs:461), passes the default graph after checking that the catalog holds it
+src/ops/bulk/fast.rs	112	40	112	41	?	-	I/O error	`?` on looking up a graph tree in `is_empty`: a storage read error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	114	9	114	10	}	branch src/ops/bulk/fast.rs:112:16 false	defensive	graph tree missing
+src/ops/bulk/fast.rs	117	44	117	45	?	-	I/O error	`?` on `trees_empty` in `is_empty`: a storage read error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	266	43	266	44	?	-	memory cap	`?` on starting a sort of the load: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	321	13	321	29	return Ok(false)	branch src/ops/bulk/fast.rs:320:12 true	test gap	second rejection of an already-rejected record in fast.rs reject(): not reached; why the FINDING 455 test does not reach it was not traced
+src/ops/bulk/fast.rs	323	44	323	45	?	-	memory cap	`?` on charging a rejected identifier: no test reaches the cap through the rejected set
+src/ops/bulk/fast.rs	344	44	344	45	?	-	memory cap	`?` on starting the conflicting-ordinals sort: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	346	47	346	48	?	-	I/O error	`?` on finishing the values sort of the uniqueness check: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	349	58	349	59	?	-	I/O error	`?` on reading the values sort of the uniqueness check: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	354	50	354	51	?	-	I/O error	`?` on pushing the first ordinal of a conflict group: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	355	21	355	22	}	branch src/ops/bulk/fast.rs:353:28 false	test gap	a group of three or more records with one unique value: no test
+src/ops/bulk/fast.rs	356	48	356	49	?	-	I/O error	`?` on pushing a conflicting ordinal: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	364	51	364	52	?	-	I/O error	`?` on finishing the conflicting-ordinals sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	365	51	365	52	?	-	I/O error	`?` on finishing the candidates sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	368	61	368	62	?	-	I/O error	`?` on reading the conflicting ordinals: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	376	60	376	61	?	-	I/O error	`?` on reading the candidates: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	377	21	379	23	return Err(crate::api::internal( … ))	branch src/ops/bulk/fast.rs:376:21 false	defensive	conflicting ordinal without candidate record
+src/ops/bulk/fast.rs	393	35	393	36	?	-	memory cap	`?` on `reject`: its only error is the charge of the rejected identifier; no test reaches the cap there
+src/ops/bulk/fast.rs	397	22	397	23	?	-	I/O error	`?` on reporting a uniqueness rejection: the report write is buffered (64 KiB) and only fails on a storage error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	398	17	398	18	}	branch src/ops/bulk/fast.rs:393:20 false	test gap	record already rejected that also conflicts on a taken value: no test
+src/ops/bulk/fast.rs	402	65	402	66	?	-	memory cap	`?` on charging a taken value: no test reaches the cap through the taken set
+src/ops/bulk/fast.rs	427	39	427	40	?	-	I/O error	`?` on pushing a uniqueness candidate: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	429	70	429	71	?	-	I/O error	`?` on pushing a uniqueness value: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	455	55	455	56	?	-	test gap	`?` on beginning the load's transaction: fails only on an engine error (closed, failed); no test
+src/ops/bulk/fast.rs	456	40	456	41	?	-	I/O error	`?` on reading the target graph's catalog object: a storage read error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	457	9	460	11	return Err(Error::new( … ))	branch src/ops/bulk/fast.rs:456:9 false	defensive	graph dropped between resolution and load
+src/ops/bulk/fast.rs	457	20	457	30	Error::new	branch src/ops/bulk/fast.rs:456:9 false	defensive	graph dropped between resolution and load
+src/ops/bulk/fast.rs	462	36	462	37	?	-	I/O error	`?` on opening the catalog tree: a storage read error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	464	37	464	38	?	-	test gap	`?` on the X lock of the graph's catalog key: a lock conflict or wait failure; no test
+src/ops/bulk/fast.rs	465	54	465	55	?	-	test gap	`?` on the X lock of the graph resource: a lock conflict or wait failure; no test
+src/ops/bulk/fast.rs	466	28	466	29	?	-	defensive	`?` on opening the graph: its catalog object was read in the same transaction
+src/ops/bulk/fast.rs	477	13	480	15	return Err(Error::new( … ))	branch src/ops/bulk/fast.rs:473:12 true	test gap	fast load refused by a POPULATING index (51N41): no test
+src/ops/bulk/fast.rs	477	24	477	34	Error::new	branch src/ops/bulk/fast.rs:473:12 true	test gap	fast load refused by a POPULATING index (51N41): no test
+src/ops/bulk/fast.rs	502	31	502	32	?	-	memory cap	`?` on starting the by-identifier sort: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	519	32	519	55	return l.invalid(&m, e)	-	test gap	a node whose label or property name is too long for a token (22N11), or whose value no property can hold (22G03), in a fast load: no test
+src/ops/bulk/fast.rs	519	39	519	40	l	-	test gap	a node whose label or property name is too long for a token (22N11), or whose value no property can hold (22G03), in a fast load: no test
+src/ops/bulk/fast.rs	523	21	523	25	vec!	branch src/ops/bulk/fast.rs:561:16 false	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs	523	26	523	27	1	branch src/ops/bulk/fast.rs:561:16 false	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs	527	13	530	14	return l.invalid( … )	branch src/ops/bulk/fast.rs:526:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	527	20	527	21	l	branch src/ops/bulk/fast.rs:526:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	528	17	528	19	&m	branch src/ops/bulk/fast.rs:526:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	535	13	535	89	return l.invalid(&m, super::invalid_argument("a record too large to store"))	branch src/ops/bulk/fast.rs:534:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	535	20	535	21	l	branch src/ops/bulk/fast.rs:534:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	535	30	535	32	&m	branch src/ops/bulk/fast.rs:534:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	537	29	537	30	?	-	I/O error	`?` on pushing a node record: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	541	37	541	38	?	-	memory cap	`?` on starting a sort of the node pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	542	32	542	33	?	-	memory cap	`?` on starting a sort of the node pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	543	30	543	31	?	-	memory cap	`?` on starting a sort of the node pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	546	35	546	36	?	-	memory cap	`?` on starting a sort of the node pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	547	31	547	32	?	-	memory cap	`?` on starting a sort of the node pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	553	40	553	41	?	-	I/O error	`?` on finishing the by-identifier sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	555	54	555	55	?	-	I/O error	`?` on reading the by-identifier sort: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	568	18	568	19	?	-	I/O error	`?` on reporting a duplicate identifier: the report write is buffered and only fails on a storage error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	573	13	573	14	}	branch src/ops/bulk/fast.rs:571:16 false	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs	581	64	581	65	?	-	I/O error	`?` on pushing the skipped mark of a node that fails a constraint: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	582	62	582	63	?	-	I/O error	`?` on pushing the skipped mark of a node that fails a constraint: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	583	17	583	18	}	branch src/ops/bulk/fast.rs:580:20 false	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs	584	33	584	34	?	-	I/O error	`?` on reporting a node that fails a constraint: the report write is buffered and only fails on a storage error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	587	40	587	41	?	-	test gap	`?` on allocating an element identifier: fails only if the identifier space is exhausted or its storage fails; no test
+src/ops/bulk/fast.rs	591	41	591	42	?	-	I/O error	`?` on adding a node to the uniqueness sorts: a storage error while they spill; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	594	53	594	54	?	-	I/O error	`?` on pushing a node to the node tree's sort: a storage error while it spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	596	54	596	55	?	-	I/O error	`?` on pushing a node's identifier to the endpoint maps: a storage error while they spill; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	597	52	597	53	?	-	I/O error	`?` on pushing a node's identifier to the endpoint maps: a storage error while they spill; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	598	13	598	14	}	branch src/ops/bulk/fast.rs:595:16 false	test gap	fast load of nodes without an input id: no test
+src/ops/bulk/fast.rs	602	26	602	27	?	-	I/O error	`?` on the node uniqueness check: a sort's storage or memory error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	606	34	606	35	?	-	memory cap	`?` on starting the by-start sort: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	612	25	612	58	return l.invalid_at(ordinal, inv)	-	malformed input	an edge record the reader refuses (malformed), in a fast load: the fast-load tests feed well-formed edges
+src/ops/bulk/fast.rs	612	32	612	33	l	-	malformed input	an edge record the reader refuses (malformed), in a fast load: the fast-load tests feed well-formed edges
+src/ops/bulk/fast.rs	627	33	627	48	return Err(err)	-	test gap	a fatal token error for an edge in a fast load (a token commit that fails, any code but 22N11): no test
+src/ops/bulk/fast.rs	628	34	628	59	return l.invalid(&m, err)	-	test gap	an edge whose type or property name is too long for a token (22N11), or whose value no property can hold (22G03), in a fast load: no test
+src/ops/bulk/fast.rs	628	41	628	42	l	-	test gap	an edge whose type or property name is too long for a token (22N11), or whose value no property can hold (22G03), in a fast load: no test
+src/ops/bulk/fast.rs	634	13	637	14	return l.invalid( … )	branch src/ops/bulk/fast.rs:633:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	634	20	634	21	l	branch src/ops/bulk/fast.rs:633:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	635	17	635	19	&m	branch src/ops/bulk/fast.rs:633:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	644	13	644	89	return l.invalid(&m, super::invalid_argument("a record too large to store"))	branch src/ops/bulk/fast.rs:643:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	644	20	644	21	l	branch src/ops/bulk/fast.rs:643:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	644	30	644	32	&m	branch src/ops/bulk/fast.rs:643:12 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	646	32	646	33	?	-	I/O error	`?` on pushing an edge record: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	648	7	648	8	?	-	test gap	`?` on the edge pass of the source: a read error, or an invalid edge under skip whose report write fails; no instrumented test makes the source fail in the edge pass
+src/ops/bulk/fast.rs	649	32	649	33	?	-	memory cap	`?` on starting the by-end sort: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	651	42	651	43	?	-	I/O error	`?` on finishing the by-start sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	652	38	652	39	?	-	I/O error	`?` on finishing the start map: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	654	53	654	54	?	-	I/O error	`?` on reading the by-start sort: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	656	59	656	60	?	-	I/O error	`?` on looking up an edge's start: a run of the start map cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	659	58	659	59	?	-	I/O error	`?` on resolving an edge's start: its only error is a buffered report write; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	661	25	661	33	continue	-	test gap	a fast-load edge whose start is unknown or skipped: the tests' invalid edges all have a valid start
+src/ops/bulk/fast.rs	670	35	670	36	?	-	I/O error	`?` on pushing an edge to the by-end sort: a storage error while it spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	674	37	674	38	?	-	memory cap	`?` on starting a sort of the edge pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	677	35	677	36	?	-	memory cap	`?` on starting a sort of the edge pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	678	31	678	32	?	-	memory cap	`?` on starting a sort of the edge pass: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	684	40	684	41	?	-	I/O error	`?` on finishing the by-end sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	685	36	685	37	?	-	I/O error	`?` on finishing the end map: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	687	53	687	54	?	-	I/O error	`?` on reading the by-end sort: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	689	57	689	58	?	-	I/O error	`?` on looking up an edge's end: a run of the end map cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	693	54	693	55	?	-	I/O error	`?` on resolving an edge's end: its only error is a buffered report write; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	705	17	705	18	l	branch src/ops/bulk/fast.rs:704:20 true	test gap	an edge failing an existence or property-type constraint in a fast load: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/fast.rs	705	17	705	33	l.invalid(&m, e)	branch src/ops/bulk/fast.rs:704:20 true	test gap	an edge failing an existence or property-type constraint in a fast load: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/fast.rs	705	33	705	34	?	branch src/ops/bulk/fast.rs:704:20 true	test gap	an edge failing an existence or property-type constraint in a fast load: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/fast.rs	706	17	706	25	continue	branch src/ops/bulk/fast.rs:704:20 true	test gap	an edge failing an existence or property-type constraint in a fast load: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/fast.rs	708	40	708	41	?	-	test gap	`?` on allocating an edge identifier: fails only if the identifier space is exhausted or its storage fails; no test
+src/ops/bulk/fast.rs	712	41	712	42	?	-	I/O error	`?` on adding an edge to the uniqueness sorts: a storage error while they spill; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	720	53	720	54	?	-	I/O error	`?` on pushing an edge to the edge tree's sort: a storage error while it spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	724	26	724	27	?	-	I/O error	`?` on the edge uniqueness check: a sort's storage or memory error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	741	41	741	42	?	-	memory cap	`?` on starting the index-keys sort: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	745	32	745	33	?	-	memory cap	`?` on starting the labels sort: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	748	41	748	42	?	-	I/O error	`?` on finishing the node tree's sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	758	83	758	84	?	-	I/O error	`?` on the bulk build of the node tree: a page write, a sort read, or an index key over 1 024 bytes; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	767	29	767	30	?	-	memory cap	`?` on starting the adjacency sort: fails only if its reservation does not fit the cap; no test
+src/ops/bulk/fast.rs	770	41	770	42	?	-	I/O error	`?` on finishing the edge tree's sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	780	83	780	84	?	-	I/O error	`?` on the bulk build of the edge tree: a page write, a sort read, or an index key over 1 024 bytes; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	788	33	788	34	?	-	I/O error	`?` on finishing the adjacency sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	789	36	789	37	?	-	I/O error	`?` on finishing the labels sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	794	81	794	82	?	-	I/O error	`?` on the bulk build of the adjacency tree: a page write or a sort read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	802	41	802	42	?	-	I/O error	`?` on finishing the index-keys sort: a run cannot be written or read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	828	34	828	35	?	-	defensive	`?` on opening an index tree of the graph: the definition was read from the catalog in the same transaction
+src/ops/bulk/fast.rs	837	25	837	26	?	-	I/O error	`?` on reading the graph's catalog entry before the install: a storage read error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	838	24	838	44	crate::api::internal	function src/ops/bulk/fast.rs:838 ops::bulk::fast::load::{closure#7}	defensive	the error of a missing catalog entry for the loaded graph: the load read its object and holds its X lock
+src/ops/bulk/fast.rs	838	45	838	79	"the loaded graph's catalog entry"	function src/ops/bulk/fast.rs:838 ops::bulk::fast::load::{closure#7}	defensive	the error of a missing catalog entry for the loaded graph: the load read its object and holds its X lock
+src/ops/bulk/fast.rs	838	81	838	82	?	-	defensive	the loaded graph's catalog entry exists: the transaction read its object and holds its X lock
+src/ops/bulk/fast.rs	839	31	839	32	?	-	I/O error	`?` on writing the new version of the graph's catalog entry: a storage or memory error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	857	14	857	15	?	-	I/O error	`?` on reporting a skipped endpoint: the report write is buffered and only fails on a storage error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	867	14	867	15	?	-	I/O error	`?` on reporting an endpoint of a rejected element: the report write is buffered and only fails on a storage error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	878	14	878	15	?	-	I/O error	`?` on reporting an unknown endpoint: the report write is buffered and only fails on a storage error; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	900	32	900	33	?	-	I/O error	`?` on reading an endpoint map: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	937	57	937	58	?	-	I/O error	`?` on reading a tree's sort in the bulk build: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	956	42	956	43	?	-	I/O error	`?` on pushing a node's labels: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	957	25	957	26	}	branch src/ops/bulk/fast.rs:951:32 false	defensive	optional tree-source parts absent only when not needed
+src/ops/bulk/fast.rs	975	30	975	31	?	-	I/O error	`?` on pushing an adjacency key: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	977	21	977	22	}	branch src/ops/bulk/fast.rs:964:28 false	defensive	optional tree-source parts absent only when not needed
+src/ops/bulk/fast.rs	988	25	990	27	return Err(StorageError::InvalidArgument( … ))	branch src/ops/bulk/fast.rs:987:24 true	test gap	input id, record or index key over the storage limits: no test
+src/ops/bulk/fast.rs	994	82	994	83	?	-	I/O error	`?` on pushing a lookup-index key: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	998	50	998	51	?	-	I/O error	`?` on pushing a range or point index key: a storage error while the sort spills; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	1022	53	1022	54	?	-	I/O error	`?` on reading the adjacency sort in its bulk build: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	1028	44	1028	45	?	-	I/O error	`?` on reading the labels sort in the adjacency build: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	1077	44	1077	45	?	-	I/O error	`?` on reading the index-keys stream: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/fast.rs	1104	54	1104	55	?	-	I/O error	`?` on reading an index's run of the key stream: a run cannot be read; no instrumented test makes it fail (the coverage run executes the reduced tmpfs fault sweep; the full sweep of the fault matrix was not instrumented)
+src/ops/bulk/files.rs	41	13	41	68	return Err(invalid_argument("a file name given twice"))	branch src/ops/bulk/files.rs:40:12 true	invalid request	export or import file names that are empty, '.', '..', '*.tmp' or repeated: no test
+src/ops/bulk/files.rs	66	23	66	58	e.kind() == io::ErrorKind::NotFound	branch src/ops/bulk/files.rs:66:23 both	test gap	import of an input file that does not exist: no test
+src/ops/bulk/files.rs	67	17	67	70	Err(invalid_argument("an input file does not exist"))	branch src/ops/bulk/files.rs:66:23 both	test gap	import of an input file that does not exist: no test
+src/ops/bulk/files.rs	69	23	69	39	Err(io_error(e))	-	I/O error	open of an input file failing with an error other than NotFound (permission, EIO); no test
+src/ops/bulk/files.rs	76	48	76	49	?	-	I/O error	`?` on `read_at` of an input file: no test injects a read error into import input
+src/ops/bulk/files.rs	111	13	111	22	self.file	branch src/ops/bulk/files.rs:110:12 true	test gap	single write of 64 KiB or more (a record over the buffer size): no test
+src/ops/bulk/files.rs	111	13	111	46	self.file.write_at(data, self.at)	branch src/ops/bulk/files.rs:110:12 true	test gap	single write of 64 KiB or more (a record over the buffer size): no test
+src/ops/bulk/files.rs	111	46	111	47	?	branch src/ops/bulk/files.rs:110:12 true	test gap	single write of 64 KiB or more (a record over the buffer size): no test
+src/ops/bulk/files.rs	112	13	112	41	self.at += data.len() as u64	branch src/ops/bulk/files.rs:110:12 true	test gap	single write of 64 KiB or more (a record over the buffer size): no test
+src/ops/bulk/files.rs	160	26	160	42	invalid_argument	function src/ops/bulk/files.rs:160 <ops::bulk::files::Outputs>::new::{closure#0}	invalid request	the error of an output location that cannot be listed: no test
+src/ops/bulk/files.rs	160	43	160	81	"the output location cannot be listed"	function src/ops/bulk/files.rs:160 <ops::bulk::files::Outputs>::new::{closure#0}	invalid request	the error of an output location that cannot be listed: no test
+src/ops/bulk/files.rs	160	83	160	84	?	-	invalid request	`?` on listing the output location: a location that does not exist or cannot be listed; no test
+src/ops/bulk/files.rs	196	71	196	80	tries < 8	branch src/ops/bulk/files.rs:196:71 both	defensive	collision of a random 64-bit temporary name
+src/ops/bulk/files.rs	196	84	196	94	tries += 1	branch src/ops/bulk/files.rs:196:71 both	defensive	collision of a random 64-bit temporary name
+src/ops/bulk/files.rs	234	64	234	65	?	-	I/O error	`?` on syncing the output location after the renames; no test injects a `sync_dir` failure into an export
+src/ops/bulk/files.rs	251	17	251	41	self.location.join(name)	branch src/ops/bulk/files.rs:250:27 true	test gap	failure after some renames of a multi-file export: no committed test (audit probe only)
+src/ops/bulk/graphml.rs	138	9	140	12	return Err(super::invalid_argument(&format!( … )))	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	138	20	138	43	super::invalid_argument	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	138	45	138	52	format!	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	186	10	186	11	?	-	I/O error	`?` on writing the GraphML header: the export's `Writer` buffers 64 KiB and test exports are smaller, so injected ENOSPC fails at the commit's flush, not here
+src/ops/bulk/graphml.rs	191	50	191	51	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	208	18	208	19	?	-	I/O error	`?` on writing a key element: buffered as above, so no storage write fails here in any test
+src/ops/bulk/graphml.rs	213	49	213	50	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	214	49	214	50	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	215	62	215	63	?	-	I/O error	`?` on writing the graph element: buffered as above, so no storage write fails here in any test
+src/ops/bulk/graphml.rs	230	13	230	81	return Err(crate::api::internal("a property without a GraphML key"))	branch src/ops/bulk/graphml.rs:229:13 false	defensive	property without a GraphML key
+src/ops/bulk/graphml.rs	254	22	254	69	(Some(TypeName::of(v).to_string()), lexical(v))	-	defensive	a native GraphML string key is chosen only when every value is a string, so the non-string arm is unreachable
+src/ops/bulk/graphml.rs	254	23	254	56	Some(TypeName::of(v).to_string())	-	defensive	a native GraphML string key is chosen only when every value is a string, so the non-string arm is unreachable
+src/ops/bulk/graphml.rs	273	57	273	58	?	-	I/O error	`?` on writing a node element: buffered as above, so no storage write fails here in any test
+src/ops/bulk/graphml.rs	276	39	276	40	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	284	14	284	15	?	-	I/O error	`?` on writing a node's labels: buffered as above, so no storage write fails here in any test
+src/ops/bulk/graphml.rs	298	39	298	40	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	310	35	310	36	?	-	I/O error	`?` on writing an edge property: `data` fails only on a buffered write (the missing key is defensive, 229:13); no test makes a write fail here
+src/ops/bulk/graphml.rs	343	22	343	45	super::invalid_argument	function src/ops/bulk/graphml.rs:343 ops::bulk::graphml::encode_props::{closure#1}	test gap	the error of a property set above the record size limit ("a value too large to export"): no test
+src/ops/bulk/graphml.rs	343	46	343	75	"a value too large to export"	function src/ops/bulk/graphml.rs:343 ops::bulk::graphml::encode_props::{closure#1}	test gap	the error of a property set above the record size limit ("a value too large to export"): no test
+src/ops/bulk/graphml.rs	362	13	362	14	}	branch src/ops/bulk/graphml.rs:360:16 false	test gap	multi-byte length in the GraphML query-result spool: no element large enough
+src/ops/bulk/graphml.rs	363	13	363	23	shift += 7	branch src/ops/bulk/graphml.rs:360:16 false	test gap	multi-byte length in the GraphML query-result spool: no element large enough
+src/ops/bulk/graphml.rs	403	41	403	42	?	-	memory cap	`?` on `engine.sorter` for a query-result GraphML export: fails only if the spool's reservation does not fit the cap; no test exports a query result near the cap
+src/ops/bulk/graphml.rs	406	55	406	56	?	-	test gap	`?` on `rows.next_row`: a query that fails while its rows are read during a GraphML export; no test exports a failing query
+src/ops/bulk/graphml.rs	420	43	420	44	?	-	test gap	`?` on encoding a node's properties for the spool: a property set above the record size limit ("a value too large to export"); no test
+src/ops/bulk/graphml.rs	423	30	423	31	?	-	I/O error	`?` on `sort.push` of a node: a storage write error while the spool spills; no test injects one in a query-result export
+src/ops/bulk/graphml.rs	426	47	426	79	contents.edges.get(&id).cloned()	branch src/ops/bulk/graphml.rs:426:17 both	defensive	edge of the result without contents
+src/ops/bulk/graphml.rs	427	17	427	25	continue	branch src/ops/bulk/graphml.rs:426:17 both	defensive	edge of the result without contents
+src/ops/bulk/graphml.rs	429	21	435	14	EdgeOut { … }	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	430	17	430	19	id	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	431	17	431	20	src	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	432	17	432	20	dst	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	436	13	436	23	a.edge(&e)	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	437	25	437	35	Vec::new()	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	438	13	438	22	put_bytes	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	438	13	438	47	put_bytes(&mut b, e.ty.as_bytes())	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	439	13	439	23	put_varint	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	439	13	439	36	put_varint(&mut b, src)	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	440	13	440	23	put_varint	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	440	13	440	36	put_varint(&mut b, dst)	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	441	13	441	25	encode_props	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	441	13	441	43	encode_props(&e.props, &mut b)	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	441	43	441	44	?	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	442	25	442	29	vec!	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	442	30	442	33	1u8	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	443	13	443	51	k.extend_from_slice(&id.to_be_bytes())	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	444	13	444	17	sort	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	444	13	444	30	sort.push(&k, &b)	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	444	30	444	31	?	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	448	43	448	44	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	449	35	449	36	?	-	I/O error	`?` on `sort.finish`: a run cannot be written or read; no test injects storage faults in a query-result export
+src/ops/bulk/graphml.rs	451	50	451	51	?	-	I/O error	`?` on `next_record` of the spool: a run cannot be read; no test injects storage faults in a query-result export
+src/ops/bulk/graphml.rs	453	13	453	21	continue	branch src/ops/bulk/graphml.rs:452:12 true	test gap	duplicate element in the GraphML query-result spool: no test
+src/ops/bulk/graphml.rs	462	52	462	53	?	branch src/ops/bulk/graphml.rs:137:8 true	test gap	label or key name holding an XML-excluded character (22N11): no test
+src/ops/bulk/graphml.rs	465	22	465	32	c.string()	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	466	30	466	54	(c.varint(), c.varint())	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	467	25	467	34	c.props()	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	468	13	468	15	gw	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	468	13	474	15	gw.edge(&EdgeOut { … })	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	469	17	469	19	id	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	470	17	470	20	src	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	471	17	471	20	dst	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	474	15	474	16	?	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	475	13	475	31	summary.edges += 1	branch src/ops/bulk/graphml.rs:458:12 false	test gap	edge element in a query-result GraphML export: no test
+src/ops/bulk/graphml.rs	555	26	555	58	Err(malformed("unexpected end"))	-	malformed input	a GraphML document that ends inside a key, data or element; no test
+src/ops/bulk/graphml.rs	568	44	568	45	?	-	malformed input	`?` on an attribute value quick-xml cannot normalise (a bad character or entity reference); no test
+src/ops/bulk/graphml.rs	608	60	608	69	malformed	function src/ops/bulk/graphml.rs:608 ops::bulk::graphml::parse_document::{closure#4}	malformed input	the error of a GraphML `<data>` without `key`: no test
+src/ops/bulk/graphml.rs	608	70	608	88	"data without key"	function src/ops/bulk/graphml.rs:608 ops::bulk::graphml::parse_document::{closure#4}	malformed input	the error of a GraphML `<data>` without `key`: no test
+src/ops/bulk/graphml.rs	608	90	608	91	?	-	malformed input	`?` on a `<data>` element without a `key` attribute; no test
+src/ops/bulk/graphml.rs	617	32	617	38	append	-	test gap	a CDATA section in GraphML data or default text: no test
+src/ops/bulk/graphml.rs	617	32	617	71	append(&mut inside, &t.xml10_content())	-	test gap	a CDATA section in GraphML data or default text: no test
+src/ops/bulk/graphml.rs	619	70	619	71	?	-	malformed input	`?` on a character reference quick-xml cannot resolve; no test
+src/ops/bulk/graphml.rs	627	30	627	72	return Err(malformed("an unknown entity"))	-	malformed input	a reference to an entity other than the five XML predefined ones; no test
+src/ops/bulk/graphml.rs	644	38	644	39	?	-	malformed input	`?` on the element callback: a node or edge whose data does not decode fails the import under abort; the tests that reach it use skip or valid data
+src/ops/bulk/graphml.rs	671	50	671	70	super::invalid_input	function src/ops/bulk/graphml.rs:671 ops::bulk::graphml::data_value::{closure#0}	malformed input	the error of an `lpg:type` attribute naming no type: no test
+src/ops/bulk/graphml.rs	671	71	671	93	"an unknown type name"	function src/ops/bulk/graphml.rs:671 ops::bulk::graphml::data_value::{closure#0}	malformed input	the error of an `lpg:type` attribute naming no type: no test
+src/ops/bulk/graphml.rs	671	95	671	96	?	-	malformed input	`?` on an `lpg:type` attribute naming no type; no test
+src/ops/bulk/graphml.rs	672	46	672	59	lexical_error	function src/ops/bulk/graphml.rs:672 ops::bulk::graphml::data_value::{closure#1}	malformed input	the error of `lpg:type`-typed data whose text does not read as its type: no test
+src/ops/bulk/graphml.rs	672	60	672	62	&t	function src/ops/bulk/graphml.rs:672 ops::bulk::graphml::data_value::{closure#1}	malformed input	the error of `lpg:type`-typed data whose text does not read as its type: no test
+src/ops/bulk/graphml.rs	674	29	674	42	lexical_error	function src/ops/bulk/graphml.rs:674 ops::bulk::graphml::data_value::{closure#2}	malformed input	the error of native GraphML data that does not convert (boolean, integer, double): no test
+src/ops/bulk/graphml.rs	674	43	674	45	&t	function src/ops/bulk/graphml.rs:674 ops::bulk::graphml::data_value::{closure#2}	malformed input	the error of native GraphML data that does not convert (boolean, integer, double): no test
+src/ops/bulk/graphml.rs	679	18	679	52	return Err(err(TypeName::Boolean))	-	malformed input	a native GraphML boolean data that is not `true`, `false`, `1` or `0`; no test
+src/ops/bulk/graphml.rs	682	56	682	59	err	function src/ops/bulk/graphml.rs:682 ops::bulk::graphml::data_value::{closure#3}	malformed input	the error of a native GraphML integer data that is not an integer: no test
+src/ops/bulk/graphml.rs	682	60	682	77	TypeName::Integer	function src/ops/bulk/graphml.rs:682 ops::bulk::graphml::data_value::{closure#3}	malformed input	the error of a native GraphML integer data that is not an integer: no test
+src/ops/bulk/graphml.rs	682	79	682	80	?	-	malformed input	`?` on a native GraphML integer data that is not an integer; no test
+src/ops/bulk/graphml.rs	685	22	685	30	f64::NAN	-	test gap	`NaN`, `Infinity`/`INF`/`inf`, `-Infinity`/`-INF`/`-inf` in a native GraphML double data (as NetworkX writes them): lpg writes non-finite floats under a typed key, and no test feeds external text
+src/ops/bulk/graphml.rs	686	43	686	56	f64::INFINITY	-	test gap	`NaN`, `Infinity`/`INF`/`inf`, `-Infinity`/`-INF`/`-inf` in a native GraphML double data (as NetworkX writes them): lpg writes non-finite floats under a typed key, and no test feeds external text
+src/ops/bulk/graphml.rs	687	46	687	63	f64::NEG_INFINITY	-	test gap	`NaN`, `Infinity`/`INF`/`inf`, `-Infinity`/`-INF`/`-inf` in a native GraphML double data (as NetworkX writes them): lpg writes non-finite floats under a typed key, and no test feeds external text
+src/ops/bulk/graphml.rs	688	40	688	43	err	function src/ops/bulk/graphml.rs:688 ops::bulk::graphml::data_value::{closure#4}	malformed input	the error of a native GraphML double data that is not a number: no test
+src/ops/bulk/graphml.rs	688	44	688	59	TypeName::Float	function src/ops/bulk/graphml.rs:688 ops::bulk::graphml::data_value::{closure#4}	malformed input	the error of a native GraphML double data that is not a number: no test
+src/ops/bulk/graphml.rs	688	61	688	62	?	-	malformed input	`?` on a native GraphML double data that is not a number; no test
+src/ops/bulk/graphml.rs	734	56	734	57	?	-	malformed input	`?` on a data value that does not convert to its key's type; no test
+src/ops/bulk/graphml.rs	743	36	743	38	id	function src/ops/bulk/graphml.rs:743 ops::bulk::graphml::decode::{closure#3}	test gap	the sort key of two or more `<default>` values applied to one element: the default test has one default
+src/ops/bulk/graphml.rs	746	30	746	38	!el.edge	-	test gap	a `<default>` on the `labels` key, applied to a node without labels data: no test
+src/ops/bulk/graphml.rs	747	13	747	19	labels	-	test gap	a `<default>` on the `labels` key, applied to a node without labels data: no test
+src/ops/bulk/graphml.rs	747	13	747	40	labels = parse_labels(text)	-	test gap	a `<default>` on the `labels` key, applied to a node without labels data: no test
+src/ops/bulk/graphml.rs	748	36	748	43	el.edge	-	test gap	a `<default>` on the `label` key, applied to an edge without type data: no test
+src/ops/bulk/graphml.rs	749	13	749	15	ty	-	test gap	a `<default>` on the `label` key, applied to an edge without type data: no test
+src/ops/bulk/graphml.rs	749	13	749	51	ty = Some(parse_labels(text).concat())	-	test gap	a `<default>` on the `label` key, applied to an edge without type data: no test
+src/ops/bulk/graphml.rs	751	66	751	67	?	-	malformed input	`?` on a `<default>` value that does not convert to its key's type; no test
+src/ops/bulk/graphml.rs	752	9	752	10	}	-	test gap	a `<default>` of the `labels` key on an edge, of the `label` key on a node, or for a property the element has under another key with the same name: no test
+src/ops/bulk/graphml.rs	793	9	795	12	return Err(invalid(super::invalid_input( … )))	branch src/ops/bulk/graphml.rs:792:9 false	malformed input	GraphML edge without source, target or type: no test
+src/ops/bulk/graphml.rs	793	20	793	27	invalid	branch src/ops/bulk/graphml.rs:792:9 false	malformed input	GraphML edge without source, target or type: no test
+src/ops/bulk/graphml.rs	798	9	798	76	return Err(invalid(super::invalid_input("an edge without a type")))	branch src/ops/bulk/graphml.rs:797:9 false	malformed input	GraphML edge without source, target or type: no test
+src/ops/bulk/graphml.rs	798	20	798	27	invalid	branch src/ops/bulk/graphml.rs:797:9 false	malformed input	GraphML edge without source, target or type: no test
+src/ops/bulk/graphml.rs	830	71	830	72	?	branch src/ops/bulk/files.rs:66:23 both	test gap	import of an input file that does not exist: no test
+src/ops/bulk/graphml.rs	842	71	842	72	?	branch src/ops/bulk/files.rs:66:23 both	test gap	import of an input file that does not exist: no test
+src/ops/bulk/import.rs	59	51	59	52	?	-	test gap	`?` on the snapshot of `graph_at`: fails only on an engine error (closed, failed); no test imports into such an engine
+src/ops/bulk/import.rs	61	35	61	36	?	-	I/O error	`?` on resolving the target path: a storage read error; no test injects one
+src/ops/bulk/import.rs	65	14	68	11	Err(Error::new( … ))	branch src/ops/bulk/import.rs:64:20 false	invalid request	import target path naming a non-graph object: no test
+src/ops/bulk/import.rs	65	18	65	28	Error::new	branch src/ops/bulk/import.rs:64:20 false	invalid request	import target path naming a non-graph object: no test
+src/ops/bulk/import.rs	93	98	93	99	?	-	invalid request	`?` on creating the report: a report file that exists or a report location that cannot be listed; no test
+src/ops/bulk/import.rs	109	24	109	39	e.caused_by(re)	-	I/O error	an import that fails and whose report then fails to commit: no test injects a storage fault into the report's commit after a failed import
+src/ops/bulk/import.rs	126	32	126	40	e.kind()	function src/ops/bulk/import.rs:126 ops::bulk::import::run_with::{closure#0}::{closure#0}	invalid request	the error of a missing or unreadable dump file of an import: no test
+src/ops/bulk/import.rs	127	49	127	97	invalid_argument("an input file does not exist")	function src/ops/bulk/import.rs:126 ops::bulk::import::run_with::{closure#0}::{closure#0}	invalid request	the error of a missing or unreadable dump file of an import: no test
+src/ops/bulk/import.rs	128	22	128	47	super::files::io_error(e)	function src/ops/bulk/import.rs:126 ops::bulk::import::run_with::{closure#0}::{closure#0}	invalid request	the error of a missing or unreadable dump file of an import: no test
+src/ops/bulk/import.rs	129	13	129	14	}	function src/ops/bulk/import.rs:126 ops::bulk::import::run_with::{closure#0}::{closure#0}	invalid request	the error of a missing or unreadable dump file of an import: no test
+src/ops/bulk/import.rs	132	44	132	45	?	-	invalid request	`?` on opening the dump of a database import: a missing file (22N11) or an I/O error; no test
+src/ops/bulk/import.rs	133	84	133	85	?	-	malformed input	`?` on `verify` of a database-scope import: a damaged dump imported into a database; the damage tests import into a graph
+src/ops/bulk/import.rs	135	13	137	15	return Err(invalid_argument( … ))	branch src/ops/bulk/import.rs:134:12 true	invalid request	dump scope that does not match the import target: no test
+src/ops/bulk/import.rs	142	9	142	21	unreachable!	branch src/ops/bulk/import.rs:141:9 false	defensive	unreachable: database target handled above
+src/ops/bulk/import.rs	144	54	144	55	?	-	invalid request	`?` on `graph_at`: an import whose target path names no graph (22N51); no test
+src/ops/bulk/import.rs	149	67	149	68	?	-	test gap	`?` on beginning a transactional import: fails only on an engine error (closed, failed); no test
+src/ops/bulk/import.rs	153	36	153	37	?	-	test gap	`?` on the commit of a transactional import: a serialization failure or a storage error at commit; no test makes it fail
+src/ops/bulk/import.rs	172	48	172	49	?	-	invalid request	`?` on opening the dump of a graph import: a missing file (22N11) or an I/O error; no test
+src/ops/bulk/import.rs	175	17	177	19	return Err(invalid_argument( … ))	branch src/ops/bulk/import.rs:174:16 true	invalid request	dump scope that does not match the import target: no test
+src/ops/bulk/import.rs	227	61	227	62	?	-	memory cap	`?` on `Charge::add` for a taken unique prefix: no test reaches the cap through the import's own sets
+src/ops/bulk/import.rs	248	33	248	34	?	-	test gap	`?` on locking the target graph: fails if the graph was dropped after `graph_at`; no test drops it during an import
+src/ops/bulk/import.rs	271	74	271	75	?	-	memory cap	`?` on `Charge::add` for a skipped identifier: no test reaches the cap through the import's own sets
+src/ops/bulk/import.rs	273	13	273	14	}	branch src/ops/bulk/import.rs:266:20 false	test gap	transactional import of nodes without an input id: no test
+src/ops/bulk/import.rs	294	31	294	44	return Err(e)	-	test gap	a fatal token error for a node (a token commit that fails, any code but 22N11): no test makes the token creation fail
+src/ops/bulk/import.rs	295	32	295	55	return fail(&mut st, e)	-	test gap	a node whose label or property name is too long for a token (22N11), or whose value no property can hold (22G03): no test in a transactional import
+src/ops/bulk/import.rs	295	39	295	43	fail	-	test gap	a node whose label or property name is too long for a token (22N11), or whose value no property can hold (22G03): no test in a transactional import
+src/ops/bulk/import.rs	311	62	311	92	return fail(&mut st, e.into())	-	test gap	`create_node` refusing a node by a constraint the import's own checks missed: a uniqueness clash with a node already in the graph; no test imports into a graph holding such a node
+src/ops/bulk/import.rs	311	69	311	73	fail	-	test gap	`create_node` refusing a node by a constraint the import's own checks missed: a uniqueness clash with a node already in the graph; no test imports into a graph holding such a node
+src/ops/bulk/import.rs	314	29	314	30	?	-	memory cap	`?` on taking a node's unique prefixes: no test reaches the cap through the import's own sets
+src/ops/bulk/import.rs	317	74	317	75	?	-	memory cap	`?` on `Charge::add` for an identifier-map entry: no test reaches the cap through the import's own map
+src/ops/bulk/import.rs	319	9	319	10	}	branch src/ops/bulk/import.rs:315:16 false	test gap	transactional import of nodes without an input id: no test
+src/ops/bulk/import.rs	360	33	360	48	return Err(err)	-	test gap	a fatal token error for an edge (a token commit that fails, any code but 22N11): no test makes the token creation fail
+src/ops/bulk/import.rs	361	34	361	62	return invalid(&mut st, err)	-	test gap	an edge whose type or property name is too long for a token (22N11), or whose value no property can hold (22G03): no test in a transactional import
+src/ops/bulk/import.rs	361	41	361	48	invalid	-	test gap	an edge whose type or property name is too long for a token (22N11), or whose value no property can hold (22G03): no test in a transactional import
+src/ops/bulk/import.rs	365	13	365	41	return invalid(&mut st, err)	branch src/ops/bulk/import.rs:364:16 true	test gap	an edge failing an existence or property-type constraint in a transactional import: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/import.rs	365	20	365	27	invalid	branch src/ops/bulk/import.rs:364:16 true	test gap	an edge failing an existence or property-type constraint in a transactional import: no test (the edge-uniqueness test checks uniqueness only)
+src/ops/bulk/import.rs	378	17	378	52	return invalid(&mut st, err.into())	-	test gap	`create_edge` refusing an edge by a constraint the import's own checks missed: a uniqueness clash with an edge already in the graph; no test
+src/ops/bulk/import.rs	378	24	378	31	invalid	-	test gap	`create_edge` refusing an edge by a constraint the import's own checks missed: a uniqueness clash with an edge already in the graph; no test
+src/ops/bulk/import.rs	380	25	380	47	return Err(err.into())	-	I/O error	a storage or memory error from `create_edge`: no test makes one fail during the edge pass
+src/ops/bulk/import.rs	382	29	382	30	?	-	memory cap	`?` on taking an edge's unique prefixes: no test reaches the cap through the import's own sets
+src/ops/bulk/import.rs	395	52	395	53	?	-	malformed input	`?` in `dump_path`: a dump object whose parent the catalog block lacks; no test
+src/ops/bulk/import.rs	400	13	400	24	return None	branch src/ops/bulk/import.rs:399:12 true	defensive	catalog parent cycle guard
+src/ops/bulk/import.rs	410	28	410	51	Action::CreateDirectory	-	test gap	the create action of a directory, schema or graph type: no test imports a database dump holding one (only graphs, under `/public`)
+src/ops/bulk/import.rs	411	25	411	45	Action::CreateSchema	-	test gap	the create action of a directory, schema or graph type: no test imports a database dump holding one (only graphs, under `/public`)
+src/ops/bulk/import.rs	412	28	412	51	Action::CreateGraphType	-	test gap	the create action of a directory, schema or graph type: no test imports a database dump holding one (only graphs, under `/public`)
+src/ops/bulk/import.rs	461	93	461	94	?	branch src/ops/bulk/import.rs:461:8 true	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	462	9	462	32	return Err(not_empty())	branch src/ops/bulk/import.rs:461:8 true	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	466	28	466	29	0	-	test gap	a directory in a database dump: no test imports one
+src/ops/bulk/import.rs	468	28	468	29	2	-	test gap	a graph type in a database dump: no test imports one
+src/ops/bulk/import.rs	475	28	475	48	super::invalid_input	function src/ops/bulk/import.rs:475 ops::bulk::import::database::{closure#3}	malformed input	the error of a dump object without a path: no test
+src/ops/bulk/import.rs	475	49	475	88	"a native dump object without a parent"	function src/ops/bulk/import.rs:475 ops::bulk::import::database::{closure#3}	malformed input	the error of a dump object without a path: no test
+src/ops/bulk/import.rs	475	90	475	91	?	-	malformed input	`?` on a dump object without a path (a missing parent or a parent cycle); no test
+src/ops/bulk/import.rs	509	20	509	21	?	-	test gap	`?` on the authoriser of a database import: a refused request; no test refuses one
+src/ops/bulk/import.rs	518	28	518	48	super::invalid_input	function src/ops/bulk/import.rs:518 ops::bulk::import::database::{closure#5}::{closure#2}	malformed input	the error of a definition naming a token the catalog block lacks: no test
+src/ops/bulk/import.rs	518	49	518	86	"a definition names an unknown token"	function src/ops/bulk/import.rs:518 ops::bulk::import::database::{closure#5}::{closure#2}	malformed input	the error of a definition naming a token the catalog block lacks: no test
+src/ops/bulk/import.rs	518	88	518	89	?	-	malformed input	`?` on a definition naming a token the catalog block lacks; no test
+src/ops/bulk/import.rs	522	55	522	56	?	-	test gap	`?` on beginning the catalog transaction of a database import: fails only on an engine error; no test
+src/ops/bulk/import.rs	530	44	530	45	?	-	I/O error	`?` on listing the root's children in the catalog transaction: a storage read error; no test injects one
+src/ops/bulk/import.rs	535	41	535	42	?	-	I/O error	`?` on listing `/public`'s children in the catalog transaction: a storage read error; no test injects one
+src/ops/bulk/import.rs	540	13	540	36	return Err(not_empty())	branch src/ops/bulk/import.rs:539:12 true	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	542	45	542	46	?	-	I/O error	`?` on the definitions of the default graph in the catalog transaction: a storage read error; no test injects one
+src/ops/bulk/import.rs	543	13	543	36	return Err(not_empty())	branch src/ops/bulk/import.rs:542:12 true	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	545	43	545	44	?	-	I/O error	`?` on opening the default graph in the catalog transaction: a storage read error; no test injects one
+src/ops/bulk/import.rs	548	51	548	52	{	function src/ops/bulk/import.rs:548 ops::bulk::import::database::{closure#6}::{closure#2}	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	549	17	549	27	any = true	function src/ops/bulk/import.rs:548 ops::bulk::import::database::{closure#6}::{closure#2}	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	550	17	550	22	false	function src/ops/bulk/import.rs:548 ops::bulk::import::database::{closure#6}::{closure#2}	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	551	13	551	14	}	function src/ops/bulk/import.rs:548 ops::bulk::import::database::{closure#6}::{closure#2}	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	551	15	551	16	?	-	I/O error	`?` on the emptiness scan of the default graph: a storage read error; no test injects one
+src/ops/bulk/import.rs	553	17	553	40	return Err(not_empty())	branch src/ops/bulk/import.rs:552:16 true	test gap	database-import refusals other than 'another object exists' (schema definitions, non-empty default graph): no test
+src/ops/bulk/import.rs	566	32	566	52	super::invalid_input	function src/ops/bulk/import.rs:566 ops::bulk::import::database::{closure#6}::{closure#3}	malformed input	the error of a dump object listed before its parent: no test
+src/ops/bulk/import.rs	566	53	566	93	"a native dump object before its parent"	function src/ops/bulk/import.rs:566 ops::bulk::import::database::{closure#6}::{closure#3}	malformed input	the error of a dump object listed before its parent: no test
+src/ops/bulk/import.rs	566	95	566	96	?	-	malformed input	`?` on a dump object listed before its parent: the objects are sorted by kind rank, so only a parent of a later rank fails it; no test
+src/ops/bulk/import.rs	568	36	568	38	tx	-	test gap	creating a directory in a database import (and its `?`): no test imports a dump holding a directory
+src/ops/bulk/import.rs	568	36	568	83	tx.create_directory(parent, &o.name, principal)	-	test gap	creating a directory in a database import (and its `?`): no test imports a dump holding a directory
+src/ops/bulk/import.rs	568	56	568	62	parent	-	test gap	creating a directory in a database import (and its `?`): no test imports a dump holding a directory
+src/ops/bulk/import.rs	568	83	568	84	?	-	test gap	creating a directory in a database import (and its `?`): no test imports a dump holding a directory
+src/ops/bulk/import.rs	569	33	569	35	tx	-	test gap	creating a schema other than `/public` in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	569	33	569	77	tx.create_schema(parent, &o.name, principal)	-	test gap	creating a schema other than `/public` in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	569	50	569	56	parent	-	test gap	creating a schema other than `/public` in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	569	77	569	78	?	-	test gap	creating a schema other than `/public` in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	571	21	571	23	tx	-	test gap	creating a graph type in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	571	21	571	84	tx.create_graph_type(parent, &o.name, principal, &o.definition)	-	test gap	creating a graph type in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	571	42	571	48	parent	-	test gap	creating a graph type in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	571	50	571	57	&o.name	-	test gap	creating a graph type in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	571	84	571	85	?	-	test gap	creating a graph type in a database import (and its `?`): no test imports a dump holding one
+src/ops/bulk/import.rs	577	31	577	53	ids.get(&o.graph_type)	branch src/ops/bulk/import.rs:574:33 false	test gap	database dump holding a graph with a graph type: no test
+src/ops/bulk/import.rs	577	68	577	69	{	function src/ops/bulk/import.rs:577 ops::bulk::import::database::{closure#6}::{closure#4}	test gap	database dump holding a graph with a graph type: no test
+src/ops/bulk/import.rs	578	29	578	92	super::invalid_input("a graph whose graph type the dump lacks")	function src/ops/bulk/import.rs:577 ops::bulk::import::database::{closure#6}::{closure#4}	test gap	database dump holding a graph with a graph type: no test
+src/ops/bulk/import.rs	579	25	579	26	}	function src/ops/bulk/import.rs:577 ops::bulk::import::database::{closure#6}::{closure#4}	test gap	database dump holding a graph with a graph type: no test
+src/ops/bulk/import.rs	579	27	579	28	?	branch src/ops/bulk/import.rs:574:33 false	test gap	database dump holding a graph with a graph type: no test
+src/ops/bulk/import.rs	581	68	581	69	?	-	test gap	`?` on creating a graph in a database import: a name clash or a storage error inside the transaction; no test
+src/ops/bulk/import.rs	588	52	588	53	?	-	test gap	`?` on a catalog identifier for a definition: fails only if the identifier space is exhausted or its storage fails; no test
+src/ops/bulk/import.rs	590	56	590	57	?	-	I/O error	`?` on opening the catalog tree in the catalog transaction: a storage read error; no test injects one
+src/ops/bulk/import.rs	594	32	594	52	super::invalid_input	function src/ops/bulk/import.rs:594 ops::bulk::import::database::{closure#6}::{closure#5}	malformed input	the error of a definition of a graph the dump lacks: no test
+src/ops/bulk/import.rs	594	53	594	93	"a definition of a graph the dump lacks"	function src/ops/bulk/import.rs:594 ops::bulk::import::database::{closure#6}::{closure#5}	malformed input	the error of a definition of a graph the dump lacks: no test
+src/ops/bulk/import.rs	594	95	594	96	?	-	malformed input	`?` on a definition of a graph the dump lacks; no test
+src/ops/bulk/import.rs	597	33	597	52	TokenKind::EdgeType	-	test gap	a definition on an edge type in a database dump: no test imports one
+src/ops/bulk/import.rs	605	21	605	22	0	branch src/ops/bulk/import.rs:604:27 false	test gap	database dump holding a label lookup index: no test
+src/ops/bulk/import.rs	607	60	607	61	?	-	malformed input	`?` on a definition whose label or type token the catalog block lacks; no test
+src/ops/bulk/import.rs	613	47	613	48	?	-	malformed input	`?` on a definition whose property token the catalog block lacks; no test
+src/ops/bulk/import.rs	616	49	616	50	?	-	I/O error	`?` on creating an index tree in the catalog transaction: a storage error; no test injects one
+src/ops/bulk/import.rs	626	40	626	60	super::invalid_input	function src/ops/bulk/import.rs:626 ops::bulk::import::database::{closure#6}::{closure#7}	malformed input	the error of a definition linking a definition the dump lacks: no test
+src/ops/bulk/import.rs	626	61	626	96	"a definition links an unknown one"	function src/ops/bulk/import.rs:626 ops::bulk::import::database::{closure#6}::{closure#7}	malformed input	the error of a definition linking a definition the dump lacks: no test
+src/ops/bulk/import.rs	626	98	626	99	?	-	malformed input	`?` on a definition linking a definition the dump lacks; no test
+src/ops/bulk/import.rs	629	67	629	68	?	-	I/O error	`?` on writing a definition in the catalog transaction: a storage or memory error; no test injects one
+src/ops/bulk/import.rs	636	13	636	23	tx.abort()	-	test gap	a database import whose catalog transaction fails before its commit (an object seen inside it, a bad definition, a storage error); the concurrent-object test fails at the commit instead
+src/ops/bulk/import.rs	637	13	637	26	return Err(e)	-	test gap	a database import whose catalog transaction fails before its commit (an object seen inside it, a bad definition, a storage error); the concurrent-object test fails at the commit instead
+src/ops/bulk/import.rs	643	87	643	88	?	-	test gap	`?` on the fast load of a graph of a database import: an invalid record under abort, or a storage error; no test imports a database dump that fails here
+src/ops/bulk/jsonl.rs	75	24	75	34	Json::Null	-	test gap	a NULL cell in a JSON Lines query-result export: no test exports a query result with a null value
+src/ops/bulk/jsonl.rs	79	61	79	67	tagged	function src/ops/bulk/jsonl.rs:79 ops::bulk::jsonl::to_json::{closure#0}	defensive	the tagged form of a finite float `serde_json::Number::from_f64` refuses: it refuses only non-finite values, which the arm excludes
+src/ops/bulk/jsonl.rs	79	68	79	69	v	function src/ops/bulk/jsonl.rs:79 ops::bulk::jsonl::to_json::{closure#0}	defensive	the tagged form of a finite float `serde_json::Number::from_f64` refuses: it refuses only non-finite values, which the arm excludes
+src/ops/bulk/jsonl.rs	79	71	79	72	c	function src/ops/bulk/jsonl.rs:79 ops::bulk::jsonl::to_json::{closure#0}	defensive	the tagged form of a finite float `serde_json::Number::from_f64` refuses: it refuses only non-finite values, which the arm excludes
+src/ops/bulk/jsonl.rs	103	13	106	15	return Err(Error::new( … ))	-	malformed input	a JSON `null` property value (22004); no test
+src/ops/bulk/jsonl.rs	103	24	103	34	Error::new	-	malformed input	a JSON `null` property value (22004); no test
+src/ops/bulk/jsonl.rs	113	17	116	19	return Err(Error::new( … ))	branch src/ops/bulk/jsonl.rs:112:23 true	test gap	JSON number above i64::MAX (22003): no test
+src/ops/bulk/jsonl.rs	113	28	113	38	Error::new	branch src/ops/bulk/jsonl.rs:112:23 true	test gap	JSON number above i64::MAX (22003): no test
+src/ops/bulk/jsonl.rs	126	48	126	49	?	-	malformed input	`?` on a JSON array element that does not convert (null, out of range, a bad tagged object); no test
+src/ops/bulk/jsonl.rs	167	5	167	6	}	branch src/ops/bulk/jsonl.rs:165:8 false	test gap	JSON Lines export of a node without properties: no test
+src/ops/bulk/jsonl.rs	217	32	217	33	?	-	I/O error	`?` on reading an edge endpoint for its labels: a storage read error; no test injects one into an export
+src/ops/bulk/jsonl.rs	222	21	222	31	Vec::new()	-	defensive	an edge endpoint absent from the graph in the same snapshot: an edge always has its endpoints
+src/ops/bulk/jsonl.rs	226	45	226	46	?	-	I/O error	`?` on the endpoint label lookups of an edge: a storage read error; no test injects one into an export
+src/ops/bulk/jsonl.rs	226	70	226	71	?	-	I/O error	`?` on the endpoint label lookups of an edge: a storage read error; no test injects one into an export
+src/ops/bulk/jsonl.rs	245	55	245	56	?	-	test gap	`?` on `rows.next_row`: a query that fails while its rows are read during a JSON Lines export; no test exports a failing query
+src/ops/bulk/jsonl.rs	251	34	251	35	?	-	I/O error	`?` on writing a query-result line: buffered (64 KiB) and test exports are smaller, so no storage write fails here
+src/ops/bulk/jsonl.rs	281	71	281	72	?	branch src/ops/bulk/files.rs:66:23 both	test gap	import of an input file that does not exist: no test
+src/ops/bulk/jsonl.rs	298	59	298	60	?	-	I/O error	`?` on `read_until` of a JSON Lines input: an I/O error of the input; no test injects one
+src/ops/bulk/jsonl.rs	305	13	305	21	continue	branch src/ops/bulk/jsonl.rs:304:12 true	test gap	blank line in a JSON Lines input: no test
+src/ops/bulk/jsonl.rs	326	28	326	47	Some(n.to_string())	-	test gap	a numeric `id` in a JSON Lines input (lpg and APOC write string identifiers): no test
+src/ops/bulk/jsonl.rs	327	14	327	18	None	-	malformed input	an `id` that is neither a string nor a number; no test
+src/ops/bulk/jsonl.rs	338	20	340	11	Err(super::invalid_input( … ))	-	malformed input	`properties` that is not a JSON object; no test
+src/ops/bulk/jsonl.rs	359	28	359	31	bad	function src/ops/bulk/jsonl.rs:359 ops::bulk::jsonl::node_of::{closure#2}	malformed input	the error of a JSON Lines label that is not a string: no test
+src/ops/bulk/jsonl.rs	359	32	359	84	super::invalid_input("a label that is not a string")	function src/ops/bulk/jsonl.rs:359 ops::bulk::jsonl::node_of::{closure#2}	malformed input	the error of a JSON Lines label that is not a string: no test
+src/ops/bulk/jsonl.rs	359	86	359	87	?	-	malformed input	`?` on a label that is not a JSON string; no test
+src/ops/bulk/jsonl.rs	360	20	360	89	return Err(bad(super::invalid_input("labels that are not an array")))	-	malformed input	`labels` that is not a JSON array; no test
+src/ops/bulk/jsonl.rs	360	31	360	34	bad	-	malformed input	`labels` that is not a JSON array; no test
+src/ops/bulk/jsonl.rs	377	15	377	27	name.clone()	function src/ops/bulk/jsonl.rs:377 ops::bulk::jsonl::edge_of::{closure#0}	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	378	14	378	26	Pos::Line(n)	function src/ops/bulk/jsonl.rs:377 ops::bulk::jsonl::edge_of::{closure#0}	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	379	13	379	23	id.clone()	function src/ops/bulk/jsonl.rs:377 ops::bulk::jsonl::edge_of::{closure#0}	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	380	16	380	27	Box::new(e)	function src/ops/bulk/jsonl.rs:377 ops::bulk::jsonl::edge_of::{closure#0}	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	381	5	381	6	}	function src/ops/bulk/jsonl.rs:377 ops::bulk::jsonl::edge_of::{closure#0}	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	384	14	384	18	None	-	malformed input	an edge `start` or `end` that is not a JSON object; no test
+src/ops/bulk/jsonl.rs	387	9	389	12	return Err(bad(super::invalid_input( … )))	branch src/ops/bulk/jsonl.rs:386:9 false	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	387	20	387	23	bad	branch src/ops/bulk/jsonl.rs:386:9 false	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	392	9	392	72	return Err(bad(super::invalid_input("an edge without a type")))	branch src/ops/bulk/jsonl.rs:391:9 false	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	392	20	392	23	bad	branch src/ops/bulk/jsonl.rs:391:9 false	malformed input	JSON Lines edge without start, end or type: no test
+src/ops/bulk/jsonl.rs	394	41	394	42	?	-	malformed input	`?` on edge properties that do not convert; no test
+src/ops/bulk/jsonl.rs	409	34	409	35	?	-	malformed input	`?` on an object without a string `type`; no test
+src/ops/bulk/jsonl.rs	420	25	420	36	f(Err(inv))	-	malformed input	a JSON Lines input line that is not a JSON object, reported in the node pass; no test
+src/ops/bulk/jsonl.rs	424	25	424	26	f	-	malformed input	an object whose `type` is neither `node` nor `relationship`; no test
+src/ops/bulk/jsonl.rs	424	25	430	20	f(Err(Invalid::new( … )))	-	malformed input	an object whose `type` is neither `node` nor `relationship`; no test
+src/ops/bulk/jsonl.rs	424	31	424	43	Invalid::new	-	malformed input	an object whose `type` is neither `node` nor `relationship`; no test
+src/ops/bulk/jsonl.rs	425	21	425	26	&name	-	malformed input	an object whose `type` is neither `node` nor `relationship`; no test
+src/ops/bulk/jsonl.rs	426	21	426	33	Pos::Line(n)	-	malformed input	an object whose `type` is neither `node` nor `relationship`; no test
+src/ops/bulk/jsonl.rs	427	21	427	25	None	-	malformed input	an object whose `type` is neither `node` nor `relationship`; no test
+src/ops/bulk/mod.rs	318	38	318	56	r.edges.is_empty()	branch src/ops/bulk/mod.rs:318:16 true	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs	319	17	319	75	return Err(invalid_argument("a CSV import names no file"))	branch src/ops/bulk/mod.rs:318:16 true	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs	330	17	330	83	return Err(invalid_argument("a delimiter that CSV quoting needs"))	branch src/ops/bulk/mod.rs:326:16 true	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs	335	17	335	83	return Err(invalid_argument("this format reads exactly one file"))	branch src/ops/bulk/mod.rs:334:16 true	invalid request	import request with no CSV file, a quote/backslash/CR/LF delimiter or a wrong file count: no test
+src/ops/bulk/mod.rs	345	31	345	32	?	branch src/ops/bulk/files.rs:37:12 true	invalid request	export or import file names that are empty, '.', '..', '*.tmp' or repeated: no test
+src/ops/bulk/model.rs	39	32	39	82	serde_json::Value::Array(vec![b.into(), r.into()])	-	test gap	the report position of a dump record (block and record ordinals): no test imports a dump holding an invalid record
+src/ops/bulk/model.rs	39	57	39	61	vec!	-	test gap	the report position of a dump record (block and record ordinals): no test imports a dump holding an invalid record
+src/ops/bulk/model.rs	162	63	162	64	?	-	invalid request	`?` on the report's outputs: a report file that exists or a location that cannot be listed; no test
+src/ops/bulk/model.rs	194	59	194	67	io_error	function src/ops/bulk/model.rs:194 <ops::bulk::model::Report>::invalid::{closure#0}	I/O error	the error of a report line serde_json cannot write: the report writer is buffered and fails only on a storage error; no test injects one
+src/ops/bulk/model.rs	194	68	194	76	e.into()	function src/ops/bulk/model.rs:194 <ops::bulk::model::Report>::invalid::{closure#0}	I/O error	the error of a report line serde_json cannot write: the report writer is buffered and fails only on a storage error; no test injects one
+src/ops/bulk/model.rs	194	78	194	79	?	-	I/O error	`?` on writing a report line: buffered (64 KiB) and test reports are smaller, so no storage write fails here
+src/ops/bulk/model.rs	195	45	195	46	?	-	I/O error	`?` on writing a report line: buffered (64 KiB) and test reports are smaller, so no storage write fails here
+src/ops/bulk/model.rs	239	55	239	56	?	-	memory cap	`?` on `Charge::add`: no test reaches the cap through an import's identifier map or unique sets
+src/ops/bulk/model.rs	312	60	312	61	?	-	test gap	`?` on a label or type token: a name too long for a token (22N11) or a token commit failure; no test
+src/ops/bulk/model.rs	319	13	325	15	return Err(( … ))	branch src/ops/bulk/model.rs:318:12 true	test gap	input value outside IV011 property values (22G03): no test
+src/ops/bulk/model.rs	320	17	320	27	Error::new	branch src/ops/bulk/model.rs:318:12 true	test gap	input value outside IV011 property values (22G03): no test
+src/types/lexical.rs	373	53	373	62	f == b'_'	branch src/types/lexical.rs:373:26 false	test gap	record field name that is empty or starts with a non-letter (written quoted): no test
+src/types/lexical.rs	403	13	403	31	out.push_str(", ")	branch src/types/lexical.rs:402:12 true	test gap	node form with two or more labels: no test
+src/types/lexical.rs	430	41	430	42	?	-	test helper	`?` in the test-only `parse_annotated`: annotated text without `:` or with an unknown type name; no test feeds one
+src/types/lexical.rs	431	30	431	31	?	-	test helper	`?` in the test-only `parse_annotated`: annotated text without `:` or with an unknown type name; no test feeds one
+src/types/lexical.rs	442	17	442	28	return None	branch src/types/lexical.rs:439:16 false	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	457	96	457	97	?	-	malformed input	`?` on a LOCAL TIME lexical form that does not read; no test
+src/types/lexical.rs	467	10	467	11	?	-	malformed input	`?` on a ZONED TIME lexical form that does not read; no test
+src/types/lexical.rs	567	45	567	46	?	-	malformed input	`?` on a PATH form that is not a list; no test
+src/types/lexical.rs	572	30	572	41	return None	-	malformed input	a PATH list whose elements do not alternate node and edge forms; no test
+src/types/lexical.rs	591	55	591	56	?	branch src/types/lexical.rs:591:13 false	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	592	13	592	24	return None	branch src/types/lexical.rs:591:13 false	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	594	57	594	58	?	-	malformed input	`?` on a node or edge record form without its `id` field; no test
+src/types/lexical.rs	596	18	596	22	None	-	malformed input	a node or edge record form whose `id` is not an integer; no test
+src/types/lexical.rs	605	13	605	24	return None	branch src/types/lexical.rs:604:12 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	624	40	624	41	?	-	malformed input	`?` on a quoted string that ends with a lone backslash; no test
+src/types/lexical.rs	629	33	629	36	'"'	-	test gap	the escape `\"` in a quoted string: the writer never produces it, and no test feeds it
+src/types/lexical.rs	637	49	637	50	?	-	malformed input	`?` on a `\U` escape whose six digits are not hexadecimal or name no Unicode scalar value; no test
+src/types/lexical.rs	648	57	648	58	?	-	malformed input	`?` on a `\u` or `\U` escape cut short by the end of the text; no test
+src/types/lexical.rs	650	13	650	24	return None	branch src/types/lexical.rs:649:12 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	653	60	653	61	?	-	defensive	`?` on `from_str_radix` of four or six digits already checked hexadecimal: it cannot fail
+src/types/lexical.rs	659	32	659	46	self.eat("x'")	branch src/types/lexical.rs:659:14 false	test gap	byte string written with a lower-case x: no test
+src/types/lexical.rs	660	13	660	24	return None	branch src/types/lexical.rs:659:14 false	test gap	byte string written with a lower-case x: no test
+src/types/lexical.rs	665	32	665	33	?	-	malformed input	`?` on a byte string without its closing quote; no test
+src/types/lexical.rs	671	53	671	54	?	-	defensive	`?` on `to_digit(16)` of a byte already checked by `is_ascii_hexdigit`: it cannot fail
+src/types/lexical.rs	701	17	701	28	return None	branch src/types/lexical.rs:700:16 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	709	13	709	24	return None	branch src/types/lexical.rs:708:12 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	713	13	713	24	return None	branch src/types/lexical.rs:712:12 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	723	34	723	35	?	-	malformed input	`?` on a back-quoted record field name that is not closed or holds a bad escape; no test
+src/types/lexical.rs	734	21	734	32	return None	branch src/types/lexical.rs:733:20 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	744	17	744	28	return None	branch src/types/lexical.rs:743:16 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	747	44	747	45	?	-	malformed input	`?` on a record field value that does not read; no test
+src/types/lexical.rs	754	17	754	28	return None	branch src/types/lexical.rs:753:16 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	761	26	761	27	?	-	malformed input	`?` on an element where the text ends; no test
+src/types/lexical.rs	797	58	797	59	?	-	malformed input	`?` on a typed element without a quoted lexical form, without the space before it, or with an unknown type name; no test
+src/types/lexical.rs	798	69	798	70	?	-	malformed input	`?` on a typed element without a quoted lexical form, without the space before it, or with an unknown type name; no test
+src/types/lexical.rs	799	46	799	47	?	-	malformed input	`?` on a typed element without a quoted lexical form, without the space before it, or with an unknown type name; no test
+src/types/lexical.rs	801	21	801	32	return None	branch src/types/lexical.rs:800:20 true	malformed input	lexical-form refusal (NULL, node/edge form, string, escape, list, record, bytes, typed form): no unit test; the lexical_parse fuzz target exercises the reader but is not instrumented
+src/types/lexical.rs	804	47	804	48	?	-	malformed input	`?` on a typed element whose quoted form is not closed; no test
+src/types/lexical.rs	810	43	810	44	?	-	malformed input	`?` on a typed element whose inner form does not read as its type; no test
+src/types/lexical.rs	838	94	838	99	false	branch src/ops/bulk/model.rs:318:12 true	test gap	input value outside IV011 property values (22G03): no test

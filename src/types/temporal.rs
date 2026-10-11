@@ -29,7 +29,6 @@
 //!   durations (`P1Y2M`, `P3DT4H5M6.5S`), negative ones with a leading
 //!   minus sign (ISO 8601-2).
 
-#[cfg(test)]
 use std::fmt::Write as _;
 
 use jiff::civil::{Date, DateTime, Time};
@@ -60,7 +59,6 @@ pub(crate) fn normalize_zone(name: &str) -> &str {
 }
 
 /// The lexical form of a temporal value (TS-21), `None` for any other.
-#[cfg(test)]
 pub(crate) fn format(v: &Value) -> Option<String> {
     Some(match v {
         Value::Date(d) => d.to_string(),
@@ -105,7 +103,6 @@ pub(crate) fn format(v: &Value) -> Option<String> {
 }
 
 /// `+hh:mm` or `+hh:mm:ss` for an offset of `seconds`.
-#[cfg(test)]
 fn offset_text(seconds: i32) -> String {
     let sign = if seconds < 0 { '-' } else { '+' };
     let s = seconds.unsigned_abs();

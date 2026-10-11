@@ -29,7 +29,7 @@ mod btree;
 mod bulk;
 mod commit;
 mod files;
-mod generator;
+pub(crate) mod generator;
 mod micro;
 mod migrate;
 mod obs;

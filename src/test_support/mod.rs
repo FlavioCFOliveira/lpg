@@ -9,6 +9,7 @@ use crate::storage::{FsStorage, Storage, StorageFile, StorageLock};
 
 pub(crate) mod child;
 pub(crate) mod history;
+pub(crate) mod values;
 
 /// The names of this process's threads, from `/proc/self/task/*/comm`.
 pub(crate) fn thread_names() -> Vec<String> {
@@ -203,6 +204,10 @@ impl Storage for NoFlush {
 
     fn rename(&self, from: &Path, to: &Path) -> io::Result<()> {
         FsStorage.rename(from, to)
+    }
+
+    fn rename_noreplace(&self, from: &Path, to: &Path) -> io::Result<()> {
+        FsStorage.rename_noreplace(from, to)
     }
 
     fn list(&self, dir: &Path) -> io::Result<Vec<OsString>> {

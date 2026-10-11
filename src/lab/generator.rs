@@ -82,6 +82,80 @@ impl Sampler {
     }
 }
 
+/// A node of a generated property graph: labels and properties.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct GenNode {
+    pub(crate) labels: Vec<String>,
+    pub(crate) props: Vec<(String, crate::types::Value)>,
+}
+
+/// An edge of a generated property graph: endpoints by node position,
+/// type and properties.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct GenEdge {
+    pub(crate) src: usize,
+    pub(crate) dst: usize,
+    pub(crate) ty: String,
+    pub(crate) props: Vec<(String, crate::types::Value)>,
+}
+
+/// Labels of generated graphs: plain, and holding the `:`, `;` and `\`
+/// that CSV and GraphML escape (rmp #54).
+pub(crate) const LABELS: [&str; 4] = ["A", "B", "C:D", "E;F\\"];
+/// Edge types of generated graphs.
+pub(crate) const EDGE_TYPES_NAMED: [&str; 3] = ["R", "S:T", "U;V"];
+
+/// A property graph of `nodes` nodes and `edges` edges from `seed` (rmp
+/// #54): endpoints from a uniform [`Sampler`] (self-loops allowed), each
+/// node with a random subset of [`LABELS`] and each edge a type of
+/// [`EDGE_TYPES_NAMED`]; property `p<k>` holds values of kind `k`
+/// ([`crate::test_support::values::property_value`], every kind of IV011)
+/// on about half the elements, and, with `mixed`, property `mixed` holds
+/// values of a kind drawn per element. Property `uid` (nodes) and `eid`
+/// (edges) number the elements, so two graphs compare element by element.
+pub(crate) fn property_graph(
+    seed: u64,
+    nodes: usize,
+    edges: usize,
+    mixed: bool,
+) -> (Vec<GenNode>, Vec<GenEdge>) {
+    use crate::test_support::values::{PROPERTY_KINDS, mixed_property_value, property_value};
+    use crate::types::Value;
+    let mut rng = StdRng::seed_from_u64(seed);
+    let props = |rng: &mut StdRng, id: (&str, usize)| {
+        let mut p: Vec<(String, Value)> = vec![(id.0.to_owned(), Value::Int(id.1 as i64))];
+        for k in 0..PROPERTY_KINDS {
+            if rng.random_bool(0.5) {
+                p.push((format!("p{k}"), property_value(rng, k)));
+            }
+        }
+        if mixed && rng.random_bool(0.7) {
+            p.push(("mixed".to_owned(), mixed_property_value(rng)));
+        }
+        p
+    };
+    let ns: Vec<GenNode> = (0..nodes)
+        .map(|i| GenNode {
+            labels: LABELS
+                .iter()
+                .filter(|_| rng.random_bool(0.4))
+                .map(|l| (*l).to_owned())
+                .collect(),
+            props: props(&mut rng, ("uid", i)),
+        })
+        .collect();
+    let mut sampler = Sampler::uniform(nodes.max(1) as u64, seed ^ 0x9e37);
+    let es = (0..if nodes == 0 { 0 } else { edges })
+        .map(|i| GenEdge {
+            src: sampler.node() as usize,
+            dst: sampler.node() as usize,
+            ty: EDGE_TYPES_NAMED[rng.random_range(0..EDGE_TYPES_NAMED.len())].to_owned(),
+            props: props(&mut rng, ("eid", i)),
+        })
+        .collect();
+    (ns, es)
+}
+
 /// Memory cap that lets the buffer pool hold `percent` % of `data_pages`
 /// (at least one page). Only the parameter: the pool arrives in task #13.
 pub(crate) fn memory_cap(data_pages: u64, percent: u64) -> u64 {
@@ -122,6 +196,41 @@ mod tests {
         let uniform = top_share(&mut Sampler::uniform(10_000, 2));
         assert!(zipf > 0.2 && zipf < 0.4, "zipf top-1% share {zipf}");
         assert!(uniform < 0.03, "uniform top-1% share {uniform}");
+    }
+
+    /// The property graph generator is deterministic and covers every
+    /// property kind and both label escapes (rmp #54).
+    #[test]
+    fn property_graphs_are_deterministic_and_cover_every_kind() {
+        let a = property_graph(7, 60, 80, true);
+        let b = property_graph(7, 60, 80, true);
+        assert_eq!(a.0.len(), 60);
+        assert_eq!(a.1.len(), 80);
+        let same = |x: &[(String, crate::types::Value)], y: &[(String, crate::types::Value)]| {
+            x.len() == y.len()
+                && x.iter()
+                    .zip(y)
+                    .all(|(p, q)| p.0 == q.0 && crate::types::lexical::bit_eq(&p.1, &q.1))
+        };
+        assert!(
+            a.0.iter()
+                .zip(&b.0)
+                .all(|(x, y)| x.labels == y.labels && same(&x.props, &y.props))
+        );
+        assert!(
+            a.1.iter()
+                .zip(&b.1)
+                .all(|(x, y)| (x.src, x.dst, &x.ty) == (y.src, y.dst, &y.ty))
+        );
+        let keys: std::collections::BTreeSet<&str> =
+            a.0.iter()
+                .flat_map(|n| n.props.iter().map(|(k, _)| k.as_str()))
+                .collect();
+        for k in 0..crate::test_support::values::PROPERTY_KINDS {
+            assert!(keys.contains(format!("p{k}").as_str()), "p{k}");
+        }
+        assert!(keys.contains("mixed"));
+        assert!(a.0.iter().any(|n| n.labels.iter().any(|l| l.contains(':'))));
     }
 
     #[test]

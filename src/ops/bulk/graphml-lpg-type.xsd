@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The lpg type attribute of GraphML exports (TS-26 item B, rmp #55
+  DECISION 400 and 411). An XSD document declares attributes of its own
+  target namespace only, so the attribute is declared here, in the lpg
+  namespace, and graphml-lpg.xsd adds it to the GraphML attribute groups.
+  Its value is a type name of TS-21, for example POINT or LIST<INTEGER>.
+  Written for lpg (MIT licence); no text of the GraphML schema is copied.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="https://crates.io/crates/lpg/graphml"
+           elementFormDefault="qualified"
+           attributeFormDefault="qualified">
+  <xs:attribute name="type" type="xs:string"/>
+</xs:schema>

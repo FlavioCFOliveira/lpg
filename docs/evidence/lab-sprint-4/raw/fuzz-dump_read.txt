@@ -1,0 +1,18 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.08s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.06s
+     Running `/dev/shm/lpg-target/fuzz-s4/x86_64-unknown-linux-gnu/release/dump_read -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/dump_read/ -runs=1000000 fuzz/corpus/dump_read`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2028541971
+INFO: Loaded 1 modules   (12138 inline 8-bit counters): 12138 [0x5f029b785780, 0x5f029b7886ea), 
+INFO: Loaded 1 PC tables (12138 PCs): 12138 [0x5f029b7886f0,0x5f029b7b7d90), 
+INFO:       52 files found in fuzz/corpus/dump_read
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 8213 bytes
+INFO: seed corpus: files: 52 min: 1b max: 8213b total: 121792b rss: 33Mb
+#54	INITED cov: 1577 ft: 1926 corp: 35/88Kb exec/s: 0 rss: 44Mb
+#1000000	DONE   cov: 1580 ft: 1944 corp: 49/191Kb lim: 8213 exec/s: 38461 rss: 449Mb
+###### Recommended dictionary. ######
+"\363\311\233\323" # Uses: 61552
+"\000\032\215k" # Uses: 2495
+###### End of recommended dictionary. ######
+Done 1000000 runs in 26 second(s)
+EXIT 0 wall 27 s

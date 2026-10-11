@@ -533,6 +533,80 @@ pub(crate) struct Catalog {
     /// The latest committed index and constraint definitions by
     /// identifier (TS-18 step 2 reads them under the commit latch).
     schema: Mutex<BTreeMap<u64, SchemaDef>>,
+    /// The trees fast initial loads installed in this open.
+    pub(crate) loaded: Loaded,
+}
+
+/// The trees fast initial loads installed in this open, each with the
+/// commit timestamp of its install (TS-26 step 6, Catalog version).
+///
+/// Built entries carry stamp 0, which every snapshot sees, so a snapshot
+/// older than the install would read the loaded graph. The install commit
+/// writes a new version of the graph's catalog entry; a snapshot that reads
+/// the older version reads the graph as empty, its exact state at that
+/// snapshot: the graph was empty and had no writer since the load began.
+/// That older version is the one every snapshot below the install
+/// timestamp reads, so the rule is kept here by tree, in memory: after a
+/// reopen no snapshot is older than any install. PostgreSQL documents the
+/// defect this avoids: `COPY FREEZE` "violates the normal rules of MVCC
+/// visibility" (R-PG @ `1b5dd3a` `doc/src/sgml/ref/copy.sgml:275-278`).
+#[derive(Debug, Default)]
+pub(crate) struct Loaded {
+    /// The highest install timestamp: a snapshot at or above it hides
+    /// nothing, without taking the lock.
+    max: crate::sync::atomic::AtomicU64,
+    trees: Mutex<HashMap<u64, u64>>,
+}
+
+impl Loaded {
+    /// Records `trees` as installed at `ts`, under the commit latch and
+    /// before the install's batch changes any page, so that no snapshot
+    /// older than `ts` can read a page the batch changes (rmp #58 FINDING
+    /// 450). PostgreSQL likewise makes the hiding rule of a new index part
+    /// of the same catalog change that makes it usable: `indcheckxmin` is
+    /// set in the tuple that marks the index valid (R-PG @ `1b5dd3a`
+    /// `src/backend/catalog/index.c:3237-3268`), and the planner skips the
+    /// index for older snapshots (`src/backend/optimizer/util/plancat.c:260-267`).
+    /// Returns the previous marks, for [`Loaded::restore`] if the batch is
+    /// undone.
+    pub(crate) fn mark(&self, trees: &[u64], ts: u64) -> Vec<(u64, Option<u64>)> {
+        if trees.is_empty() {
+            return Vec::new();
+        }
+        let mut t = self.trees.lock().unwrap_or_else(PoisonError::into_inner);
+        let prev = trees.iter().map(|&id| (id, t.insert(id, ts))).collect();
+        self.max
+            .fetch_max(ts, crate::sync::atomic::Ordering::SeqCst);
+        prev
+    }
+
+    /// Puts back the marks [`Loaded::mark`] replaced: the install's batch
+    /// was undone. The highest timestamp stays: it only selects the slow
+    /// path of [`Loaded::hides`].
+    pub(crate) fn restore(&self, prev: Vec<(u64, Option<u64>)>) {
+        let mut t = self.trees.lock().unwrap_or_else(PoisonError::into_inner);
+        for (id, old) in prev {
+            match old {
+                Some(ts) => t.insert(id, ts),
+                None => t.remove(&id),
+            };
+        }
+    }
+
+    /// Whether a snapshot `snapshot` reads tree `id` empty: a load
+    /// installed it at a later timestamp.
+    pub(crate) fn hides(&self, id: u64, snapshot: u64) -> bool {
+        // SeqCst pairs with `mark`: a snapshot drawn after an install's
+        // publication is at or above its timestamp anyway.
+        if snapshot >= self.max.load(crate::sync::atomic::Ordering::SeqCst) {
+            return false;
+        }
+        self.trees
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(&id)
+            .is_some_and(|&ts| snapshot < ts)
+    }
 }
 
 impl Catalog {

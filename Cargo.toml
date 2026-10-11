@@ -21,6 +21,11 @@ tokio = { version = "1.53.2", default-features = false, features = ["rt", "time"
 # Events per request and transaction (TS-24). No default features: the
 # `attributes` proc-macro crate is not used.
 tracing = { version = "0.1.44", default-features = false, features = ["std"] }
+# Bulk import and export (TS-26, TS-31): CSV files, JSON Lines with a
+# correctly rounded float parser (`float_roundtrip`, FR-IMP-006), GraphML.
+csv = "1.4.0"
+serde_json = { version = "1.0.154", features = ["float_roundtrip"] }
+quick-xml = "0.42.0"
 
 [dev-dependencies]
 tempfile = "3.27.0"

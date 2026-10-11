@@ -12,6 +12,7 @@ use super::spatial::{self, Point, Srid, distance};
 use super::{DayToSecond, Value, ZonedDateTime, ZonedTime, key, record, temporal, total_cmp};
 use crate::sync::Arc;
 use crate::test_support::seed;
+use crate::test_support::values::random_value;
 
 fn zoned(text: &str) -> Value {
     Value::ZonedDateTime(Box::new(ZonedDateTime::new(text.parse::<Zoned>().unwrap())))
@@ -344,123 +345,6 @@ fn distances_follow_the_ts21_formulas() {
         ),
         17_023_582.192_560_054,
     );
-}
-
-/// A random value of a small domain per group, so that equal and adjacent
-/// values are frequent.
-fn random_value(rng: &mut StdRng, depth: u32) -> Value {
-    let pick = rng.random_range(0..if depth > 1 { 17 } else { 20 });
-    let small = |rng: &mut StdRng| rng.random_range(-3i64..=3);
-    match pick {
-        0 => Value::Null,
-        1 => Value::Bool(rng.random()),
-        2 => Value::Int(match rng.random_range(0..6) {
-            0 => small(rng),
-            1 => [i64::MIN, i64::MAX, i64::MIN + 1, i64::MAX - 1][rng.random_range(0..4)],
-            2 => (1i64 << 53) + small(rng),
-            3 => -(1i64 << 53) + small(rng),
-            4 => rng.random(),
-            _ => small(rng) << rng.random_range(0..62),
-        }),
-        3 => Value::Float(match rng.random_range(0..8) {
-            0 => small(rng) as f64,
-            1 => small(rng) as f64 + 0.5,
-            2 => [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, -0.0, 0.0][rng.random_range(0..5)],
-            3 => 9_223_372_036_854_775_808.0 * [1.0, -1.0, 2.0][rng.random_range(0..3)],
-            4 => (1u64 << 53) as f64 * if rng.random() { 1.0 } else { -1.0 },
-            5 => {
-                f64::from_bits(rng.random::<u64>() & 0x000F_FFFF_FFFF_FFFF)
-                    * if rng.random() { 1.0 } else { -1.0 }
-            }
-            6 => small(rng) as f64 * 1e-300,
-            _ => rng.random::<f64>() * 1e10 - 5e9,
-        }),
-        4 => Value::Node(rng.random_range(0..4)),
-        5 => Value::Edge(rng.random_range(0..4)),
-        6 => Value::Date(
-            Date::new(
-                rng.random_range(-2..=2) * 3000 + 2000,
-                rng.random_range(1..=2),
-                rng.random_range(1..=2),
-            )
-            .unwrap(),
-        ),
-        7 => Value::LocalTime(
-            Time::new(rng.random_range(0..3), 0, 0, rng.random_range(0..2)).unwrap(),
-        ),
-        8 => Value::LocalDateTime(DateTime::from_parts(
-            Date::new(2026, 1, rng.random_range(1..=2)).unwrap(),
-            Time::new(rng.random_range(0..2), 0, 0, rng.random_range(0..2)).unwrap(),
-        )),
-        9 => Value::ZonedTime(ZonedTime {
-            time: Time::new(rng.random_range(0..3), 0, 0, 0).unwrap(),
-            offset: rng.random_range(-1..=1) * 3600,
-        }),
-        10 => {
-            // Instants with and without a fractional second on both sides
-            // of the Unix epoch: jiff gives the fraction the instant's sign.
-            let near_epoch = [
-                "1969-12-31T23:59:58.5",
-                "1969-12-31T23:59:59",
-                "1969-12-31T23:59:59.5",
-                "1970-01-01T00:00:00",
-                "1970-01-01T00:00:00.5",
-            ][rng.random_range(0..5)];
-            match rng.random_range(0..6) {
-                0 => offset_zoned("2026-03-28T01:00:00", rng.random_range(-1..=1) * 3600),
-                1 => zoned("2026-03-28T01:00:00+00:00[UTC]"),
-                2 => zoned("2026-03-28T01:00:00+00:00[Europe/Lisbon]"),
-                3 => zoned("2026-03-28T01:00:00+00:00[Europe/London]"),
-                4 => offset_zoned(near_epoch, rng.random_range(-1..=1) * 3600),
-                _ => zoned(&format!("{near_epoch}+00:00[UTC]")),
-            }
-        }
-        11 => Value::YearToMonth(small(rng)),
-        12 => Value::DayToSecond(
-            DayToSecond::new(small(rng) * 1_314_873, small(rng) * 500_000_000).unwrap(),
-        ),
-        13 => Value::string(["", "a", "a\0", "ab", "b", "é", "\0"][rng.random_range(0..7)]),
-        14 => Value::Bytes(Arc::from(
-            [&b""[..], b"\0", b"\0\0", b"\x01", b"\xff", b"a\0"][rng.random_range(0..6)],
-        )),
-        15 => Value::Path(Arc::from(
-            [
-                &[1u64][..],
-                &[1, 5, 2],
-                &[1, 5, 2, 6, 3],
-                &[2, 5, 3],
-                &[1, 4, 2],
-            ][rng.random_range(0..5)],
-        )),
-        16 => {
-            let srid =
-                [Srid::Cartesian2D, Srid::Wgs84_2D, Srid::Cartesian3D][rng.random_range(0..3)];
-            let c: Vec<f64> = (0..srid.dims())
-                .map(|_| [0.0, -0.0, 1.0, -1.0, f64::NAN][rng.random_range(0..5)])
-                .collect();
-            point(srid, &c)
-        }
-        17 | 18 => {
-            let n = rng.random_range(0..3);
-            Value::List(
-                (0..n)
-                    .map(|_| random_value(rng, depth + 1))
-                    .collect::<Vec<_>>()
-                    .into(),
-            )
-        }
-        _ => {
-            let names = ["a", "b", "c"];
-            let n = rng.random_range(0..3);
-            let mut fields: Vec<(Arc<str>, Value)> = Vec::new();
-            for name in names.iter().take(n) {
-                if rng.random() {
-                    fields.push((Arc::from(*name), random_value(rng, depth + 1)));
-                }
-            }
-            Value::Record(fields.into())
-        }
-    }
 }
 
 fn enc(v: &Value) -> Vec<u8> {

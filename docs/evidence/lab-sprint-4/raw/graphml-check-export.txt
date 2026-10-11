@@ -1,0 +1,1 @@
+graph.graphml: networkx=read nodes=40 edges=60; graphml.xsd=invalid ('{https://crates.io/crates/lpg/graphml}type' attribute not allowed for element); graphml-lpg.xsd=valid

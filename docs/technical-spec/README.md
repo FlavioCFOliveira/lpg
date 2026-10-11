@@ -1,7 +1,7 @@
 ---
 title: Technical specification
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - ../../README.md
   - ../functional-spec/README.md
@@ -91,6 +91,9 @@ Checked between 2026-09-24 and 2026-10-08. Citations added on or after 2026-10-0
 | R-OCTCK | openCypher, <https://github.com/opencypher/openCypher> (its `tck/`) | `677cbaf` (2026-03-20) | Apache-2.0 |
 | R-DF | Apache DataFusion, <https://github.com/apache/datafusion> | `54a4bbf` (2026-10-08) | Apache-2.0 |
 | R-GRAMMARINATOR | grammarinator, <https://github.com/renatahodovan/grammarinator> | `3a6a745` (2026-10-02) | BSD-3-Clause |
+| R-APOC | APOC, <https://github.com/neo4j/apoc> | `e52bc20` (2026-10-09) | Apache-2.0 |
+| R-NX | NetworkX 3.7, read from its PyPI wheel, <https://github.com/networkx/networkx> | 3.7 | BSD-3-Clause |
+| R-LDBCI | LDBC SNB Interactive v1 implementations, <https://github.com/ldbc/ldbc_snb_interactive_v1_impls> | `11db98c` (2026-03-26) | Apache-2.0 |
 | R-ISO | ISO/IEC 39075:2024 electronic inserts, [docs/standards/iso-iec-39075/ed-1/](../standards/iso-iec-39075/ed-1/README.md) ([S45]); supplementary source for GQLSTATUS codes, feature identifiers and implementation-defined items | edition 1 (2024-03-23) | ISO terms of use |
 
 ### Official documentation
@@ -132,6 +135,9 @@ Checked between 2026-09-24 and 2026-10-08. Citations added on or after 2026-10-0
 | D-SHUTTLE | shuttle 0.9.5: <https://docs.rs/shuttle/0.9.5/shuttle/> ("randomized testing, rather than the exhaustive testing that Loom offers"; `shuttle::sync` provides `Mutex`, `RwLock`, `Condvar`, `Arc`, `atomic`) |
 | D-RUST190 | Rust blog, "Announcing Rust 1.90.0" (2025-09-18): "The `x86_64-unknown-linux-gnu` target will now use the LLD linker for linking Rust crates by default." <https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/> (checked 2026-10-11) |
 | D-FORK | LLVM libFuzzer, `compiler-rt/lib/fuzzer/FuzzerFlags.def:63-71` (`fork`; `ignore_timeouts` and `ignore_ooms` default 1, `ignore_crashes` 0) and `FuzzerFork.cpp:457-475` (a timeout or OOM exit is counted and fuzzing continues when ignored; any other non-zero exit stops every job), llvm-project @ `f3653503` (checked 2026-10-11) |
+| D-XML | W3C, "Extensible Markup Language (XML) 1.0 (Fifth Edition)": §2.2 `Char`, §2.11 end-of-line handling: <https://www.w3.org/TR/xml/> |
+| D-GMLXSD | GraphML 1.0 schema files, <http://graphml.graphdrawing.org/xmlns/1.0/>: `graphml.xsd` (SHA-256 `c5d04fb9…af52`), `graphml-structure.xsd` (`78091238…a04b`), `graphml-attributes.xsd` (`e13e2d5d…36bb`), `graphml-parseinfo.xsd` (`6d025e0b…92ca`) (fetched 2026-10-11) |
+| D-CARGOFEAT | The Cargo Book, "Features", "Feature unification": "Cargo will use the union of all features enabled on that dependency when building it": <https://doc.rust-lang.org/cargo/reference/features.html> (checked 2026-10-11) |
 | D-CARGOFUZZ | cargo-fuzz 0.13.2, `src/project.rs:354-371`: without `--target-dir`, cargo chooses the target directory, except for coverage builds, which use `<current directory>/target/<triple>/coverage` (tag `0.13.2`, commit `984c861`, checked 2026-10-11) |
 
 ### Measurements and research notes
@@ -146,4 +152,5 @@ Kept in the repository under [`docs/evidence/`](../evidence/README.md), which al
 | P-STO | [evidence/research/research-01-storage.md](../evidence/research/research-01-storage.md) (2026-09-24) | Storage evidence with file and line references. |
 | P-TX | [evidence/research/research-02-layout-mvcc.md](../evidence/research/research-02-layout-mvcc.md) (2026-09-24), with the page model [evidence/layout-sim/](../evidence/layout-sim/pagesim.py) | Layout, MVCC, validation, locks and indexes evidence with file and line references. |
 | M-FEAT | [evidence/planning/round-s/](../evidence/planning/round-s/README.md) (2026-10-08) | Rule-to-feature classification of `GQL.g4`; TCK and gql-compat selection counts; ambiguous `GQL.g4` decisions; keyword differences with the ISO BNF; Unicode version of the oracle's ANTLR jar. |
+| M-S4 | [evidence/planning/sprint-4-plan.md](../evidence/planning/sprint-4-plan.md) (2026-10-11) | Sprint 4 plan: specification gaps and their references (§3), reuse inventory (§4); Neo4j 2026.09.0 CSV import probe and GraphML probes with NetworkX 3.7 and xmlschema 4.3.2 (Appendix A). |
 | P-TEST | [evidence/research/research-04-turso-libsql.md](../evidence/research/research-04-turso-libsql.md) (2026-10-03) | Turso and libSQL kernel components and test dimensions compared with lpg Sprint 1, with file and line references; recommendations R1–R13; test-speed and flaky-test measurements (§5). |

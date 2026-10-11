@@ -1,0 +1,11 @@
+[package]
+name = "ldbc-driver"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+lpg = { path = "/data/dev/xumiga/lpg" }
+tokio = { version = "1", features = ["rt-multi-thread"] }

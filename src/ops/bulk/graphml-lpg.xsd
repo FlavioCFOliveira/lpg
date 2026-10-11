@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  lpg's extension of the GraphML 1.0 schema (TS-26 item B, rmp #55
+  DECISION 400 and 411). It redefines the GraphML schema and adds the
+  attribute type of the namespace https://crates.io/crates/lpg/graphml,
+  declared in graphml-lpg-type.xsd, to the attribute groups
+  key.extra.attrib and data.extra.attrib: the extension points the GraphML
+  schema provides for <key> and <data> (graphml-structure.xsd), which
+  graphml-attributes.xsd extends the same way. Every GraphML export of lpg
+  validates against this schema. Written for lpg (MIT licence); no text of
+  the GraphML schema is copied: it is referenced by its URL.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://graphml.graphdrawing.org/xmlns"
+           xmlns:lpg="https://crates.io/crates/lpg/graphml"
+           targetNamespace="http://graphml.graphdrawing.org/xmlns"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+  <xs:import namespace="https://crates.io/crates/lpg/graphml"
+             schemaLocation="graphml-lpg-type.xsd"/>
+  <xs:redefine schemaLocation="http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+    <xs:attributeGroup name="key.extra.attrib">
+      <xs:attributeGroup ref="key.extra.attrib"/>
+      <xs:attribute ref="lpg:type" use="optional"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="data.extra.attrib">
+      <xs:attributeGroup ref="data.extra.attrib"/>
+      <xs:attribute ref="lpg:type" use="optional"/>
+    </xs:attributeGroup>
+  </xs:redefine>
+</xs:schema>

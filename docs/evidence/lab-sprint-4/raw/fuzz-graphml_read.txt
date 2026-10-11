@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.10s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.07s
+     Running `/dev/shm/lpg-target/fuzz-s4/x86_64-unknown-linux-gnu/release/graphml_read -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/graphml_read/ -runs=1000000 -fork=3 -ignore_timeouts=0 -ignore_ooms=0 fuzz/corpus/graphml_read`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2055536923
+INFO: Loaded 1 modules   (26269 inline 8-bit counters): 26269 [0x5dfb1325c420, 0x5dfb13262abd), 
+INFO: Loaded 1 PC tables (26269 PCs): 26269 [0x5dfb13262ac0,0x5dfb132c9490), 
+INFO: -fork=3: fuzzing in separate process(s)
+INFO: -fork=3: 626 seed inputs, starting to fuzz in /tmp/libFuzzerTemp.FuzzWithFork3375021.dir
+INFO: fuzzed for 1020436 iterations, wrapping up soon
+INFO: exiting: 0 time: 1380s
+EXIT 0 wall 1381 s
+#1020436: cov: 4785 ft: 22439 corp: 1923 exec/s: 260 oom/timeout/crash: 0/0/0 time: 1379s job: 87 dft_time: 0

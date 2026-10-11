@@ -308,6 +308,8 @@ struct Builder<'s, 'l, 'e> {
     store: &'s Store<'s>,
     lease: &'l mut Lease<'e>,
     id: u64,
+    /// How the leaves store their keys.
+    keys: Keys,
     buf: Vec<u8>,
     enc: Encoder,
     levels: Vec<Level>,
@@ -384,7 +386,7 @@ impl Builder<'_, '_, '_> {
     ) -> Result<()> {
         self.buf.fill(0);
         if es.len() == 0 {
-            node::init_empty_leaf(&mut self.buf, self.id, node::Keys::Prefix);
+            node::init_empty_leaf(&mut self.buf, self.id, self.keys);
         } else {
             let at = Place {
                 tree: self.id,
@@ -500,18 +502,21 @@ impl Builder<'_, '_, '_> {
     }
 }
 
-/// Builds tree `id` from `source` into pages of `lease` and returns its
-/// root, the number of entries and the number of pages.
+/// Builds tree `id` from `source` into pages of `lease`, its leaves storing
+/// keys as `keys`, and returns its root, the number of entries and the
+/// number of pages.
 fn build_pages(
     store: &Store<'_>,
     lease: &mut Lease<'_>,
     id: u64,
+    keys: Keys,
     source: &mut dyn SortedEntries,
 ) -> Result<(u64, u64, u64)> {
     let mut b = Builder {
         store,
         lease,
         id,
+        keys,
         buf: vec![0u8; PAGE_SIZE],
         enc: Encoder::default(),
         levels: Vec::new(),
@@ -519,6 +524,7 @@ fn build_pages(
         entries: 0,
     };
     let mut es = Entries::default();
+    es.set_keys(keys);
     // Body bytes of `es`: entries and restart array.
     let mut size = 0usize;
     let mut page = b.allocate()?;
@@ -684,7 +690,7 @@ impl Engine {
     pub(crate) fn bulk_build_pages(&self, source: &mut dyn SortedEntries) -> Result<Built<'_>> {
         let load = self.core().backup_or_load();
         let id = self.store().draw_tree_id();
-        self.bulk_build_pages_with(source, id, Some(load))
+        self.bulk_build_pages_with(source, id, Keys::Prefix, Some(load))
     }
 
     /// Steps 1 and 2 of the online bulk build of tree `id`, an index's
@@ -701,20 +707,42 @@ impl Engine {
         source: &mut dyn SortedEntries,
         id: u64,
     ) -> Result<Built<'_>> {
-        self.bulk_build_pages_with(source, id, None)
+        self.bulk_build_pages_with(source, id, Keys::Prefix, None)
+    }
+
+    /// Steps 1 and 2 of the bulk build of tree `id`, an existing tree of a
+    /// graph or an index that a fast initial load fills
+    /// ([`Built::install_args`], installed by the load's commit with
+    /// [`crate::tx::Transaction::commit_installing_all`]), its leaves
+    /// storing keys as `keys` (field-delta leaves for an adjacency tree,
+    /// TS-06). The caller holds the backup-or-load latch for the whole load
+    /// ([`crate::storage::engine::Core::backup_or_load`]), so the result
+    /// holds none.
+    ///
+    /// # Errors
+    ///
+    /// As [`Engine::bulk_build_pages`].
+    pub(crate) fn bulk_build_pages_into(
+        &self,
+        source: &mut dyn SortedEntries,
+        id: u64,
+        keys: Keys,
+    ) -> Result<Built<'_>> {
+        self.bulk_build_pages_with(source, id, keys, None)
     }
 
     fn bulk_build_pages_with<'e>(
         &'e self,
         source: &mut dyn SortedEntries,
         id: u64,
+        keys: Keys,
         load: Option<crate::sync::MutexGuard<'e, ()>>,
     ) -> Result<Built<'e>> {
         let core = self.core();
         core.health.check()?;
         let store = core.store();
         let mut lease = Lease::new(self, id);
-        let (root, entries, pages) = build_pages(&store, &mut lease, id, source)?;
+        let (root, entries, pages) = build_pages(&store, &mut lease, id, keys, source)?;
         core.data.sync()?;
         Ok(Built {
             lease,

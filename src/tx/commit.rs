@@ -297,11 +297,14 @@ impl Engine {
     /// with nothing applied and the database usable; any other error with
     /// the database unusable, as [`Engine::commit`].
     pub(crate) fn commit_transaction(&self, tx: &mut Transaction) -> Result<Option<u64>> {
-        self.commit_transaction_installing(tx, None)
+        self.commit_transaction_installing(tx, &[])
     }
 
-    /// [`Engine::commit_transaction`] that, with `built`, also installs its
-    /// bulk-built tree in step 6 ([`Transaction::commit_installing`]).
+    /// [`Engine::commit_transaction`] that also installs each bulk-built
+    /// tree of `built` in step 6: a new tree, or, with `Some(old)`, into the
+    /// existing tree `old` of the same identifier
+    /// ([`Transaction::commit_installing`]; the fast initial load,
+    /// [`crate::ops::bulk`]).
     ///
     /// # Errors
     ///
@@ -309,10 +312,11 @@ impl Engine {
     pub(crate) fn commit_transaction_installing(
         &self,
         tx: &mut Transaction,
-        built: Option<&Built<'_>>,
+        built: &[(&Built<'_>, Option<Tree>)],
     ) -> Result<Option<u64>> {
         // Step 1.
-        if tx.writes.is_empty() && tx.drops.is_empty() && tx.created.is_empty() && built.is_none() {
+        if tx.writes.is_empty() && tx.drops.is_empty() && tx.created.is_empty() && built.is_empty()
+        {
             return Ok(None);
         }
         let started = Instant::now();
@@ -330,7 +334,7 @@ impl Engine {
         &self,
         tx: &Transaction,
         charge: &mut Reservation,
-        built: Option<&Built<'_>>,
+        built: &[(&Built<'_>, Option<Tree>)],
     ) -> Result<u64> {
         let core = self.core();
         core.health.check()?;
@@ -344,15 +348,14 @@ impl Engine {
         // cover every identifier this transaction drew (TS-07). A bulk
         // build's pages stay owned by its record until this commit installs
         // the tree; if it fails, they are released when `built` is dropped.
-        let install = built.map(|b| b.install_args());
-        self.reserve_space(
-            &store,
-            &estimate,
-            tx.created.len() + usize::from(install.is_some()),
-        )?;
+        let install: Vec<(Install, Option<Tree>)> = built
+            .iter()
+            .map(|(b, old)| (b.install_args(), *old))
+            .collect();
+        self.reserve_space(&store, &estimate, tx.created.len() + install.len())?;
         // A commit that installs a bulk-built tree is not in a backup's WAL
         // range (`storage::btree::bulk`): it waits while a backup runs.
-        let _installs = install.is_some().then(|| core.install_step());
+        let _installs = (!install.is_empty()).then(|| core.install_step());
         let st = store.lock();
         drop(estimate);
         let ids = core.ids.current();
@@ -407,15 +410,7 @@ impl Engine {
                 .register(ts, WriteKeys::new(keys), key_charge);
             // Step 6.
             let r = self.apply_transaction(
-                store,
-                st,
-                wal,
-                tx,
-                charge,
-                ts,
-                &dir_keys,
-                &derived,
-                install.as_ref(),
+                store, st, wal, tx, charge, ts, &dir_keys, &derived, &install,
             );
             if r.is_err() {
                 mvcc.committed.withdraw(ts);
@@ -444,7 +439,7 @@ impl Engine {
         ts: u64,
         dir_keys: &[[u8; 8]],
         derived: &Derived,
-        install: Option<&Install>,
+        install: &[(Install, Option<Tree>)],
     ) -> Result<()> {
         let core = self.core();
         let mvcc = &core.mvcc;
@@ -543,9 +538,16 @@ impl Engine {
                 value: w.value.as_deref(),
                 stamp: w.stamp,
             }));
+            // A fast initial load's trees are hidden from older snapshots
+            // before the batch changes a page (TS-26 step 6, Catalog
+            // version; `catalog::Loaded::mark`).
+            let marks = core.catalog.loaded.mark(&tx.loaded_trees, ts);
             let r = store
                 .apply_batch_installing(st, Some(wal), &batch, &tx.created, install)
                 .map(drop);
+            if r.is_err() {
+                core.catalog.loaded.restore(marks);
+            }
             st.set_freeze_horizon(0);
             r.map(|()| effects)
         });

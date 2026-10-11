@@ -1,0 +1,12 @@
+file	functions	regions	branches	lines
+src/ops/bulk/csv.rs	72/78	741/836	108/130	612/658
+src/ops/bulk/dump.rs	45/57	537/646	60/80	467/516
+src/ops/bulk/export.rs	42/52	378/489	8/20	318/371
+src/ops/bulk/fast.rs	43/44	769/907	114/136	669/717
+src/ops/bulk/files.rs	15/16	120/136	22/34	115/124
+src/ops/bulk/graphml.rs	50/58	545/656	58/78	474/534
+src/ops/bulk/import.rs	35/43	449/557	53/74	402/466
+src/ops/bulk/jsonl.rs	41/44	319/366	27/32	261/300
+src/ops/bulk/mod.rs	10/10	81/86	14/20	107/110
+src/ops/bulk/model.rs	31/32	176/187	14/16	183/192
+src/types/lexical.rs	54/54	649/689	122/154	516/533

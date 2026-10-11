@@ -1,0 +1,44 @@
+fmt: exit 0, 7 s
+cfgfuzz: exit 0, 58 s
+clippy: exit 0, 86 s
+loom: exit 0, 268 s
+nextest: exit 100, 300 s
+FAILED: nextest (gate log)
+shuttle: exit 0, 310 s
+concurrent gates: 310 s
+stress: exit 0, 102 s
+all gates: 412 s, 1 failed
+EXIT 1
+
+--- nextest (lab dirs) failure block
+        FAIL [  99.013s] (491/581) lpg suites::kill::kill_and_reopen
+  stdout ───
+
+    running 1 test
+    test suites::kill::kill_and_reopen has been running for over 60 seconds
+    SUITE kill fs=ext4 source=/dev/nvme0n1p1 dir=/data/tmp/lpg-lab iterations=200 printed_commits=12126 recovery_ms_p50=58.6 recovery_ms_p99=187.0 replayed_bytes_p50=304288 replayed_bytes_p99=666144 child_commits_per_s_p50=626 kills_in_checkpoint=200 kills_in_backup=200 recycling_checkpoints=7 printed_drops=684 kills_in_index_build=200 index_builds=0 restarted_index_builds=200 kept_indexes_checked=199 seconds=98.6
+    test suites::kill::kill_and_reopen ... FAILED
+
+    failures:
+
+    failures:
+        suites::kill::kill_and_reopen
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 609 filtered out; finished in 98.96s
+
+  stderr ───
+    LPG_SEED=4168562804439027456
+    LPG_SEED=4764818256610116953
+
+    thread '<unnamed>' (3387533) panicked at src/suites/kill.rs:543:14:
+    the child commits: Disconnected
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+        PASS [   0.373s] (492/581) lpg ops::backup::tests::a_backup_requested_during_a_bulk_build_fails_at_once
+     Summary [ 299.316s] 581 tests run: 580 passed (4 slow), 1 failed, 29 skipped
+--- loom
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 488 filtered out; finished in 54.87s
+--- shuttle
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 488 filtered out; finished in 47.57s
+--- stress
+     Summary [ 101.581s] 69 tests run: 69 passed, 541 skipped

@@ -1,7 +1,7 @@
 ---
 title: Use cases
 status: draft
-last-reviewed: 2026-10-07
+last-reviewed: 2026-10-11
 related:
   - functional-requirements.md
   - non-functional-requirements.md
@@ -147,17 +147,18 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
 
 - **Actor**: Application.
 - **Trigger**: The application requests an import of files in a supported format ([FR-IMP-001](functional-requirements.md#import-and-export)).
-- **Preconditions**: The database is open; the target graph exists.
+- **Preconditions**: The database is open; the target graph exists, or, for a native dump of a database, the catalog holds only the default schema and an empty default graph ([FR-IMP-003](functional-requirements.md#import-and-export)).
 - **Main flow**:
-  1. The application chooses the transactional import or, for an empty graph, the fast initial load ([FR-IMP-002](functional-requirements.md#import-and-export)).
+  1. The application chooses the transactional import or, for an empty graph, the fast initial load ([FR-IMP-002](functional-requirements.md#import-and-export)). A native dump of a database is always loaded by the fast initial load ([FR-IMP-003](functional-requirements.md#import-and-export)).
   2. The crate imports the records and assigns new element identifiers ([FR-IMP-005](functional-requirements.md#import-and-export)).
-  3. The crate returns a report.
+  3. The crate writes the report of invalid records, one entry per record, to a file that the application names, and returns the counts of imported and invalid records ([FR-IMP-004](functional-requirements.md#import-and-export)).
 - **Alternate flows**:
   - A1. A record is invalid: the crate aborts (default) or skips it, and reports it ([FR-IMP-004](functional-requirements.md#import-and-export)).
   - A2. The fast initial load targets a graph that is not empty: it fails.
   - A3. A transactional import needs more memory than the cap: it fails and the graph is unchanged ([FR-IMP-002](functional-requirements.md#import-and-export), [FR-LIM-007](functional-requirements.md#resource-limits)).
   - A4. A backup is running when the fast initial load is requested: the load waits until the backup ends ([FR-OPS-001](functional-requirements.md#operations)).
-- **Postconditions**: The graph contains the imported data, or is unchanged after an abort.
+  - A5. A native dump of a database is imported into a database whose catalog holds another object or whose default graph is not empty: the import fails with an error and the database is unchanged ([FR-IMP-003](functional-requirements.md#import-and-export)).
+- **Postconditions**: The graph contains the imported data, or is unchanged after an abort. A failed import of a native dump of a database leaves what [FR-IMP-003](functional-requirements.md#import-and-export) states.
 
 ### UC-OPS-004 Export data
 

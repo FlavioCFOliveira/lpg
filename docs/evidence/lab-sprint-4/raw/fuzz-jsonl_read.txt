@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.09s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.08s
+     Running `/dev/shm/lpg-target/fuzz-s4/x86_64-unknown-linux-gnu/release/jsonl_read -artifact_prefix=/data/dev/xumiga/lpg/fuzz/artifacts/jsonl_read/ -runs=1000000 -fork=4 -ignore_timeouts=0 -ignore_ooms=0 fuzz/corpus/jsonl_read`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 2060197466
+INFO: Loaded 1 modules   (23573 inline 8-bit counters): 23573 [0x5c94c8687270, 0x5c94c868ce85), 
+INFO: Loaded 1 PC tables (23573 PCs): 23573 [0x5c94c868ce88,0x5c94c86e8fd8), 
+INFO: -fork=4: fuzzing in separate process(s)
+INFO: -fork=4: 580 seed inputs, starting to fuzz in /tmp/libFuzzerTemp.FuzzWithFork3374992.dir
+INFO: fuzzed for 1003667 iterations, wrapping up soon
+INFO: exiting: 0 time: 1807s
+EXIT 0 wall 1808 s
+#1003667: cov: 4184 ft: 21812 corp: 2438 exec/s: 282 oom/timeout/crash: 0/0/0 time: 1807s job: 116 dft_time: 0
