@@ -1,7 +1,7 @@
 ---
 title: Operations
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - storage.md
   - transactions-and-recovery.md
@@ -50,21 +50,42 @@ related:
     The result is the state of one commit point, with element identifiers unchanged. A restore interrupted before step 5 completes leaves no `CONTROL`, so the location holds no database; a new restore, after step 4 takes `LOCK`, removes `wal-temp` and every `data-<h>` and `wal-<h>-<lsn>` the artefact does not contain, of any generation, then overwrites the files it writes (`src/ops/restore.rs:220-226`).
   - **Export layouts** (database, graph or query result, as FR-IMP-003 assigns):
     - **CSV**: separate node and edge files with the Neo4j header fields `:ID`, `:LABEL`, `:START_ID`, `:END_ID`, `:TYPE`.
+      - A graph export writes one node file and one edge file. The property columns of each are the union of the property names of its elements; an absent property is an empty field.
       - Fields are quoted as RFC 4180 requires.
       - Inside an array or `:LABEL` field, elements are separated by `;`, and `\` escapes `;` and `\`.
-      - An absent property is an empty field.
+      - Column types are Neo4j's lower-case names `long`, `double`, `boolean`, `string`, `date`, `localtime`, `time`, `localdatetime`, `datetime`, `point` and `<type>[]`; import reads them case-insensitively (R-NEO `community/import-util/.../csv/DataFactories.java:593`; `community/csv/.../reader/Extractors.java:173-204`). Import also reads `int`, `short` and `byte` as `long`, and `float` as `double`: LDBC's Neo4j headers use `INT` (R-LDBCI `cypher/scripts/headers.txt`).
+      - A `double` column writes NaN and ±infinity as `NaN`, `Infinity` and `-Infinity`. Neo4j parses a `double` with `Double.parseDouble` (`Extractors.java:611-627`); measured: Neo4j 2026.09.0 imported them and returned `NaN` and `Infinity` (M-S4 Appendix A).
+      - A `point` column writes each value in the [TS-21](values-and-types.md#ts-21-values-and-types) form, with its `srid`. Neo4j merges the header's and the value's maps, the value winning, and accepts `srid` (R-NEO `community/values/.../storable/PointValue.java:311-321, 474-478`); `crs` and `srid` together fail (`PointValue.java:336`). Measured: header `point{srid:7203}` with a value holding `srid` imported with SRID 7203 (M-S4 Appendix A).
+      - A header field `<name>:lpg:<type name>` or `<name>:lpg:annotated` takes everything after `lpg:` as a type name of [TS-21](values-and-types.md#ts-21-values-and-types) or `annotated`. Any other field follows APOC's field grammar, `name`, `:type`, `{options}`, `(idspace)`, `[]` (R-APOC `core/src/main/java/apoc/export/csv/CsvLoaderConstants.java:28-29`, ported).
+      - A property name that holds `:` fails the export with an error naming it: the field grammar's name is `[^:]*` (`CsvLoaderConstants.java:29`).
+      - **Neo4j input** (user decision 2026-10-11, item A option (a), rmp #55 DECISION 399). Import also accepts id spaces (`:ID(<space>)`, `:START_ID(<space>)`, `:END_ID(<space>)`), `:IGNORE` columns, a one-byte delimiter (default `,`) and array delimiter (default `;`) that differ, and labels for a node file or an edge type for an edge file given with the file. LDBC's Neo4j load files therefore import unchanged (R-LDBCI `cypher/scripts/import-to-neo4j.sh:32-51`; R-NEO `community/import-tool/.../ImportCommand.java:372-393`). An input id is unique within its id space; a file without one uses the default space. Export writes `,`, `;` and no id space.
     - **JSON Lines**: one object per node (`type`, `id`, `labels`, `properties`) and per edge (`type`, `id`, `label`, `properties`, `start`, `end`), as APOC writes them [S44].
-    - **GraphML**: one `<key>` per property; labels in a `labels` data key, as APOC writes them [S44].
-    - **Native dump**: an lpg binary format with a format version and a CRC-32C per block, using the record encoding of [TS-21](values-and-types.md#ts-21-values-and-types).
+      - `id` is a JSON string. `start` and `end` are objects `{"id", "labels"}`; import reads only their `id` (R-APOC `core/src/main/java/apoc/export/json/JsonFormatSerializer.java:37-51, 88, 106-116`).
+      - A JSON `null` property value is an invalid record: a property cannot hold null (IV011, [TS-21](values-and-types.md#ts-21-values-and-types)).
+      - A number without fraction or exponent is an integer. serde_json reads one from 2<sup>63</sup> to 2<sup>64</sup> − 1 as `u64`, which is an invalid record (`i64` is the one integer type). It reads `-0` and every integer of larger magnitude as `f64` (serde_json 1.0.154 `src/de.rs:486-494, 517-524`); import keeps those as floats. lpg's export writes neither.
+    - **GraphML**: one `<key>` per property.
+      - Node labels are only in the data key `labels`, written `:A:B`; the edge type is only in the data key `label`; in both, `\` escapes `:` and `\`. `<node>` and `<edge>` carry no `labels` or `label` attribute: APOC writes both the attribute and the data key (R-APOC `core/src/main/java/apoc/export/graphml/XmlGraphMLWriter.java:129-156, 169-170`), and the GraphML 1.0 schema rejects the attribute (measured, M-S4 Appendix A).
+      - **XML characters.** XML 1.0 `Char` excludes U+0000–U+0008, U+000B, U+000C, U+000E–U+001F, U+FFFE and U+FFFF (D-XML §2.2). A string value that holds one is annotated as `STRING`, in the escaped lexical form of [TS-21](values-and-types.md#ts-21-values-and-types); a label, edge type or property name that holds one fails the export with an error naming it. `\r` is written `&#13;` (quick-xml 0.42.0 `escape`, `src/escape.rs:93-110`); the reader applies XML 1.0 end-of-line handling (D-XML §2.11; quick-xml `xml10_content`, `src/events/mod.rs:625-628`).
+      - A `<data>` element with no text reads as the empty string (R-NX `readwrite/graphml.py:1056-1057`).
+      - The reader reads its file twice, nodes first, then edges: GraphML allows an edge before its nodes, and NetworkX reads every node before any edge (`readwrite/graphml.py:902-960`).
+      - **Extension schema** (user decision 2026-10-11, item B option (a), rmp #55 DECISION 400). `src/ops/bulk/graphml-lpg.xsd`, in the GraphML namespace, `xs:redefine`s `http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd` and adds the attribute `type` of the namespace `https://crates.io/crates/lpg/graphml` to the attribute groups `key.extra.attrib` and `data.extra.attrib`, the extension points the GraphML schema provides (`graphml-structure.xsd:44-49, 60-66`; `graphml-attributes.xsd:27-45` extends `key.extra.attrib` the same way; D-GMLXSD). The attribute is declared in `src/ops/bulk/graphml-lpg-type.xsd`, whose target namespace is the lpg namespace: an XSD document declares attributes of its own target namespace only. Both files ship in the crate package, and neither copies text of the GraphML schema files, whose licence is not confirmed. Every GraphML export validates against `graphml-lpg.xsd`. Measured 2026-10-11 with xmlschema 4.3.2 on a probe of the two files: a file with `lpg:type` on `<key>` and `<data>` is valid against it and invalid against `graphml.xsd`; a file with another lpg attribute, or with a `labels` attribute on `<node>`, is invalid against both (rmp #55 TEST).
+    - **Native dump**: an lpg binary format using the record encoding of [TS-21](values-and-types.md#ts-21-values-and-types).
+      - A header: magic, dump format version, scope (database or graph), the crate's format version ([TS-28](#ts-28-format-versioning-and-migration)).
+      - Blocks in this order: catalog definitions and tokens, node records, edge records, index and constraint definitions. Each block is length-prefixed and carries a CRC-32C.
+      - A trailer: the count of each block kind, and its own CRC-32C, so a truncated dump fails.
+      - A dump that fails a length or CRC-32C check fails the import whichever invalid-record option is set: no record of a damaged block is known to be complete.
+      - The checks follow the backup `MANIFEST` (above; `src/ops/backup.rs:132-160`); the order follows Turso's `.dump`, which writes each table's definition and rows, then the indexes and the other schema objects (R-TURSO @ `be5bab8` `cli/app.rs:1847-1874`).
+      - **Database scope**: what a backup covers (FR-OPS-008), the catalog, every graph, and every index and constraint definition; not registered procedures and functions. Owners are not dumped.
+      - **Database-scope import** (user decision 2026-10-11, item D option (a), rmp #55 DECISION 402). The target catalog must hold only the objects `create` writes, `/public` and an empty `/public/lpg` ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)); otherwise the import fails. One transaction creates the dump's other catalog objects (directories, schemas, graph types, then graphs) and every index and constraint definition; the importing principal owns each object it creates ([TS-23](interfaces.md#ts-23-authentication-and-authorisation)). Each graph is then loaded by the fast initial load, which builds those indexes and checks those constraints (steps 2 and 4, below). A failure leaves the created objects, and the graphs loaded before it, in place. The import mode option does not apply to this scope.
     - **Query results**: CSV and JSON Lines write one record per result row, with the result's columns. GraphML writes the nodes and edges the result contains, including those inside paths and lists, and leaves out the other values.
-  - **Type annotations (FR-IMP-006).** Values use the lexical forms of [TS-21](values-and-types.md#ts-21-values-and-types). A property, or a query-result column, is **uniform** when all its exported values have one type, and **mixed** otherwise.
+  - **Type annotations (FR-IMP-006).** Values use the lexical forms and type names of [TS-21](values-and-types.md#ts-21-values-and-types). A property, or a query-result column, is **uniform** when all its exported values have one type, and **mixed** otherwise.
 
     | Value | CSV | JSON Lines | GraphML |
     |---|---|---|---|
     | BOOLEAN, uniform | `boolean` column | JSON boolean | `attr.type="boolean"` |
     | 64-bit integer, uniform | `long` column | JSON number without fraction or exponent | `attr.type="long"` |
     | 64-bit float, finite, uniform | `double` column | JSON number with a fraction or exponent | `attr.type="double"` |
-    | 64-bit float, NaN or ±infinity | annotated | tagged object | `attr.type="string"` + lpg type attribute |
+    | 64-bit float, NaN or ±infinity | `double` column: `NaN`, `Infinity`, `-Infinity` | tagged object | `attr.type="string"` + lpg type attribute |
     | character string, uniform, never empty | `string` column | JSON string | `attr.type="string"` |
     | DATE, LOCAL TIME, ZONED TIME, LOCAL DATETIME, ZONED DATETIME, uniform | `date`, `localtime`, `time`, `localdatetime`, `datetime` column | tagged object | `attr.type="string"` + lpg type attribute |
     | point, uniform | `point` column | tagged object | `attr.type="string"` + lpg type attribute |
@@ -72,21 +93,57 @@ related:
     | any other type (both duration kinds, byte string, record, nested list, other numerics, node, edge, path) | `lpg:<type name>` column | tagged object | `attr.type="string"` + lpg type attribute |
     | any value of a mixed property or column, or a string column that holds an empty string | `lpg:annotated` column; each value written as `<type name>:<lexical form>` | each value by its own row above | `attr.type="string"`, lpg type attribute on each `<data>` element |
 
-    - A tagged object has exactly the two keys `"$lpg_type"` and `"$value"`. Every JSON object in a property or value position is read as a tagged object.
-    - The GraphML type attribute is in the namespace `https://crates.io/crates/lpg/graphml`.
+    - A tagged object has exactly the two keys `"$lpg_type"`, the type name, and `"$value"`, a JSON string holding the lexical form. Every JSON object in a property or value position is read as a tagged object.
+    - The GraphML type attribute is `type` in the namespace `https://crates.io/crates/lpg/graphml`.
+  - **Records.** Importers process nodes before edges. Tokens new to the catalog (labels, edge types, property names) are created by an ordinary transaction before the import or load writes; tokens left by an abort stay unused ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics); `src/catalog/mod.rs`).
+  - **Invalid records** (FR-IMP-004): a malformed record; a value not convertible to its column type or tagged type; a duplicate input id in one id space; an edge with an unknown endpoint; an edge whose endpoint was skipped; a constraint violation. Neo4j names the same cases in `--skip-duplicate-nodes` and `--skip-bad-relationships` (R-NEO `community/import-tool/.../ImportCommand.java:158-159`).
+    - A malformed header, or a damaged native dump, fails the import: it is not a record.
+    - With abort, the default, the import stops at the first invalid record and adds nothing. With skip, it continues without the record.
+    - **Report** (user decision 2026-10-11, item C option (a), rmp #55 DECISION 401). The application names a report file. The crate writes it as an export file (Export files, below), one line per invalid record, and the call returns the counts of imported nodes, imported edges and invalid records. Neo4j's import tool writes its report to the file `--report-file` names, by default `report.json.log` (R-NEO `community/import-tool/.../ImportCommand.java:261`, `ImportContext.java:114`).
+    - Each report line is one JSON object with the keys `file`; `record`, the line for CSV and JSON Lines, the element ordinal for GraphML, the block and record ordinals for the native dump; `id`, the input id or `null`; `gqlstatus`; and `reason`. Kuzu keeps the message, file path and line number of each skipped record (R-KUZU `src/include/processor/warning_context.h`; `PopulatedCopyFromError`, `src/include/processor/operator/persistent/reader/copy_from_error.h:82-87`); PostgreSQL's `COPY` with `LOG_VERBOSITY verbose` reports the input line and the column of each discarded row (R-PG @ `1b5dd3a` `doc/src/sgml/ref/copy.sgml:467-475`).
+  - **GQLSTATUS of import and export**, by the rule of [GQLSTATUS codes](interfaces.md#gqlstatus-codes). ISO lines are those of the conditions insert; Neo4j lines those of `GqlStatusInfoCodes.java` @ `54a7dcf`. The ISO text is not available, so an ISO code is chosen by its condition name (provisional, OQ-005).
+
+    | Failure | GQLSTATUS | Source |
+    |---|---|---|
+    | A malformed record or header; a damaged native dump; an unknown type name; a duplicate input id in one id space; an edge with an unknown or skipped endpoint | 22N05 | Neo4j "input failed validation" (557), by description |
+    | A text that is not a lexical form of its column or tagged type: a temporal instant; a duration; any other type | 22007; 22G0H; 22018 | ISO (74; 93; 79), by name |
+    | A JSON integer outside the `i64` range | 22003 | ISO (72) |
+    | A JSON `null` property value | 22004 | ISO (73), by name |
+    | A tagged type that a property cannot hold | 22G03 | IV011 ([TS-21](values-and-types.md#ts-21-values-and-types)) |
+    | A constraint violation | as `ConstraintViolation` | [GQLSTATUS codes](interfaces.md#gqlstatus-codes) |
+    | An import that aborts on an invalid record | the code of that record | Invalid records, above |
+    | An excluded format and scope pair; a name a format cannot hold; an export or report file that exists; a delimiter equal to the array delimiter | 22N11 | `InvalidArgument` ([GQLSTATUS codes](interfaces.md#gqlstatus-codes)), as for a backup target that is not empty (`src/ops/backup.rs:255-256`) |
+    | A fast initial load into a graph that is not empty; a database-scope import into a catalog that holds other objects | 51N41 | Neo4j "admin operation failed" (3201), by description, as `LoadRunning` |
+    | Storage full, or any other I/O failure | 50N00 | `Io` ([GQLSTATUS codes](interfaces.md#gqlstatus-codes)); neither the ISO insert nor `GqlStatusInfoCodes.java` has a code for a full device (searched 2026-10-11) |
+    | The memory cap; the transaction memory limit | 51N72; 51N73 | [GQLSTATUS codes](interfaces.md#gqlstatus-codes) |
+    | A refusal of the authoriser | 42NFF | [GQLSTATUS codes](interfaces.md#gqlstatus-codes) |
+
+  - **Authorisation** (FR-AUTH-001). Import and export are `Session` operations; each asks once per `(action, object)` pair ([TS-23](interfaces.md#ts-23-authentication-and-authorisation); `src/auth/mod.rs:50-80`):
+    - export: `TRAVERSE` and `READ` on each graph of its scope; a query-result export asks what `execute` asks for its statement;
+    - import and fast initial load: `CREATE`, `SET LABEL` and `SET PROPERTY` on the target graph;
+    - database-scope import: those on each graph, `CREATE` of each catalog object kind it creates, on the object's path, and `CREATE INDEX` and `CREATE CONSTRAINT` on each graph with definitions.
+  - **Export files.** The caller names each output file, in a location that exists. Each file is written as `<name>.tmp`, synced, renamed to `<name>`, and the location is then synced, as `MANIFEST` is (above; R-PG `src/bin/pg_basebackup/pg_basebackup.c:2298-2321`). An export fails if a target file exists, and removes its files on failure (UC-OPS-004 A1).
+  - **Memory.** The transactional import's id map is charged to the memory cap. Parse and write buffers, the report's included, have fixed sizes outside the cap, as the 1 MiB copy buffer has ([TS-08](storage.md#ts-08-buffer-pool-and-memory-cap)). The fast initial load's memory is its sort reservations (FR-LIM-003, FR-LIM-007).
   - **Transactional import** runs as one transaction. It adds all records or none (FR-IMP-004), and its writes with their old versions must fit the memory cap (FR-LIM-007).
   - **Fast initial load** targets an empty graph.
     1. Wait for a running backup to end. Take the X graph lock ([TS-15](transactions-and-recovery.md#ts-15-serializable-isolation-and-write-locks)), so writers of the graph wait; readers keep reading the empty graph. If the graph is not empty, fail.
-    2. External merge sort of the input into temporary files through the storage trait, in the database location ([TS-05](storage.md#ts-05-files-and-pages)). On the sorted runs, check the constraints already defined on the graph. Each violation is an invalid record, handled by the abort-or-skip option (FR-IMP-004). An edge whose endpoint was skipped is invalid as well.
+    2. External merge sort of the input into temporary files through the storage trait, in the database location ([TS-05](storage.md#ts-05-files-and-pages)):
+       - nodes by (id space, input id), which assigns identifiers in order and finds duplicate input ids;
+       - edges by start input id, merged with the sorted nodes to resolve starts, then by end input id to resolve ends;
+       - the adjacency keys (`adj_key`), and each index's keys (`index_keys`).
+
+       On the sorted runs, check the constraints already defined on the graph; uniqueness is checked on adjacent sorted keys (`UniqueSorted`, `src/index/build.rs:554-575`, a port of PostgreSQL's `enforceUnique`). Each violation is an invalid record, handled by the abort-or-skip option (FR-IMP-004). An edge whose endpoint was skipped is invalid as well.
     3. Build the node, edge and adjacency trees bottom-up, filled to 90 %, into pages taken in logged runs and owned by the build's record ([TS-05](storage.md#ts-05-files-and-pages) Build pages).
     4. Then build every index already defined on the graph bottom-up from sorted runs. The label or edge-type lookup tree is built only if that index exists.
     5. `sync_data`.
-    6. Write one WAL group that installs the tree roots and the new allocation state.
+    6. Write one WAL group that installs the tree roots, the new allocation state, the statistics and a new version of the graph's catalog entry.
+       - **Statistics**: the counts per label and per `(label, type, direction)` gathered during the build, added in one batch as an index's ONLINE commit adds its build's counts ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) step 6; `switch`, `src/index/mod.rs:974`).
+       - **Catalog version.** Built entries carry stamp 0, which every snapshot sees (`src/storage/btree/bulk.rs:223, 774`; [TS-06](storage.md#ts-06-graph-layout)). A snapshot that reads the older version of the graph's catalog entry reads the graph as empty, which is its exact state at that snapshot: the graph was empty and had no writer since step 1. The catalog tree is stamped ([TS-17](catalog-and-indexes.md#ts-17-catalog-and-statistics)).
     7. Release the graph lock.
 
     If the load fails or crashes before step 6, the graph stays empty and its pages stay owned by its build record, whose release runs at once after a failure (again at close or the next open if that release fails) and at the next open after a crash ([TS-05](storage.md#ts-05-files-and-pages) Build pages). ENOSPC during reservation fails the load.
   - **Element identifiers.** Both import modes assign new identifiers; input identifiers only connect edges to nodes.
-- **Satisfies**: FR-OPS-001, FR-OPS-002, FR-OPS-003, FR-OPS-007, FR-OPS-008, FR-OPS-009, FR-OPS-010, FR-REC-003, FR-REC-004, FR-IMP-001, FR-IMP-002, FR-IMP-003, FR-IMP-004, FR-IMP-005, FR-IMP-006, FR-IDX-001, FR-LIM-007, BR-TYPE-002, NFR-PERF-005.
+- **Satisfies**: FR-OPS-001, FR-OPS-002, FR-OPS-003, FR-OPS-007, FR-OPS-008, FR-OPS-009, FR-OPS-010, FR-REC-003, FR-REC-004, FR-IMP-001, FR-IMP-002, FR-IMP-003, FR-IMP-004, FR-IMP-005, FR-IMP-006, FR-IDX-001, FR-LIM-003, FR-LIM-007, FR-AUTH-001, BR-TYPE-002, NFR-PERF-002, NFR-PERF-005.
 - **Evidence**:
   - PostgreSQL base backup: checkpoint, file copy while running, then the WAL from start to stop replayed at restore. Neo4j full backup copies the store and recovers ([P-STO](../evidence/research/research-01-storage.md) §Q7).
   - PostgreSQL's backup manifest records the WAL range (R-PG `src/backend/backup/basebackup.c:657-660`) and a CRC-32C per file by default (`basebackup.c:729`). `pg_basebackup` syncs the data, then durably renames `backup_manifest.tmp` to `backup_manifest`, so that an interrupted copy is not "mistaken for a valid backup" (`src/bin/pg_basebackup/pg_basebackup.c:2298-2321`).
@@ -98,10 +155,12 @@ related:
   - Neo4j import header format and data types (D-HDR; [S38]).
   - APOC JSON Lines and GraphML layouts, and APOC query-result export (D-APOC; [S44]). GraphML allows six `attr.type` values (D-GML).
   - External sort and bottom-up build: R-PG `src/backend/utils/sort/tuplesort.c:11-15`, `src/backend/access/nbtree/nbtsort.c:4`.
+  - Catalog version of a fast load. PostgreSQL documents the defect of loading rows visible to older snapshots: `COPY FREEZE` "violates the normal rules of MVCC visibility" (R-PG @ `1b5dd3a` `doc/src/sgml/ref/copy.sgml:275-278`), and `TRUNCATE` "is not MVCC-safe" (`doc/src/sgml/ref/truncate.sgml:147-149`).
+  - Sprint 4 planning measurements and reference study: [M-S4](../evidence/planning/sprint-4-plan.md) §3, §4 and Appendix A; the decisions on rmp #55.
   - Measured: bottom-up load of the adjacency tree at 1.88 M edges/s with a 1 GiB build cache, at 100 M edges ([M-LAYOUT](../evidence/layout-bench/results.md)).
 - **Crates**:
   - `csv` 1.4.0 (Unlicense/MIT): dependency.
-  - `serde_json` 1.0.151 with `serde`: dependency.
+  - `serde_json` 1.0.154 with the feature `float_roundtrip`: dependency ([TS-31](dependencies.md#ts-31-dependency-set)).
   - `quick-xml` 0.42.0 (MIT): dependency.
 - **Rejected**:
   - Logical backup at an MVCC snapshot: a long reader holds old versions in memory for the whole copy (FR-LIM-005).
@@ -112,8 +171,12 @@ related:
   - Transactional import in independent batches: an abort would leave earlier batches committed, against FR-IMP-004.
   - Fast load by ordinary inserts: random I/O at 1–10 % cache.
   - APOC's conversion of mixed-type properties to plain strings: lossy, against FR-IMP-006.
+  - Items A to D, the options the user did not choose (rmp #55 DECISION 399 to 402): lpg's CSV layout only, with a converter for LDBC in Sprint 6, or Neo4j's whole import option set; the GraphML type attribute without a schema, or a companion `<data>` key; the report in memory charged to the cap, or a callback per record; a database dump imported graph by graph into existing graphs, or a database scope for export only.
+  - Loaded entries left visible to snapshots older than the install: a snapshot taken before the load would see the graph change, against serializable isolation (README) and step 1.
+  - serde_json's `arbitrary_precision` feature, to read every JSON integer outside the `i64` range as invalid: Cargo builds a dependency with the union of the features every package enables (D-CARGOFEAT), so it would change serde_json for the application's own uses.
+  - ISO G1003, "endpoint node not in current working graph", for an edge with an unknown endpoint: G1003 names a node that exists elsewhere, while no node has that input id.
 
-Not confirmed in the official documentation (unverified): whether Neo4j's `point` header accepts a `srid` key, and whether GraphML validators accept an attribute from another namespace on `<data>` and `<key>`.
+Unverified: whether `neo4j-admin database import` accepts the point form of [TS-21](values-and-types.md#ts-21-values-and-types), which has a space after each colon; the measured probe had none ([unverified point 12](quality-and-testing.md#unverified-points)).
 
 ## TS-28 Format versioning and migration
 

@@ -15,7 +15,7 @@ related:
 - **Licence allow-list** for `cargo-deny` (user decision 2026-10-02): MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, 0BSD, BSL-1.0, CC0-1.0, Unicode-3.0. Copyleft licences are excluded. A crate whose licence expression offers alternatives passes when one of them is listed (D-DENY).
 - **Satisfies**: NFR-DEP-001, NFR-DEP-002, NFR-SIMP-001.
 
-crates.io data as of 2026-10-02, as of 2026-10-07 for `jiff` and `shuttle`, and as of 2026-10-11 for `tokio` and `tracing` (downloads: total / last 90 days).
+crates.io data as of 2026-10-02, as of 2026-10-07 for `jiff` and `shuttle`, and as of 2026-10-11 for `tokio`, `tracing` and `serde_json` (downloads: total / last 90 days).
 
 | Crate | Version | Licence | Downloads | Last release | Kind | Used by |
 |---|---|---|---|---|---|---|
@@ -28,13 +28,23 @@ crates.io data as of 2026-10-02, as of 2026-10-07 for `jiff` and `shuttle`, and 
 | nalgebra | 0.35.0 | Apache-2.0 | 92.7 M / 16.1 M | 2026-05-24 | runtime | [TS-25](algorithms.md#ts-25-graph-algorithms) |
 | rand | 0.10.3 | MIT OR Apache-2.0 | 1 815.9 M / 475.0 M | 2026-09-20 | runtime | [TS-25](algorithms.md#ts-25-graph-algorithms), database UUID ([TS-05](storage.md#ts-05-files-and-pages)) |
 | csv | 1.4.0 | Unlicense/MIT | 256.8 M / 52.4 M | 2025-10-17 | runtime | [TS-26](operations.md#ts-26-backup-restore-import-and-export) |
-| serde | 1.0.229 | MIT OR Apache-2.0 | 1 471.2 M / 337.7 M | 2026-07-18 | runtime | [TS-26](operations.md#ts-26-backup-restore-import-and-export) |
-| serde_json | 1.0.151 | MIT OR Apache-2.0 | 1 372.9 M / 338.0 M | 2026-07-20 | runtime | [TS-26](operations.md#ts-26-backup-restore-import-and-export) |
+| serde_json | 1.0.154 | MIT OR Apache-2.0 | 1 415.2 M / 354.6 M | 2026-10-11 | runtime, feature `float_roundtrip`, which "makes f64 -> JSON -> f64 produce output identical to the input" (`Cargo.toml.orig:67-74`); without it, floats are parsed by multiplying or dividing by powers of ten (`src/de.rs:623-660`). FR-IMP-006 needs the lossless round trip. No `serde` derive | [TS-26](operations.md#ts-26-backup-restore-import-and-export) |
 | quick-xml | 0.42.0 | MIT | 444.2 M / 123.2 M | 2026-08-22 | runtime | [TS-26](operations.md#ts-26-backup-restore-import-and-export) |
 | tempfile | 3.27.0 | MIT OR Apache-2.0 | 853.1 M / 195.4 M | 2026-03-11 | dev | [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
 | loom | 0.7.2 | MIT | 68.6 M / 15.5 M | 2024-04-23 | dev | [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
 | shuttle | 0.9.5 | Apache-2.0 | 6.1 M / 1.8 M | 2026-10-01 | dev | [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
 | antlr4rust | 0.6.0 | BSD-3-Clause | 3.3 M / 2.6 M | 2026-09-27 | dev, test-only oracle crate, not a dependency of `lpg` | [TS-19](query-engine.md#ts-19-parser), [TS-30](quality-and-testing.md#ts-30-testing-and-conformance) |
+
+**Transitive crates of `csv`, `serde_json` and `quick-xml`**, measured 2026-10-11 with `cargo tree -e normal` on a probe crate that depends on the three at the versions above (rmp #55 TEST). No `serde` crate is in the tree: `csv` and `serde_json` depend on `serde_core` (their `Cargo.toml`). `cargo deny check licenses` with lpg's `deny.toml` passes on the probe ([unverified point 11](quality-and-testing.md#unverified-points)).
+
+| Crate | Version | Licence | Brought by |
+|---|---|---|---|
+| csv-core | 0.1.13 | Unlicense/MIT | csv |
+| itoa | 1.0.18 | MIT OR Apache-2.0 | csv, serde_json |
+| ryu | 1.0.23 | Apache-2.0 OR BSL-1.0 | csv |
+| serde_core | 1.0.229 | MIT OR Apache-2.0 | csv, serde_json |
+| memchr | 2.8.3 | Unlicense OR MIT | csv-core, quick-xml, serde_json |
+| zmij | 1.0.23 | MIT | serde_json |
 
 ## Considered and not used
 
