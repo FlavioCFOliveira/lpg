@@ -122,7 +122,7 @@ fn property_value(v: &Value) -> Result<(), Error> {
 }
 
 /// The token of a property key, created if missing.
-fn key_token(cx: &mut Cx<'_, '_>, k: &Name) -> Result<u64, Error> {
+fn key_token(cx: &mut Cx<'_>, k: &Name) -> Result<u64, Error> {
     match k.token {
         Some(t) => Ok(t),
         None => Ok(cx.tx.token(TokenKind::PropertyKey, &k.name)?),
@@ -132,7 +132,7 @@ fn key_token(cx: &mut Cx<'_, '_>, k: &Name) -> Result<u64, Error> {
 /// The properties `props` evaluated over `row`: NULLs dropped, the others
 /// checked.
 fn eval_props(
-    cx: &mut Cx<'_, '_>,
+    cx: &mut Cx<'_>,
     props: &[(Name, crate::query::expr::Expr)],
     row: &[Value],
 ) -> Result<Vec<(u64, Value)>, Error> {
@@ -159,7 +159,7 @@ impl Write {
     /// Writes one row; records the elements written.
     fn apply(
         &self,
-        cx: &mut Cx<'_, '_>,
+        cx: &mut Cx<'_>,
         g: &Graph,
         mut row: Vec<Value>,
         written: &mut Vec<Value>,
@@ -247,7 +247,7 @@ impl Write {
 /// Changes the properties of the node or edge `el` of `g` with `f`; a NULL
 /// element is left alone (a `SET` on an optional match's NULL).
 fn change(
-    cx: &mut Cx<'_, '_>,
+    cx: &mut Cx<'_>,
     g: &Graph,
     el: &Value,
     f: impl FnOnce(&mut Vec<(u64, Value)>),
@@ -273,14 +273,14 @@ fn change(
 }
 
 /// The names of tokens.
-fn names(cx: &Cx<'_, '_>, tokens: &[u64]) -> BTreeSet<String> {
+fn names(cx: &Cx<'_>, tokens: &[u64]) -> BTreeSet<String> {
     tokens
         .iter()
         .filter_map(|t| cx.tx.engine().token_name(*t).map(|(_, n)| n))
         .collect()
 }
 
-fn named_props(cx: &Cx<'_, '_>, props: Vec<(u64, Value)>) -> Vec<(String, Value)> {
+fn named_props(cx: &Cx<'_>, props: Vec<(u64, Value)>) -> Vec<(String, Value)> {
     props
         .into_iter()
         .filter_map(|(k, v)| cx.tx.engine().token_name(k).map(|(_, n)| (n, v)))
@@ -294,7 +294,7 @@ fn violation(what: String) -> Error {
 /// The closed-graph-type check of the elements a statement wrote
 /// (module documentation).
 fn check_closed(
-    cx: &mut Cx<'_, '_>,
+    cx: &mut Cx<'_>,
     g: &Graph,
     gt: &GraphType,
     written: &[Value],
@@ -343,7 +343,7 @@ fn check_closed(
 }
 
 impl Operator for Write {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         if !self.done {
             self.done = true;
             let mut rows = Vec::new();
@@ -404,7 +404,7 @@ fn invalid_reference(path: &[Box<str>], what: &str) -> Error {
 }
 
 /// The object at `path` if it is of `kind`.
-fn resolve(cx: &mut Cx<'_, '_>, path: &[Box<str>], kind: Kind) -> Result<Option<u64>, Error> {
+fn resolve(cx: &mut Cx<'_>, path: &[Box<str>], kind: Kind) -> Result<Option<u64>, Error> {
     let names: Vec<&str> = path.iter().map(|s| &**s).collect();
     Ok(cx
         .tx
@@ -414,7 +414,7 @@ fn resolve(cx: &mut Cx<'_, '_>, path: &[Box<str>], kind: Kind) -> Result<Option<
 }
 
 /// The parent of `path` (a directory or the root) and its name.
-fn in_directory<'p>(cx: &mut Cx<'_, '_>, path: &'p [Box<str>]) -> Result<(u64, &'p str), Error> {
+fn in_directory<'p>(cx: &mut Cx<'_>, path: &'p [Box<str>]) -> Result<(u64, &'p str), Error> {
     let (name, dirs) = path.split_last().expect("a path has a name");
     let parent = if dirs.is_empty() {
         ROOT
@@ -425,7 +425,7 @@ fn in_directory<'p>(cx: &mut Cx<'_, '_>, path: &'p [Box<str>]) -> Result<(u64, &
 }
 
 /// The schema of `path` (all but its last name) and its name.
-fn in_schema<'p>(cx: &mut Cx<'_, '_>, path: &'p [Box<str>]) -> Result<(u64, &'p str), Error> {
+fn in_schema<'p>(cx: &mut Cx<'_>, path: &'p [Box<str>]) -> Result<(u64, &'p str), Error> {
     let (name, schema) = path.split_last().expect("a path has a name");
     let s =
         resolve(cx, schema, Kind::Schema)?.ok_or_else(|| invalid_reference(schema, "schema"))?;
@@ -439,7 +439,7 @@ fn inline_type_name(graph: &str) -> String {
 
 /// Drops `name` of `kind` in `parent`; 42002 if there is none.
 fn drop_named(
-    cx: &mut Cx<'_, '_>,
+    cx: &mut Cx<'_>,
     parent: u64,
     name: &str,
     kind: Kind,
@@ -466,8 +466,8 @@ fn drop_named(
     }
 }
 
-fn run_catalog(cx: &mut Cx<'_, '_>, op: &CatalogOp) -> Result<(), Error> {
-    let owner = cx.st.principal.clone();
+fn run_catalog(cx: &mut Cx<'_>, op: &CatalogOp) -> Result<(), Error> {
+    let owner = cx.st.session.principal.clone();
     match op {
         CatalogOp::CreateSchema(path) => {
             let (parent, name) = in_directory(cx, path)?;
@@ -547,7 +547,7 @@ fn run_catalog(cx: &mut Cx<'_, '_>, op: &CatalogOp) -> Result<(), Error> {
 }
 
 impl Operator for Catalog {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         if !self.done {
             self.done = true;
             for op in &self.ops {

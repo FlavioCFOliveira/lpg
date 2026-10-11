@@ -100,6 +100,12 @@ test(=obs::recording::tests::concurrent_calls_are_all_recorded)
 | test(=index::tests::index::a_constraint_commit_during_a_backup_waits_and_the_backup_restores_intact)
 | test(=index::tests::index::a_build_release_during_a_backup_waits_and_the_backup_restores_intact)
 | test(=index::tests::index::a_backup_under_four_committers_and_an_index_build_restores_to_one_commit_point)
+| test(=api::tests::api::sessions_trust_their_principal_and_refuse_a_concurrent_request)
+| test(=api::tests::api::backup_restore_integrity_check_and_migration_through_the_api)
+| test(=api::tests::api::close_waits_for_the_timeout_then_aborts_the_transaction)
+| test(=api::tests::limits::the_second_statement_fails_after_the_transaction_time_limit)
+| test(=api::tests::limits::a_cancelled_statement_fails_and_its_write_is_never_visible)
+| test(=api::tests::limits::a_terminated_transactions_statement_fails_and_its_writes_vanish)
 '''
 # Sixteen copies share the machine: one test at a time.
 test-threads = 1

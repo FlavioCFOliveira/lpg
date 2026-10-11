@@ -185,11 +185,13 @@ impl Versions {
     }
 
     /// Versions held.
+    #[cfg(test)]
     pub(crate) fn len(&self) -> usize {
         self.read().queue.len()
     }
 
     /// Bytes charged for the versions held.
+    #[cfg(test)]
     pub(crate) fn bytes(&self) -> u64 {
         self.read().bytes
     }

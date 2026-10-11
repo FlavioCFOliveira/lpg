@@ -24,6 +24,7 @@
 //! `physical-plan/src/sorts/sort.rs` (reservation per batch) and Kuzu @
 //! `89f0263` `src/processor/operator/` were studied.
 
+use crate::obs::names::indexes;
 use std::collections::{HashMap, VecDeque};
 
 use super::profile::{Profiled, Profiler};
@@ -89,29 +90,41 @@ pub(super) fn build(n: &Node, prof: &mut Option<Profiler>) -> Box<dyn Operator> 
             slot,
             label,
             index,
-        } => Box::new(Scan::new(
-            *graph,
-            *slot,
-            ScanKind::Index {
-                index: *index,
-                lo: label.to_be_bytes().to_vec(),
-                hi: label.checked_add(1).map(|l| l.to_be_bytes().to_vec()),
-            },
-        )),
+        } => Box::new(
+            Scan::new(
+                *graph,
+                *slot,
+                ScanKind::Index {
+                    index: *index,
+                    lo: label.to_be_bytes().to_vec(),
+                    hi: label.checked_add(1).map(|l| l.to_be_bytes().to_vec()),
+                },
+            )
+            .counting(indexes::LOOKUP_QUERIED),
+        ),
         Op::IndexSeek {
             graph,
             slot,
             index,
             seek,
+            props,
             ..
-        } => Box::new(Scan::new(
-            *graph,
-            *slot,
-            ScanKind::Seek {
-                index: *index,
-                seek: seek.clone(),
-            },
-        )),
+        } => Box::new(
+            Scan::new(
+                *graph,
+                *slot,
+                ScanKind::Seek {
+                    index: *index,
+                    seek: seek.clone(),
+                },
+            )
+            .counting(match seek {
+                Seek::Point(_) => indexes::POINT_QUERIED,
+                Seek::Range(..) => indexes::RANGE_QUERIED,
+                Seek::Eq(_) if props.len() > 1 => indexes::COMPOSITE_QUERIED,
+                Seek::Eq(_) => indexes::SINGLE_PROPERTY_QUERIED,
+            }),
+        ),
         Op::Expand {
             graph,
             from,
@@ -194,6 +207,22 @@ pub(super) fn build(n: &Node, prof: &mut Option<Profiler>) -> Box<dyn Operator> 
         Op::Set { graph, items } => write::set(child(), *graph, items.clone()),
         Op::Remove { graph, items } => write::remove(child(), *graph, items.clone()),
         Op::Catalog(ops) => write::catalog(ops.clone()),
+        Op::ProcedureCall {
+            routine,
+            args,
+            yields,
+            graph,
+        } => Box::new(Call {
+            child: child(),
+            routine: routine.clone(),
+            args: args.clone(),
+            yields: yields.clone(),
+            graph: *graph,
+            input: None,
+            row: 0,
+            current: None,
+            held: Held::default(),
+        }),
         Op::Produce(_) => child(),
     };
     match id {
@@ -208,7 +237,7 @@ struct Argument {
 }
 
 impl Operator for Argument {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         if self.done {
             return Ok(None);
         }
@@ -252,6 +281,10 @@ struct Scan {
     range: Option<KeyRange>,
     arg: Option<Vec<Value>>,
     done: bool,
+    /// The `index.<kind>.queried` metric of an index read (TS-24), counted
+    /// once per run of the scan.
+    metric: Option<&'static str>,
+    counted: bool,
 }
 
 impl Scan {
@@ -264,14 +297,22 @@ impl Scan {
             range: None,
             arg: None,
             done: false,
+            metric: None,
+            counted: false,
         }
+    }
+
+    /// The scan, counting `metric` once per run.
+    fn counting(mut self, metric: &'static str) -> Scan {
+        self.metric = Some(metric);
+        self
     }
 
     /// The key range of a range seek.
     fn seek_range(
         &self,
         seek: &Seek,
-        cx: &mut Cx<'_, '_>,
+        cx: &mut Cx<'_>,
         arg: &[Value],
     ) -> Result<Option<KeyRange>, Error> {
         let succ = |p: &[u8]| crate::tx::conflict::Interval::prefix(p).hi;
@@ -317,9 +358,15 @@ impl Scan {
 }
 
 impl Operator for Scan {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         if self.done {
             return Ok(None);
+        }
+        if !self.counted {
+            self.counted = true;
+            if let Some(m) = self.metric {
+                cx.tx.engine().core().sink.counter(m, 1);
+            }
         }
         let arg = match &self.arg {
             Some(a) => a.clone(),
@@ -401,6 +448,7 @@ impl Operator for Scan {
         self.range = None;
         self.arg = None;
         self.done = false;
+        self.counted = false;
     }
 }
 
@@ -424,7 +472,7 @@ struct Expand {
 }
 
 impl Operator for Expand {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         while !self.out.full() && !self.done {
             if self.pos < self.adj.len() {
                 let a = self.adj[self.pos];
@@ -488,7 +536,7 @@ struct Filter {
 }
 
 impl Operator for Filter {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         loop {
             let Some(b) = self.child.next_batch(cx)? else {
                 return Ok(None);
@@ -526,7 +574,7 @@ struct Apply {
 }
 
 impl Operator for Apply {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         while !self.out.full() && !self.done {
             if self.active {
                 let r = self.right.next_batch(cx);
@@ -596,6 +644,95 @@ impl Operator for Apply {
     }
 }
 
+/// `ProcedureCall` (rmp #50): for each input row, calls the routine once
+/// with its arguments and returns the input row extended by each row the
+/// routine returns. The rows of the batch being built are charged to the
+/// memory cap and released when the batch is returned (FR-LIM-006).
+struct Call {
+    child: Box<dyn Operator>,
+    routine: crate::proc::RoutineRef,
+    args: Vec<Expr>,
+    yields: Vec<(usize, Slot)>,
+    graph: usize,
+    input: Option<Batch>,
+    row: usize,
+    /// The input row of the running call, and the rows it still returns.
+    current: Option<(Vec<Value>, crate::proc::Rows)>,
+    held: Held,
+}
+
+impl Operator for Call {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
+        self.held.release();
+        let mut out = Batch::new(cx.st.width);
+        let columns = self.routine.get().sig.columns.len();
+        loop {
+            if let Some((input, rows)) = &mut self.current {
+                while !out.is_full() {
+                    cx.st.tick()?;
+                    let Some(r) = rows.next() else {
+                        self.current = None;
+                        break;
+                    };
+                    let values = r?;
+                    if values.len() != columns {
+                        return Err(Error::new(
+                            crate::gqlstatus::codes::C50N00,
+                            "internal error: a procedure returned a row of the wrong width",
+                        ));
+                    }
+                    let mut row = input.clone();
+                    for (c, s) in &self.yields {
+                        row[*s] = values[*c].clone();
+                    }
+                    self.held.grow(cx, row_bytes(&row))?;
+                    out.push_owned(row);
+                }
+                if out.is_full() {
+                    return Ok(Some(out));
+                }
+            }
+            if self.input.as_ref().is_none_or(|b| self.row >= b.len()) {
+                match self.child.next_batch(cx)? {
+                    Some(b) => {
+                        self.input = Some(b);
+                        self.row = 0;
+                    }
+                    None => return Ok((!out.is_empty()).then_some(out)),
+                }
+            }
+            let input = self
+                .input
+                .as_ref()
+                .expect("an input batch")
+                .row(self.row)
+                .to_vec();
+            self.row += 1;
+            let mut args = Vec::with_capacity(self.args.len());
+            for a in &self.args {
+                args.push(eval(a, &input, cx)?);
+            }
+            let rows = self
+                .routine
+                .get()
+                .invoke(cx, &mut self.held, self.graph, &args)?;
+            self.current = Some((input, rows));
+        }
+    }
+
+    fn reset(&mut self) {
+        self.child.reset();
+        self.input = None;
+        self.row = 0;
+        self.current = None;
+        self.held.release();
+    }
+
+    fn held(&self) -> u64 {
+        self.held.peak()
+    }
+}
+
 /// Computes slots per row.
 struct Project {
     child: Box<dyn Operator>,
@@ -603,7 +740,7 @@ struct Project {
 }
 
 impl Operator for Project {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         let Some(b) = self.child.next_batch(cx)? else {
             return Ok(None);
         };
@@ -638,7 +775,7 @@ struct Aggregate {
 }
 
 impl Operator for Aggregate {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         if !self.done {
             self.done = true;
             // Groups in order of first appearance, by the order keys of
@@ -746,7 +883,7 @@ struct Distinct {
 }
 
 impl Operator for Distinct {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         loop {
             let Some(b) = self.child.next_batch(cx)? else {
                 return Ok(None);
@@ -789,7 +926,7 @@ struct Sort {
 }
 
 impl Operator for Sort {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         if !self.done {
             self.done = true;
             let mut rows: Vec<(Vec<Value>, Vec<Value>)> = Vec::new();
@@ -810,7 +947,11 @@ impl Operator for Sort {
             rows.sort_by(|a, b| {
                 n += 1;
                 if n.is_multiple_of(CHECK_EVERY) && checked.is_ok() {
-                    checked = cx.st.check.as_mut().map_or(Ok(()), |c| c());
+                    checked = cx
+                        .st
+                        .check
+                        .as_ref()
+                        .map_or(Ok(()), |c| c(cx.st.iterations + n));
                 }
                 for (i, (_, desc)) in keys.iter().enumerate() {
                     let o = sort_cmp(&a.0[i], &b.0[i], *desc);
@@ -820,6 +961,8 @@ impl Operator for Sort {
                 }
                 std::cmp::Ordering::Equal
             });
+            // The comparisons are the sort's loop iterations.
+            cx.st.iterations += n;
             checked?;
             for (_, r) in rows {
                 self.out.push(r);

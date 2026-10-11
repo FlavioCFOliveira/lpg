@@ -32,27 +32,27 @@ use crate::storage::counters;
 
 /// The measured statistics of one operator.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub(crate) struct ProfileStats {
+pub struct ProfileStats {
     /// Rows produced.
-    pub(crate) rows: u64,
+    pub rows: u64,
     /// Batches produced.
-    pub(crate) batches: u64,
+    pub batches: u64,
     /// Calls of `next_batch`.
-    pub(crate) calls: u64,
+    pub calls: u64,
     /// Time in the operator, its inputs excluded, in nanoseconds.
-    pub(crate) time_ns: u64,
+    pub time_ns: u64,
     /// B+tree entries its own reads returned (Neo4j's "DB Hits").
-    pub(crate) entries_read: u64,
+    pub entries_read: u64,
     /// The same reads counted by the transaction layer: the independent
     /// check of `entries_read` (FR-OBS-006 acceptance).
-    pub(crate) tx_entries: u64,
+    pub tx_entries: u64,
     /// Buffer pool hits of its own reads.
-    pub(crate) hits: u64,
+    pub hits: u64,
     /// Buffer pool misses of its own reads.
-    pub(crate) misses: u64,
+    pub misses: u64,
     /// The most memory it reserved from the memory accountant at once
     /// (Neo4j's "Memory (Bytes)").
-    pub(crate) peak_memory: u64,
+    pub peak_memory: u64,
 }
 
 /// Counters read before and after a call.
@@ -105,6 +105,7 @@ impl Profiler {
     /// The highest number of operators running at once: an operator runs
     /// from the start of its `next_batch` to its end, except while it waits
     /// in a call of one of its inputs.
+    #[cfg(test)]
     pub(crate) fn max_running(&self) -> usize {
         self.max_running
     }
@@ -137,7 +138,7 @@ impl Profiled {
     }
 }
 
-fn now(cx: &Cx<'_, '_>, t0: Instant) -> Totals {
+fn now(cx: &Cx<'_>, t0: Instant) -> Totals {
     let c = counters::current();
     Totals {
         entries: c.entries,
@@ -149,7 +150,7 @@ fn now(cx: &Cx<'_, '_>, t0: Instant) -> Totals {
 }
 
 impl Operator for Profiled {
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error> {
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error> {
         let t0 = Instant::now();
         {
             let p = cx

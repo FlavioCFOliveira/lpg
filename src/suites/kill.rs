@@ -129,7 +129,7 @@ fn kill_label(iter: u64) -> String {
 fn retry<T>(
     e: &Engine,
     iso: Isolation,
-    mut f: impl FnMut(&mut crate::tx::Transaction<'_>) -> crate::storage::error::Result<T>,
+    mut f: impl FnMut(&mut crate::tx::Transaction) -> crate::storage::error::Result<T>,
 ) -> T {
     use crate::storage::error::Error;
     loop {

@@ -160,6 +160,15 @@ pub(crate) enum Part {
         graph: usize,
         items: Vec<(Slot, PropKey)>,
     },
+    /// A named procedure call (GP04; rmp #50): the routine, one argument
+    /// per parameter (defaults filled in), the result columns it yields
+    /// (column index, slot), and its working graph.
+    Call {
+        routine: crate::proc::RoutineRef,
+        args: Vec<Expr>,
+        yields: Vec<(usize, Slot)>,
+        graph: usize,
+    },
 }
 
 /// A projection. Without aggregates, every item is computed per row.

@@ -27,7 +27,7 @@ mod index {
         assert!(p.is_empty(), "{p:?}");
     }
 
-    fn graph(tx: &mut Transaction<'_>) -> Graph {
+    fn graph(tx: &mut Transaction) -> Graph {
         tx.graph(DEFAULT_GRAPH_ID).unwrap()
     }
 
@@ -71,7 +71,7 @@ mod index {
     }
 
     /// Every element of `entity` of `g` that `tx` sees, with its record.
-    fn scan(tx: &mut Transaction<'_>, g: &Graph, entity: Entity) -> Vec<(u64, Element)> {
+    fn scan(tx: &mut Transaction, g: &Graph, entity: Entity) -> Vec<(u64, Element)> {
         let tree = match entity {
             Entity::Node => g.nodes,
             Entity::Edge => g.edges,
@@ -1319,7 +1319,7 @@ mod index {
             &[k.w],
         )
         .unwrap();
-        let attempt = |f: &dyn Fn(&mut Transaction<'_>, &Graph)| {
+        let attempt = |f: &dyn Fn(&mut Transaction, &Graph)| {
             let mut tx = e.begin(Isolation::Serializable).unwrap();
             let g = graph(&mut tx);
             f(&mut tx, &g);
@@ -2569,7 +2569,7 @@ mod index {
 
     /// A transaction that creates 2 000 nodes of `L` with `p` in 0..5, and
     /// their nodes.
-    fn create_indexed<'e>(e: &'e Engine, k: &Tokens) -> (Transaction<'e>, Vec<(u64, i64)>) {
+    fn create_indexed(e: &Engine, k: &Tokens) -> (Transaction, Vec<(u64, i64)>) {
         let mut tx = e.begin(Isolation::Serializable).unwrap();
         let g = graph(&mut tx);
         let nodes = (0..2000)
@@ -2585,7 +2585,7 @@ mod index {
     }
 
     /// A transaction that sets `L.p = v` on `nodes`.
-    fn set_p<'e>(e: &'e Engine, k: &Tokens, nodes: &[u64], v: i64) -> Transaction<'e> {
+    fn set_p(e: &Engine, k: &Tokens, nodes: &[u64], v: i64) -> Transaction {
         let mut tx = e.begin(Isolation::Serializable).unwrap();
         let g = graph(&mut tx);
         for &n in nodes {
@@ -2608,7 +2608,7 @@ mod index {
     /// The bytes requested by the memory-limit error of a commit made while
     /// every byte the pool can give up is held except `free` and 8 pages,
     /// the room the pool needs for the pages the commit reads.
-    fn commit_with_free(e: &Engine, tx: Transaction<'_>, free: u64) -> u64 {
+    fn commit_with_free(e: &Engine, tx: Transaction, free: u64) -> u64 {
         // A checkpoint first: no frame becomes evictable while the hog is
         // held because its page LSN becomes durable.
         e.checkpoint().unwrap();

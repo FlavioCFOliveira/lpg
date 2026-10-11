@@ -27,7 +27,7 @@ fn invalid_reference(what: &str) -> Error {
 
 type Path = Vec<Box<str>>;
 
-impl Binder<'_, '_> {
+impl Binder<'_> {
     /// The path of catalog object `id`.
     fn path_of(&mut self, id: u64) -> Result<Path, Error> {
         match self.tx.path(id)? {

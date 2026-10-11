@@ -18,7 +18,7 @@ pub(crate) mod support {
 
     /// Runs `text` in `tx` with `params` and returns its rows.
     pub(crate) fn rows_in(
-        tx: &mut Transaction<'_>,
+        tx: &mut Transaction,
         text: &str,
         params: &Params,
     ) -> Result<Vec<Vec<Value>>, Error> {
@@ -1095,7 +1095,7 @@ mod cursor {
         .unwrap();
         let calls = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let seen = calls.clone();
-        c.set_check(Box::new(move || {
+        c.set_check(std::sync::Arc::new(move |_| {
             if seen.fetch_add(1, std::sync::atomic::Ordering::SeqCst) == 1 {
                 Err(Error::new(codes::C25N14, "cancelled"))
             } else {

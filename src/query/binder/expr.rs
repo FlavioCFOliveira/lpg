@@ -66,7 +66,7 @@ fn is_min_magnitude(e: &ast::Expr) -> bool {
     }
 }
 
-impl Binder<'_, '_> {
+impl Binder<'_> {
     /// Binds a value expression where aggregates are not allowed, and
     /// folds its constant parts.
     pub(super) fn bind_value(&mut self, e: &Spanned<ast::Expr>) -> Result<Expr, Error> {

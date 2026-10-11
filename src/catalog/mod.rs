@@ -105,6 +105,7 @@ pub(crate) const STATS_TREE: u64 = 2;
 /// The node, edge and adjacency trees of the default graph.
 pub(crate) const DEFAULT_GRAPH_TREES: [u64; 3] = [3, 4, 5];
 /// The trees `create` writes: catalog, statistics, the default graph's.
+#[cfg(test)]
 pub(crate) const CREATED_TREES: u64 = 5;
 /// The root directory: the parent of top-level objects. It has no entry.
 pub(crate) const ROOT: u64 = 0;
@@ -787,7 +788,7 @@ impl Effects {
     pub(crate) fn of(
         core: &Core,
         store: &Store<'_>,
-        tx: &Transaction<'_>,
+        tx: &Transaction,
         index_stats: &stats::Delta,
     ) -> Result<Effects> {
         let mut e = Effects::default();
@@ -917,7 +918,7 @@ fn parent_allowed(kind: Kind, parent: Option<Kind>) -> bool {
     }
 }
 
-impl Transaction<'_> {
+impl Transaction {
     fn catalog_tree(&mut self) -> Result<Tree> {
         self.tree(CATALOG_TREE)
     }

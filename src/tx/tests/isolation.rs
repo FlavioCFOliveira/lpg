@@ -249,7 +249,7 @@ fn a_failed_transaction_ran_its_operations_once() {
     let before = sink.snapshot();
     let calls = std::cell::Cell::new(0);
     let mut t1 = e.begin(Isolation::Serializable).unwrap();
-    let op = |tx: &mut Transaction<'_>, write: bool| {
+    let op = |tx: &mut Transaction, write: bool| {
         calls.set(calls.get() + 1);
         if write {
             tx.put(t, b"m", b"1").map(|()| None)

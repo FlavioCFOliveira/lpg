@@ -158,8 +158,9 @@ pub(crate) fn row_bytes(row: &[Value]) -> u64 {
 }
 
 /// A status check (rmp #49 wires cancellation, termination and the time
-/// limit through it).
-pub(crate) type Check = Box<dyn FnMut() -> Result<(), Error> + Send>;
+/// limit through it), given the statement's loop iterations so far.
+/// Shared, so a nested statement of a procedure checks the same status.
+pub(crate) type Check = crate::sync::Arc<dyn Fn(usize) -> Result<(), Error> + Send + Sync>;
 
 /// The counters of a statement's writes, for `ResultStream::summary()`
 /// (rmp #47).
@@ -187,17 +188,22 @@ pub(crate) struct State {
     pub(crate) subs: Vec<Option<Box<dyn Operator>>>,
     /// The statement clock.
     pub(crate) now: jiff::Timestamp,
-    /// The session's principal.
-    pub(crate) principal: String,
+    /// The session: its principal, home and current schema and graph, and
+    /// its procedures (nested statements of a procedure run with it).
+    pub(crate) session: SessionCtx,
     /// The status check.
     pub(crate) check: Option<Check>,
-    iterations: usize,
+    /// Loop iterations counted by `tick`.
+    pub(crate) iterations: usize,
     /// Rows produced by the scan and seek operators (FR-API-010 checks).
     pub(crate) scan_rows: u64,
     /// Calls of the closed-graph-type check (FR-GQL-004 checks).
     pub(crate) type_checks: u64,
     /// The write counters.
     pub(crate) counters: Counters,
+    /// The most bytes the transaction held when an operator reserved
+    /// (the request's `peak_memory_bytes` event field, rmp #51).
+    pub(crate) peak_memory: u64,
     /// PROFILE's statistics, by operator, when profiling.
     pub(crate) profile: Option<profile::Profiler>,
 }
@@ -212,9 +218,9 @@ impl State {
     pub(crate) fn tick(&mut self) -> Result<(), Error> {
         self.iterations += 1;
         if self.iterations.is_multiple_of(CHECK_EVERY)
-            && let Some(c) = &mut self.check
+            && let Some(c) = &self.check
         {
-            c()?;
+            c(self.iterations)?;
         }
         Ok(())
     }
@@ -229,8 +235,8 @@ impl State {
 }
 
 /// What an operator runs with: the transaction and the statement's state.
-pub(crate) struct Cx<'a, 'e> {
-    pub(crate) tx: &'a mut Transaction<'e>,
+pub(crate) struct Cx<'a> {
+    pub(crate) tx: &'a mut Transaction,
     pub(crate) st: &'a mut State,
 }
 
@@ -242,7 +248,7 @@ pub(crate) trait Operator: Send {
     /// # Errors
     ///
     /// The statement's errors.
-    fn next_batch(&mut self, cx: &mut Cx<'_, '_>) -> Result<Option<Batch>, Error>;
+    fn next_batch(&mut self, cx: &mut Cx<'_>) -> Result<Option<Batch>, Error>;
 
     /// Starts again from the beginning, with the current argument row.
     fn reset(&mut self);
@@ -259,6 +265,9 @@ pub(crate) trait Operator: Send {
 #[derive(Debug, Default)]
 pub(crate) struct Held {
     res: Option<Reservation>,
+    /// The transaction's operator counter its reservation is added to
+    /// (the memory limit, rmp #49).
+    counted: Option<crate::sync::Arc<crate::sync::atomic::AtomicU64>>,
     used: u64,
     /// The most bytes reserved at once (PROFILE's peak memory).
     peak: u64,
@@ -271,12 +280,18 @@ impl Held {
     /// # Errors
     ///
     /// 51N72 when the memory cap refuses the reservation.
-    pub(crate) fn grow(&mut self, cx: &mut Cx<'_, '_>, bytes: u64) -> Result<(), Error> {
+    pub(crate) fn grow(&mut self, cx: &mut Cx<'_>, bytes: u64) -> Result<(), Error> {
         self.used += bytes;
         let have = self.res.as_ref().map_or(0, Reservation::bytes);
         if self.used > have {
             let need = (self.used - have).max(CHUNK);
+            cx.tx.check_memory(need)?;
             let r = cx.tx.engine().core().pool.reserve(need)?;
+            let c = self
+                .counted
+                .get_or_insert_with(|| cx.tx.operator_bytes.clone());
+            c.fetch_add(need, crate::sync::atomic::Ordering::Relaxed);
+            cx.st.peak_memory = cx.st.peak_memory.max(cx.tx.memory_held());
             match &mut self.res {
                 Some(h) => h.absorb(r),
                 None => self.res = Some(r),
@@ -295,12 +310,20 @@ impl Held {
 
     /// Releases everything.
     pub(crate) fn release(&mut self) {
-        self.res = None;
+        if let (Some(r), Some(c)) = (self.res.take(), &self.counted) {
+            c.fetch_sub(r.bytes(), crate::sync::atomic::Ordering::Relaxed);
+        }
         self.used = 0;
     }
 }
 
-impl Env for Cx<'_, '_> {
+impl Drop for Held {
+    fn drop(&mut self) {
+        self.release();
+    }
+}
+
+impl Env for Cx<'_> {
     fn param(&self, i: usize) -> Value {
         self.st.params.get(i).cloned().unwrap_or(Value::Null)
     }
@@ -376,7 +399,7 @@ impl Env for Cx<'_, '_> {
     }
 
     fn principal(&self) -> &str {
-        &self.st.principal
+        &self.st.session.principal
     }
 
     fn token(&self, kind: crate::catalog::TokenKind, name: &str) -> Option<u64> {
@@ -402,8 +425,10 @@ pub(crate) struct Cursor {
     root: Box<dyn Operator>,
     st: State,
     plan: Plan,
+    graph_ids: Vec<u64>,
     columns: Vec<(Box<str>, Slot)>,
     kind: StatementKind,
+    catalog: bool,
     control: Control,
     done: bool,
 }
@@ -418,7 +443,7 @@ impl std::fmt::Debug for Cursor {
 }
 
 /// Aborts `tx` because the statement failed with `e`, and returns `e`.
-fn fail(tx: &mut Transaction<'_>, e: Error) -> Error {
+fn fail(tx: &mut Transaction, e: Error) -> Error {
     if tx.check_active().is_ok() {
         tx.abort_with(StorageError::Aborted);
     }
@@ -446,17 +471,49 @@ impl Cursor {
         self.st.check = Some(check);
     }
 
+    /// Every authorisation request the statement's plan can perform
+    /// (TS-23), asked before its first batch.
+    ///
+    /// # Errors
+    ///
+    /// Storage errors of the catalog reads.
+    pub(crate) fn requests(
+        &self,
+        tx: &mut Transaction,
+    ) -> Result<Vec<crate::auth::Request>, Error> {
+        crate::auth::requests(&self.plan, &self.graph_ids, tx, &self.st.session.principal)
+    }
+
+    /// Whether the statement is catalog-modifying.
+    pub(crate) fn is_catalog(&self) -> bool {
+        self.catalog
+    }
+
+    /// The most bytes the transaction held when one of the statement's
+    /// operators reserved memory.
+    pub(crate) fn peak_memory(&self) -> u64 {
+        self.st.peak_memory
+    }
+
+    /// Loop iterations counted so far (cancellation checks, rmp #49).
+    #[cfg(test)]
+    pub(crate) fn iterations(&self) -> usize {
+        self.st.iterations
+    }
+
     /// The statement's write counters.
     pub(crate) fn counters(&self) -> Counters {
         self.st.counters
     }
 
     /// Rows produced by its scans and seeks so far.
+    #[cfg(test)]
     pub(crate) fn scan_rows(&self) -> u64 {
         self.st.scan_rows
     }
 
     /// Calls of the closed-graph-type check so far.
+    #[cfg(test)]
     pub(crate) fn type_checks(&self) -> u64 {
         self.st.type_checks
     }
@@ -467,12 +524,12 @@ impl Cursor {
     /// # Errors
     ///
     /// The statement's errors; 25N05 once `tx` is aborted.
-    pub(crate) fn next_batch(&mut self, tx: &mut Transaction<'_>) -> Result<Option<Batch>, Error> {
+    pub(crate) fn next_batch(&mut self, tx: &mut Transaction) -> Result<Option<Batch>, Error> {
         if self.done {
             return Ok(None);
         }
-        if let Some(c) = &mut self.st.check
-            && let Err(e) = c()
+        if let Some(c) = &self.st.check
+            && let Err(e) = c(self.st.iterations)
         {
             self.done = true;
             return Err(fail(tx, e));
@@ -511,24 +568,27 @@ impl Cursor {
 
     /// The highest number of operators running at once (NFR-PERF-007);
     /// PROFILE only.
+    #[cfg(test)]
     pub(crate) fn max_running(&self) -> Option<usize> {
         self.st.profile.as_ref().map(profile::Profiler::max_running)
     }
 }
 
 /// A statement parsed, bound and planned.
-struct Prepared {
+pub(crate) struct Prepared {
     plan: Plan,
     params: Vec<Value>,
     graph_ids: Vec<u64>,
     columns: Vec<(Box<str>, Slot)>,
     kind: StatementKind,
+    /// Whether the statement is catalog-modifying.
+    catalog: bool,
     control: Control,
 }
 
 fn prepare(
     text: &str,
-    tx: &mut Transaction<'_>,
+    tx: &mut Transaction,
     session: &SessionCtx,
     params: &Params,
 ) -> Result<Prepared, Error> {
@@ -547,6 +607,7 @@ fn prepare(
             graph_ids: Vec::new(),
             columns: Vec::new(),
             kind: StatementKind::Read,
+            catalog: false,
             control,
         }),
         Some(Body::Catalog(ops)) => Ok(Prepared {
@@ -555,6 +616,7 @@ fn prepare(
             graph_ids: Vec::new(),
             columns: Vec::new(),
             kind: StatementKind::Write,
+            catalog: true,
             control,
         }),
         Some(Body::Query(q)) => {
@@ -577,6 +639,7 @@ fn prepare(
                 graph_ids: q.graphs.clone(),
                 columns: q.columns.clone(),
                 kind: q.kind,
+                catalog: false,
                 control,
             })
         }
@@ -584,7 +647,7 @@ fn prepare(
 }
 
 /// The closed graph type of graph `id`, `None` for an open graph.
-fn graph_type_of(tx: &mut Transaction<'_>, id: u64) -> Result<Option<GraphType>, Error> {
+fn graph_type_of(tx: &mut Transaction, id: u64) -> Result<Option<GraphType>, Error> {
     let Some(o) = tx.object(id)? else {
         return Ok(None);
     };
@@ -607,12 +670,22 @@ fn graph_type_of(tx: &mut Transaction<'_>, id: u64) -> Result<Option<GraphType>,
 
 fn start(
     text: &str,
-    tx: &mut Transaction<'_>,
+    tx: &mut Transaction,
     session: &SessionCtx,
     params: &Params,
     profiling: bool,
 ) -> Result<Cursor, Error> {
     let p = prepare(text, tx, session, params)?;
+    start_prepared(p, tx, session, profiling)
+}
+
+/// The cursor of the prepared statement `p`.
+fn start_prepared(
+    p: Prepared,
+    tx: &mut Transaction,
+    session: &SessionCtx,
+    profiling: bool,
+) -> Result<Cursor, Error> {
     let mut graphs = Vec::new();
     let mut graph_types = Vec::new();
     for &g in &p.graph_ids {
@@ -635,20 +708,23 @@ fn start(
         args: Vec::new(),
         subs,
         now: crate::types::temporal::now(),
-        principal: session.principal.clone(),
+        session: session.clone(),
         check: None,
         iterations: 0,
         scan_rows: 0,
         type_checks: 0,
         counters: Counters::default(),
+        peak_memory: 0,
         profile: profiler,
     };
     Ok(Cursor {
         root,
         st,
         plan: p.plan,
+        graph_ids: p.graph_ids,
         columns: p.columns,
         kind: p.kind,
+        catalog: p.catalog,
         control: p.control,
         done: false,
     })
@@ -664,7 +740,7 @@ fn start(
 /// first operators.
 pub(crate) fn run(
     text: &str,
-    tx: &mut Transaction<'_>,
+    tx: &mut Transaction,
     session: &SessionCtx,
     params: &Params,
 ) -> Result<Cursor, Error> {
@@ -678,7 +754,7 @@ pub(crate) fn run(
 /// As [`run`].
 pub(crate) fn profile(
     text: &str,
-    tx: &mut Transaction<'_>,
+    tx: &mut Transaction,
     session: &SessionCtx,
     params: &Params,
 ) -> Result<Cursor, Error> {
@@ -693,7 +769,7 @@ pub(crate) fn profile(
 /// As [`run`], without the operators'.
 pub(crate) fn explain(
     text: &str,
-    tx: &mut Transaction<'_>,
+    tx: &mut Transaction,
     session: &SessionCtx,
     params: &Params,
 ) -> Result<Description, Error> {
@@ -703,13 +779,72 @@ pub(crate) fn explain(
     }
 }
 
+/// Runs `text`, a statement of a procedure's context, in the transaction
+/// `tx` of the calling statement whose state is `outer`, and returns its
+/// rows (TS-24). With `read_only`, a statement that would modify data
+/// fails with 42N02 before it runs. The statement is authorised as the
+/// caller's statements are, through the session's host, and checks the
+/// caller's status.
+///
+/// # Errors
+///
+/// 42N02; 25G01 and 2D000 for a transaction command, 42000 for a session
+/// command; the statement's errors.
+pub(crate) fn run_nested(
+    text: &str,
+    tx: &mut Transaction,
+    outer: &State,
+    params: &Params,
+    read_only: bool,
+) -> Result<Vec<Vec<Value>>, Error> {
+    let session = &outer.session;
+    let p = prepare(text, tx, session, params)?;
+    if p.control.start {
+        return Err(Error::new(
+            codes::C25G01,
+            "invalid transaction state: active GQL-transaction",
+        ));
+    }
+    if p.control.end.is_some() {
+        return Err(Error::new(
+            codes::C2D000,
+            "invalid transaction termination: a procedure cannot end its caller's transaction",
+        ));
+    }
+    if p.control.close || !p.control.session.is_empty() {
+        return Err(Error::new(
+            codes::C42000,
+            "syntax error or access rule violation: a session command in a procedure",
+        ));
+    }
+    if read_only && (p.catalog || p.kind != StatementKind::Read) {
+        return Err(Error::new(
+            codes::C42N02,
+            "writing in read access mode: a read-only procedure ran a statement that modifies data",
+        ));
+    }
+    if let Some(h) = &session.procs.host {
+        let reqs = crate::auth::requests(&p.plan, &p.graph_ids, tx, &session.principal)?;
+        h.authorise(&session.principal, &reqs)?;
+    }
+    let mut c = start_prepared(p, tx, session, false)?;
+    if let Some(ch) = &outer.check {
+        c.set_check(ch.clone());
+    }
+    let mut out = Vec::new();
+    while let Some(b) = c.next_batch(tx)? {
+        out.extend(b.rows().map(<[Value]>::to_vec));
+    }
+    Ok(out)
+}
+
 /// Every result row of a cursor (tests and the reference checks).
 ///
 /// # Errors
 ///
 /// As [`Cursor::next_batch`].
 #[cfg(test)]
-pub(crate) fn collect(c: &mut Cursor, tx: &mut Transaction<'_>) -> Result<Vec<Vec<Value>>, Error> {
+pub(crate) fn collect(c: &mut Cursor, tx: &mut Transaction) -> Result<Vec<Vec<Value>>, Error> {
     let mut out = Vec::new();
     while let Some(b) = c.next_batch(tx)? {
         out.extend(b.rows().map(<[Value]>::to_vec));

@@ -30,17 +30,30 @@ use super::conflict::Committed;
 use super::lock::LockTable;
 use super::versions::Versions;
 use crate::storage::btree::Tree;
-use crate::storage::freelist::{Readers, Registered};
+#[cfg(test)]
+use crate::storage::freelist::Registered;
+use crate::storage::freelist::{Detached, Readers};
 use crate::sync::atomic::{AtomicU64, Ordering};
 use crate::sync::{Condvar, Mutex, MutexGuard, PoisonError};
 
 /// Registers a snapshot in `registry` against the published commit
 /// timestamp `published` (TS-14 Begin). Returns the registration, which
 /// ends the snapshot when dropped, and the snapshot.
+#[cfg(test)]
 pub(crate) fn begin<'a>(registry: &'a Readers, published: &AtomicU64) -> (Registered<'a>, u64) {
     // `Readers::enter` loads `published`, stores it with a SeqCst
     // compare-and-swap and issues a SeqCst fence.
     let reg = registry.enter(published);
+    let snapshot = published.load(Ordering::SeqCst);
+    (reg, snapshot)
+}
+
+/// [`begin`] with a registration that borrows nothing, for an owned
+/// transaction (TS-02 "Owned transactions"); it is withdrawn with
+/// [`Readers::leave`] on `registry`.
+pub(crate) fn begin_detached(registry: &Readers, published: &AtomicU64) -> (Detached, u64) {
+    // As `begin`.
+    let reg = registry.enter_detached(published);
     let snapshot = published.load(Ordering::SeqCst);
     (reg, snapshot)
 }

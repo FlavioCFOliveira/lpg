@@ -47,6 +47,12 @@ pub(crate) enum Error {
         /// Bytes requested.
         requested: u64,
     },
+    /// A reservation of a transaction would make it hold more than its
+    /// memory limit (FR-API-007, rmp #49).
+    TransactionMemoryLimit {
+        /// The limit, in bytes.
+        limit: u64,
+    },
     /// An argument is outside its allowed range.
     InvalidArgument(&'static str),
     /// A backup artefact has no valid `MANIFEST`: the backup did not
@@ -201,6 +207,10 @@ impl fmt::Display for Error {
                     "memory cap reached: {requested} bytes could not be reserved"
                 )
             }
+            Error::TransactionMemoryLimit { limit } => write!(
+                f,
+                "transaction memory limit reached: the transaction may hold at most {limit} bytes"
+            ),
             Error::InvalidArgument(what) => write!(f, "invalid argument: {what}"),
             Error::IncompleteBackup(what) => {
                 write!(f, "the backup is incomplete or damaged: {what}")
@@ -287,6 +297,7 @@ impl Error {
             | Error::MigrationRequired { .. }
             | Error::NewerFormat { .. } => codes::C51N40,
             Error::MemoryLimit { .. } => codes::C51N72,
+            Error::TransactionMemoryLimit { .. } => codes::C51N73,
             Error::InvalidArgument(_) => codes::C22N11,
             Error::IncompleteBackup(_)
             | Error::LoadRunning
@@ -408,6 +419,7 @@ mod tests {
             ),
             (Error::Unusable, "08N09"),
             (Error::MemoryLimit { requested: 1 }, "51N72"),
+            (Error::TransactionMemoryLimit { limit: 1 }, "51N73"),
             (Error::InvalidArgument("x"), "22N11"),
             (Error::IncompleteBackup("x".into()), "51N41"),
             (Error::LoadRunning, "51N41"),
@@ -456,7 +468,7 @@ mod tests {
             // Every message names what failed, without the code.
             assert!(!kind.to_string().is_empty());
         }
-        // Each top-level kind appears: 25 kinds, with the sub-kinds of
+        // Each top-level kind appears: 26 kinds, with the sub-kinds of
         // `NotFound` and `ConstraintViolation` listed separately.
         let mut names: Vec<String> = kinds
             .iter()
@@ -469,7 +481,7 @@ mod tests {
             })
             .collect();
         names.dedup();
-        assert_eq!(names.len(), 25);
+        assert_eq!(names.len(), 26);
         // The two codes of Sprint 2 are unchanged (TS-15).
         assert_eq!(Error::Serialization.gqlstatus().code(), "25N11");
         assert_eq!(Error::Deadlock.gqlstatus().code(), "50N05");

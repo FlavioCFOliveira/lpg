@@ -1,7 +1,7 @@
 ---
 title: Architecture
 status: draft
-last-reviewed: 2026-10-08
+last-reviewed: 2026-10-11
 related:
   - README.md
   - interfaces.md
@@ -52,7 +52,8 @@ A request flows: API or Bolt → parser → binder → planner → authorisation
   - Handles: `Database`, `Session`, `Transaction`, `ResultStream` with `async fn next()`. The API shape is in [interfaces.md](interfaces.md#public-api-shape).
   - `Database` is a cheap clone of one shared engine. `close` acts on the engine, and afterwards every clone fails. "Dropped without close" (FR-DB-009) means that the last clone was dropped while the engine was open.
   - A session holds an atomic "busy" flag. A request that arrives while another runs fails with a GQLSTATUS error (FR-SES-004).
-  - **Owned transactions.** `spawn_blocking` takes a `'static` closure (D-TOKIO), so a transaction and its cursor own what they use. A transaction holds an `Engine` handle made by `Engine::handle(Arc<Core>)` (`src/storage/engine.rs:771-777`) instead of `&Engine`, and its snapshot registrations hold owned references (today `Transaction<'e>` borrows both, `src/tx/mod.rs:108-114`). No self-referential crate is used.
+  - **Owned transactions.** `spawn_blocking` takes a `'static` closure (D-TOKIO), so a transaction and its cursor own what they use. A transaction holds an `Engine` handle made by `Engine::handle(Arc<Core>)` instead of `&Engine`, and its snapshot registrations are detached slots of the registry, which `Transaction::end` withdraws (`Readers::enter_detached`, `Readers::leave`, `src/storage/freelist.rs`; rmp #47). No self-referential crate is used.
+  - **Built** (rmp #47, `src/api/`). Each request and each result batch runs in one `spawn_blocking` call, which takes the transaction's slot (`Mutex<Option<Transaction>>`) for the batch; the cursor moves into the closure and back. A statement's status check reads one atomic per transaction ([TS-20](query-engine.md#ts-20-binder-planner-and-execution) Limits and cancellation). The time limit's timer is a tokio task started with the transaction and aborted when it ends.
   - Session and transaction statements in GQL text, and the matching API calls, reach the same session and transaction functions (FR-GQL-005):
     - A session has at most one active transaction, begun by `START TRANSACTION` or by `Session::begin`; text and API act on the same one.
     - `START TRANSACTION`, or `begin`, while a transaction is active fails with 25G01 and leaves that transaction as it was.

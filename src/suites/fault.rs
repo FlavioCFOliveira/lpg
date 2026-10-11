@@ -844,7 +844,7 @@ fn row_targets(rows: &Rows, c: u32) -> (u64, u64) {
 /// The graph changes of [`tx_batch`] `c` in `tx`, with the label, edge
 /// type and property key `tokens`.
 fn tx_graph(
-    tx: &mut crate::tx::Transaction<'_>,
+    tx: &mut crate::tx::Transaction,
     c: u32,
     tokens: (u64, u64, u64),
     rows: &Rows,
@@ -920,7 +920,7 @@ fn graph_visible(e: &Engine) -> Graphs {
     use crate::types::Value;
     let (_, _, p) = tx_tokens(e);
     let mut tx = e.begin(Isolation::Snapshot).unwrap();
-    let count = |tx: &mut crate::tx::Transaction<'_>, t: Tree| {
+    let count = |tx: &mut crate::tx::Transaction, t: Tree| {
         let mut n = 0;
         tx.scan_prefix(t, b"", |_, _| {
             n += 1;

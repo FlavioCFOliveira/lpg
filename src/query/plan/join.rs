@@ -54,7 +54,9 @@
 
 use std::collections::HashMap;
 
-use crate::sync::atomic::{AtomicU64, Ordering};
+// `std`'s atomic, not the facade's: a static counter outside any model,
+// and `loom`'s atomics cannot initialise a static (no `const fn new`).
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// The largest number of edges planned exactly.
 pub(crate) const MAX_EXACT: usize = 7;

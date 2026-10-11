@@ -78,7 +78,10 @@ pub struct Error {
 
 impl Error {
     /// An error with `status` and `message`, without position or cause.
-    pub(crate) fn new(status: GqlStatus, message: impl Into<String>) -> Self {
+    /// A registered procedure or function reports its failures this way;
+    /// its message must hold no value (IV016, FR-OBS-002).
+    #[must_use]
+    pub fn new(status: GqlStatus, message: impl Into<String>) -> Self {
         Error {
             status,
             message: message.into(),

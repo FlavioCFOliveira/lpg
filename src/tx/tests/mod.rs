@@ -94,7 +94,7 @@ pub(crate) fn read(e: &Engine, t: Tree, k: &[u8]) -> Option<Vec<u8>> {
 }
 
 /// Every entry of `t` that `tx` sees.
-pub(crate) fn all(tx: &mut Transaction<'_>, t: Tree) -> Vec<(Vec<u8>, Vec<u8>)> {
+pub(crate) fn all(tx: &mut Transaction, t: Tree) -> Vec<(Vec<u8>, Vec<u8>)> {
     let mut out = Vec::new();
     tx.scan_prefix(t, b"", |k, v| {
         out.push((k.to_vec(), v.to_vec()));

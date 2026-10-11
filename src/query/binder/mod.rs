@@ -46,6 +46,7 @@ use super::bound::{
 use super::expr::Slot;
 use super::features::{gate, unsupported};
 use super::span::{Span, Spanned};
+#[cfg(any(test, fuzzing))]
 use crate::catalog::{DEFAULT_GRAPH_ID, DEFAULT_SCHEMA_ID};
 use crate::error::{Error, Position};
 use crate::gqlstatus::codes;
@@ -65,11 +66,15 @@ pub(crate) struct SessionCtx {
     pub(crate) current_schema: u64,
     /// The current graph's object identifier.
     pub(crate) current_graph: u64,
+    /// The database handle's procedures and functions, and the API host
+    /// (rmp #50).
+    pub(crate) procs: crate::proc::Procs,
 }
 
 impl SessionCtx {
     /// A session of `principal` at the defaults of FR-DB-005: `/public` and
     /// `/public/lpg` (ID002).
+    #[cfg(any(test, fuzzing))]
     pub(crate) fn new(principal: &str) -> SessionCtx {
         SessionCtx {
             principal: principal.to_string(),
@@ -77,6 +82,7 @@ impl SessionCtx {
             home_graph: DEFAULT_GRAPH_ID,
             current_schema: DEFAULT_SCHEMA_ID,
             current_graph: DEFAULT_GRAPH_ID,
+            procs: crate::proc::Procs::builtins(),
         }
     }
 }
@@ -94,7 +100,7 @@ impl SessionCtx {
 pub(crate) fn bind(
     text: &str,
     p: &ast::Program,
-    tx: &mut Transaction<'_>,
+    tx: &mut Transaction,
     session: &SessionCtx,
 ) -> Result<Program, Error> {
     for code in super::lexer::comment_features(text) {
@@ -157,9 +163,9 @@ pub(crate) fn bind(
 }
 
 /// The binder's state for one program.
-pub(crate) struct Binder<'a, 'e> {
+pub(crate) struct Binder<'a> {
     text: &'a str,
-    tx: &'a mut Transaction<'e>,
+    tx: &'a mut Transaction,
     session: &'a SessionCtx,
     current_schema: u64,
     current_graph: u64,
@@ -175,10 +181,12 @@ pub(crate) struct Binder<'a, 'e> {
     scope: Vec<(Box<str>, Slot)>,
     reads: bool,
     writes: bool,
+    /// Binding a query, where only reads are allowed (rmp #50).
+    reads_only: bool,
 }
 
-impl<'a, 'e> Binder<'a, 'e> {
-    fn new(text: &'a str, tx: &'a mut Transaction<'e>, session: &'a SessionCtx) -> Self {
+impl<'a> Binder<'a> {
+    fn new(text: &'a str, tx: &'a mut Transaction, session: &'a SessionCtx) -> Self {
         Binder {
             text,
             tx,
@@ -194,6 +202,7 @@ impl<'a, 'e> Binder<'a, 'e> {
             scope: Vec::new(),
             reads: false,
             writes: false,
+            reads_only: false,
         }
     }
 
@@ -321,6 +330,26 @@ impl<'a, 'e> Binder<'a, 'e> {
 
     fn bind_statement(&mut self, st: &ast::Statement) -> Result<Body, Error> {
         match st {
+            ast::Statement::Catalog(list)
+                if list.len() == 1
+                    && matches!(list[0].0, ast::CatalogModifyingStatement::Call(_)) =>
+            {
+                // A lone `CALL`, which the oracle parses as a
+                // catalog-modifying statement (TS-19 Ambiguities): its
+                // result is the columns it yields, as Neo4j's standalone
+                // `CALL` returns the procedure's columns.
+                let Spanned(ast::CatalogModifyingStatement::Call(c), span) = &list[0] else {
+                    unreachable!("matched above");
+                };
+                self.at(*span, |b| b.bind_call(c))?;
+                if let Some(Part::Call { yields, .. }) = self.parts.last() {
+                    self.columns = yields
+                        .iter()
+                        .map(|(_, s)| (self.slots[*s].name.clone(), *s))
+                        .collect();
+                }
+                Ok(Body::Query(self.finish()))
+            }
             ast::Statement::Catalog(list) => {
                 let mut ops = Vec::new();
                 for Spanned(c, span) in list {

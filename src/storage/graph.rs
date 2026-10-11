@@ -216,7 +216,7 @@ fn corrupt(what: &str) -> Error {
     Error::Corruption(what.into())
 }
 
-impl Transaction<'_> {
+impl Transaction {
     /// The trees of graph `id`, as the snapshot sees its catalog entry.
     ///
     /// # Errors
@@ -682,7 +682,7 @@ fn add_edges(d: &mut Delta, graph: u64, labels: &[u64], a: &Adj, by: i64) {
 /// Storage errors; [`Error::Corruption`] for a malformed committed record;
 /// [`Error::InvalidArgument`] for a malformed record or key in the write
 /// set.
-pub(crate) fn stats_delta(_core: &Core, store: &Store<'_>, tx: &Transaction<'_>) -> Result<Delta> {
+pub(crate) fn stats_delta(_core: &Core, store: &Store<'_>, tx: &Transaction) -> Result<Delta> {
     let mut d = Delta::default();
     for g in &tx.graphs {
         let writes = |t: Tree| {

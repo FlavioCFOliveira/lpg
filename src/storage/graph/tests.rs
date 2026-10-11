@@ -16,7 +16,7 @@ mod graph {
     use crate::tx::Isolation;
     use crate::tx::tests::{db, pause_gc, reopen, until_waiting};
 
-    fn graph(tx: &mut Transaction<'_>) -> Graph {
+    fn graph(tx: &mut Transaction) -> Graph {
         tx.graph(DEFAULT_GRAPH_ID).unwrap()
     }
 
@@ -590,7 +590,7 @@ mod graph {
             nbr: b,
             edge: 777_777,
         });
-        let raw = |f: &dyn Fn(&mut Transaction<'_>, &Graph)| {
+        let raw = |f: &dyn Fn(&mut Transaction, &Graph)| {
             let mut tx = e.begin(Isolation::Serializable).unwrap();
             let g = graph(&mut tx);
             f(&mut tx, &g);

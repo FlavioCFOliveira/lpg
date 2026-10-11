@@ -170,6 +170,7 @@ impl Engine {
     /// # Errors
     ///
     /// As [`Engine::commit`].
+    #[cfg(test)]
     pub(crate) fn create_trees(&self, n: usize) -> Result<Vec<Tree>> {
         Ok(self.commit_with(&[], n, Ids::default())?.trees)
     }
@@ -295,7 +296,7 @@ impl Engine {
     /// [`Error::Serialization`] (step 4); ENOSPC or [`Error::MemoryLimit`],
     /// with nothing applied and the database usable; any other error with
     /// the database unusable, as [`Engine::commit`].
-    pub(crate) fn commit_transaction(&self, tx: &mut Transaction<'_>) -> Result<Option<u64>> {
+    pub(crate) fn commit_transaction(&self, tx: &mut Transaction) -> Result<Option<u64>> {
         self.commit_transaction_installing(tx, None)
     }
 
@@ -307,7 +308,7 @@ impl Engine {
     /// As [`Engine::commit_transaction`].
     pub(crate) fn commit_transaction_installing(
         &self,
-        tx: &mut Transaction<'_>,
+        tx: &mut Transaction,
         built: Option<&Built<'_>>,
     ) -> Result<Option<u64>> {
         // Step 1.
@@ -327,7 +328,7 @@ impl Engine {
 
     fn commit_transaction_steps(
         &self,
-        tx: &Transaction<'_>,
+        tx: &Transaction,
         charge: &mut Reservation,
         built: Option<&Built<'_>>,
     ) -> Result<u64> {
@@ -438,7 +439,7 @@ impl Engine {
         store: &Store<'_>,
         st: &mut WriteState,
         wal: &Wal,
-        tx: &Transaction<'_>,
+        tx: &Transaction,
         charge: &mut Reservation,
         ts: u64,
         dir_keys: &[[u8; 8]],
@@ -581,7 +582,7 @@ impl Engine {
 /// pending write stamped with `ts`, then the directory entries `dir_values`
 /// under `dir_keys` of the trees it drops.
 fn batch_of<'a>(
-    tx: &'a Transaction<'_>,
+    tx: &'a Transaction,
     ts: u64,
     dir_keys: &'a [[u8; 8]],
     dir_values: &'a [[u8; 16]],

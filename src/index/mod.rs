@@ -104,7 +104,7 @@ pub(crate) enum Entity {
 /// no byte-string property type, lpg has byte-string values (TS-21; user
 /// decision 2026-10-08, rmp #34).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum PropertyType {
+pub enum PropertyType {
     Boolean = 0,
     Integer = 1,
     Float = 2,
@@ -175,6 +175,39 @@ impl TypeSet {
     fn from_bits(bits: u64) -> Option<TypeSet> {
         let b = u32::try_from(bits).ok()?;
         (b != 0 && b & !TYPE_BITS == 0).then_some(TypeSet(b))
+    }
+
+    /// The set as Neo4j's `SHOW CONSTRAINTS` writes it: its types in
+    /// order, then its list types, joined by ` | `, such as `STRING |
+    /// LIST<STRING NOT NULL>` (Cypher Manual, "List constraints", read
+    /// 2026-10-11).
+    pub(crate) fn describe(self) -> String {
+        const NAMES: [&str; 12] = [
+            "BOOLEAN",
+            "INTEGER",
+            "FLOAT",
+            "STRING",
+            "DATE",
+            "LOCAL TIME",
+            "LOCAL DATETIME",
+            "ZONED TIME",
+            "ZONED DATETIME",
+            "DURATION",
+            "POINT",
+            "BYTES",
+        ];
+        let mut parts: Vec<String> = Vec::new();
+        for (i, n) in NAMES.iter().enumerate() {
+            if self.0 & (1 << i) != 0 {
+                parts.push((*n).to_string());
+            }
+        }
+        for (i, n) in NAMES.iter().enumerate() {
+            if self.0 & (1 << (LIST_SHIFT as usize + i)) != 0 {
+                parts.push(format!("LIST<{n} NOT NULL>"));
+            }
+        }
+        parts.join(" | ")
     }
 
     /// Whether `v` has one of the set's types. A list has `LIST<T NOT
@@ -687,12 +720,7 @@ fn unique_violation(store: &Store<'_>, tree: Tree, change: &Change) -> Result<bo
 /// [`Error::ConstraintViolation`]; [`Error::InvalidArgument`] for an index
 /// key longer than 1 024 bytes or a malformed record in the write set;
 /// storage errors.
-pub(crate) fn derive(
-    core: &Core,
-    store: &Store<'_>,
-    tx: &Transaction<'_>,
-    ts: u64,
-) -> Result<Derived> {
+pub(crate) fn derive(core: &Core, store: &Store<'_>, tx: &Transaction, ts: u64) -> Result<Derived> {
     let mut d = Derived::default();
     if let Some(on) = &tx.online {
         switch(core, store, on, &mut d)?;
@@ -1108,7 +1136,7 @@ pub(crate) fn check(core: &Core, push: &mut dyn FnMut(String)) -> Result<()> {
 // ---------------------------------------------------------------------------
 // The transaction API: definitions, reads, constraint locks, drops.
 
-impl Transaction<'_> {
+impl Transaction {
     /// Definition `id` of `graph` as the snapshot sees it.
     ///
     /// # Errors

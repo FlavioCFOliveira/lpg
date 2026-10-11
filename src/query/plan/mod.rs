@@ -133,6 +133,13 @@ pub(crate) enum Op {
     },
     /// Catalog-modifying statements.
     Catalog(Vec<CatalogOp>),
+    /// A named procedure call (rmp #50), once per input row.
+    ProcedureCall {
+        routine: crate::proc::RoutineRef,
+        args: Vec<Expr>,
+        yields: Vec<(usize, Slot)>,
+        graph: usize,
+    },
     /// The result: the columns (none for a statement without result).
     Produce(Vec<(Box<str>, Slot)>),
 }
@@ -700,6 +707,25 @@ impl Planner<'_> {
                         est,
                     )
                 }
+                Part::Call {
+                    routine,
+                    args,
+                    yields,
+                    graph,
+                } => {
+                    bound.extend(yields.iter().map(|(_, s)| *s));
+                    let est = cur.est;
+                    over(
+                        Op::ProcedureCall {
+                            routine: routine.clone(),
+                            args: args.clone(),
+                            yields: yields.clone(),
+                            graph: *graph,
+                        },
+                        cur,
+                        est,
+                    )
+                }
             };
         }
         cur
@@ -737,7 +763,7 @@ impl Planner<'_> {
 /// # Errors
 ///
 /// Storage errors of the index definitions read.
-pub(crate) fn plan(q: &Query, tx: &mut Transaction<'_>, params: &[Value]) -> Result<Plan, Error> {
+pub(crate) fn plan(q: &Query, tx: &mut Transaction, params: &[Value]) -> Result<Plan, Error> {
     let mut indexes = Vec::new();
     for &g in &q.graphs {
         indexes.push(tx.schema_defs(g)?);
@@ -803,19 +829,19 @@ pub(crate) fn plan_catalog(ops: &[CatalogOp]) -> Plan {
 /// One node of a plan description (TS-20 "EXPLAIN and PROFILE",
 /// "Result").
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct Description {
+pub struct Description {
     /// The operator name (Neo4j's where Neo4j has the operator).
-    pub(crate) name: String,
+    pub name: String,
     /// Details: index, direction, types, labels, expressions.
-    pub(crate) details: String,
+    pub details: String,
     /// The variables it binds or reads.
-    pub(crate) identifiers: Vec<String>,
+    pub identifiers: Vec<String>,
     /// Estimated rows.
-    pub(crate) estimated_rows: f64,
+    pub estimated_rows: f64,
     /// PROFILE's measured counters; `None` for EXPLAIN.
-    pub(crate) profile: Option<super::exec::profile::ProfileStats>,
+    pub profile: Option<super::exec::profile::ProfileStats>,
     /// Its inputs.
-    pub(crate) children: Vec<Description>,
+    pub children: Vec<Description>,
 }
 
 impl Plan {
@@ -863,6 +889,7 @@ pub(crate) fn op_name(n: &Node) -> &'static str {
         }
         Op::Remove { .. } => "RemoveProperty",
         Op::Catalog(_) => "CatalogStatements",
+        Op::ProcedureCall { .. } => "ProcedureCall",
         Op::Produce(cols) if cols.is_empty() => "EmptyResult",
         Op::Produce(_) => "ProduceResults",
     }
@@ -953,6 +980,12 @@ fn describe(n: &Node, names: &[Box<str>]) -> Description {
             cols.iter().map(|(n, _)| n.to_string()).collect(),
         ),
         Op::Catalog(ops) => (format!("{} statements", ops.len()), Vec::new()),
+        Op::ProcedureCall {
+            routine, yields, ..
+        } => (
+            format!("{routine:?}"),
+            yields.iter().map(|(_, s)| slot(s)).collect(),
+        ),
         _ => (String::new(), Vec::new()),
     };
     Description {

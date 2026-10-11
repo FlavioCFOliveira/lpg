@@ -161,7 +161,7 @@ fn elements(e: &ast::PathPatternExpr) -> Vec<&ast::ElementPattern> {
     }
 }
 
-impl Binder<'_, '_> {
+impl Binder<'_> {
     /// Binds the graph pattern of a `MATCH` in graph `graph`; its
     /// variables join the scope.
     pub(super) fn bind_graph_pattern(

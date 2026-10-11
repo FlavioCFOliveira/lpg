@@ -35,8 +35,16 @@ enum Src<'x> {
     Slot(Slot),
 }
 
-impl Binder<'_, '_> {
+impl Binder<'_> {
     pub(super) fn bind_composite(&mut self, q: &ast::CompositeQueryExpr) -> Result<(), Error> {
+        // A query allows only reads (a read-write procedure fails, rmp #50).
+        let outer = std::mem::replace(&mut self.reads_only, true);
+        let r = self.bind_composite_inner(q);
+        self.reads_only = outer;
+        r
+    }
+
+    fn bind_composite_inner(&mut self, q: &ast::CompositeQueryExpr) -> Result<(), Error> {
         match q {
             ast::CompositeQueryExpr::Conjunction { conjunction, .. } => {
                 let code = match conjunction.0 {
@@ -174,20 +182,126 @@ impl Binder<'_, '_> {
         Ok(())
     }
 
-    /// A `CALL`. Named procedure calls (GP04) resolve in the procedure
-    /// registry of rmp #50, which this round does not have.
+    /// A `CALL` of a named procedure (GP04; rmp #50, TS-24 Names and
+    /// calls): the routine is looked up by its whole dotted name in the
+    /// session's registry; a schema part or a reference parameter names no
+    /// routine (42N08). A read-write routine fails with 42N02 inside a
+    /// query, where only reads are allowed. Arguments fill the parameters
+    /// in order, then their defaults. Without `YIELD`, every result column
+    /// becomes a variable of its name.
     pub(super) fn bind_call(&mut self, c: &ast::CallProcedureStatement) -> Result<(), Error> {
-        match &c.procedure.0 {
-            ast::ProcedureCall::Inline(_) => Err(unsupported("GP01")),
-            ast::ProcedureCall::Named(n) => {
-                gate("GP04")?;
-                let name = self.text_of(n.name.1).to_string();
-                Err(Error::new(
-                    codes::C42N08,
-                    format!("no such procedure: {name}"),
-                ))
+        let n = match &c.procedure.0 {
+            ast::ProcedureCall::Inline(_) => return Err(unsupported("GP01")),
+            ast::ProcedureCall::Named(n) => n,
+        };
+        gate("GP04")?;
+        if c.optional {
+            // `OPTIONAL CALL` has no feature code of its own in the
+            // features insert; it is outside the approved set (TS-19).
+            return Err(rule("OPTIONAL CALL is not supported"));
+        }
+        let text = self.text_of(n.name.1).to_string();
+        let no_such = || Error::new(codes::C42N08, format!("no such procedure: {text}"));
+        let name = match &n.name.0 {
+            ast::ProcedureRef::Parameter(_) => return Err(no_such()),
+            ast::ProcedureRef::Object(o) => match &o.parent {
+                Some(Spanned(p, _)) if p.schema.is_some() => return Err(no_such()),
+                Some(Spanned(p, _)) => {
+                    let mut parts: Vec<&str> = p.objects.iter().map(|Spanned(i, _)| &**i).collect();
+                    parts.push(&o.name.0);
+                    parts.join(".")
+                }
+                None => o.name.0.to_string(),
+            },
+        };
+        let routine = self.session.procs.get(&name).ok_or_else(no_such)?;
+        let (mode, params, columns) = {
+            let r = routine.get();
+            (r.mode(), r.sig.params.clone(), r.sig.columns.clone())
+        };
+        if mode == crate::proc::Mode::ReadWrite && self.reads_only {
+            return Err(Error::new(
+                codes::C42N02,
+                format!(
+                    "writing in read access mode: the procedure {name} may modify data and is called in a query"
+                ),
+            ));
+        }
+        if n.args.len() > params.len() {
+            return Err(Error::new(
+                codes::C22N11,
+                format!(
+                    "invalid argument: the procedure {name} takes at most {} arguments",
+                    params.len()
+                ),
+            ));
+        }
+        let mut args = Vec::with_capacity(params.len());
+        for a in &n.args {
+            args.push(self.bind_value(a)?);
+        }
+        for p in &params[n.args.len()..] {
+            match &p.default {
+                Some(v) => args.push(Expr::Lit(v.clone())),
+                None => {
+                    return Err(Error::new(
+                        codes::C22N11,
+                        format!(
+                            "invalid argument: the procedure {name} needs its argument {}",
+                            p.name
+                        ),
+                    ));
+                }
             }
         }
+        let wanted: Vec<(usize, Box<str>)> = match &n.yield_clause {
+            None => columns
+                .iter()
+                .enumerate()
+                .map(|(i, c)| (i, c.as_str().into()))
+                .collect(),
+            Some(Spanned(items, _)) => {
+                let mut out = Vec::new();
+                for Spanned(item, span) in items {
+                    let col = columns
+                        .iter()
+                        .position(|c| **c == *item.name.0)
+                        .ok_or_else(|| {
+                            self.locate(
+                                Error::new(
+                                    codes::C42002,
+                                    format!("invalid reference: the procedure {name} has no result column {}", item.name.0),
+                                ),
+                                *span,
+                            )
+                        })?;
+                    let var = item.alias.as_ref().map_or(&item.name.0, |a| &a.0);
+                    out.push((col, var.clone()));
+                }
+                out
+            }
+        };
+        let mut yields = Vec::new();
+        for (col, var) in wanted {
+            if self.lookup(&var).is_some() {
+                return Err(rule(&format!("the variable '{var}' is already bound")));
+            }
+            let slot = self.slot(&var, VarKind::Value, Ty::Any, None);
+            self.scope.push((var, slot));
+            yields.push((col, slot));
+        }
+        let graph = self.graph_index(self.current_graph);
+        match mode {
+            crate::proc::Mode::ReadOnly => self.reads = true,
+            crate::proc::Mode::ReadWrite => self.writes = true,
+        }
+        self.parts.push(Part::Call {
+            routine,
+            args,
+            yields,
+            graph,
+        });
+        Ok(())
     }
 
     fn bind_match(&mut self, m: &ast::MatchStatement, optional: bool) -> Result<(), Error> {

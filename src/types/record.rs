@@ -62,6 +62,7 @@ const POINT: u8 = 18;
 /// Tags reserved for the numeric types not supported (BR-GQL-002): UINT64
 /// (GV11), UINT128 (GV13), INT128 (GV14), UINT256 (GV15), INT256 (GV16),
 /// DECIMAL (GV17), FLOAT16 (GV20), FLOAT128 (GV25), FLOAT256 (GV26).
+#[cfg(test)]
 pub(crate) const RESERVED: [u8; 9] = [19, 20, 21, 22, 23, 24, 25, 26, 27];
 
 /// Why a record cannot be encoded.
@@ -307,6 +308,15 @@ pub(crate) fn encode(
         prev = Some(*k);
     }
     Ok(())
+}
+
+/// The bytes `v` takes in the record encoding: its header and payload
+/// (TS-21), the measure of the byte limit (FR-LIM-002). A value the
+/// encoding cannot hold is measured by what it wrote before failing.
+pub(crate) fn value_size(v: &Value) -> u64 {
+    let mut out = Vec::new();
+    let _ = put_value(&mut out, v);
+    out.len() as u64
 }
 
 /// A cursor over encoded bytes; every read is checked.

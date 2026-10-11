@@ -156,7 +156,7 @@ fn elle_reports_g2_item_for_a_snapshot_isolation_write_skew() {
         let t = tree(&e);
         let h = History::default();
         let (x, y) = (1u64, 2u64);
-        let list = |tx: &mut Transaction<'_>, k: u64| -> Vec<i64> {
+        let list = |tx: &mut Transaction, k: u64| -> Vec<i64> {
             tx.get(t, &k.to_be_bytes())
                 .unwrap()
                 .map(|v| {
@@ -443,7 +443,7 @@ fn run_graph_ops(e: &Engine, k: &GraphKeys, iso: Isolation, plan: &mut Plan) -> 
     use crate::storage::error::Result;
     use crate::types::Value;
     let mut tx = e.begin(iso).unwrap();
-    let list = |tx: &mut Transaction<'_>, key: u64| -> Result<Vec<i64>> {
+    let list = |tx: &mut Transaction, key: u64| -> Result<Vec<i64>> {
         let g = tx.graph(DEFAULT_GRAPH_ID)?;
         let (_, props) = tx.node(&g, k.nodes[key as usize])?.expect("the node");
         Ok(match props.iter().find(|p| p.0 == k.l) {

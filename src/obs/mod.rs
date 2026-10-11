@@ -25,8 +25,8 @@ pub trait MetricsSink: Send + Sync {
     fn histogram(&self, name: &'static str, value: u64);
 }
 
-/// Metric names, one module per FR-OBS-001 category that the storage and
-/// transaction kernel produces. Components add their names here.
+/// Metric names, one module per FR-OBS-001 category. The Bolt category
+/// comes with the Bolt endpoints (Sprint 6).
 pub mod names {
     /// Transactions.
     pub mod transactions {
@@ -95,6 +95,55 @@ pub mod names {
         /// Gauge: bytes reserved from the database's memory accountant, by
         /// the pool and every other user (TS-08).
         pub const ACCOUNTED_BYTES: &str = "page_cache.accounted_bytes";
+    }
+
+    /// Query execution (TS-24 Metrics; rmp #51). Emitted by the API when a
+    /// statement ends.
+    pub mod query_execution {
+        /// Counter: statements that succeeded.
+        pub const SUCCESS: &str = "db.query.execution.success";
+        /// Counter: statements that failed.
+        pub const FAILURE: &str = "db.query.execution.failure";
+        /// Histogram: latency of one successful statement, from the request
+        /// to its last row, in milliseconds.
+        pub const LATENCY_MILLIS: &str = "db.query.execution.latency.millis";
+    }
+
+    /// Data counts (TS-24 Metrics; rmp #51). Gauges set by
+    /// `Database::check_integrity`, which counts every element: the
+    /// statistics hold no total count (TS-17).
+    pub mod data_counts {
+        /// Gauge: nodes in every graph of the database.
+        pub const NODE: &str = "neo4j.count.node";
+        /// Gauge: edges in every graph of the database.
+        pub const RELATIONSHIP: &str = "neo4j.count.relationship";
+        /// Gauge: edge-type tokens.
+        pub const RELATIONSHIP_TYPES: &str = "neo4j.count.relationship_types";
+    }
+
+    /// Indexes (TS-24 Metrics; rmp #51): `index.<kind>.queried` when a
+    /// statement's operator reads an index, `index.<kind>.populated` when
+    /// an index becomes ONLINE. `<kind>` is Neo4j's `lookup`, `range` or
+    /// `point`, or lpg's `single_property` or `composite`.
+    pub mod indexes {
+        /// Counter: label lookup index reads.
+        pub const LOOKUP_QUERIED: &str = "index.lookup.queried";
+        /// Counter: range scans of a single-property range index.
+        pub const RANGE_QUERIED: &str = "index.range.queried";
+        /// Counter: point index reads.
+        pub const POINT_QUERIED: &str = "index.point.queried";
+        /// Counter: equality seeks of a single-property range index.
+        pub const SINGLE_PROPERTY_QUERIED: &str = "index.single_property.queried";
+        /// Counter: equality seeks of a composite range index.
+        pub const COMPOSITE_QUERIED: &str = "index.composite.queried";
+        /// Counter: label lookup indexes populated.
+        pub const LOOKUP_POPULATED: &str = "index.lookup.populated";
+        /// Counter: single-property range indexes populated.
+        pub const RANGE_POPULATED: &str = "index.range.populated";
+        /// Counter: point indexes populated.
+        pub const POINT_POPULATED: &str = "index.point.populated";
+        /// Counter: composite range indexes populated.
+        pub const COMPOSITE_POPULATED: &str = "index.composite.populated";
     }
 
     /// Store size.
@@ -166,6 +215,21 @@ mod tests {
             store_size::FULL,
             store_size::DATABASE,
             store_size::RESERVED_UNUSED,
+            query_execution::SUCCESS,
+            query_execution::FAILURE,
+            query_execution::LATENCY_MILLIS,
+            data_counts::NODE,
+            data_counts::RELATIONSHIP,
+            data_counts::RELATIONSHIP_TYPES,
+            indexes::LOOKUP_QUERIED,
+            indexes::RANGE_QUERIED,
+            indexes::POINT_QUERIED,
+            indexes::SINGLE_PROPERTY_QUERIED,
+            indexes::COMPOSITE_QUERIED,
+            indexes::LOOKUP_POPULATED,
+            indexes::RANGE_POPULATED,
+            indexes::POINT_POPULATED,
+            indexes::COMPOSITE_POPULATED,
         ];
         let set: std::collections::BTreeSet<_> = all.iter().collect();
         assert_eq!(set.len(), all.len());

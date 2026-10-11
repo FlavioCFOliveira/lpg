@@ -20,8 +20,15 @@ pub(crate) struct Counts {
     pub(crate) misses: u64,
 }
 
+#[cfg(not(loom))]
 thread_local! {
     static COUNTS: Cell<Counts> = const { Cell::new(Counts { entries: 0, hits: 0, misses: 0 }) };
+}
+// `loom`'s `thread_local!` takes no `const` initialiser (`loom` 0.7.2
+// `src/lib.rs:395-410`).
+#[cfg(loom)]
+thread_local! {
+    static COUNTS: Cell<Counts> = Cell::new(Counts { entries: 0, hits: 0, misses: 0 });
 }
 
 /// The current thread's counts.

@@ -11,56 +11,34 @@
 // built in; the code the other tests use is then unused (TS-30).
 #![cfg_attr(any(loom, shuttle), allow(dead_code, unused_imports))]
 
-#[cfg_attr(
-    not(test),
-    allow(
-        dead_code,
-        reason = "the catalog API's first non-test callers come with Sprint 3"
-    )
-)]
+pub mod api;
+pub mod auth;
 pub(crate) mod catalog;
 mod error;
 #[cfg(fuzzing)]
 pub mod fuzz;
 pub mod gqlstatus;
-#[cfg_attr(
-    not(test),
-    allow(
-        dead_code,
-        reason = "the index API's first non-test callers come with Sprint 3"
-    )
-)]
 pub(crate) mod index;
 pub mod obs;
 pub mod ops;
-#[cfg_attr(
-    not(test),
-    allow(
-        dead_code,
-        reason = "the query module's first non-test callers come with rmp #47"
-    )
-)]
+pub mod proc;
 pub(crate) mod query;
 pub mod storage;
 mod sync;
-#[cfg_attr(
-    not(test),
-    allow(
-        dead_code,
-        reason = "the transaction API's first non-test callers come with Sprint 3"
-    )
-)]
 pub mod tx;
-#[cfg_attr(
-    not(test),
-    allow(
-        dead_code,
-        reason = "the value types' first non-test callers come with rmp #31-#33"
-    )
-)]
 pub(crate) mod types;
 
+pub use api::{
+    ConstraintKind, Counters, DEFAULT_CLOSE_TIMEOUT, Database, Entity, IndexKind, IntegrityReport,
+    Limits, Options, Parameters, ResultStream, Session, StatementType, Summary, Transaction,
+    TransactionInfo, TransactionOptions, TypeSpec,
+};
 pub use error::{Error, Position};
+pub use index::PropertyType;
+pub use query::exec::profile::ProfileStats;
+pub use query::plan::Description as PlanDescription;
+pub use tx::Isolation;
+pub use types::{DayToSecond, Point, Srid, Value, ZonedDateTime, ZonedTime};
 
 #[cfg(test)]
 mod lab;
