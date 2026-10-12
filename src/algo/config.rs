@@ -51,6 +51,15 @@ pub(crate) enum Ty {
     /// A GDS scaler: a name, or a record with `type` and, for `log`,
     /// `offset` ([`super::scale`]).
     Scaler,
+    /// Node property names: a string, a list of strings, or a record of
+    /// names to metric names (GDS KNN `nodeProperties`); kept as a record
+    /// whose values are the metric names, null when none is given.
+    Props,
+    /// A node filter (GDS filtered similarity): a label, or a list of
+    /// nodes or node element identifiers.
+    NodeFilter,
+    /// A list of lists of numbers (GDS k-means `seedCentroids`).
+    Lists,
 }
 
 /// The default of a configuration key.
@@ -146,6 +155,8 @@ pub(crate) const IGNORED: &[&str] = &[
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Config {
     values: Vec<(&'static str, Value)>,
+    /// The keys the record gave (not null).
+    given: Vec<&'static str>,
     /// Ignored keys as given.
     ignored: Vec<(Arc<str>, Value)>,
 }
@@ -193,12 +204,16 @@ impl Config {
             return Err(invalid(format!("unexpected configuration key: {k}")));
         }
         let mut values = Vec::with_capacity(keys.len());
+        let mut present = Vec::new();
         for key in keys {
             let v = given
                 .iter()
                 .find(|(k, _)| **k == *key.name)
                 .map(|(_, v)| v)
                 .filter(|v| !v.is_null());
+            if v.is_some() {
+                present.push(key.name);
+            }
             let v = match v {
                 Some(v) => check(key, v)?,
                 None => match key.def {
@@ -219,7 +234,39 @@ impl Config {
             };
             values.push((key.name, v));
         }
-        Ok(Config { values, ignored })
+        Ok(Config {
+            values,
+            given: present,
+            ignored,
+        })
+    }
+
+    /// Whether key `name` is declared and not null.
+    pub(crate) fn has(&self, name: &str) -> bool {
+        self.values.iter().any(|(k, v)| *k == name && !v.is_null())
+    }
+
+    /// Whether the record gave key `name` (GDS's `topK` and `bottomK`
+    /// exclude each other only when both are given).
+    pub(crate) fn given(&self, name: &str) -> bool {
+        self.given.contains(&name)
+    }
+
+    /// The names and metric names of a [`Ty::Props`] key.
+    pub(crate) fn props(&self, name: &str) -> Vec<(String, Option<String>)> {
+        match self.get(name) {
+            Value::Record(r) => r
+                .iter()
+                .map(|(k, v)| {
+                    let metric = match v {
+                        Value::String(s) => Some(s.to_string()),
+                        _ => None,
+                    };
+                    (k.to_string(), metric)
+                })
+                .collect(),
+            _ => Vec::new(),
+        }
     }
 
     /// The value of key `name`.
@@ -430,6 +477,56 @@ fn check(key: &Key, v: &Value) -> Result<Value, Error> {
             _ => Err(wrong_type(name, "a list of integers")),
         },
         Ty::Scaler => super::scale::Scaler::parse(name, v).map(|s| s.value()),
+        Ty::Props => {
+            let field = |n: &Value, m: Value| match n {
+                Value::String(s) => Ok((Arc::<str>::from(&**s), m)),
+                _ => Err(wrong_type(
+                    name,
+                    "a property name, a list of them, or a record of names to metrics",
+                )),
+            };
+            let fields: Vec<(Arc<str>, Value)> = match v {
+                Value::String(_) => vec![field(v, Value::Null)?],
+                Value::List(l) => l
+                    .iter()
+                    .map(|x| field(x, Value::Null))
+                    .collect::<Result<_, _>>()?,
+                Value::Record(r) => r
+                    .iter()
+                    .map(|(k, m)| match m {
+                        Value::String(s) => Ok((k.clone(), Value::string(&s.to_uppercase()))),
+                        Value::Null => Ok((k.clone(), Value::Null)),
+                        _ => Err(wrong_type(name, "a record of property names to metric names")),
+                    })
+                    .collect::<Result<_, _>>()?,
+                _ => {
+                    return Err(wrong_type(
+                        name,
+                        "a property name, a list of them, or a record of names to metrics",
+                    ));
+                }
+            };
+            if fields.is_empty() {
+                return Err(invalid(format!(
+                    "the configuration key {name} needs at least one property"
+                )));
+            }
+            Ok(Value::Record(fields.into()))
+        }
+        Ty::Lists => match v {
+            Value::List(l)
+                if l.iter().all(|x| {
+                    matches!(x, Value::List(xs) if xs.iter().all(|y| matches!(y, Value::Int(_) | Value::Float(_))))
+                }) =>
+            {
+                Ok(v.clone())
+            }
+            _ => Err(wrong_type(name, "a list of lists of numbers")),
+        },
+        Ty::NodeFilter => match v {
+            Value::String(_) => Ok(v.clone()),
+            other => check(&Key::new(name, Ty::Nodes, Def::EmptyList), other),
+        },
     }
 }
 

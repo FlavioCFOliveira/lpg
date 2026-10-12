@@ -46,8 +46,12 @@
 //!
 //! [TS-25]: ../../docs/technical-spec/algorithms.md
 
+mod centrality;
+mod clustering;
+mod community;
 pub(crate) mod config;
 mod cycles;
+mod functions;
 mod kernels;
 pub(crate) mod mem;
 mod pagerank;
@@ -55,9 +59,14 @@ mod paths;
 pub(crate) mod projection;
 pub(crate) mod scale;
 pub(crate) mod sched;
+mod similarity;
 mod structure;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_centrality;
+#[cfg(test)]
+mod tests_community;
 #[cfg(test)]
 mod tests_paths;
 #[cfg(test)]
@@ -150,6 +159,8 @@ pub(crate) enum ArgDefault {
     Required,
     Null,
     Str(&'static str),
+    Float(f64),
+    Int(i64),
 }
 
 /// What a write mode writes, read from the stream rows.
@@ -170,6 +181,26 @@ pub(crate) enum WriteKind {
     /// Edge property `writeProperty` of the edge in column `edge` is set
     /// to true.
     EdgeFlag { edge: usize },
+    /// Each field of the record in column `map` is set as the node
+    /// property of its name on the node in column `id` (HITS's
+    /// `authProperty` and `hubProperty`).
+    NodeMap { id: usize, map: usize },
+    /// Node property `writeProperty` of the node in column `id` is set to
+    /// field `field` of the record in column `map` (SLLPA's
+    /// `communityIds`).
+    NodeField {
+        id: usize,
+        map: usize,
+        field: &'static str,
+    },
+    /// One relationship of type `writeRelationshipType` per row, from the
+    /// node in column `src` to the node in column `dst`, with property
+    /// `writeProperty` set to column `value` (node similarity, KNN).
+    RelsProp {
+        src: usize,
+        dst: usize,
+        value: usize,
+    },
 }
 
 /// An algorithm of the inventory (module documentation).
@@ -194,12 +225,18 @@ pub(crate) struct Entry {
     pub(crate) edge_props: &'static [&'static str],
     /// Keys whose string value names a node property to project.
     pub(crate) node_props: &'static [&'static str],
+    /// Keys whose value names node properties to project as vectors (a
+    /// string, a list of strings or a [`config::Ty::Props`] record).
+    pub(crate) vector_props: &'static [&'static str],
     pub(crate) stream_columns: &'static [&'static str],
     pub(crate) write_columns: &'static [&'static str],
     /// The computation.
     pub(crate) run: fn(&mut Run<'_, '_>) -> Result<Output, Error>,
     /// MAGE's positional parameters, before `configuration`.
     pub(crate) args: &'static [Arg],
+    /// The positional parameters whose string value names an edge
+    /// property to project, after those of `edge_props`.
+    pub(crate) edge_args: &'static [usize],
     /// Node properties projected by name, after those of `node_props`.
     pub(crate) named_node_props: &'static [&'static str],
     /// Projects each edge's type and each node's labels.
@@ -225,10 +262,12 @@ impl Entry {
         undirected: false,
         edge_props: &[],
         node_props: &[],
+        vector_props: &[],
         stream_columns: &[],
         write_columns: &[],
         run: no_run,
         args: &[],
+        edge_args: &[],
         named_node_props: &[],
         edge_types: false,
         node_labels: false,
@@ -297,6 +336,31 @@ pub(crate) static ENTRIES: &[Entry] = &[
     structure::GRAPHLIKE,
     structure::CLOSURE,
     structure::REDUCTION,
+    centrality::DEGREE,
+    centrality::BETWEENNESS,
+    centrality::CLOSENESS,
+    centrality::HARMONIC,
+    pagerank::EIGENVECTOR,
+    centrality::KATZ,
+    pagerank::ARTICLE_RANK,
+    centrality::HITS,
+    centrality::CELF,
+    similarity::NODE_SIMILARITY,
+    similarity::NODE_SIMILARITY_FILTERED,
+    similarity::KNN,
+    similarity::KNN_FILTERED,
+    community::LOUVAIN,
+    community::LEIDEN,
+    community::LABEL_PROPAGATION,
+    community::SLLPA,
+    community::MODULARITY_OPTIMIZATION,
+    community::MAX_K_CUT,
+    community::MODULARITY,
+    community::CONDUCTANCE,
+    clustering::SPECTRAL,
+    clustering::BALANCED_CUT,
+    clustering::KMEANS,
+    clustering::HDBSCAN,
 ];
 
 /// The mode of an algorithm routine.
@@ -377,6 +441,8 @@ pub(crate) fn routines() -> Vec<Routine> {
                 ArgDefault::Required => Parameter::new(a.name),
                 ArgDefault::Null => Parameter::with_default(a.name, Value::Null),
                 ArgDefault::Str(s) => Parameter::with_default(a.name, Value::string(s)),
+                ArgDefault::Float(f) => Parameter::with_default(a.name, Value::Float(f)),
+                ArgDefault::Int(i) => Parameter::with_default(a.name, Value::Int(i)),
             })
             .collect();
         ps.push(Parameter::with_default(
@@ -398,6 +464,7 @@ pub(crate) fn routines() -> Vec<Routine> {
             });
         }
     }
+    out.extend(functions::routines());
     out
 }
 
@@ -420,7 +487,7 @@ pub(crate) fn call(
     let no_such = || Error::new(codes::C42N08, format!("no such procedure: {name}"));
     let routine = procs.get(name).ok_or_else(no_such)?;
     let r = routine.get();
-    if !matches!(r.body, Body::Algo(..)) {
+    if !matches!(r.body, Body::Algo(..)) && !functions::is_function(name) {
         return Err(no_such());
     }
     if let Some(k) = parameters
@@ -466,7 +533,7 @@ pub(crate) fn requests(e: &Entry, mode: AlgoMode) -> Vec<(Action, bool)> {
     if mode == AlgoMode::Write {
         if matches!(
             e.write_kind,
-            WriteKind::PathRels { .. } | WriteKind::Rels { .. }
+            WriteKind::PathRels { .. } | WriteKind::Rels { .. } | WriteKind::RelsProp { .. }
         ) {
             r.push((Action::Create, false));
         }
@@ -487,6 +554,17 @@ fn keys(e: &Entry, mode: AlgoMode) -> Vec<Key> {
         k.extend_from_slice(e.write_keys);
     }
     k
+}
+
+/// The node properties key `key` names: a string, a list of strings, or
+/// the names of a [`config::Ty::Props`] record.
+fn vector_names(cfg: &Config, key: &str) -> Vec<String> {
+    match cfg.get(key) {
+        Value::String(s) => vec![s.to_string()],
+        Value::List(_) => cfg.names(key).into_iter().map(str::to_string).collect(),
+        Value::Record(_) => cfg.props(key).into_iter().map(|(n, _)| n).collect(),
+        _ => Vec::new(),
+    }
 }
 
 /// `None` for `["*"]`, else the names.
@@ -532,10 +610,19 @@ pub(crate) fn invoke(
             .edge_props
             .iter()
             .filter_map(|k| cfg.str(k).map(str::to_string))
+            .chain(e.edge_args.iter().filter_map(|i| match &positional[*i] {
+                Value::String(s) => Some(s.to_string()),
+                _ => None,
+            }))
             .collect(),
         node_props,
         edge_types: e.edge_types,
         node_labels: e.node_labels,
+        vector_props: e
+            .vector_props
+            .iter()
+            .flat_map(|k| vector_names(&cfg, k))
+            .collect(),
     };
     let g = cx.st.graphs[cx.graph];
     let mut mem = Mem::new(cx.tx, cx.st);
@@ -756,6 +843,66 @@ fn write_rows(
     rows: &[Vec<Value>],
 ) -> Result<(u64, u64, u64), Error> {
     match kind {
+        WriteKind::NodeMap { id, map } => {
+            let mut written = 0;
+            let mut nodes = Vec::new();
+            for (i, r) in rows.iter().enumerate() {
+                if i % crate::query::exec::CHECK_EVERY == 0 {
+                    cx.check()?;
+                }
+                let (Some(node), Value::Record(fields)) = (row_node(&r[id]), &r[map]) else {
+                    continue;
+                };
+                let Some((labels, mut props)) = cx.tx.node(g, node)? else {
+                    continue;
+                };
+                for (k, v) in fields.iter() {
+                    let key = cx.tx.token(TokenKind::PropertyKey, k)?;
+                    props.retain(|(p, _)| *p != key);
+                    props.push((key, v.clone()));
+                    cx.st.counters.properties_set += 1;
+                    written += 1;
+                }
+                cx.tx.set_node(g, node, &labels, &props)?;
+                nodes.push(Value::Node(node));
+            }
+            check_closed(cx, g, &nodes)?;
+            Ok((written, 0, 0))
+        }
+        WriteKind::NodeField { id, map, field } => {
+            let pairs: Vec<(u64, Value)> = rows
+                .iter()
+                .filter_map(|r| {
+                    let Value::Record(fields) = &r[map] else {
+                        return None;
+                    };
+                    let v = fields.iter().find(|(k, _)| &**k == field)?.1.clone();
+                    Some((row_node(&r[id])?, v))
+                })
+                .collect();
+            Ok((write_node_values(cx, g, cfg, &pairs)?, 0, 0))
+        }
+        WriteKind::RelsProp { src, dst, value } => {
+            let name = cfg.str(WRITE_RELATIONSHIP_TYPE).unwrap_or_default();
+            let ty = cx.tx.token(TokenKind::EdgeType, name)?;
+            let prop = cfg.str(config::WRITE_PROPERTY).unwrap_or_default();
+            let key = cx.tx.token(TokenKind::PropertyKey, prop)?;
+            let mut written = Vec::new();
+            for (i, r) in rows.iter().enumerate() {
+                if i % crate::query::exec::CHECK_EVERY == 0 {
+                    cx.check()?;
+                }
+                let (Some(a), Some(b)) = (row_node(&r[src]), row_node(&r[dst])) else {
+                    continue;
+                };
+                let id = cx.tx.create_edge(g, a, b, ty, &[(key, r[value].clone())])?;
+                cx.st.counters.edges_created += 1;
+                cx.st.counters.properties_set += 1;
+                written.push(Value::Edge(id));
+            }
+            check_closed(cx, g, &written)?;
+            Ok((0, written.len() as u64, 0))
+        }
         WriteKind::NodeProp { id, value } => {
             let pairs: Vec<(u64, Value)> = rows
                 .iter()
@@ -865,6 +1012,11 @@ impl Summary<'_> {
     /// The value of summary column `c` (module documentation).
     fn column(&self, c: &str) -> Value {
         let int = |x: u64| Value::Int(i64::try_from(x).unwrap_or(i64::MAX));
+        // The entry's own value of a column comes first (an iterative
+        // row-output entry gives `ranIterations` and `didConverge`).
+        if let Some((_, v)) = self.extra.iter().find(|(k, _)| *k == c) {
+            return v.clone();
+        }
         match c {
             "nodePropertiesWritten" => int(self.written),
             "relationshipsWritten" => int(self.rels_written),

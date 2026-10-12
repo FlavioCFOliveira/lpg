@@ -65,6 +65,8 @@ pub(crate) struct Sched {
     size: usize,
     blocks: usize,
     workers: usize,
+    concurrency: usize,
+    parallel: bool,
     check: Option<Check>,
     /// The key the worker-count probe records under ([`probe`]).
     #[cfg(test)]
@@ -99,9 +101,23 @@ impl Sched {
             size,
             blocks,
             workers,
+            concurrency,
+            parallel,
             check,
             #[cfg(test)]
             probe: None,
+        }
+    }
+
+    /// The scheduler of the same run over `n` items instead (an
+    /// aggregated graph of a community entry): the blocks of `n`, the
+    /// same `concurrency`, status check and probe key.
+    #[must_use]
+    pub(crate) fn resized(&self, n: usize) -> Sched {
+        Sched {
+            #[cfg(test)]
+            probe: self.probe.clone(),
+            ..Sched::new(n, self.concurrency, self.parallel, self.check.clone())
         }
     }
 
@@ -139,7 +155,7 @@ impl Sched {
         f: impl Fn(usize, Range<usize>) -> R + Sync,
     ) -> Result<Vec<R>, Error> {
         let results: Vec<Mutex<Option<R>>> = (0..self.blocks).map(|_| Mutex::new(None)).collect();
-        self.run(|b| {
+        self.run(0..self.blocks, |b| {
             let r = f(b, self.range(b));
             *results[b].lock().unwrap_or_else(PoisonError::into_inner) = Some(r);
         })?;
@@ -179,10 +195,51 @@ impl Sched {
         })
     }
 
-    /// Runs block body `f` for every block on the run's workers (module
-    /// documentation).
-    fn run(&self, f: impl Fn(usize) + Sync) -> Result<(), Error> {
-        let next = AtomicUsize::new(0);
+    /// Runs `f` on every block and folds each block's result into `acc`
+    /// with `merge`, in block order. Blocks run in waves of as many
+    /// blocks as the run has workers, so at most that many results are
+    /// held at once (per-source partial sums of a centrality); the merge
+    /// order is the block order whatever the wave size, so the result
+    /// does not depend on `concurrency`.
+    ///
+    /// # Errors
+    ///
+    /// As [`Sched::map`].
+    pub(crate) fn fold<R: Send, A>(
+        &self,
+        acc: &mut A,
+        f: impl Fn(usize, Range<usize>) -> R + Sync,
+        mut merge: impl FnMut(&mut A, R),
+    ) -> Result<(), Error> {
+        let mut start = 0;
+        while start < self.blocks {
+            let end = (start + self.workers).min(self.blocks);
+            let results: Vec<Mutex<Option<R>>> = (start..end).map(|_| Mutex::new(None)).collect();
+            self.run(start..end, |b| {
+                let r = f(b, self.range(b));
+                *results[b - start]
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner) = Some(r);
+            })?;
+            for m in results {
+                merge(
+                    acc,
+                    m.into_inner()
+                        .unwrap_or_else(PoisonError::into_inner)
+                        .expect("every block ran"),
+                );
+            }
+            start = end;
+        }
+        Ok(())
+    }
+
+    /// Runs block body `f` for every block of `blocks` on the run's
+    /// workers (module documentation).
+    fn run(&self, blocks: Range<usize>, f: impl Fn(usize) + Sync) -> Result<(), Error> {
+        let first = blocks.start;
+        let last = blocks.end;
+        let next = AtomicUsize::new(first);
         let stop = AtomicBool::new(false);
         let failure: Mutex<Option<Error>> = Mutex::new(None);
         let fail = |e: Error| {
@@ -197,7 +254,7 @@ impl Sched {
                 // Relaxed suffices: the counter only hands out distinct
                 // block indexes; the scope's join orders the results.
                 let b = next.fetch_add(1, Ordering::Relaxed);
-                if b >= self.blocks || stop.load(Ordering::Relaxed) {
+                if b >= last || stop.load(Ordering::Relaxed) {
                     return;
                 }
                 if let Some(c) = &self.check
@@ -213,7 +270,8 @@ impl Sched {
         let key = self.probe.as_deref();
         #[cfg(not(test))]
         let key = None;
-        if let Err(e) = workers(self.workers, key, body) {
+        let k = self.workers.min(last - first).max(1);
+        if let Err(e) = workers(k, key, body) {
             fail(e);
         }
         match failure.into_inner().unwrap_or_else(PoisonError::into_inner) {
@@ -358,6 +416,37 @@ mod tests {
             assert_eq!(lens.iter().sum::<usize>(), 1000);
             assert!(out.iter().enumerate().all(|(i, x)| *x == 2 * i));
         }
+    }
+
+    /// `fold` merges the block results in block order, whatever the
+    /// number of workers (and so of waves); `resized` keeps the run's
+    /// `concurrency`.
+    #[test]
+    fn fold_in_block_order() {
+        let sum = |c: usize| {
+            let s = Sched::new(1000, c, true, None);
+            let mut acc = (0.0f64, Vec::new());
+            s.fold(
+                &mut acc,
+                |b, r| (b, r.map(|v| 1.0 / (v as f64 + 1.0)).sum::<f64>()),
+                |acc, (b, x)| {
+                    acc.0 += x;
+                    acc.1.push(b);
+                },
+            )
+            .unwrap();
+            acc
+        };
+        let one = sum(1);
+        assert_eq!(one.1, (0..63).collect::<Vec<_>>());
+        for c in [2, 5, 16] {
+            let other = sum(c);
+            assert_eq!(other.0.to_bits(), one.0.to_bits());
+            assert_eq!(other.1, one.1);
+        }
+        let s = Sched::new(1000, 3, true, None).resized(10);
+        assert_eq!((s.blocks(), s.workers()), (10, 3));
+        assert_eq!(Sched::new(1000, 3, false, None).resized(10).workers(), 1);
     }
 
     /// The first failed check stops the run with its error.

@@ -198,6 +198,7 @@ impl ReadProcedure for Probe {
             edge_types: p.edge_types.clone(),
             labels: p.labels.clone(),
             orientation: p.orientation,
+            vectors: p.vectors.clone(),
         };
         let cfg = Config::parse(&empty(), &super::keys(&pagerank::ENTRY, AlgoMode::Stream))?;
         let mut outs = Vec::new();
@@ -404,6 +405,7 @@ fn drop_self_loops(p: &Projection<u32>) -> Projection<u32> {
         edge_types: Vec::new(),
         labels: (Vec::new(), Vec::new()),
         orientation: Orientation::Natural,
+        vectors: Vec::new(),
     }
 }
 
@@ -944,8 +946,12 @@ fn lab_zipf_projection_memory() {
 fn every_entry_has_its_columns() {
     for e in ENTRIES {
         assert!(!e.algs.is_empty() && !e.stream_columns.is_empty(), "{e:?}");
+        // GDS's modularity optimisation reports `nodes`, not
+        // `nodePropertiesWritten` (`algorithm-entries.md`, ALG-065).
         assert!(
-            e.write.is_none() || e.write_columns.iter().any(|c| c.ends_with("Written")),
+            e.write.is_none()
+                || e.write_columns.iter().any(|c| c.ends_with("Written"))
+                || e.algs == [65],
             "{e:?}"
         );
         assert!(format!("{e:?}").starts_with(e.stream));

@@ -626,6 +626,127 @@ pub(crate) fn petersen() -> OracleGraph {
     }
 }
 
+/// The ring of cliques of `algorithm-entries.md` rule Q (rmp #66):
+/// `cliques` cliques of `size` nodes (label `K`), each pair of a clique
+/// joined once, and the last node of each clique joined to the first of
+/// the next; node property `community` is the clique.
+pub(crate) fn ring_of_cliques(cliques: usize, size: usize) -> OracleGraph {
+    use crate::types::Value;
+    let nodes = (0..cliques * size)
+        .map(|i| GenNode {
+            labels: vec!["K".to_owned()],
+            props: vec![
+                ("uid".to_owned(), Value::Int(i as i64)),
+                ("community".to_owned(), Value::Int((i / size) as i64)),
+            ],
+        })
+        .collect();
+    let edge = |src, dst| GenEdge {
+        src,
+        dst,
+        ty: "R".to_owned(),
+        props: vec![("weight".to_owned(), Value::Float(1.0))],
+    };
+    let mut edges = Vec::new();
+    for c in 0..cliques {
+        let base = c * size;
+        for i in 0..size {
+            for j in (i + 1)..size {
+                edges.push(edge(base + i, base + j));
+            }
+        }
+        edges.push(edge(base + size - 1, ((c + 1) % cliques) * size));
+    }
+    OracleGraph {
+        nodes,
+        edges,
+        directed: false,
+    }
+}
+
+/// Planted communities (rmp #66): `groups` groups of `size` nodes; each
+/// pair of nodes is joined with probability `p_in` inside a group and
+/// `p_out` across, in a random direction, with a `weight` in `(0, 1]`;
+/// node property `community` is the group.
+pub(crate) fn planted(seed: u64, groups: usize, size: usize, p_in: f64, p_out: f64) -> OracleGraph {
+    use crate::types::Value;
+    let mut rng = chacha(seed);
+    let n = groups * size;
+    let mut nodes = lab_nodes(&mut rng, n);
+    for (i, node) in nodes.iter_mut().enumerate() {
+        node.props
+            .push(("community".to_owned(), Value::Int((i / size) as i64)));
+    }
+    let mut edges = Vec::new();
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let p = if i / size == j / size { p_in } else { p_out };
+            if rng.random_bool(p) {
+                let (s, d) = if rng.random_bool(0.5) { (i, j) } else { (j, i) };
+                edges.push(lab_edge(&mut rng, s, d));
+            }
+        }
+    }
+    OracleGraph {
+        nodes,
+        edges,
+        directed: false,
+    }
+}
+
+/// `g` with node property `community` drawn uniformly in `0..k` per node
+/// from seed `seed` (rmp #66: ALG-082 on a Zipf graph).
+pub(crate) fn communities(mut g: OracleGraph, seed: u64, k: i64) -> OracleGraph {
+    let mut rng = chacha(seed);
+    for n in &mut g.nodes {
+        n.props.push((
+            "community".to_owned(),
+            crate::types::Value::Int(rng.random_range(0..k)),
+        ));
+    }
+    g
+}
+
+/// Planted point clusters (rmp #66): `clusters` clusters of `size` points
+/// (label `C`) around the corners `(0, 0)`, `(10, 0)`, `(0, 10)`, `(10,
+/// 10)`, …, each coordinate within 1 of its corner, and four noise points
+/// (label `N`) far from them and from each other; the 2-D point is the
+/// node property `vec`, its cluster `community` (−1 for noise). No edge.
+pub(crate) fn blobs(seed: u64, clusters: usize, size: usize) -> OracleGraph {
+    use crate::types::Value;
+    let mut rng = chacha(seed);
+    let mut nodes = Vec::new();
+    let point = |x: f64, y: f64| Value::List(vec![Value::Float(x), Value::Float(y)].into());
+    for c in 0..clusters {
+        let (cx, cy) = ((c % 2) as f64 * 10.0, (c / 2) as f64 * 10.0);
+        for _ in 0..size {
+            let x = cx + rng.random::<f64>() * 2.0 - 1.0;
+            let y = cy + rng.random::<f64>() * 2.0 - 1.0;
+            nodes.push((vec!["C".to_owned()], point(x, y), c as i64));
+        }
+    }
+    for (x, y) in [(50.0, 50.0), (-40.0, 30.0), (30.0, -45.0), (-35.0, -40.0)] {
+        nodes.push((vec!["N".to_owned()], point(x, y), -1));
+    }
+    let nodes = nodes
+        .into_iter()
+        .enumerate()
+        .map(|(i, (labels, vec, c))| GenNode {
+            labels,
+            props: vec![
+                ("uid".to_owned(), Value::Int(i as i64)),
+                ("vec".to_owned(), vec),
+                ("community".to_owned(), Value::Int(c)),
+            ],
+        })
+        .collect();
+    OracleGraph {
+        nodes,
+        edges: Vec::new(),
+        directed: false,
+    }
+}
+
 /// The edge property columns of the oracle graph file, in this order.
 const EDGE_COLUMNS: [&str; 3] = ["weight", "capacity", "cost"];
 
@@ -655,12 +776,24 @@ pub(crate) fn write_oracle(dir: &std::path::Path, g: &OracleGraph) {
             }
         }
     }
+    // Integer node properties other than `uid` (`community`).
+    let mut ints: Vec<&str> = Vec::new();
+    for n in &g.nodes {
+        for (k, v) in &n.props {
+            if matches!(v, Value::Int(_)) && k != "uid" && !ints.contains(&k.as_str()) {
+                ints.push(k);
+            }
+        }
+    }
     let mut nodes = String::from("id:ID,:LABEL,uid:long");
     if with_vec {
         nodes.push_str(",vec:double[]");
     }
     for k in &extra {
         let _ = write!(nodes, ",{k}:double");
+    }
+    for k in &ints {
+        let _ = write!(nodes, ",{k}:long");
     }
     nodes.push('\n');
     for (i, n) in g.nodes.iter().enumerate() {
@@ -674,6 +807,14 @@ pub(crate) fn write_oracle(dir: &std::path::Path, g: &OracleGraph) {
             let _ = write!(nodes, ",{cell}");
         }
         for k in &extra {
+            let cell = n
+                .props
+                .iter()
+                .find(|(p, _)| p == k)
+                .map_or_else(String::new, |(_, v)| float(v));
+            let _ = write!(nodes, ",{cell}");
+        }
+        for k in &ints {
             let cell = n
                 .props
                 .iter()
@@ -838,6 +979,14 @@ mod tests {
             ("petersen", petersen()),
             ("bip20", bipartite(27, 8, 12, 30)),
             ("tour7", tournaments(28, 7)),
+            // rmp #65 and #66.
+            ("rc24", ring_of_cliques(4, 6)),
+            ("planted60", planted(29, 4, 15, 0.35, 0.02)),
+            ("blobs40", blobs(30, 4, 9)),
+            (
+                "zipf60c",
+                communities(power_law(31, 60, 180, true, true), 32, 4),
+            ),
         ]
     }
 

@@ -354,3 +354,159 @@ Every uncovered region, by reason:
 | `/tmp` | 2.5 G used | 2.5 G used | no new file kept |
 | `/tmp/lpgram` | empty | empty | every test removes its directory |
 | `/dev/shm/lpg-target` | 5.3 G | 7.6 G | the build in use; the 2.4 G `llvm-cov-target` was deleted after the coverage run |
+
+## #65 and #66
+
+Centrality, similarity and link-prediction families (rmp #65, 19 entries) and the community-detection and clustering family (rmp #66, 11 entries), built together on the runtime of #63, at `2c0c41a` plus uncommitted changes, on 2026-10-12. Correctness only: no timing was measured.
+
+### Runtime extensions (generic)
+
+| Extension | Where |
+|---|---|
+| `Sched::fold`: block results merged in block order, blocks run in waves of `workers`, so at most that many partial results are held; `Sched::resized` for an aggregated graph | `src/algo/sched.rs` |
+| Node vector properties (`Vectors`: a number is a vector of one value) and the entry field `vector_props`; edge properties named by positional arguments (`edge_args`); `ArgDefault::{Float, Int}` | `src/algo/projection.rs`, `src/algo/mod.rs` |
+| Write kinds `NodeMap` (each record field as a property), `NodeField` (one record field as `writeProperty`), `RelsProp` (relationships with `writeProperty`); an entry's summary values take precedence | `src/algo/mod.rs` |
+| Key types `Props`, `NodeFilter`, `Lists`; `Config::given`, `Config::has` | `src/algo/config.rs` |
+| The GDS functions as one-column routines, reachable by `CALL` and by `run_algorithm` | `src/algo/functions.rs`, `src/algo/mod.rs` |
+| Shared kernels: power iteration (PageRank, ArticleRank, eigenvector), Brandes and reverse BFS, the community `Net` with colour classes, local moving and modularity, k-means | `pagerank.rs`, `centrality.rs`, `community.rs`, `clustering.rs` |
+
+### Decisions
+
+| Decision | References studied | Pattern taken | Rejected |
+|---|---|---|---|
+| Deterministic parallel Louvain, Leiden, modularity optimisation, LPA, SLLPA: rounds over greedy colour classes; a class is computed by blocks from the state before it and applied in node order | GDS `modularityoptimization/ModularityOptimization.java` (K1 colouring), Lu, Halappanavar, Kalyanaraman 2015; NetworKit `PLM.cpp`, `PLP.cpp`; network_partitions `leiden/*` | colouring makes simultaneous moves of a class independent; GDS's own SLLPA runs asynchronously | fully synchronous rounds (LPA swaps across an edge; SLLPA did not settle the ring of cliques in 20 rounds, measured); NetworKit's unordered moves; GDS's lowest-label tie (it gives one community on `rc24` and `karate`, measured) |
+| Sampling with per-block seeds: betweenness sampling draws per block from `rng(samplingSeed, b)`; CELF's cascade *j* is the live-edge cascade of stream *j*, read by word position | GDS `RandomDegreeSelectionStrategy.java`, `ICLazyForwardTask.java` (simulations partitioned by index); rand 0.10.3 `ChaCha8Rng::set_word_pos` | per-index streams independent of the block that reads them | GDS's `SplittableRandom.split()` per thread (order-dependent) |
+| KNN candidate merge order: proposals of each block in generation order, applied in block order; ties to the lower index | MAGE `knn.hpp` (`CalculateKNN`, `UpdateNN`), GDS `similarity/knn/*` | NN-descent with old/new lists and reverse sampling | MAGE's shared generator under OpenMP and its uncleared reverse lists |
+| HDBSCAN core distances by blocks over the projected vectors, all pairs | hdbscan 0.12 `core_distances/serial.rs` (brute force below 250 points), GDS documentation | brute force | the `kdtree` crate (not in TS-31) |
+| k-means initialisation: stream 0; `UNIFORM` = k distinct points, `KMEANS++` = D² sampling; Lloyd sums by blocks | linfa `init.rs`, GDS `KmeansUniformSampler.java`, `KmeansPlusPlusSampler.java` | the reference samplers | changing `UNIFORM` to D² (alters GDS's semantics) |
+| Eigensolver: dense nalgebra `SymmetricEigen`, eigenvalues sorted, the lower index on a tie | TS-25, cuGraph `spectral_clustering.cu` (cuVS spectral embedding, `n_init` 10) | Laplacian eigenmaps, then k-means | Lanczos (no sparse solver in TS-31); `ev_tolerance` and `ev_max_iter` therefore have no effect |
+| Max k-cut: GRASP greedy construction then colour-class local search and Fiduccia-Mattheyses passes | GDS `approxmaxkcut/*`, Feo-Resende 1995, Fiduccia-Mattheyses 1982 | GRASP | GDS's uniform placement (lpg's cut fell to 130 against GDS's 131 on `planted60`, measured) |
+
+### Instruments
+
+| Instrument | Change |
+|---|---|
+| [`gds_batch.sh`](gds_batch.sh) (new) | Many queries on one fixture in one container: graphs `g` (NATURAL) and `u` (UNDIRECTED); every numeric node column projected; `LABELS` to project real labels. |
+| [`oracle-cases/gds_cases_65_66.sh`](oracle-cases/gds_cases_65_66.sh), [`nx_cases_65_66.sh`](oracle-cases/nx_cases_65_66.sh), [`mage_cases_65_66.sh`](oracle-cases/mage_cases_65_66.sh) (new) | 280 GDS outputs from 17 containers (one per fixture and run, failed cases rerun with `FILTER` and `ONLY`), 5 NetworkX outputs, 4 MAGE outputs. Every container was removed (`docker ps -a` lists none). |
+| Fixtures (`src/lab/generator.rs`) | `rc24` (ring of 4 cliques of 6), `planted60` (4 groups of 15, p 0.35/0.02), `blobs40` (4 clusters of 9 points and 4 noise points), `zipf60c` (`zipf60`'s generator, seed 31, with a `community` property); `write_oracle` writes integer properties. |
+
+### Oracle results (rule F unless stated)
+
+| ALG | Oracle | Graphs | Largest relative difference |
+|---|---|---|---|
+| 034 | GDS | `zipf60`, `uniform60` (natural, REVERSE weighted, UNDIRECTED), `karate`, `zipf300` | 3.9e-16 |
+| 035 | GDS, no sampling | `zipf60`, `uniform60` (unweighted, weighted, undirected), `karate`, `zipf300` (blocks of 5) | 1.7e-15 |
+| 038, 039 | GDS | same, with Wasserman-Faust | 1.7e-16 |
+| 040 | GDS | same, weighted, `maxIterations` 100, `sourceNodes` | 3.3e-16 |
+| 041 | MAGE 3.8.0 (F, `epsilon`) | `karate`, `cyc12`, `uniform60`, `zipf60` | 0 |
+| 043 | GDS `pageRank` with `sourceNodes` | `zipf60`, `uniform60` | 6.9e-18 |
+| 044 | GDS | `zipf60` (incl. undirected), `uniform60`, `karate`, `zipf300` | 3.3e-16 |
+| 045 | GDS | `zipf60` (20 and 5 iterations), `uniform60`, `zipf300` | 1.1e-16 |
+| 105 | GDS (F; V on `topN` ties) | Jaccard, overlap, cosine, weighted, cutoffs, components, filtered: `zipf60`, `uniform60`, `karate`, `zipf300` | equal similarities per source |
+| 107 | GDS functions | 7 vector pairs × 6 functions | 42 equal (values or errors) |
+| 112–115, 117 | GDS functions | `zipf60` (3 directions, 4 pairs, a type), `uniform60` | 85 equal |
+| 116 | GDS function | `planted60`, 9 pairs and an absent property | equal |
+| 082 | GDS and NetworkX `modularity` | `rc24`, `planted60`, `zipf60c`; natural, undirected, weighted | 8.3e-17; sums equal NetworkX's |
+
+NetworkX's `partition_quality` and `constant_potts_model` were run but have no lpg column to compare (open point 4).
+
+### Parity entries (rule Q)
+
+| ALG | Measure | lpg | Reference on the same graph |
+|---|---|---|---|
+| 059 | p = 1: greedy reachability cover | `zipf60`: seeds and gains equal the test's greedy, cover 50 | GDS total 50 |
+| 059 | spread ≥ GDS − 3 SE, 10 000 cascades | `zipf60` 10.836, `uniform60` 9.018 | 10.084 (SE 0.029), 8.880 (SE 0.024) |
+| 106 | recall ≥ GDS's | 1.000 (`zipf60`, `uniform60`, two seeds, COSINE, EUCLIDEAN, PEARSON); filtered 0.994 | 1.000; filtered 0.961 |
+| 061 | `rc24` planted (P); modularity | `rc24` 0.6875; `karate` 0.4188; `planted60` 0.6149 | GDS 0.6875, 0.4188, 0.6143 |
+| 062 | as 061, seeds 42 and 7 | 0.6875, 0.4188, 0.6149 | GDS 0.6875, 0.4188, 0.6149 |
+| 063 | as 061 | 0.6875 (4), `karate` 0.3991 (3), `planted60` 0.5701 (5) | GDS 0.0 (1 community), 0.0 (1), 0.3571 (2) |
+| 064 | strongest label = clique on `rc24`, seeds 42 and 7 | 4 labels = the cliques; `karate` 3, `planted60` 5 and 7 strongest labels | GDS (strength 0.2): 30, 42, 79 labels in all |
+| 065 | as 061 | 0.6875, 0.3466 (7), 0.5559 (6) | GDS 0.6875, 0.3466 (7), 0.5525 (8) |
+| 076 | `rc24`, 4 clusters: planted | planted, modularity 0.6875; `karate` (2) 0.3715; `planted60` (4) 0.5947 | no runnable reference |
+| 077 | as 076; ratio cut | planted, ratio cut 1.3333; `karate` 0.9379; `planted60` 3.5005 | no runnable reference |
+| 078 | cut ≥ GDS's; optimum on 12 nodes | `rc24` 40; `karate` 61; `planted60` 134–135 (k 2), 174 (k 4); `cyc12` 19 (k 2), 23 (k 3) | GDS 40, 61, 131, 169, 19, 23; enumerated optimum 19 and 23 |
+| 080 | 4 clusters (P), inertia ≤ GDS's | KMEANS++ seeds 42, 7: planted, inertia 20.3279 | GDS KMEANS++ 20.3279 |
+| 081 | planted with noise (P), noise equal | planted, 4 noise points | GDS: the same |
+
+Karate and `planted60` hold no point vectors, so 080 and 081 are measured on `blobs40` only.
+
+### Rounds to convergence against the reference
+
+| Entry | Graph | lpg | GDS |
+|---|---|---|---|
+| 040 eigenvector (`tolerance` 1e-9) | `zipf60`, `uniform60`, `karate` | 17, 42, 46 | 17, 42, 46 |
+| 043 personalised PageRank | `zipf60`, `uniform60` | 73, 71 | 73, 71 |
+| 044 ArticleRank (`tolerance` 1e-9) | `zipf60`, `uniform60`, `karate` | 26, 21, 26 | 26, 21, 26 |
+| 045 HITS (`ranIterations` = 4 × `hitsIterations`) | `zipf60` | 20 | 20 |
+| 061 Louvain (`ranLevels`) | `rc24`, `karate`, `planted60` | 1, 2, 2 | 1, 2, 2 |
+| 062 Leiden (`ranLevels`) | same | 1, 2, 2 | 1, 2, 2 |
+| 063 LPA (`ranIterations`) | same | 2, 4, 5 | 2, 4, 3 |
+| 065 modularity optimisation | same | 3, 3, 4 | 3, 4, 5 |
+
+### Determinism, worker counts, `CALL` and the Rust API
+
+| Check | Test | Result |
+|---|---|---|
+| Every entry bit-equal at `concurrency` 1–16, twice; 035 with sampling; 059, 062, 064, 076–078, 080, 106 at two seeds | `Lab::det` in `tests_centrality.rs`, `tests_community.rs` | pass |
+| `CALL` rows equal `Transaction::run_algorithm` rows, functions included | `Lab::det`, `link_prediction` | pass |
+| The 20 parallel procedures of the families start exactly 2 workers on a 2-block projection at `concurrency` 4 (043's `gds.pageRank` in the #63 test); 041, 076, 077 at most one at 16 | `worker_counts_of_the_centrality_families`, `worker_counts_of_the_community_family` | pass |
+
+### Memory
+
+| Check | Result |
+|---|---|
+| 035, 105, 061, 080 under a 4 KiB transaction limit | 51N73 |
+| Accountant peak ≤ cap in every test | pass |
+| #65 family on `zipf300` (11 entries): accountant peak 3 476 197 B, cap 33 554 432 B; heaptrack peak of the whole test 3.56 MB | `heaptrack.sh … lab_family65_memory` |
+| #66 family on `zipf300` (10 entries): accountant peak 3 476 197 B; heaptrack peak 3.56 MB | `heaptrack.sh … lab_family66_memory` |
+
+Both peaks equal the fixture import's: no run of either family exceeded it, so the families' own peaks are below 3.56 MB but are not separated.
+
+### Coverage
+
+`cargo llvm-cov nextest -E 'test(/algo::/)'`, 44 tests. Regions covered: `centrality.rs` 969/1018, `similarity.rs` 1253/1277, `functions.rs` 610/661, `community.rs` 2287/2353, `clustering.rs` 1157/1213, `pagerank.rs` 394/420. Every uncovered region, by reason:
+
+* **`usize` projections**: each `with_projection!` arm of 2^32 nodes or more (not built in tests).
+* **Errors of a reservation, the scheduler or storage** (`)?;` after `r.mem.grow`, `r.mem.vec`, `sched.*`, `cx.tx.*`, `r.emit`, `check_now`): the refusal path is covered by the memory tests through other reservations.
+* **Argument errors not exercised**: Katz and spectral argument types (`centrality.rs:565-569`, `clustering.rs:395-402, 900-914, 952`), function argument types and config keys (`functions.rs:149, 289, 329-330, 435-439`), an unknown KNN metric (`similarity.rs:721-724`), a source node outside the projection (`pagerank.rs:185-190`).
+* **Degenerate inputs**: no node or a zero norm (`pagerank.rs:363, 435`), `2m = 0` and empty partitions (`community.rs:322, 759, 845, 1073`), fewer than two points or equal points (`clustering.rs:663, 736`), an isolated node in the normalised Laplacian and no weight property (`clustering.rs:922, 967-970`), empty vectors (`similarity.rs:332, 618, 621`), a null list or configuration, an absent type, a non-numeric community (`functions.rs:276, 382, 418, 500-502`).
+* **Branches no case reaches**: CELF's heap emptied before `seedSetSize` (`centrality.rs:806`); k-means with all distances 0, an empty centroid, a singleton cluster in the silhouette (`clustering.rs:197, 271, 448, 456`); HDBSCAN selecting a cluster whose descendant was selected, and labels through nested clusters (`clustering.rs:802-837`); local moving that exhausts `maxIterations`, a NaN seed, a Louvain level without moves after the first, Leiden stopping by `tolerance` or without aggregation, a non-finite refinement sum, `approximate_exponent` below −256, LPA `consecutiveIds`, a node without community in 082 (`community.rs:431, 724, 932-933, 985-994, 1146, 1173, 1229, 1318, 1759`); the extremes of the exact integer–float comparison (`functions.rs:243-259, 323`); a non-float similarity in the distribution, an equal pair in `keep_best`, random joins without targets, a self-proposal (`similarity.rs:297, 434, 874, 890`).
+
+### Findings
+
+1. **GDS 2026.09.0's SLLPA rejects `randomSeed`** ("Unexpected configuration key: randomSeed", measured), while `algorithm-entries.md` marks ALG-064 R. lpg keeps `randomSeed`, as the specification says.
+2. **GDS's HITS refuses an undirected projection** ("requires relationship projections to be directed", measured); lpg refuses `UNDIRECTED` with 22N11.
+3. **GDS's label propagation fails its own quality measure**: one community on `rc24` and on `karate` (lowest-label ties); lpg keeps its label on a tie and otherwise draws by a fixed hash, and finds the cliques.
+4. **GDS's node similarity** keeps the parallel edge of lowest relationship identifier (cosine of `zipf60` nodes 0 and 25 matches only that rule, measured) and counts a node's distinct targets for `degreeCutoff`; lpg does the same.
+5. **NetworkX's `modularity` weighs by the `weight` attribute by default**; the unweighted oracle runs pass `"weight": null`.
+6. **K-means `UNIFORM`** hits four clusters of 9 points with probability 27/35 × 18/34 × 9/33 = 0.11; GDS's seed-42 run found them, lpg's seed 42 does not. Rule Q is therefore checked with KMEANS++.
+7. **A GDS `{ALL: {label: '*'}}` projection drops the node labels**, so label filters failed; `gds_batch.sh` projects real labels with `LABELS`, and the filtered cases pass node lists.
+
+### Open points (unverified or not done)
+
+1. GDS's SLLPA is asynchronous and draws from `SplittableRandom`; lpg's semi-synchronous form is compared by its quality measure only.
+2. Accepted with no effect: `forceSeedOptimization` (its GDS semantics are not in the open repository), `seedTargetNodes` (initial samples always come from the targets), `ev_tolerance`, `ev_max_iter`, `leafSize`, `partitioning`, `mutateProperty`, `batchSize`; GDS-side behaviour of these is unverified.
+3. The Louvain and Leiden write modes write `communityId` even with `includeIntermediateCommunities`; GDS writes the list then (documentation, not measured). HITS's `nodePropertiesWritten` counts two properties per node; GDS's count is not measured.
+4. NetworkX's `partition_quality` and `constant_potts_model` have no lpg output to compare with.
+5. The heap peaks of the families are below the fixture import's and are not separated (Memory).
+6. MAGE's `GraphView::Neighbours` (the degree in Katz's `γ`) was not read (the `mg_graph` header is not in the clone); the results equal MAGE's on four graphs.
+7. The column names of the GDS functions (`similarity`, `distance`, `score`) are lpg's: GDS's functions return a bare value.
+
+### Quality gate
+
+| Command | Result |
+|---|---|
+| `cargo nextest run --no-fail-fast` | 632 passed, 36 skipped, 0 failed (before the last header-comment edits, which change no code) |
+| `cargo clippy --all-targets -- -D warnings` | no warning |
+| `cargo fmt --all -- --check` | clean |
+| `cargo deny check licenses` | "licenses ok" |
+| `cargo +1.89 build` | exit 0 |
+| `cargo tree -p lpg -e normal` | 47 crates besides lpg; `Cargo.toml` and `Cargo.lock` unchanged |
+
+### RAM space
+
+| Location | Before | After | Left and why |
+|---|---|---|---|
+| `/tmp` | 2.5 G used | 2.5 G used | no file kept; case files under `/tmp` deleted |
+| `/tmp/lpgram` | empty | empty | every test removes its directory |
+| `/dev/shm/lpg-target` | 7.7 G | 8.3 G | the build in use; the 2.7 G `llvm-cov-target` was deleted after each coverage run |

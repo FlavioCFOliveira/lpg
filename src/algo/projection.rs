@@ -123,6 +123,30 @@ pub(crate) struct Spec {
     pub(crate) edge_types: bool,
     /// Keep each node's label tokens ([`Projection::labels`]).
     pub(crate) node_labels: bool,
+    /// Node properties loaded as vectors ([`Projection::vectors`]), in
+    /// this order.
+    pub(crate) vector_props: Vec<String>,
+}
+
+/// One node property loaded as a vector per node (k-means, HDBSCAN, KNN;
+/// rmp #65, #66): the values of node `v` are `val[row[v]..row[v + 1]]`.
+/// A number is a vector of one value, a list of numbers its values (a
+/// non-numeric element is NaN); any other value, or none, an empty
+/// vector.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub(crate) struct Vectors {
+    pub(crate) row: Vec<usize>,
+    pub(crate) val: Vec<f64>,
+    /// Every value present was a number, not a list (GDS compares scalar
+    /// properties with another metric than arrays).
+    pub(crate) scalar: bool,
+}
+
+impl Vectors {
+    /// The vector of node `v`.
+    pub(crate) fn of(&self, v: usize) -> &[f64] {
+        &self.val[self.row[v]..self.row[v + 1]]
+    }
 }
 
 /// One compressed sparse row array: the targets of node `v` are
@@ -155,6 +179,8 @@ pub(crate) struct Projection<I> {
     /// 1]]`, if [`Spec::node_labels`]; empty otherwise.
     pub(crate) labels: (Vec<usize>, Vec<u64>),
     pub(crate) orientation: Orientation,
+    /// Node vector properties ([`Spec::vector_props`]).
+    pub(crate) vectors: Vec<Vectors>,
 }
 
 /// A projection of either index type (module documentation).
@@ -245,6 +271,11 @@ pub(crate) fn build(
         .iter()
         .map(|p| mem.tx.engine().token_id(TokenKind::PropertyKey, p))
         .collect();
+    let vector_keys: Vec<Option<u64>> = spec
+        .vector_props
+        .iter()
+        .map(|p| mem.tx.engine().token_id(TokenKind::PropertyKey, p))
+        .collect();
     let edge_keys: Vec<Option<u64>> = spec
         .edge_props
         .iter()
@@ -256,7 +287,15 @@ pub(crate) fn build(
     let mut node_props: Vec<Vec<f64>> = vec![Vec::new(); node_keys.len()];
     let mut label_row: Vec<usize> = Vec::new();
     let mut label_col: Vec<u64> = Vec::new();
-    let decode = labels.is_some() || !node_keys.is_empty() || spec.node_labels;
+    let mut vectors: Vec<Vectors> = vector_keys
+        .iter()
+        .map(|_| Vectors {
+            scalar: true,
+            ..Vectors::default()
+        })
+        .collect();
+    let decode =
+        labels.is_some() || !node_keys.is_empty() || !vector_keys.is_empty() || spec.node_labels;
     scan(mem, g.nodes, |mem, k, v| {
         let id = element_of(k).ok_or_else(|| corrupt("a malformed node key"))?;
         if decode {
@@ -271,6 +310,22 @@ pub(crate) fn build(
                     number(key.and_then(|key| ps.iter().find(|(p, _)| *p == key).map(|(_, x)| x)));
                 mem.push(arr, x)?;
             }
+            for (vs, key) in vectors.iter_mut().zip(&vector_keys) {
+                let at = vs.val.len();
+                mem.push(&mut vs.row, at)?;
+                match key.and_then(|key| ps.iter().find(|(p, _)| *p == key).map(|(_, x)| x)) {
+                    Some(x @ (Value::Int(_) | Value::Float(_))) => {
+                        mem.push(&mut vs.val, number(Some(x)))?
+                    }
+                    Some(Value::List(xs)) => {
+                        vs.scalar = false;
+                        for x in xs.iter() {
+                            mem.push(&mut vs.val, number(Some(x)))?;
+                        }
+                    }
+                    _ => {}
+                }
+            }
             if spec.node_labels {
                 let at = label_col.len();
                 mem.push(&mut label_row, at)?;
@@ -284,6 +339,10 @@ pub(crate) fn build(
     if spec.node_labels {
         let at = label_col.len();
         mem.push(&mut label_row, at)?;
+    }
+    for vs in &mut vectors {
+        let at = vs.val.len();
+        mem.push(&mut vs.row, at)?;
     }
 
     // Edge properties, by edge identifier.
@@ -394,6 +453,7 @@ pub(crate) fn build(
         edge_types,
         labels: (label_row, label_col),
         orientation,
+        vectors,
     };
     if u32::try_from(n).is_ok() {
         parts.into_projection(mem).map(Any::Small)
@@ -416,6 +476,7 @@ struct Parts {
     edge_types: Vec<u64>,
     labels: (Vec<usize>, Vec<u64>),
     orientation: Orientation,
+    vectors: Vec<Vectors>,
 }
 
 impl Parts {
@@ -445,6 +506,7 @@ impl Parts {
             edge_types: self.edge_types,
             labels: self.labels,
             orientation: self.orientation,
+            vectors: self.vectors,
         })
     }
 }
