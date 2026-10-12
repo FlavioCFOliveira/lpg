@@ -1,7 +1,7 @@
 ---
 title: Technical specification
 status: draft
-last-reviewed: 2026-10-11
+last-reviewed: 2026-10-12
 related:
   - ../../README.md
   - ../functional-spec/README.md
@@ -24,6 +24,7 @@ This folder states how the `lpg` crate is built. The [functional specification](
 | [values-and-types.md](values-and-types.md) | Runtime values, temporal and spatial types, encodings. | TS-21 |
 | [bolt.md](bolt.md) | Bolt and PackStream endpoints. | TS-22 |
 | [algorithms.md](algorithms.md) | Graph-algorithm runs, projection, parallelism, determinism. | TS-25 |
+| [algorithm-entries.md](algorithm-entries.md) | Per-entry tables of TS-25: parallel classification, signatures, entry notes, verification. | TS-25 |
 | [operations.md](operations.md) | Backup, restore, import, export, format migration. | TS-26, TS-28 |
 | [quality-and-testing.md](quality-and-testing.md) | Toolchain, tests, conformance, measurement, unverified points. | TS-29, TS-30 |
 | [dependencies.md](dependencies.md) | The dependency set and the crates considered. | TS-31 |
@@ -153,4 +154,5 @@ Kept in the repository under [`docs/evidence/`](../evidence/README.md), which al
 | P-TX | [evidence/research/research-02-layout-mvcc.md](../evidence/research/research-02-layout-mvcc.md) (2026-09-24), with the page model [evidence/layout-sim/](../evidence/layout-sim/pagesim.py) | Layout, MVCC, validation, locks and indexes evidence with file and line references. |
 | M-FEAT | [evidence/planning/round-s/](../evidence/planning/round-s/README.md) (2026-10-08) | Rule-to-feature classification of `GQL.g4`; TCK and gql-compat selection counts; ambiguous `GQL.g4` decisions; keyword differences with the ISO BNF; Unicode version of the oracle's ANTLR jar. |
 | M-S4 | [evidence/planning/sprint-4-plan.md](../evidence/planning/sprint-4-plan.md) (2026-10-11) | Sprint 4 plan: specification gaps and their references (§3), reuse inventory (§4); Neo4j 2026.09.0 CSV import probe and GraphML probes with NetworkX 3.7 and xmlschema 4.3.2 (Appendix A). |
+| M-S5 | [evidence/planning/sprint-5-plan.md](../evidence/planning/sprint-5-plan.md) and [sprint-5-reuse-map.md](../evidence/planning/sprint-5-reuse-map.md) (2026-10-12) | Sprint 5 plan: specification gaps (§3), GDS 2026.09.0 probes (§0, §9); per-entry reuse sources, parallel evidence and petgraph `Csr` compile probe (reuse map §2, §3, §6). |
 | P-TEST | [evidence/research/research-04-turso-libsql.md](../evidence/research/research-04-turso-libsql.md) (2026-10-03) | Turso and libSQL kernel components and test dimensions compared with lpg Sprint 1, with file and line references; recommendations R1–R13; test-speed and flaky-test measurements (§5). |

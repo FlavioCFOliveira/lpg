@@ -1,0 +1,3 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+42N08: syntax error or access rule violation - no such procedure. The procedure gds.noSuchAlgo.stream() was not found. Verify that the spelling is correct.
+  42001: syntax error or access rule violation - invalid syntax

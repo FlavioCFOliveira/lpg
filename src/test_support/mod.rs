@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 use crate::storage::{FsStorage, Storage, StorageFile, StorageLock};
 
+pub(crate) mod algo;
 pub(crate) mod child;
 pub(crate) mod history;
 pub(crate) mod values;

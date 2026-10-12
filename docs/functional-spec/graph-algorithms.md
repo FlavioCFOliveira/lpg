@@ -1,11 +1,12 @@
 ---
 title: Graph-algorithm inventory
 status: draft
-last-reviewed: 2026-10-02
+last-reviewed: 2026-10-12
 related:
   - functional-requirements.md
   - open-questions.md
   - README.md
+  - ../technical-spec/algorithm-entries.md
 ---
 
 # Graph-algorithm inventory
@@ -28,6 +29,8 @@ Each source was read on 2026-09-24. Codes used in the tables:
 
 Every entry below was verified in at least one of these sources. No entry is unverified.
 
+The Parallel column applies [FR-ALG-006](functional-requirements.md#graph-algorithms) (user decision 2026-10-12); its codes name the sources that provide a parallel CPU version. Each entry's evidence is in [algorithm-entries.md](../technical-spec/algorithm-entries.md#parallel-classification).
+
 ## Inclusion rule
 
 An entry is included when a source provides it as a procedure or function that computes a result (a value, a score, a set, a partition, a path, a tree, a flow or a derived graph) from an input graph. The following are excluded, with the reason:
@@ -42,164 +45,164 @@ An entry is included when a source provides it as a procedure or function that c
 
 ## Traversal and ordering
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-001 | Breadth-first search | G `gds.bfs`; M Memgraph built-in breadth-first search; N `bfs_edges`, `bfs_tree`, `bfs_layers`, `bfs_predecessors`, `bfs_successors`, `bfs_labeled_edges`, `generic_bfs_edges`, `edge_bfs` |
-| ALG-002 | Depth-first search | G `gds.dfs`; M Memgraph built-in depth-first search; N `dfs_edges`, `dfs_tree`, `dfs_preorder_nodes`, `dfs_postorder_nodes`, `dfs_predecessors`, `dfs_successors`, `dfs_labeled_edges`, `edge_dfs` |
-| ALG-003 | Neighbourhood at a given hop distance | M `neighbors.at_hop`, `neighbors.by_hop`; N `descendants_at_distance` |
-| ALG-004 | Path expansion and reachable subgraph | M `path.expand`, `path.subgraph_nodes`, `path.subgraph_all` |
-| ALG-006 | Random walk | G `gds.randomWalk`; N `random_walk` |
-| ALG-007 | Topological sort | G `gds.dag.topologicalSort`; M `graph_util.topological_sort`; P `toposort`; N `topological_sort`, `lexicographical_topological_sort`, `all_topological_sorts`, `topological_generations` |
-| ALG-008 | Ancestors and descendants | M `graph_util.ancestors`, `graph_util.descendants`; N `ancestors`, `descendants` |
-| ALG-009 | Reachability test | P `has_path_connecting`; N `has_path`, `is_reachable` |
-| ALG-011 | Dominators and dominance frontiers | P `dominators::simple_fast`; N `immediate_dominators`, `dominance_frontiers` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-001 | Breadth-first search | yes (G) | G `gds.bfs`; M Memgraph built-in breadth-first search; N `bfs_edges`, `bfs_tree`, `bfs_layers`, `bfs_predecessors`, `bfs_successors`, `bfs_labeled_edges`, `generic_bfs_edges`, `edge_bfs` |
+| ALG-002 | Depth-first search | no | G `gds.dfs`; M Memgraph built-in depth-first search; N `dfs_edges`, `dfs_tree`, `dfs_preorder_nodes`, `dfs_postorder_nodes`, `dfs_predecessors`, `dfs_successors`, `dfs_labeled_edges`, `edge_dfs` |
+| ALG-003 | Neighbourhood at a given hop distance | no | M `neighbors.at_hop`, `neighbors.by_hop`; N `descendants_at_distance` |
+| ALG-004 | Path expansion and reachable subgraph | no | M `path.expand`, `path.subgraph_nodes`, `path.subgraph_all` |
+| ALG-006 | Random walk | yes (G) | G `gds.randomWalk`; N `random_walk` |
+| ALG-007 | Topological sort | yes (G) | G `gds.dag.topologicalSort`; M `graph_util.topological_sort`; P `toposort`; N `topological_sort`, `lexicographical_topological_sort`, `all_topological_sorts`, `topological_generations` |
+| ALG-008 | Ancestors and descendants | no | M `graph_util.ancestors`, `graph_util.descendants`; N `ancestors`, `descendants` |
+| ALG-009 | Reachability test | no | P `has_path_connecting`; N `has_path`, `is_reachable` |
+| ALG-011 | Dominators and dominance frontiers | no | P `dominators::simple_fast`; N `immediate_dominators`, `dominance_frontiers` |
 
 ## Shortest and weighted paths
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-013 | Unweighted shortest paths (single-pair, single-source, single-target, all-pairs, bidirectional) | M Memgraph built-in breadth-first search; N `shortest_path`, `shortest_path_length`, `bidirectional_shortest_path`, `single_source_shortest_path`, `single_source_shortest_path_length`, `single_target_shortest_path`, `single_target_shortest_path_length`, `all_pairs_shortest_path`, `all_pairs_shortest_path_length`, `predecessor` |
-| ALG-014 | Dijkstra shortest path (single-pair and single-source) | G `gds.shortestPath.dijkstra`, `gds.allShortestPaths.dijkstra`; M Memgraph built-in weighted shortest path; P `dijkstra`, `with_dynamic_goal`; N `dijkstra_path`, `dijkstra_path_length`, `single_source_dijkstra`, `single_source_dijkstra_path`, `single_source_dijkstra_path_length`, `dijkstra_predecessor_and_distance` |
-| ALG-015 | Bidirectional Dijkstra | P `bidirectional_dijkstra`; N `bidirectional_dijkstra` |
-| ALG-018 | A* search | G `gds.shortestPath.astar`; M `algo.astar`; P `astar`; N `astar_path`, `astar_path_length` |
-| ALG-019 | Bellman-Ford | G `gds.bellmanFord`; P `bellman_ford`; N `bellman_ford_path`, `bellman_ford_path_length`, `single_source_bellman_ford`, `single_source_bellman_ford_path`, `single_source_bellman_ford_path_length`, `all_pairs_bellman_ford_path`, `all_pairs_bellman_ford_path_length`, `bellman_ford_predecessor_and_distance` |
-| ALG-020 | Negative-cycle detection | P `find_negative_cycle`; N `negative_edge_cycle`, `find_negative_cycle` |
-| ALG-021 | Shortest Path Faster Algorithm (SPFA) | P `spfa` |
-| ALG-023 | Delta-stepping single-source shortest paths | G `gds.allShortestPaths.delta` |
-| ALG-024 | Johnson all-pairs shortest paths | P `johnson`, `parallel_johnson`; N `johnson` |
-| ALG-025 | Floyd-Warshall all-pairs shortest paths | P `floyd_warshall`, `floyd_warshall_path`; A `floyd_warshall`; N `floyd_warshall`, `floyd_warshall_predecessor_and_distance`, `floyd_warshall_numpy`, `floyd_warshall_tree`, `reconstruct_path` |
-| ALG-026 | Seidel all-pairs shortest paths (unweighted, undirected) | A `seidel` |
-| ALG-027 | All-pairs shortest distances | G `gds.allShortestPaths`; A `shortest_distances`, `distance_map` |
-| ALG-028 | All shortest paths between nodes | M Memgraph built-in all shortest paths; N `all_shortest_paths`, `single_source_all_shortest_paths`, `all_pairs_all_shortest_paths` |
-| ALG-029 | Yen's k shortest paths | G `gds.shortestPath.yens`; M Memgraph built-in k shortest paths; N `shortest_simple_paths` |
-| ALG-030 | Length of the k-th shortest path | P `k_shortest_path` |
-| ALG-031 | All simple paths | M `algo.all_simple_paths`; P `all_simple_paths`, `all_simple_paths_multi`; N `all_simple_paths`, `all_simple_edge_paths`, `is_simple_path` |
-| ALG-032 | Longest path in a directed acyclic graph | G `gds.dag.longestPath`; N `dag_longest_path`, `dag_longest_path_length` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-013 | Unweighted shortest paths (single-pair, single-source, single-target, all-pairs, bidirectional) | no | M Memgraph built-in breadth-first search; N `shortest_path`, `shortest_path_length`, `bidirectional_shortest_path`, `single_source_shortest_path`, `single_source_shortest_path_length`, `single_target_shortest_path`, `single_target_shortest_path_length`, `all_pairs_shortest_path`, `all_pairs_shortest_path_length`, `predecessor` |
+| ALG-014 | Dijkstra shortest path (single-pair and single-source) | no | G `gds.shortestPath.dijkstra`, `gds.allShortestPaths.dijkstra`; M Memgraph built-in weighted shortest path; P `dijkstra`, `with_dynamic_goal`; N `dijkstra_path`, `dijkstra_path_length`, `single_source_dijkstra`, `single_source_dijkstra_path`, `single_source_dijkstra_path_length`, `dijkstra_predecessor_and_distance` |
+| ALG-015 | Bidirectional Dijkstra | no | P `bidirectional_dijkstra`; N `bidirectional_dijkstra` |
+| ALG-018 | A* search | no | G `gds.shortestPath.astar`; M `algo.astar`; P `astar`; N `astar_path`, `astar_path_length` |
+| ALG-019 | Bellman-Ford | yes (G) | G `gds.bellmanFord`; P `bellman_ford`; N `bellman_ford_path`, `bellman_ford_path_length`, `single_source_bellman_ford`, `single_source_bellman_ford_path`, `single_source_bellman_ford_path_length`, `all_pairs_bellman_ford_path`, `all_pairs_bellman_ford_path_length`, `bellman_ford_predecessor_and_distance` |
+| ALG-020 | Negative-cycle detection | no | P `find_negative_cycle`; N `negative_edge_cycle`, `find_negative_cycle` |
+| ALG-021 | Shortest Path Faster Algorithm (SPFA) | no | P `spfa` |
+| ALG-023 | Delta-stepping single-source shortest paths | yes (G) | G `gds.allShortestPaths.delta` |
+| ALG-024 | Johnson all-pairs shortest paths | yes (P) | P `johnson`, `parallel_johnson`; N `johnson` |
+| ALG-025 | Floyd-Warshall all-pairs shortest paths | no | P `floyd_warshall`, `floyd_warshall_path`; A `floyd_warshall`; N `floyd_warshall`, `floyd_warshall_predecessor_and_distance`, `floyd_warshall_numpy`, `floyd_warshall_tree`, `reconstruct_path` |
+| ALG-026 | Seidel all-pairs shortest paths (unweighted, undirected) | no | A `seidel` |
+| ALG-027 | All-pairs shortest distances | yes (G) | G `gds.allShortestPaths`; A `shortest_distances`, `distance_map` |
+| ALG-028 | All shortest paths between nodes | no | M Memgraph built-in all shortest paths; N `all_shortest_paths`, `single_source_all_shortest_paths`, `all_pairs_all_shortest_paths` |
+| ALG-029 | Yen's k shortest paths | yes (G) | G `gds.shortestPath.yens`; M Memgraph built-in k shortest paths; N `shortest_simple_paths` |
+| ALG-030 | Length of the k-th shortest path | no | P `k_shortest_path` |
+| ALG-031 | All simple paths | no | M `algo.all_simple_paths`; P `all_simple_paths`, `all_simple_paths_multi`; N `all_simple_paths`, `all_simple_edge_paths`, `is_simple_path` |
+| ALG-032 | Longest path in a directed acyclic graph | yes (G) | G `gds.dag.longestPath`; N `dag_longest_path`, `dag_longest_path_length` |
 
 ## Centrality
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-034 | Degree centrality | G `gds.degree`; M `degree_centrality`; N `degree_centrality`, `in_degree_centrality`, `out_degree_centrality` |
-| ALG-035 | Betweenness centrality | G `gds.betweenness`; M `betweenness_centrality`; N `betweenness_centrality` |
-| ALG-038 | Closeness centrality | G `gds.closeness`; N `closeness_centrality`, `incremental_closeness_centrality` |
-| ALG-039 | Harmonic centrality | G `gds.closeness.harmonic`; N `harmonic_centrality` |
-| ALG-040 | Eigenvector centrality | G `gds.eigenvector`; N `eigenvector_centrality`, `eigenvector_centrality_numpy` |
-| ALG-041 | Katz centrality | M `katz_centrality`; N `katz_centrality`, `katz_centrality_numpy` |
-| ALG-042 | PageRank | G `gds.pageRank`; M `pagerank`; P `page_rank`, `parallel_page_rank`; N `pagerank`, `google_matrix` |
-| ALG-043 | Personalised PageRank | M cuGraph module `personalized_pagerank` |
-| ALG-044 | ArticleRank | G `gds.articleRank` |
-| ALG-045 | HITS (hubs and authorities) | G `gds.hits`; N `hits` |
-| ALG-059 | Influence maximisation (CELF) | G `gds.influenceMaximization.celf` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-034 | Degree centrality | yes (G) | G `gds.degree`; M `degree_centrality`; N `degree_centrality`, `in_degree_centrality`, `out_degree_centrality` |
+| ALG-035 | Betweenness centrality | yes (G, M) | G `gds.betweenness`; M `betweenness_centrality`; N `betweenness_centrality` |
+| ALG-038 | Closeness centrality | yes (G) | G `gds.closeness`; N `closeness_centrality`, `incremental_closeness_centrality` |
+| ALG-039 | Harmonic centrality | yes (G) | G `gds.closeness.harmonic`; N `harmonic_centrality` |
+| ALG-040 | Eigenvector centrality | yes (G) | G `gds.eigenvector`; N `eigenvector_centrality`, `eigenvector_centrality_numpy` |
+| ALG-041 | Katz centrality | no | M `katz_centrality`; N `katz_centrality`, `katz_centrality_numpy` |
+| ALG-042 | PageRank | yes (P, G, M) | G `gds.pageRank`; M `pagerank`; P `page_rank`, `parallel_page_rank`; N `pagerank`, `google_matrix` |
+| ALG-043 | Personalised PageRank | yes (G) | G `gds.pageRank` with `sourceNodes` (decision taken from a reference, 2026-10-12: GDS documents personalised PageRank as PageRank "biased towards a set of `sourceNodes`", [algorithm-entries.md](../technical-spec/algorithm-entries.md#parallel-classification)); M cuGraph module `personalized_pagerank` |
+| ALG-044 | ArticleRank | yes (G) | G `gds.articleRank` |
+| ALG-045 | HITS (hubs and authorities) | yes (G) | G `gds.hits`; N `hits` |
+| ALG-059 | Influence maximisation (CELF) | yes (G) | G `gds.influenceMaximization.celf` |
 
 ## Community detection and clustering
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-061 | Louvain | G `gds.louvain`; M `community_detection`; N `louvain_communities`, `louvain_partitions` |
-| ALG-062 | Leiden | G `gds.leiden`; M `leiden_community_detection`; N `leiden_communities`, `leiden_partitions` |
-| ALG-063 | Label propagation | G `gds.labelPropagation`; N `label_propagation_communities`, `asyn_lpa_communities`, `fast_label_propagation_communities` |
-| ALG-064 | Speaker-listener label propagation (overlapping communities) | G `gds.sllpa` |
-| ALG-065 | Modularity optimisation | G `gds.modularityOptimization` |
-| ALG-076 | Spectral clustering | M cuGraph module `spectral_clustering` |
-| ALG-077 | Balanced-cut clustering | M cuGraph module `balanced_cut_clustering` |
-| ALG-078 | Approximate maximum k-cut | G `gds.maxkcut` |
-| ALG-080 | K-means clustering | G `gds.kmeans`; M `kmeans_clustering` |
-| ALG-081 | HDBSCAN clustering | G `gds.hdbscan` |
-| ALG-082 | Partition quality (modularity, conductance, Potts model, coverage and performance) | G `gds.modularity`, `gds.conductance`; N `modularity`, `overlapping_modularity`, `constant_potts_model`, `partition_quality`, `is_partition`, `is_cover` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-061 | Louvain | yes (G, M) | G `gds.louvain`; M `community_detection`; N `louvain_communities`, `louvain_partitions` |
+| ALG-062 | Leiden | yes (G, M) | G `gds.leiden`; M `leiden_community_detection`; N `leiden_communities`, `leiden_partitions` |
+| ALG-063 | Label propagation | yes (G) | G `gds.labelPropagation`; N `label_propagation_communities`, `asyn_lpa_communities`, `fast_label_propagation_communities` |
+| ALG-064 | Speaker-listener label propagation (overlapping communities) | yes (G) | G `gds.sllpa` |
+| ALG-065 | Modularity optimisation | yes (G) | G `gds.modularityOptimization` |
+| ALG-076 | Spectral clustering | no | M cuGraph module `spectral_clustering` |
+| ALG-077 | Balanced-cut clustering | no | M cuGraph module `balanced_cut_clustering` |
+| ALG-078 | Approximate maximum k-cut | yes (G) | G `gds.maxkcut` |
+| ALG-080 | K-means clustering | yes (G) | G `gds.kmeans`; M `kmeans_clustering` |
+| ALG-081 | HDBSCAN clustering | yes (G) | G `gds.hdbscan` |
+| ALG-082 | Partition quality (modularity, conductance, Potts model, coverage and performance) | yes (G) | G `gds.modularity`, `gds.conductance`; N `modularity`, `overlapping_modularity`, `constant_potts_model`, `partition_quality`, `is_partition`, `is_cover` |
 
 ## Components and connectivity
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-083 | Weakly connected components | G `gds.wcc`; M `weakly_connected_components`, `union_find`; N `weakly_connected_components`, `number_weakly_connected_components`, `is_weakly_connected` |
-| ALG-084 | Connected components (undirected) | P `connected_components`; N `connected_components`, `number_connected_components`, `is_connected`, `node_connected_component` |
-| ALG-085 | Strongly connected components | G `gds.scc`; P `scc`, `tarjan_scc`, `kosaraju_scc`; N `strongly_connected_components`, `kosaraju_strongly_connected_components`, `number_strongly_connected_components`, `is_strongly_connected` |
-| ALG-086 | Condensation | P `condensation`; N `condensation` |
-| ALG-089 | Biconnected components | M `biconnected_components`; N `biconnected_components`, `biconnected_component_edges`, `is_biconnected` |
-| ALG-090 | Articulation points | G `gds.articulationPoints`; P `articulation_points`; A `articulation_points`; N `articulation_points` |
-| ALG-091 | Bridges | G `gds.bridges`; M `bridges`; P `bridges`; A `find_bridges`; N `bridges`, `has_bridges`, `local_bridges` |
-| ALG-093 | k-core decomposition | G `gds.kcore`; N `core_number`, `k_core`, `k_shell`, `k_crust`, `k_corona`, `onion_layers` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-083 | Weakly connected components | yes (G) | G `gds.wcc`; M `weakly_connected_components`, `union_find`; N `weakly_connected_components`, `number_weakly_connected_components`, `is_weakly_connected` |
+| ALG-084 | Connected components (undirected) | no | P `connected_components`; N `connected_components`, `number_connected_components`, `is_connected`, `node_connected_component` |
+| ALG-085 | Strongly connected components | no | G `gds.scc`; P `scc`, `tarjan_scc`, `kosaraju_scc`; N `strongly_connected_components`, `kosaraju_strongly_connected_components`, `number_strongly_connected_components`, `is_strongly_connected` |
+| ALG-086 | Condensation | no | P `condensation`; N `condensation` |
+| ALG-089 | Biconnected components | no | M `biconnected_components`; N `biconnected_components`, `biconnected_component_edges`, `is_biconnected` |
+| ALG-090 | Articulation points | no | G `gds.articulationPoints`; P `articulation_points`; A `articulation_points`; N `articulation_points` |
+| ALG-091 | Bridges | no | G `gds.bridges`; M `bridges`; P `bridges`; A `find_bridges`; N `bridges`, `has_bridges`, `local_bridges` |
+| ALG-093 | k-core decomposition | yes (G) | G `gds.kcore`; N `core_number`, `k_core`, `k_shell`, `k_crust`, `k_corona`, `onion_layers` |
 
 ## Similarity and link prediction
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-105 | Neighbourhood node similarity (Jaccard, overlap, cosine) | G `gds.nodeSimilarity`, `gds.nodeSimilarity.filtered`; M `node_similarity.jaccard`, `node_similarity.overlap`, `node_similarity.cosine` and their pairwise forms; N `jaccard_coefficient` |
-| ALG-106 | K-nearest neighbours | G `gds.knn`, `gds.knn.filtered`; M `knn` |
-| ALG-107 | Vector similarity functions (cosine, Euclidean, Jaccard, overlap, Pearson) | G `gds.similarity.cosine`, `gds.similarity.euclidean`, `gds.similarity.euclideanDistance`, `gds.similarity.jaccard`, `gds.similarity.overlap`, `gds.similarity.pearson` |
-| ALG-112 | Adamic-Adar index | G `gds.linkprediction.adamicAdar`; N `adamic_adar_index` |
-| ALG-113 | Common neighbours | G `gds.linkprediction.commonNeighbors` |
-| ALG-114 | Preferential attachment | G `gds.linkprediction.preferentialAttachment`; N `preferential_attachment` |
-| ALG-115 | Resource allocation index | G `gds.linkprediction.resourceAllocation`; N `resource_allocation_index` |
-| ALG-116 | Same community | G `gds.linkprediction.sameCommunity` |
-| ALG-117 | Total neighbours | G `gds.linkprediction.totalNeighbors` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-105 | Neighbourhood node similarity (Jaccard, overlap, cosine) | yes (G) | G `gds.nodeSimilarity`, `gds.nodeSimilarity.filtered`; M `node_similarity.jaccard`, `node_similarity.overlap`, `node_similarity.cosine` and their pairwise forms; N `jaccard_coefficient` |
+| ALG-106 | K-nearest neighbours | yes (G, M) | G `gds.knn`, `gds.knn.filtered`; M `knn` |
+| ALG-107 | Vector similarity functions (cosine, Euclidean, Jaccard, overlap, Pearson) | no | G `gds.similarity.cosine`, `gds.similarity.euclidean`, `gds.similarity.euclideanDistance`, `gds.similarity.jaccard`, `gds.similarity.overlap`, `gds.similarity.pearson` |
+| ALG-112 | Adamic-Adar index | no | G `gds.linkprediction.adamicAdar`; N `adamic_adar_index` |
+| ALG-113 | Common neighbours | no | G `gds.linkprediction.commonNeighbors` |
+| ALG-114 | Preferential attachment | no | G `gds.linkprediction.preferentialAttachment`; N `preferential_attachment` |
+| ALG-115 | Resource allocation index | no | G `gds.linkprediction.resourceAllocation`; N `resource_allocation_index` |
+| ALG-116 | Same community | no | G `gds.linkprediction.sameCommunity` |
+| ALG-117 | Total neighbours | no | G `gds.linkprediction.totalNeighbors` |
 
 ## Structural measures
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-120 | Triangle count and triangle listing | G `gds.triangleCount`, `gds.triangles`; N `triangles`, `all_triangles` |
-| ALG-121 | Clustering coefficient and transitivity | G `gds.localClusteringCoefficient`; N `clustering`, `average_clustering` (exact and approximate), `transitivity`, `square_clustering`, `generalized_degree` |
-| ALG-123 | Eccentricity, diameter, radius, centre and periphery | A `eccentricity`, `diameter`, `radius`, `center`, `periphery` and their `weighted_` forms; N `eccentricity`, `diameter` (exact and approximate), `harmonic_diameter`, `radius`, `center`, `periphery` |
-| ALG-128 | Girth | A `girth`; N `girth` |
-| ALG-143 | Laplacian matrix | A `laplacian_matrix` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-120 | Triangle count and triangle listing | yes (G) | G `gds.triangleCount`, `gds.triangles`; N `triangles`, `all_triangles` |
+| ALG-121 | Clustering coefficient and transitivity | yes (G) | G `gds.localClusteringCoefficient`; N `clustering`, `average_clustering` (exact and approximate), `transitivity`, `square_clustering`, `generalized_degree` |
+| ALG-123 | Eccentricity, diameter, radius, centre and periphery | no | A `eccentricity`, `diameter`, `radius`, `center`, `periphery` and their `weighted_` forms; N `eccentricity`, `diameter` (exact and approximate), `harmonic_diameter`, `radius`, `center`, `periphery` |
+| ALG-128 | Girth | no | A `girth`; N `girth` |
+| ALG-143 | Laplacian matrix | no | A `laplacian_matrix` |
 
 ## Spanning trees, flows and cuts
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-147 | Minimum spanning tree (Kruskal, Prim, Borůvka) | G `gds.spanningTree`; P `min_spanning_tree`, `min_spanning_tree_prim`; A `prim`, `boruvka`; N `minimum_spanning_tree`, `minimum_spanning_edges` |
-| ALG-149 | k-spanning tree | G `gds.kSpanningTree` |
-| ALG-151 | Number of spanning trees | A `count_spanning_trees`; N `number_of_spanning_trees` |
-| ALG-153 | Steiner tree | G `gds.steinerTree`; P `steiner_tree`; N `steiner_tree`, `metric_closure` |
-| ALG-154 | Prize-collecting Steiner tree | G `gds.prizeSteinerTree` |
-| ALG-155 | Maximum flow | G `gds.maxFlow`; M `max_flow`; P `ford_fulkerson`, `dinics`; N `maximum_flow`, `maximum_flow_value`, `edmonds_karp`, `dinitz`, `preflow_push`, `shortest_augmenting_path`, `boykov_kolmogorov` |
-| ALG-157 | Minimum-cost flow | G `gds.maxFlow.minCost`; N `min_cost_flow`, `min_cost_flow_cost`, `max_flow_min_cost`, `cost_of_flow`, `network_simplex`, `capacity_scaling` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-147 | Minimum spanning tree (Kruskal, Prim, Borůvka) | no | G `gds.spanningTree`; P `min_spanning_tree`, `min_spanning_tree_prim`; A `prim`, `boruvka`; N `minimum_spanning_tree`, `minimum_spanning_edges` |
+| ALG-149 | k-spanning tree | no | G `gds.kSpanningTree` |
+| ALG-151 | Number of spanning trees | no | A `count_spanning_trees`; N `number_of_spanning_trees` |
+| ALG-153 | Steiner tree | yes (G) | G `gds.steinerTree`; P `steiner_tree`; N `steiner_tree`, `metric_closure` |
+| ALG-154 | Prize-collecting Steiner tree | no | G `gds.prizeSteinerTree` |
+| ALG-155 | Maximum flow | yes (G) | G `gds.maxFlow`; M `max_flow`; P `ford_fulkerson`, `dinics`; N `maximum_flow`, `maximum_flow_value`, `edmonds_karp`, `dinitz`, `preflow_push`, `shortest_augmenting_path`, `boykov_kolmogorov` |
+| ALG-157 | Minimum-cost flow | no | G `gds.maxFlow.minCost`; N `min_cost_flow`, `min_cost_flow_cost`, `max_flow_min_cost`, `cost_of_flow`, `network_simplex`, `capacity_scaling` |
 
 ## Matching, covering, cliques and colouring
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-161 | Maximum and maximal matching | P `maximum_matching`, `greedy_matching`; N `maximal_matching`, `is_matching`, `is_maximal_matching`, `is_perfect_matching` |
-| ALG-163 | Bipartite matching | M `bipartite_matching`; N `hopcroft_karp_matching`, `eppstein_matching`, bipartite `maximum_matching`, `minimum_weight_full_matching`, `to_vertex_cover` |
-| ALG-169 | Maximal cliques (Bron-Kerbosch) | P `maximal_cliques`; N `find_cliques`, `find_cliques_recursive`, `enumerate_all_cliques`, `node_clique_number`, `number_of_cliques`, `make_max_clique_graph`, `make_clique_bipartite` |
-| ALG-171 | Clique counting | G `gds.cliqueCounting` |
-| ALG-173 | Greedy colouring | M `graph_coloring`; N `greedy_color` with the strategies `strategy_largest_first`, `strategy_smallest_last`, `strategy_independent_set`, `strategy_connected_sequential`, `strategy_connected_sequential_bfs`, `strategy_connected_sequential_dfs`, `strategy_random_sequential` |
-| ALG-174 | DSatur colouring | P `dsatur_coloring`; N `strategy_saturation_largest_first` |
-| ALG-176 | K-1 colouring | G `gds.k1coloring` |
-| ALG-177 | Greedy feedback arc set | P `greedy_feedback_arc_set` |
-| ALG-178 | Set cover | M `set_cover` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-161 | Maximum and maximal matching | no | P `maximum_matching`, `greedy_matching`; N `maximal_matching`, `is_matching`, `is_maximal_matching`, `is_perfect_matching` |
+| ALG-163 | Bipartite matching | no | M `bipartite_matching`; N `hopcroft_karp_matching`, `eppstein_matching`, bipartite `maximum_matching`, `minimum_weight_full_matching`, `to_vertex_cover` |
+| ALG-169 | Maximal cliques (Bron-Kerbosch) | no | P `maximal_cliques`; N `find_cliques`, `find_cliques_recursive`, `enumerate_all_cliques`, `node_clique_number`, `number_of_cliques`, `make_max_clique_graph`, `make_clique_bipartite` |
+| ALG-171 | Clique counting | yes (G) | G `gds.cliqueCounting` |
+| ALG-173 | Greedy colouring | no | M `graph_coloring`; N `greedy_color` with the strategies `strategy_largest_first`, `strategy_smallest_last`, `strategy_independent_set`, `strategy_connected_sequential`, `strategy_connected_sequential_bfs`, `strategy_connected_sequential_dfs`, `strategy_random_sequential` |
+| ALG-174 | DSatur colouring | no | P `dsatur_coloring`; N `strategy_saturation_largest_first` |
+| ALG-176 | K-1 colouring | yes (G) | G `gds.k1coloring` |
+| ALG-177 | Greedy feedback arc set | no | P `greedy_feedback_arc_set` |
+| ALG-178 | Set cover | no | M `set_cover` |
 
 ## Cycles, tours and routing
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-180 | Cycle detection and acyclicity test | M `cycles`; P `is_cyclic_directed`, `is_cyclic_undirected`; N `find_cycle`, `is_directed_acyclic_graph` |
-| ALG-181 | Simple-cycle enumeration | A `elementary_circuits`; N `simple_cycles`, `recursive_simple_cycles` |
-| ALG-187 | Travelling salesman | M `tsp`; N `traveling_salesman_problem`, `christofides`, `asadpour_atsp`, `greedy_tsp`, `simulated_annealing_tsp`, `threshold_accepting_tsp` |
-| ALG-188 | Vehicle routing | M `vrp` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-180 | Cycle detection and acyclicity test | no | M `cycles`; P `is_cyclic_directed`, `is_cyclic_undirected`; N `find_cycle`, `is_directed_acyclic_graph` |
+| ALG-181 | Simple-cycle enumeration | no | A `elementary_circuits`; N `simple_cycles`, `recursive_simple_cycles` |
+| ALG-187 | Travelling salesman | no | M `tsp`; N `traveling_salesman_problem`, `christofides`, `asadpour_atsp`, `greedy_tsp`, `simulated_annealing_tsp`, `threshold_accepting_tsp` |
+| ALG-188 | Vehicle routing | no | M `vrp` |
 
 ## Isomorphism and graph recognition
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-189 | Graph isomorphism (VF2, VF2++) | P `is_isomorphic`, `is_isomorphic_matching`; N `is_isomorphic`, `could_be_isomorphic`, `fast_could_be_isomorphic`, `faster_could_be_isomorphic`, `GraphMatcher`, `DiGraphMatcher`, `MultiGraphMatcher`, `MultiDiGraphMatcher`, `vf2pp_isomorphism`, `vf2pp_is_isomorphic`, `vf2pp_all_isomorphisms` |
-| ALG-190 | Subgraph isomorphism and monomorphism | P `is_isomorphic_subgraph`, `is_isomorphic_subgraph_matching`, `subgraph_isomorphisms_iter`; N `ISMAGS`, `vf2pp_subgraph_isomorphism`, `vf2pp_subgraph_is_isomorphic`, `vf2pp_all_subgraph_isomorphisms`, `vf2pp_monomorphism`, `vf2pp_is_monomorphic`, `vf2pp_all_monomorphisms` |
-| ALG-194 | Bipartiteness test and bipartition | P `is_bipartite_undirected`; N `is_bipartite`, `is_bipartite_node_set`, bipartite `color`, bipartite `sets` |
-| ALG-203 | Tournament tests | A `is_tournament`, `is_tournament_transitive`; N `is_tournament`, `score_sequence`, tournament `is_strongly_connected` |
-| ALG-204 | Degree-sequence realisability | A `is_degree_sequence_graphlike`; N `is_graphical`, `is_multigraphical`, `is_pseudographical`, `is_digraphical`, `is_valid_degree_sequence_erdos_gallai`, `is_valid_degree_sequence_havel_hakimi` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-189 | Graph isomorphism (VF2, VF2++) | no | P `is_isomorphic`, `is_isomorphic_matching`; N `is_isomorphic`, `could_be_isomorphic`, `fast_could_be_isomorphic`, `faster_could_be_isomorphic`, `GraphMatcher`, `DiGraphMatcher`, `MultiGraphMatcher`, `MultiDiGraphMatcher`, `vf2pp_isomorphism`, `vf2pp_is_isomorphic`, `vf2pp_all_isomorphisms` |
+| ALG-190 | Subgraph isomorphism and monomorphism | no | P `is_isomorphic_subgraph`, `is_isomorphic_subgraph_matching`, `subgraph_isomorphisms_iter`; N `ISMAGS`, `vf2pp_subgraph_isomorphism`, `vf2pp_subgraph_is_isomorphic`, `vf2pp_all_subgraph_isomorphisms`, `vf2pp_monomorphism`, `vf2pp_is_monomorphic`, `vf2pp_all_monomorphisms` |
+| ALG-194 | Bipartiteness test and bipartition | no | P `is_bipartite_undirected`; N `is_bipartite`, `is_bipartite_node_set`, bipartite `color`, bipartite `sets` |
+| ALG-203 | Tournament tests | no | A `is_tournament`, `is_tournament_transitive`; N `is_tournament`, `score_sequence`, tournament `is_strongly_connected` |
+| ALG-204 | Degree-sequence realisability | no | A `is_degree_sequence_graphlike`; N `is_graphical`, `is_multigraphical`, `is_pseudographical`, `is_digraphical`, `is_valid_degree_sequence_erdos_gallai`, `is_valid_degree_sequence_havel_hakimi` |
 
 ## Derived structures
 
-| ID | Algorithm | Sources |
-|---|---|---|
-| ALG-205 | Transitive closure | P `dag_transitive_reduction_closure`; N `transitive_closure`, `transitive_closure_dag` |
-| ALG-206 | Transitive reduction | P `dag_transitive_reduction_closure`, `dag_to_toposorted_adjacency_list`; N `transitive_reduction` |
+| ID | Algorithm | Parallel | Sources |
+|---|---|---|---|
+| ALG-205 | Transitive closure | no | P `dag_transitive_reduction_closure`; N `transitive_closure`, `transitive_closure_dag` |
+| ALG-206 | Transitive reduction | no | P `dag_transitive_reduction_closure`, `dag_to_toposorted_adjacency_list`; N `transitive_reduction` |
 
 ## Derived procedure names
 
-Neither Neo4j Graph Data Science nor Memgraph MAGE provides these entries as a usable procedure: either no procedure exists, or the MAGE name does not parse under opengql/grammar because it starts with the reserved word `PATH` (ALG-004). Their procedure names follow the rule in [FR-ALG-007](functional-requirements.md#graph-algorithms) (user decision 2026-10-02): the `gds.` namespace and a camelCase name derived from the first function that petgraph or graphalgs lists for the entry, or from each MAGE name for ALG-004, with `.`, `::` and `_` removed. Where an entry has no function name (ALG-013, ALG-028) or shares its first function with another entry (ALG-205, ALG-206), the name is derived from the entry's algorithm name in this inventory, without its parenthetical. Each name takes the mode suffixes `.stream` and `.write`.
+Neither Neo4j Graph Data Science nor Memgraph MAGE provides these entries as a usable procedure: either no procedure exists, or the MAGE name does not parse under opengql/grammar because it starts with the reserved word `PATH` (ALG-004). Their procedure names follow the rule in [FR-ALG-007](functional-requirements.md#graph-algorithms) (user decision 2026-10-02): the `gds.` namespace and a camelCase name derived from the first function that petgraph or graphalgs lists for the entry, or from each MAGE name for ALG-004, with `.`, `::` and `_` removed. Where an entry has no function name (ALG-013, ALG-028) or shares its first function with another entry (ALG-205, ALG-206), the name is derived from the entry's algorithm name in this inventory, without its parenthetical. Each name takes `.stream`, and `.write` where the result belongs to nodes or edges; ALG-004, ALG-009, ALG-020, ALG-024, ALG-025, ALG-026, ALG-128, ALG-143, ALG-151, ALG-169, ALG-181, ALG-189, ALG-190, ALG-203 and ALG-204 have no write mode (user decision 2026-10-12).
 
 | ID | Procedure name | Derived from |
 |---|---|---|

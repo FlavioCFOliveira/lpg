@@ -1,0 +1,1 @@
+{"nodeIds": [1, 0, 1], "costs": [0.0, -1.0, -2.0], "sourceNode": 1, "index": 0, "targetNode": 1, "totalCost": -2.0, "isNegativeCycle": true}

@@ -1,0 +1,6 @@
+{"strategy": "largest_first", "colors": 3, "value": {"0": 0, "1": 0, "2": 1, "3": 1, "4": 2, "5": 1, "6": 2, "7": 0, "8": 2, "9": 0}}
+{"strategy": "smallest_last", "colors": 3, "value": {"9": 0, "8": 1, "7": 0, "6": 1, "5": 2, "4": 1, "1": 0, "3": 2, "2": 2, "0": 0}}
+{"strategy": "independent_set", "colors": 3, "value": {"0": 0, "1": 0, "7": 0, "9": 0, "2": 1, "3": 1, "5": 1, "4": 2, "6": 2, "8": 2}}
+{"strategy": "connected_sequential_bfs", "colors": 4, "value": {"0": 0, "2": 1, "3": 1, "5": 1, "4": 0, "7": 0, "1": 2, "8": 2, "6": 3, "9": 3}}
+{"strategy": "connected_sequential_dfs", "colors": 3, "value": {"0": 0, "2": 1, "4": 0, "1": 1, "3": 2, "8": 0, "7": 2, "6": 0, "5": 1, "9": 2}}
+{"strategy": "saturation_largest_first", "colors": 3, "value": {"0": 0, "2": 1, "3": 1, "1": 0, "4": 2, "5": 1, "6": 2, "7": 0, "8": 2, "9": 0}}

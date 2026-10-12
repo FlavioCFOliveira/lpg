@@ -1,0 +1,29 @@
+{"nodeIds": [25, 17, 23, 14, 10, 0], "costs": [0.0, 0.6851296555896766, 1.7495271017630907, 1.1220031166470634, 1.8704022019749504, 3.2374318114022946], "sourceNode": 25, "index": 0, "targetNode": 0, "totalCost": 3.2374318114022946, "isNegativeCycle": false}
+{"nodeIds": [25, 8, 5, 1], "costs": [0.0, 0.761146083085967, 0.5995288921538355, 2.067296758491784], "sourceNode": 25, "index": 1, "targetNode": 1, "totalCost": 2.067296758491784, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 29, 2], "costs": [0.0, 0.6851296555896766, -0.1645276446426266, 1.367410910172838], "sourceNode": 25, "index": 2, "targetNode": 2, "totalCost": 1.367410910172838, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 23, 14, 3], "costs": [0.0, 0.6851296555896766, 1.7495271017630907, 1.1220031166470634, 1.2046906787024119], "sourceNode": 25, "index": 3, "targetNode": 3, "totalCost": 1.2046906787024119, "isNegativeCycle": false}
+{"nodeIds": [25, 8, 4], "costs": [0.0, 0.761146083085967, 1.4336891870880464], "sourceNode": 25, "index": 4, "targetNode": 4, "totalCost": 1.4336891870880464, "isNegativeCycle": false}
+{"nodeIds": [25, 8, 5], "costs": [0.0, 0.761146083085967, 0.5995288921538355], "sourceNode": 25, "index": 5, "targetNode": 5, "totalCost": 0.5995288921538355, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 23, 7], "costs": [0.0, 0.6851296555896766, 1.7495271017630907, 0.6805275419469925], "sourceNode": 25, "index": 6, "targetNode": 7, "totalCost": 0.6805275419469925, "isNegativeCycle": false}
+{"nodeIds": [25, 8], "costs": [0.0, 0.761146083085967], "sourceNode": 25, "index": 7, "targetNode": 8, "totalCost": 0.761146083085967, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 22, 9], "costs": [0.0, 0.6851296555896766, 1.8530317854232758, 0.9922488907973709], "sourceNode": 25, "index": 8, "targetNode": 9, "totalCost": 0.9922488907973709, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 23, 14, 10], "costs": [0.0, 0.6851296555896766, 1.7495271017630907, 1.1220031166470634, 1.8704022019749504], "sourceNode": 25, "index": 9, "targetNode": 10, "totalCost": 1.8704022019749504, "isNegativeCycle": false}
+{"nodeIds": [25, 15, 11], "costs": [0.0, 1.4241887070263315, 1.6138437865485713], "sourceNode": 25, "index": 10, "targetNode": 11, "totalCost": 1.6138437865485713, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 29, 12], "costs": [0.0, 0.6851296555896766, -0.1645276446426266, 1.6561240756896933], "sourceNode": 25, "index": 11, "targetNode": 12, "totalCost": 1.6561240756896933, "isNegativeCycle": false}
+{"nodeIds": [25, 8, 5, 13], "costs": [0.0, 0.761146083085967, 0.5995288921538355, 1.5130807465664469], "sourceNode": 25, "index": 12, "targetNode": 13, "totalCost": 1.5130807465664469, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 23, 14], "costs": [0.0, 0.6851296555896766, 1.7495271017630907, 1.1220031166470634], "sourceNode": 25, "index": 13, "targetNode": 14, "totalCost": 1.1220031166470634, "isNegativeCycle": false}
+{"nodeIds": [25, 15], "costs": [0.0, 1.4241887070263315], "sourceNode": 25, "index": 14, "targetNode": 15, "totalCost": 1.4241887070263315, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 29, 16], "costs": [0.0, 0.6851296555896766, -0.1645276446426266, 2.139061581275137], "sourceNode": 25, "index": 15, "targetNode": 16, "totalCost": 2.139061581275137, "isNegativeCycle": false}
+{"nodeIds": [25, 17], "costs": [0.0, 0.6851296555896766], "sourceNode": 25, "index": 16, "targetNode": 17, "totalCost": 0.6851296555896766, "isNegativeCycle": false}
+{"nodeIds": [25, 18], "costs": [0.0, 1.3298976411418666], "sourceNode": 25, "index": 17, "targetNode": 18, "totalCost": 1.3298976411418666, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 28, 19], "costs": [0.0, 0.6851296555896766, 0.9097359738081228, 1.5878233330893403], "sourceNode": 25, "index": 18, "targetNode": 19, "totalCost": 1.5878233330893403, "isNegativeCycle": false}
+{"nodeIds": [25, 15, 20], "costs": [0.0, 1.4241887070263315, 0.9482242543682099], "sourceNode": 25, "index": 19, "targetNode": 20, "totalCost": 0.9482242543682099, "isNegativeCycle": false}
+{"nodeIds": [25, 8, 4, 21], "costs": [0.0, 0.761146083085967, 1.4336891870880464, 2.152528317426891], "sourceNode": 25, "index": 20, "targetNode": 21, "totalCost": 2.152528317426891, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 22], "costs": [0.0, 0.6851296555896766, 1.8530317854232758], "sourceNode": 25, "index": 21, "targetNode": 22, "totalCost": 1.8530317854232758, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 23], "costs": [0.0, 0.6851296555896766, 1.7495271017630907], "sourceNode": 25, "index": 22, "targetNode": 23, "totalCost": 1.7495271017630907, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 29, 24], "costs": [0.0, 0.6851296555896766, -0.1645276446426266, 1.8237310985119883], "sourceNode": 25, "index": 23, "targetNode": 24, "totalCost": 1.8237310985119883, "isNegativeCycle": false}
+{"nodeIds": [25], "costs": [0.0], "sourceNode": 25, "index": 24, "targetNode": 25, "totalCost": 0.0, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 23, 26], "costs": [0.0, 0.6851296555896766, 1.7495271017630907, 1.825262888558532], "sourceNode": 25, "index": 25, "targetNode": 26, "totalCost": 1.825262888558532, "isNegativeCycle": false}
+{"nodeIds": [25, 8, 4, 21, 27], "costs": [0.0, 0.761146083085967, 1.4336891870880464, 2.152528317426891, 2.769966611320221], "sourceNode": 25, "index": 26, "targetNode": 27, "totalCost": 2.769966611320221, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 28], "costs": [0.0, 0.6851296555896766, 0.9097359738081228], "sourceNode": 25, "index": 27, "targetNode": 28, "totalCost": 0.9097359738081228, "isNegativeCycle": false}
+{"nodeIds": [25, 17, 29], "costs": [0.0, 0.6851296555896766, -0.1645276446426266], "sourceNode": 25, "index": 28, "targetNode": 29, "totalCost": -0.1645276446426266, "isNegativeCycle": false}

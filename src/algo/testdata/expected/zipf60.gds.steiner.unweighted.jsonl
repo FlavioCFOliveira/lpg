@@ -1,0 +1,10 @@
+{"weight": 1.0, "nodeId": 0, "parentId": 58}
+{"weight": 1.0, "nodeId": 4, "parentId": 25}
+{"weight": 1.0, "nodeId": 9, "parentId": 24}
+{"weight": 0.0, "nodeId": 13, "parentId": 13}
+{"weight": 1.0, "nodeId": 17, "parentId": 24}
+{"weight": 1.0, "nodeId": 24, "parentId": 13}
+{"weight": 1.0, "nodeId": 25, "parentId": 9}
+{"weight": 1.0, "nodeId": 41, "parentId": 50}
+{"weight": 1.0, "nodeId": 50, "parentId": 25}
+{"weight": 1.0, "nodeId": 58, "parentId": 24}

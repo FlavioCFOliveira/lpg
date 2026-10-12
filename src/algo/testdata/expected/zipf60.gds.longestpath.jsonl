@@ -1,0 +1,29 @@
+{"nodeIds": [1], "costs": [0.0], "index": 0, "sourceNode": 1, "targetNode": 1, "totalCost": 0.0}
+{"nodeIds": [2], "costs": [0.0], "index": 1, "sourceNode": 2, "targetNode": 2, "totalCost": 0.0}
+{"nodeIds": [3], "costs": [0.0], "index": 2, "sourceNode": 3, "targetNode": 3, "totalCost": 0.0}
+{"nodeIds": [11, 4], "costs": [0.0, 1.0], "index": 3, "sourceNode": 11, "targetNode": 4, "totalCost": 1.0}
+{"nodeIds": [6], "costs": [0.0], "index": 4, "sourceNode": 6, "targetNode": 6, "totalCost": 0.0}
+{"nodeIds": [10], "costs": [0.0], "index": 5, "sourceNode": 10, "targetNode": 10, "totalCost": 0.0}
+{"nodeIds": [11], "costs": [0.0], "index": 6, "sourceNode": 11, "targetNode": 11, "totalCost": 0.0}
+{"nodeIds": [13], "costs": [0.0], "index": 7, "sourceNode": 13, "targetNode": 13, "totalCost": 0.0}
+{"nodeIds": [3, 14], "costs": [0.0, 1.0], "index": 8, "sourceNode": 3, "targetNode": 14, "totalCost": 1.0}
+{"nodeIds": [11, 17], "costs": [0.0, 1.0], "index": 9, "sourceNode": 11, "targetNode": 17, "totalCost": 1.0}
+{"nodeIds": [18], "costs": [0.0], "index": 10, "sourceNode": 18, "targetNode": 18, "totalCost": 0.0}
+{"nodeIds": [6, 22], "costs": [0.0, 1.0], "index": 11, "sourceNode": 6, "targetNode": 22, "totalCost": 1.0}
+{"nodeIds": [59, 24], "costs": [0.0, 1.0], "index": 12, "sourceNode": 59, "targetNode": 24, "totalCost": 1.0}
+{"nodeIds": [6, 25], "costs": [0.0, 1.0], "index": 13, "sourceNode": 6, "targetNode": 25, "totalCost": 1.0}
+{"nodeIds": [40, 26], "costs": [0.0, 1.0], "index": 14, "sourceNode": 40, "targetNode": 26, "totalCost": 1.0}
+{"nodeIds": [27], "costs": [0.0], "index": 15, "sourceNode": 27, "targetNode": 27, "totalCost": 0.0}
+{"nodeIds": [33, 28], "costs": [0.0, 1.0], "index": 16, "sourceNode": 33, "targetNode": 28, "totalCost": 1.0}
+{"nodeIds": [40, 31], "costs": [0.0, 1.0], "index": 17, "sourceNode": 40, "targetNode": 31, "totalCost": 1.0}
+{"nodeIds": [32], "costs": [0.0], "index": 18, "sourceNode": 32, "targetNode": 32, "totalCost": 0.0}
+{"nodeIds": [33], "costs": [0.0], "index": 19, "sourceNode": 33, "targetNode": 33, "totalCost": 0.0}
+{"nodeIds": [2, 35], "costs": [0.0, 1.0], "index": 20, "sourceNode": 2, "targetNode": 35, "totalCost": 1.0}
+{"nodeIds": [13, 36], "costs": [0.0, 1.0], "index": 21, "sourceNode": 13, "targetNode": 36, "totalCost": 1.0}
+{"nodeIds": [40], "costs": [0.0], "index": 22, "sourceNode": 40, "targetNode": 40, "totalCost": 0.0}
+{"nodeIds": [44], "costs": [0.0], "index": 23, "sourceNode": 44, "targetNode": 44, "totalCost": 0.0}
+{"nodeIds": [11, 46], "costs": [0.0, 1.0], "index": 24, "sourceNode": 11, "targetNode": 46, "totalCost": 1.0}
+{"nodeIds": [6, 48], "costs": [0.0, 1.0], "index": 25, "sourceNode": 6, "targetNode": 48, "totalCost": 1.0}
+{"nodeIds": [1, 51], "costs": [0.0, 1.0], "index": 26, "sourceNode": 1, "targetNode": 51, "totalCost": 1.0}
+{"nodeIds": [2, 54], "costs": [0.0, 1.0], "index": 27, "sourceNode": 2, "targetNode": 54, "totalCost": 1.0}
+{"nodeIds": [59], "costs": [0.0], "index": 28, "sourceNode": 59, "targetNode": 59, "totalCost": 0.0}

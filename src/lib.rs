@@ -11,6 +11,7 @@
 // built in; the code the other tests use is then unused (TS-30).
 #![cfg_attr(any(loom, shuttle), allow(dead_code, unused_imports))]
 
+pub(crate) mod algo;
 pub mod api;
 pub mod auth;
 pub(crate) mod catalog;

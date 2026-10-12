@@ -497,7 +497,8 @@ fn no_built_in_backs_up_restores_or_creates_a_directory() {
         let d = graph_dir();
         let db = create(d.path(), &TestAuth::new()).await;
         let names = db.routines();
-        assert_eq!(names.len(), 8, "{names:?}");
+        // The eight built-ins of TS-24 and the algorithm routines (rmp #63).
+        assert_eq!(names.len(), 8 + crate::algo::routines().len(), "{names:?}");
         for n in &names {
             let n = n.to_lowercase();
             assert!(

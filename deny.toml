@@ -12,4 +12,6 @@ allow = [
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
     "MIT",
+    # foldhash 0.1.5 (petgraph -> hashbrown 0.15.5), Sprint 5 (TS-31).
+    "Zlib",
 ]
