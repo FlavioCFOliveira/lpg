@@ -477,6 +477,7 @@ fn bfs_tree<I: Ix>(p: &Projection<I>, source: usize, forward: bool) -> Tree {
         for (w, slot) in adj {
             let w = w.index();
             if t.dist[w].is_infinite() {
+                trace!("visit", "{w} from {v}");
                 t.dist[w] = t.dist[v] + 1.0;
                 t.pred[w] = v;
                 t.slot[w] = slot;
@@ -635,6 +636,7 @@ fn bidirectional<I: Ix>(
         fvis[u] = true;
         bvis[v] = true;
         let (du, dv) = (fwd.dist[u], bwd.dist[v]);
+        trace!("pop", "{u} {du:?} {v} {dv:?}");
         for (x, slot) in p.out(u) {
             let x = x.index();
             let c = kernels::cost(p, w, slot);
@@ -647,6 +649,7 @@ fn bidirectional<I: Ix>(
             if bvis[x] {
                 let total = du + c + bwd.dist[x];
                 if best.is_none_or(|b| total < b.0) {
+                    trace!("best", "{total:?} {u} {x}");
                     best = Some((total, u, x, slot));
                 }
             }
@@ -663,6 +666,7 @@ fn bidirectional<I: Ix>(
             if fvis[x] {
                 let total = dv + c + fwd.dist[x];
                 if best.is_none_or(|b| total < b.0) {
+                    trace!("best", "{total:?} {x} {v}");
                     best = Some((total, x, v, slot));
                 }
             }
@@ -670,6 +674,7 @@ fn bidirectional<I: Ix>(
         if let Some(b) = best
             && du + dv >= b.0
         {
+            trace!("stop", "{:?} >= {:?}", du + dv, b.0);
             let (cost, a, z, slot) = b;
             let (mut nodes, mut slots) = fwd.walk(a)?;
             slots.push(slot);
@@ -683,6 +688,7 @@ fn bidirectional<I: Ix>(
     }
     // A heap ran out before the stop rule held: the best meeting found
     // is the shortest path (petgraph returns no path here).
+    trace!("fallback", "{best:?}");
     let (cost, a, z, slot) = best?;
     let (mut nodes, mut slots) = fwd.walk(a)?;
     slots.push(slot);
@@ -731,6 +737,13 @@ fn astar<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error>
         |v| haversine_nm(lat[v.index()], lon[v.index()], lat[t], lon[t]),
     );
     let mut rows = Vec::new();
+    trace!(
+        "petgraph",
+        "{:?}",
+        found
+            .as_ref()
+            .map(|(c, path)| (*c, path.iter().map(|v| v.index()).collect::<Vec<_>>()))
+    );
     if let Some((_, path)) = found {
         let nodes: Vec<usize> = path.iter().map(|v| v.index()).collect();
         let (slots, costs) = kernels::path_edges(p, w, &nodes);
@@ -789,6 +802,11 @@ fn bellman_ford_rounds<I: Ix>(
             any
         })?;
         std::mem::swap(&mut cur, &mut next);
+        trace!(
+            "round",
+            "{round} {:?}",
+            cur.iter().map(|c| c.0).collect::<Vec<_>>()
+        );
         #[cfg(test)]
         if let Some(key) = &r.sched.probe {
             rounds::record(key, round);
@@ -798,6 +816,7 @@ fn bellman_ford_rounds<I: Ix>(
         }
         if round == n {
             changing = (0..n).filter(|v| cur[*v].3).collect();
+            trace!("stop", "changing {changing:?}");
         }
     }
     let mut t = Tree::new(n);
@@ -936,7 +955,15 @@ fn find_negative_cycle<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<
     let s = key_node(p, r, "sourceNode")?;
     r.mem.grow(4 * p.node_count() * 16)?;
     let mut rows = Vec::new();
-    if let Some(cycle) = petgraph::algo::find_negative_cycle(p, I::new(s)) {
+    let found = petgraph::algo::find_negative_cycle(p, I::new(s));
+    trace!(
+        "petgraph",
+        "{:?}",
+        found
+            .as_ref()
+            .map(|c| c.iter().map(|v| v.index()).collect::<Vec<_>>())
+    );
+    if let Some(cycle) = found {
         let mut nodes: Vec<usize> = cycle.iter().map(|v| v.index()).collect();
         if let Some(first) = nodes.first().copied() {
             nodes.push(first);
@@ -961,6 +988,16 @@ fn spfa<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> 
     r.mem.grow(4 * n * 16)?;
     let paths = petgraph::algo::spfa(p, I::new(s), |e| kernels::cost(p, w, e.id()))
         .map_err(|_| negative_cycle())?;
+    trace!(
+        "petgraph",
+        "{:?} {:?}",
+        paths.distances,
+        paths
+            .predecessors
+            .iter()
+            .map(|x| x.map(|v| v.index()))
+            .collect::<Vec<_>>()
+    );
     let mut t = Tree::new(n);
     for v in 0..n {
         if let Some(u) = paths.predecessors[v] {
@@ -1022,10 +1059,12 @@ fn delta<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error>
             if frontier.is_empty() {
                 break;
             }
+            trace!("light", "{i} {frontier:?}");
             settled.extend_from_slice(&frontier);
             let reqs = requests(&frontier, &t.dist, true)?;
             for (x, d, v, slot) in reqs.into_iter().flatten() {
                 if d < t.dist[x] {
+                    trace!("relax", "{x} {d:?} {v}");
                     t.dist[x] = d;
                     t.pred[x] = v;
                     t.slot[x] = slot;
@@ -1035,9 +1074,11 @@ fn delta<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error>
         }
         settled.sort_unstable();
         settled.dedup();
+        trace!("heavy", "{i} {settled:?}");
         let reqs = requests(&settled, &t.dist, false)?;
         for (x, d, v, slot) in reqs.into_iter().flatten() {
             if d < t.dist[x] {
+                trace!("relax", "{x} {d:?} {v}");
                 t.dist[x] = d;
                 t.pred[x] = v;
                 t.slot[x] = slot;
@@ -1086,13 +1127,18 @@ fn johnson<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Erro
         return Err(negative_cycle());
     }
     let h = h.dist;
+    trace!("potential", "{h:?}");
     r.mem.grow(
         n.saturating_mul(n).saturating_mul(size_of::<f64>())
             + r.sched_workers() * kernels::dijkstra_bytes(n, p.edge_ids.len()),
     )?;
     let blocks = r.sched.map(|_, range| {
         range
-            .map(|s| (s, reweighted_dijkstra(p, s, &h, w)))
+            .map(|s| {
+                let d = reweighted_dijkstra(p, s, &h, w);
+                trace!("source", "{s} {d:?}");
+                (s, d)
+            })
             .collect::<Vec<_>>()
     })?;
     let mut rows = Vec::new();
@@ -1151,10 +1197,20 @@ fn floyd<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error>
     let w = weighted(r);
     numeric(p, w)?;
     let n = p.node_count();
+    // A negative self-loop is a negative cycle, which petgraph's
+    // `floyd_warshall` misses: it sets each node's distance to itself to
+    // 0 after loading the edges (`floyd_warshall.rs:284-288`; rmp #71).
+    if (0..n).any(|v| {
+        p.out(v)
+            .any(|(x, slot)| x.index() == v && kernels::cost(p, w, slot) < 0.0)
+    }) {
+        return Err(negative_cycle());
+    }
     // petgraph's matrix and its map of every pair.
     r.mem.grow(n.saturating_mul(n).saturating_mul(8 + 48))?;
     let d = petgraph::algo::floyd_warshall(p, |e| kernels::cost(p, w, e.id()))
         .map_err(|_| negative_cycle())?;
+    trace!("petgraph", "{} pairs", d.len());
     let mut pairs: Vec<((usize, usize), f64)> = d
         .into_iter()
         .filter(|(_, x)| *x < f64::MAX)
@@ -1218,6 +1274,7 @@ fn seidel<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
                 }
             }
         }
+        trace!("component", "{members:?}");
         let d = apd(a);
         for (i, v) in members.iter().enumerate() {
             for (j, x) in members.iter().enumerate() {
@@ -1241,6 +1298,7 @@ fn seidel<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
 fn apd(A: DMatrix<u64>) -> DMatrix<u64> {
     let n = A.nrows();
     if (0..n).all(|i| (0..n).all(|j| i == j || A[(i, j)] != 0)) {
+        trace!("apd", "complete");
         return A;
     }
     let Z = &A * &A;
@@ -1265,6 +1323,13 @@ fn apd(A: DMatrix<u64>) -> DMatrix<u64> {
             };
         }
     }
+    trace!(
+        "apd",
+        "{:?}",
+        (0..n)
+            .map(|i| (0..n).map(|j| D[(i, j)]).collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+    );
     D
 }
 
@@ -1291,6 +1356,7 @@ fn all_pairs<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Er
                 } else {
                     bfs_tree(p, s, true)
                 };
+                trace!("source", "{s} {:?}", tree.dist);
                 (s, tree.dist)
             })
             .collect::<Vec<_>>()
@@ -1345,10 +1411,17 @@ fn all_shortest_between<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result
                 *e = (slot, c);
             }
         }
-        best.into_iter()
+        let out: Vec<(usize, usize)> = best
+            .into_iter()
             .filter(|(u, (_, c))| tree.dist[*u] + c == tree.dist[v])
             .map(|(u, (slot, _))| (u, slot))
-            .collect()
+            .collect();
+        trace!(
+            "preds",
+            "{v} {:?}",
+            out.iter().map(|x| x.0).collect::<Vec<_>>()
+        );
+        out
     };
     // Depth-first from the target: a stack of (node, its predecessors,
     // the next one).
@@ -1362,6 +1435,7 @@ fn all_shortest_between<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result
             let mut ss = slots.clone();
             ns.reverse();
             ss.reverse();
+            trace!("path", "{ns:?}");
             let costs = tree.costs(&ns);
             let row = path_row(p, rows.len(), &ns, &ss, &costs);
             r.emit(&mut rows, row)?;
@@ -1540,18 +1614,30 @@ fn yens<I: Ix>(
         })?;
         let mut round: Vec<(usize, Route)> = parts.into_iter().flatten().collect();
         round.sort_by_key(|(i, _)| *i);
+        trace!(
+            "round",
+            "{ki} spurs {}..{}",
+            previous.spur,
+            previous.nodes.len() - 1
+        );
         for (_, route) in round {
             if visited.insert(route.slots.clone()) {
+                trace!(
+                    "candidate",
+                    "{:?} {:?} {}", route.cost, route.nodes, route.spur
+                );
                 candidates.push(std::cmp::Reverse(route));
             }
         }
         if let Some(std::cmp::Reverse(route)) = candidates.pop() {
             let c = route.cost;
+            trace!("accept", "{c:?} {:?}", route.nodes);
             routes.push(route);
             while routes.len() < k {
                 match candidates.peek() {
                     Some(std::cmp::Reverse(next)) if next.cost == c => {
                         let std::cmp::Reverse(next) = candidates.pop().expect("peeked");
+                        trace!("accept", "{c:?} {:?}", next.nodes);
                         routes.push(next);
                     }
                     _ => break,
@@ -1633,6 +1719,7 @@ fn k_shortest<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, E
     });
     let mut pairs: Vec<(usize, f64)> = d.into_iter().map(|(v, c)| (v.index(), c)).collect();
     pairs.sort_unstable_by_key(|x| x.0);
+    trace!("petgraph", "{pairs:?}");
     let mut rows = Vec::new();
     for (v, c) in pairs {
         r.emit(&mut rows, vec![id_value(p, v), Value::Float(c)])?;
@@ -1783,7 +1870,18 @@ fn all_simple<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, E
     loop {
         // Enter the last node of the path (MAGE `DFS`).
         let v = *nodes.last().expect("a node");
+        trace!(
+            "enter",
+            "{:?}",
+            nodes
+                .iter()
+                .zip(slots.iter().map(|x| Some(p.edge_id(*x))).chain([None]))
+                .flat_map(|(n, e)| [Some(*n as u64), e])
+                .flatten()
+                .collect::<Vec<_>>()
+        );
         let next = if v == end {
+            trace!("emit", "");
             let path = kernels::path_value(p, &nodes, &slots);
             r.emit(&mut rows, vec![path])?;
             Vec::new()
@@ -1854,6 +1952,11 @@ fn longest_path<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output,
                 .collect::<Vec<_>>()
         })?;
         for (v, (d, u, slot)) in parts.into_iter().flatten() {
+            trace!(
+                "settle",
+                "{v} {d:?} {}",
+                if u == NONE { -1 } else { u as i64 }
+            );
             t.dist[v] = d;
             t.pred[v] = u;
             t.slot[v] = slot;

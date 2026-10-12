@@ -1,0 +1,5285 @@
+{
+ "graphs": {
+  "dir": {
+   "n": 7,
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     4.0
+    ],
+    [
+     0,
+     2,
+     "R",
+     1.0
+    ],
+    [
+     2,
+     1,
+     "R",
+     2.0
+    ],
+    [
+     1,
+     3,
+     "R",
+     1.0
+    ],
+    [
+     2,
+     3,
+     "R",
+     5.0
+    ],
+    [
+     3,
+     4,
+     "R",
+     3.0
+    ],
+    [
+     1,
+     4,
+     "R",
+     7.0
+    ],
+    [
+     4,
+     5,
+     "R",
+     1.0
+    ],
+    [
+     2,
+     2,
+     "R",
+     1.0
+    ],
+    [
+     0,
+     2,
+     "R",
+     3.0
+    ],
+    [
+     5,
+     3,
+     "R",
+     2.0
+    ],
+    [
+     6,
+     0,
+     "R",
+     1.0
+    ]
+   ]
+  },
+  "neg": {
+   "n": 6,
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     4.0
+    ],
+    [
+     0,
+     2,
+     "R",
+     2.0
+    ],
+    [
+     2,
+     1,
+     "R",
+     -3.0
+    ],
+    [
+     1,
+     3,
+     "R",
+     2.0
+    ],
+    [
+     2,
+     3,
+     "R",
+     5.0
+    ],
+    [
+     3,
+     4,
+     "R",
+     -1.0
+    ],
+    [
+     4,
+     2,
+     "R",
+     3.0
+    ],
+    [
+     5,
+     0,
+     "R",
+     1.0
+    ]
+   ]
+  },
+  "negcyc": {
+   "n": 6,
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     4.0
+    ],
+    [
+     0,
+     2,
+     "R",
+     2.0
+    ],
+    [
+     2,
+     1,
+     "R",
+     -3.0
+    ],
+    [
+     1,
+     3,
+     "R",
+     2.0
+    ],
+    [
+     2,
+     3,
+     "R",
+     5.0
+    ],
+    [
+     3,
+     4,
+     "R",
+     -1.0
+    ],
+    [
+     4,
+     2,
+     "R",
+     -2.0
+    ],
+    [
+     5,
+     0,
+     "R",
+     1.0
+    ]
+   ]
+  },
+  "selfneg": {
+   "n": 3,
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     1.0
+    ],
+    [
+     1,
+     1,
+     "R",
+     -1.0
+    ],
+    [
+     1,
+     2,
+     "R",
+     1.0
+    ]
+   ]
+  },
+  "dag": {
+   "n": 6,
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     3.0
+    ],
+    [
+     0,
+     2,
+     "R",
+     1.0
+    ],
+    [
+     1,
+     3,
+     "R",
+     2.0
+    ],
+    [
+     2,
+     3,
+     "R",
+     4.0
+    ],
+    [
+     3,
+     4,
+     "R",
+     1.0
+    ],
+    [
+     0,
+     3,
+     "R",
+     1.0
+    ],
+    [
+     1,
+     4,
+     "R",
+     5.0
+    ],
+    [
+     5,
+     4,
+     "R",
+     2.0
+    ],
+    [
+     0,
+     1,
+     "R",
+     2.0
+    ]
+   ]
+  },
+  "typed": {
+   "n": 4,
+   "edges": [
+    [
+     0,
+     1,
+     "A",
+     null
+    ],
+    [
+     1,
+     2,
+     "B",
+     null
+    ],
+    [
+     2,
+     0,
+     "A",
+     null
+    ],
+    [
+     3,
+     1,
+     "B",
+     null
+    ],
+    [
+     1,
+     3,
+     "A",
+     null
+    ],
+    [
+     0,
+     3,
+     "B",
+     null
+    ],
+    [
+     0,
+     2,
+     "A",
+     null
+    ]
+   ],
+   "nodes": [
+    ":N&X",
+    ":N",
+    ":N&Y",
+    ":N&X"
+   ]
+  },
+  "und": {
+   "n": 5,
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     null
+    ],
+    [
+     1,
+     2,
+     "R",
+     null
+    ],
+    [
+     2,
+     0,
+     "R",
+     null
+    ],
+    [
+     2,
+     3,
+     "R",
+     null
+    ],
+    [
+     3,
+     4,
+     "R",
+     null
+    ],
+    [
+     4,
+     2,
+     "R",
+     null
+    ],
+    [
+     1,
+     3,
+     "R",
+     null
+    ],
+    [
+     1,
+     0,
+     "R",
+     null
+    ],
+    [
+     4,
+     4,
+     "R",
+     null
+    ]
+   ]
+  },
+  "geo": {
+   "n": 6,
+   "edges": [],
+   "nodes": [
+    ":N {lat: 3.87e1, lng: -9.14e0,",
+    ":N {lat: 4.11e1, lng: -8.61e0,",
+    ":N {lat: 3.70e1, lng: -7.93e0,",
+    ":N {lat: 4.02e1, lng: -8.41e0,",
+    ":N {lat: 3.85e1, lng: -7.91e0,",
+    ":N {lat: 4.15e1, lng: -8.42e0,"
+   ]
+  },
+  "iso": {
+   "n": 15,
+   "nodes": [
+    ":P",
+    ":P",
+    ":P",
+    ":P",
+    ":Q",
+    ":Q",
+    ":Q",
+    ":Q",
+    ":U",
+    ":U",
+    ":U",
+    ":U",
+    ":S",
+    ":S",
+    ":S"
+   ],
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     null
+    ],
+    [
+     1,
+     2,
+     "R",
+     null
+    ],
+    [
+     2,
+     3,
+     "R",
+     null
+    ],
+    [
+     3,
+     0,
+     "R",
+     null
+    ],
+    [
+     0,
+     1,
+     "R",
+     null
+    ],
+    [
+     0,
+     2,
+     "R",
+     null
+    ],
+    [
+     4,
+     6,
+     "R",
+     null
+    ],
+    [
+     6,
+     5,
+     "R",
+     null
+    ],
+    [
+     5,
+     7,
+     "R",
+     null
+    ],
+    [
+     7,
+     4,
+     "R",
+     null
+    ],
+    [
+     4,
+     6,
+     "R",
+     null
+    ],
+    [
+     4,
+     5,
+     "R",
+     null
+    ],
+    [
+     8,
+     9,
+     "R",
+     null
+    ],
+    [
+     9,
+     10,
+     "R",
+     null
+    ],
+    [
+     10,
+     11,
+     "R",
+     null
+    ],
+    [
+     11,
+     8,
+     "R",
+     null
+    ],
+    [
+     8,
+     10,
+     "R",
+     null
+    ],
+    [
+     12,
+     13,
+     "R",
+     null
+    ],
+    [
+     13,
+     14,
+     "R",
+     null
+    ]
+   ]
+  },
+  "tour": {
+   "n": 10,
+   "nodes": [
+    ":T",
+    ":T",
+    ":T",
+    ":T",
+    ":C",
+    ":C",
+    ":C",
+    ":X",
+    ":X",
+    ":X"
+   ],
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     null
+    ],
+    [
+     0,
+     2,
+     "R",
+     null
+    ],
+    [
+     0,
+     3,
+     "R",
+     null
+    ],
+    [
+     1,
+     2,
+     "R",
+     null
+    ],
+    [
+     1,
+     3,
+     "R",
+     null
+    ],
+    [
+     2,
+     3,
+     "R",
+     null
+    ],
+    [
+     4,
+     5,
+     "R",
+     null
+    ],
+    [
+     5,
+     6,
+     "R",
+     null
+    ],
+    [
+     6,
+     4,
+     "R",
+     null
+    ],
+    [
+     7,
+     8,
+     "R",
+     null
+    ],
+    [
+     8,
+     7,
+     "R",
+     null
+    ],
+    [
+     8,
+     9,
+     "R",
+     null
+    ]
+   ]
+  },
+  "bip": {
+   "n": 6,
+   "edges": [
+    [
+     0,
+     1,
+     "R",
+     null
+    ],
+    [
+     2,
+     1,
+     "R",
+     null
+    ],
+    [
+     2,
+     3,
+     "R",
+     null
+    ],
+    [
+     0,
+     3,
+     "R",
+     null
+    ],
+    [
+     5,
+     4,
+     "R",
+     null
+    ]
+   ]
+  }
+ },
+ "cases": {
+  "001 all": {
+   "graph": "dir",
+   "proc": "gds.bfs.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    }
+   },
+   "kinds": [
+    "level",
+    "expand",
+    "append",
+    "stop"
+   ],
+   "want": [
+    "level: 0 [0]",
+    "expand: 0 at 0",
+    "append: [1, 2]",
+    "level: 1 [1, 2]",
+    "expand: 1 at 0",
+    "expand: 2 at 1",
+    "append: [3, 4]",
+    "level: 2 [3, 4]",
+    "expand: 3 at 0",
+    "expand: 4 at 1",
+    "append: [5]",
+    "level: 3 [5]",
+    "expand: 5 at 0",
+    "append: []",
+    "stop: empty"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "001 maxDepth 2": {
+   "graph": "dir",
+   "proc": "gds.bfs.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "maxDepth": 2
+   },
+   "kinds": [
+    "level",
+    "expand",
+    "append",
+    "stop"
+   ],
+   "want": [
+    "level: 0 [0]",
+    "expand: 0 at 0",
+    "append: [1, 2]",
+    "level: 1 [1, 2]",
+    "expand: 1 at 0",
+    "expand: 2 at 1",
+    "append: [3, 4]",
+    "stop: maxDepth 2"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "001 target": {
+   "graph": "dir",
+   "proc": "gds.bfs.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNodes": [
+     {
+      "node": 4
+     }
+    ]
+   },
+   "kinds": [
+    "level",
+    "expand",
+    "append",
+    "stop"
+   ],
+   "want": [
+    "level: 0 [0]",
+    "expand: 0 at 0",
+    "append: [1, 2]",
+    "level: 1 [1, 2]",
+    "expand: 1 at 0",
+    "expand: 2 at 1",
+    "append: [3, 4]",
+    "level: 2 [3, 4]",
+    "stop: target 4"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "002 all": {
+   "graph": "dir",
+   "proc": "gds.dfs.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    }
+   },
+   "kinds": [
+    "pop",
+    "push",
+    "stop"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 1 1",
+    "push: 2 1",
+    "pop: 2 1",
+    "push: 3 2",
+    "pop: 3 2",
+    "push: 4 3",
+    "pop: 4 3",
+    "push: 5 4",
+    "pop: 5 4",
+    "pop: 1 1"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "002 maxDepth 1": {
+   "graph": "dir",
+   "proc": "gds.dfs.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "maxDepth": 1
+   },
+   "kinds": [
+    "pop",
+    "push",
+    "stop"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 1 1",
+    "push: 2 1",
+    "pop: 2 1",
+    "pop: 1 1"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "002 target": {
+   "graph": "dir",
+   "proc": "gds.dfs.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNodes": [
+     {
+      "node": 3
+     }
+    ]
+   },
+   "kinds": [
+    "pop",
+    "push",
+    "stop"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 1 1",
+    "push: 2 1",
+    "pop: 2 1",
+    "push: 3 2",
+    "pop: 3 2",
+    "stop: target 3"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 by_hop []": {
+   "graph": "typed",
+   "proc": "neighbors.by_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [],
+    3
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2, 3]",
+    "level: 2 []",
+    "level: 3 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 at_hop []": {
+   "graph": "typed",
+   "proc": "neighbors.at_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [],
+    2
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2, 3]",
+    "level: 2 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 by_hop ['A>']": {
+   "graph": "typed",
+   "proc": "neighbors.by_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "A>"
+    ],
+    3
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2]",
+    "level: 2 [3]",
+    "level: 3 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 at_hop ['A>']": {
+   "graph": "typed",
+   "proc": "neighbors.at_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "A>"
+    ],
+    2
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2]",
+    "level: 2 [3]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 by_hop ['<B']": {
+   "graph": "typed",
+   "proc": "neighbors.by_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "<B"
+    ],
+    3
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 []",
+    "level: 2 []",
+    "level: 3 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 at_hop ['<B']": {
+   "graph": "typed",
+   "proc": "neighbors.at_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "<B"
+    ],
+    2
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 by_hop ['A']": {
+   "graph": "typed",
+   "proc": "neighbors.by_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "A"
+    ],
+    3
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2]",
+    "level: 2 [3]",
+    "level: 3 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 at_hop ['A']": {
+   "graph": "typed",
+   "proc": "neighbors.at_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "A"
+    ],
+    2
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2]",
+    "level: 2 [3]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 by_hop ['<']": {
+   "graph": "typed",
+   "proc": "neighbors.by_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "<"
+    ],
+    3
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [2]",
+    "level: 2 [1]",
+    "level: 3 [3]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 at_hop ['<']": {
+   "graph": "typed",
+   "proc": "neighbors.at_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     "<"
+    ],
+    2
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [2]",
+    "level: 2 [1]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 by_hop ['>']": {
+   "graph": "typed",
+   "proc": "neighbors.by_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     ">"
+    ],
+    3
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2, 3]",
+    "level: 2 []",
+    "level: 3 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "003 at_hop ['>']": {
+   "graph": "typed",
+   "proc": "neighbors.at_hop",
+   "args": [
+    {
+     "node": 0
+    },
+    [
+     ">"
+    ],
+    2
+   ],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 1 [1, 2, 3]",
+    "level: 2 []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand [] []": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [],
+    "labels": [],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "emit: [0, 6, 2]",
+    "enter: [0, 6, 2, 10, 0]",
+    "emit: [0, 6, 2, 10, 0]",
+    "enter: [0, 6, 2, 10, 0, 4, 1]",
+    "emit: [0, 6, 2, 10, 0, 4, 1]",
+    "enter: [0, 6, 2, 10, 0, 9, 3]",
+    "emit: [0, 6, 2, 10, 0, 9, 3]",
+    "enter: [0, 6, 2, 5, 1]",
+    "emit: [0, 6, 2, 5, 1]",
+    "enter: [0, 6, 2, 5, 1, 4, 0]",
+    "emit: [0, 6, 2, 5, 1, 4, 0]",
+    "enter: [0, 6, 2, 5, 1, 7, 3]",
+    "emit: [0, 6, 2, 5, 1, 7, 3]",
+    "enter: [0, 6, 2, 5, 1, 8, 3]",
+    "emit: [0, 6, 2, 5, 1, 8, 3]",
+    "enter: [0, 4, 1]",
+    "emit: [0, 4, 1]",
+    "enter: [0, 4, 1, 7, 3]",
+    "emit: [0, 4, 1, 7, 3]",
+    "enter: [0, 4, 1, 7, 3, 8, 1]",
+    "emit: [0, 4, 1, 7, 3, 8, 1]",
+    "enter: [0, 4, 1, 7, 3, 9, 0]",
+    "emit: [0, 4, 1, 7, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 9, 0]",
+    "emit: [0, 4, 1, 8, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "emit: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "emit: [0, 4, 1, 5, 2]",
+    "enter: [0, 4, 1, 5, 2, 10, 0]",
+    "emit: [0, 4, 1, 5, 2, 10, 0]",
+    "enter: [0, 4, 1, 5, 2, 6, 0]",
+    "emit: [0, 4, 1, 5, 2, 6, 0]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]",
+    "enter: [0, 10, 2, 5, 1]",
+    "emit: [0, 10, 2, 5, 1]",
+    "enter: [0, 10, 2, 5, 1, 4, 0]",
+    "emit: [0, 10, 2, 5, 1, 4, 0]",
+    "enter: [0, 10, 2, 5, 1, 7, 3]",
+    "emit: [0, 10, 2, 5, 1, 7, 3]",
+    "enter: [0, 10, 2, 5, 1, 8, 3]",
+    "emit: [0, 10, 2, 5, 1, 8, 3]",
+    "enter: [0, 10, 2, 6, 0]",
+    "emit: [0, 10, 2, 6, 0]",
+    "enter: [0, 10, 2, 6, 0, 4, 1]",
+    "emit: [0, 10, 2, 6, 0, 4, 1]",
+    "enter: [0, 10, 2, 6, 0, 9, 3]",
+    "emit: [0, 10, 2, 6, 0, 9, 3]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "emit: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "emit: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "emit: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "emit: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "emit: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "emit: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "emit: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]",
+    "emit: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand [] ['-Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [],
+    "labels": [
+     "-Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 4, 1]",
+    "emit: [0, 4, 1]",
+    "enter: [0, 4, 1, 7, 3]",
+    "emit: [0, 4, 1, 7, 3]",
+    "enter: [0, 4, 1, 7, 3, 8, 1]",
+    "emit: [0, 4, 1, 7, 3, 8, 1]",
+    "enter: [0, 4, 1, 7, 3, 9, 0]",
+    "emit: [0, 4, 1, 7, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 9, 0]",
+    "emit: [0, 4, 1, 8, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "emit: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "emit: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "emit: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "emit: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "emit: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "emit: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "emit: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand [] ['>X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [],
+    "labels": [
+     ">X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 6, 2, 10, 0]",
+    "emit: [0, 6, 2, 10, 0]",
+    "enter: [0, 6, 2, 10, 0, 4, 1]",
+    "enter: [0, 6, 2, 10, 0, 9, 3]",
+    "emit: [0, 6, 2, 10, 0, 9, 3]",
+    "enter: [0, 6, 2, 5, 1]",
+    "enter: [0, 6, 2, 5, 1, 4, 0]",
+    "emit: [0, 6, 2, 5, 1, 4, 0]",
+    "enter: [0, 6, 2, 5, 1, 7, 3]",
+    "emit: [0, 6, 2, 5, 1, 7, 3]",
+    "enter: [0, 6, 2, 5, 1, 8, 3]",
+    "emit: [0, 6, 2, 5, 1, 8, 3]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 7, 3]",
+    "emit: [0, 4, 1, 7, 3]",
+    "enter: [0, 4, 1, 7, 3, 8, 1]",
+    "enter: [0, 4, 1, 7, 3, 9, 0]",
+    "emit: [0, 4, 1, 7, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 9, 0]",
+    "emit: [0, 4, 1, 8, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "enter: [0, 4, 1, 5, 2, 10, 0]",
+    "emit: [0, 4, 1, 5, 2, 10, 0]",
+    "enter: [0, 4, 1, 5, 2, 6, 0]",
+    "emit: [0, 4, 1, 5, 2, 6, 0]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 10, 2, 5, 1]",
+    "enter: [0, 10, 2, 5, 1, 4, 0]",
+    "emit: [0, 10, 2, 5, 1, 4, 0]",
+    "enter: [0, 10, 2, 5, 1, 7, 3]",
+    "emit: [0, 10, 2, 5, 1, 7, 3]",
+    "enter: [0, 10, 2, 5, 1, 8, 3]",
+    "emit: [0, 10, 2, 5, 1, 8, 3]",
+    "enter: [0, 10, 2, 6, 0]",
+    "emit: [0, 10, 2, 6, 0]",
+    "enter: [0, 10, 2, 6, 0, 4, 1]",
+    "enter: [0, 10, 2, 6, 0, 9, 3]",
+    "emit: [0, 10, 2, 6, 0, 9, 3]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "emit: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "emit: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "emit: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "emit: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand [] ['/Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [],
+    "labels": [
+     "/Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 6, 2]",
+    "emit: [0, 6, 2]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 7, 3]",
+    "enter: [0, 4, 1, 7, 3, 8, 1]",
+    "enter: [0, 4, 1, 7, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 9, 0]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "emit: [0, 4, 1, 5, 2]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]",
+    "enter: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "emit: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]",
+    "emit: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand [] ['+X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [],
+    "labels": [
+     "+X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 7, 1]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 subgraph []": {
+   "graph": "typed",
+   "proc": "gds.pathSubgraphNodes.stream",
+   "args": [],
+   "config": {
+    "startNode": [
+     {
+      "node": 0
+     }
+    ],
+    "relationshipFilter": []
+   },
+   "kinds": [
+    "pop",
+    "push"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 2 1",
+    "push: 1 1",
+    "push: 3 1",
+    "pop: 2 1",
+    "pop: 1 1",
+    "pop: 3 1"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['A>'] []": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "A>"
+    ],
+    "labels": [],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "emit: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]",
+    "enter: [0, 10, 2, 6, 0]",
+    "emit: [0, 10, 2, 6, 0]",
+    "enter: [0, 10, 2, 6, 0, 4, 1]",
+    "emit: [0, 10, 2, 6, 0, 4, 1]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['A>'] ['-Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "A>"
+    ],
+    "labels": [
+     "-Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "emit: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['A>'] ['>X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "A>"
+    ],
+    "labels": [
+     ">X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 10, 2, 6, 0]",
+    "emit: [0, 10, 2, 6, 0]",
+    "enter: [0, 10, 2, 6, 0, 4, 1]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['A>'] ['/Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "A>"
+    ],
+    "labels": [
+     "/Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['A>'] ['+X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "A>"
+    ],
+    "labels": [
+     "+X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 subgraph ['A>']": {
+   "graph": "typed",
+   "proc": "gds.pathSubgraphNodes.stream",
+   "args": [],
+   "config": {
+    "startNode": [
+     {
+      "node": 0
+     }
+    ],
+    "relationshipFilter": [
+     "A>"
+    ]
+   },
+   "kinds": [
+    "pop",
+    "push"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 1 1",
+    "push: 2 1",
+    "pop: 1 1",
+    "push: 3 2",
+    "pop: 2 1",
+    "pop: 3 2"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<B'] []": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<B"
+    ],
+    "labels": [],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<B'] ['-Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<B"
+    ],
+    "labels": [
+     "-Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<B'] ['>X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<B"
+    ],
+    "labels": [
+     ">X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<B'] ['/Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<B"
+    ],
+    "labels": [
+     "/Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<B'] ['+X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<B"
+    ],
+    "labels": [
+     "+X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 subgraph ['<B']": {
+   "graph": "typed",
+   "proc": "gds.pathSubgraphNodes.stream",
+   "args": [],
+   "config": {
+    "startNode": [
+     {
+      "node": 0
+     }
+    ],
+    "relationshipFilter": [
+     "<B"
+    ]
+   },
+   "kinds": [
+    "pop",
+    "push"
+   ],
+   "want": [
+    "pop: 0 0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<A>'] []": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<A>"
+    ],
+    "labels": [],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<A>'] ['-Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<A>"
+    ],
+    "labels": [
+     "-Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<A>'] ['>X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<A>"
+    ],
+    "labels": [
+     ">X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<A>'] ['/Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<A>"
+    ],
+    "labels": [
+     "/Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['<A>'] ['+X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "<A>"
+    ],
+    "labels": [
+     "+X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 subgraph ['<A>']": {
+   "graph": "typed",
+   "proc": "gds.pathSubgraphNodes.stream",
+   "args": [],
+   "config": {
+    "startNode": [
+     {
+      "node": 0
+     }
+    ],
+    "relationshipFilter": [
+     "<A>"
+    ]
+   },
+   "kinds": [
+    "pop",
+    "push"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 2 1 both",
+    "pop: 2 1"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['B', '<A'] []": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "B",
+     "<A"
+    ],
+    "labels": [],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "emit: [0, 6, 2]",
+    "enter: [0, 6, 2, 10, 0]",
+    "emit: [0, 6, 2, 10, 0]",
+    "enter: [0, 6, 2, 10, 0, 9, 3]",
+    "emit: [0, 6, 2, 10, 0, 9, 3]",
+    "enter: [0, 6, 2, 5, 1]",
+    "emit: [0, 6, 2, 5, 1]",
+    "enter: [0, 6, 2, 5, 1, 4, 0]",
+    "emit: [0, 6, 2, 5, 1, 4, 0]",
+    "enter: [0, 6, 2, 5, 1, 7, 3]",
+    "emit: [0, 6, 2, 5, 1, 7, 3]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "emit: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "emit: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "emit: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "emit: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "emit: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "emit: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]",
+    "emit: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['B', '<A'] ['-Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "B",
+     "<A"
+    ],
+    "labels": [
+     "-Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "emit: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "emit: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "emit: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "emit: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "emit: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['B', '<A'] ['>X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "B",
+     "<A"
+    ],
+    "labels": [
+     ">X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 6, 2, 10, 0]",
+    "emit: [0, 6, 2, 10, 0]",
+    "enter: [0, 6, 2, 10, 0, 9, 3]",
+    "emit: [0, 6, 2, 10, 0, 9, 3]",
+    "enter: [0, 6, 2, 5, 1]",
+    "enter: [0, 6, 2, 5, 1, 4, 0]",
+    "emit: [0, 6, 2, 5, 1, 4, 0]",
+    "enter: [0, 6, 2, 5, 1, 7, 3]",
+    "emit: [0, 6, 2, 5, 1, 7, 3]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "emit: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "emit: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "emit: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['B', '<A'] ['/Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "B",
+     "<A"
+    ],
+    "labels": [
+     "/Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 6, 2]",
+    "emit: [0, 6, 2]",
+    "enter: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 8, 1, 4, 0]",
+    "enter: [0, 9, 3, 8, 1, 7, 3]",
+    "enter: [0, 9, 3, 8, 1, 5, 2]",
+    "emit: [0, 9, 3, 8, 1, 5, 2]",
+    "enter: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 4, 0]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]",
+    "emit: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['B', '<A'] ['+X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     "B",
+     "<A"
+    ],
+    "labels": [
+     "+X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 8, 1]",
+    "enter: [0, 9, 3, 7, 1]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 subgraph ['B', '<A']": {
+   "graph": "typed",
+   "proc": "gds.pathSubgraphNodes.stream",
+   "args": [],
+   "config": {
+    "startNode": [
+     {
+      "node": 0
+     }
+    ],
+    "relationshipFilter": [
+     "B",
+     "<A"
+    ]
+   },
+   "kinds": [
+    "pop",
+    "push"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 2 1",
+    "push: 3 1",
+    "pop: 2 1",
+    "push: 1 2",
+    "pop: 3 1",
+    "pop: 1 2"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['>'] []": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     ">"
+    ],
+    "labels": [],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "emit: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "emit: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "emit: [0, 4, 1, 5, 2]",
+    "enter: [0, 4, 1, 5, 2, 6, 0]",
+    "emit: [0, 4, 1, 5, 2, 6, 0]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]",
+    "enter: [0, 10, 2, 6, 0]",
+    "emit: [0, 10, 2, 6, 0]",
+    "enter: [0, 10, 2, 6, 0, 4, 1]",
+    "emit: [0, 10, 2, 6, 0, 4, 1]",
+    "enter: [0, 10, 2, 6, 0, 9, 3]",
+    "emit: [0, 10, 2, 6, 0, 9, 3]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 7, 1]",
+    "emit: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "emit: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]",
+    "emit: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['>'] ['-Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     ">"
+    ],
+    "labels": [
+     "-Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "emit: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "emit: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 7, 1]",
+    "emit: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "emit: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['>'] ['>X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     ">"
+    ],
+    "labels": [
+     ">X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "enter: [0, 4, 1, 5, 2, 6, 0]",
+    "emit: [0, 4, 1, 5, 2, 6, 0]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 10, 2, 6, 0]",
+    "emit: [0, 10, 2, 6, 0]",
+    "enter: [0, 10, 2, 6, 0, 4, 1]",
+    "enter: [0, 10, 2, 6, 0, 9, 3]",
+    "emit: [0, 10, 2, 6, 0, 9, 3]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "emit: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['>'] ['/Y']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     ">"
+    ],
+    "labels": [
+     "/Y"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "enter: [0, 4, 1, 8, 3, 7, 1]",
+    "enter: [0, 4, 1, 5, 2]",
+    "emit: [0, 4, 1, 5, 2]",
+    "enter: [0, 10, 2]",
+    "emit: [0, 10, 2]",
+    "enter: [0, 9, 3]",
+    "enter: [0, 9, 3, 7, 1]",
+    "enter: [0, 9, 3, 7, 1, 8, 3]",
+    "enter: [0, 9, 3, 7, 1, 5, 2]",
+    "emit: [0, 9, 3, 7, 1, 5, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 expand ['>'] ['+X']": {
+   "graph": "typed",
+   "proc": "gds.pathExpand.stream",
+   "args": [],
+   "config": {
+    "start": [
+     {
+      "node": 0
+     }
+    ],
+    "relationships": [
+     ">"
+    ],
+    "labels": [
+     "+X"
+    ],
+    "minHops": 0,
+    "maxHops": 3
+   },
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "emit: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 9, 3]",
+    "emit: [0, 9, 3]",
+    "enter: [0, 9, 3, 7, 1]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 subgraph ['>']": {
+   "graph": "typed",
+   "proc": "gds.pathSubgraphNodes.stream",
+   "args": [],
+   "config": {
+    "startNode": [
+     {
+      "node": 0
+     }
+    ],
+    "relationshipFilter": [
+     ">"
+    ]
+   },
+   "kinds": [
+    "pop",
+    "push"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 1 1",
+    "push: 2 1",
+    "push: 3 1",
+    "pop: 1 1",
+    "pop: 2 1",
+    "pop: 3 1"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "004 subgraph labels": {
+   "graph": "typed",
+   "proc": "gds.pathSubgraphNodes.stream",
+   "args": [],
+   "config": {
+    "startNode": [
+     {
+      "node": 0
+     }
+    ],
+    "labelFilter": [
+     "-Y"
+    ],
+    "maxHops": 1
+   },
+   "kinds": [
+    "pop",
+    "push"
+   ],
+   "want": [
+    "pop: 0 0",
+    "push: 2 1",
+    "push: 1 1",
+    "push: 3 1",
+    "pop: 2 1",
+    "pop: 1 1",
+    "pop: 3 1"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "007 dag": {
+   "graph": "dag",
+   "proc": "gds.dag.topologicalSort.stream",
+   "args": [],
+   "config": {
+    "computeMaxDistanceFromSource": true
+   },
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 0 [0, 5]",
+    "level: 1 [1, 2]",
+    "level: 2 [3]",
+    "level: 3 [4]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "007 cyclic": {
+   "graph": "dir",
+   "proc": "gds.dag.topologicalSort.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "level"
+   ],
+   "want": [
+    "level: 0 [6]",
+    "level: 1 [0]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "008 descendants": {
+   "graph": "dir",
+   "proc": "graph_util.descendants",
+   "args": [
+    {
+     "node": 0
+    }
+   ],
+   "config": {},
+   "kinds": [
+    "visit"
+   ],
+   "want": [
+    "visit: 1 from 0",
+    "visit: 2 from 0",
+    "visit: 3 from 1",
+    "visit: 4 from 1",
+    "visit: 5 from 4"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "008 ancestors": {
+   "graph": "dir",
+   "proc": "graph_util.ancestors",
+   "args": [
+    {
+     "node": 3
+    }
+   ],
+   "config": {},
+   "kinds": [
+    "visit"
+   ],
+   "want": [
+    "visit: 1 from 3",
+    "visit: 2 from 3",
+    "visit: 5 from 3",
+    "visit: 0 from 1",
+    "visit: 4 from 5",
+    "visit: 6 from 0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "011": {
+   "graph": "dir",
+   "proc": "gds.dominatorsSimpleFast.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    }
+   },
+   "kinds": [
+    "idom",
+    "frontier"
+   ],
+   "want": [
+    "idom: 1 0",
+    "idom: 2 0",
+    "idom: 3 0",
+    "idom: 4 0",
+    "idom: 5 4",
+    "frontier: 2 gets 1",
+    "frontier: 2 gets 2",
+    "frontier: 1 gets 3",
+    "frontier: 2 gets 3",
+    "frontier: 5 gets 3",
+    "frontier: 4 gets 3",
+    "frontier: 1 gets 4",
+    "frontier: 3 gets 4"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "011 und": {
+   "graph": "und",
+   "proc": "gds.dominatorsSimpleFast.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    }
+   },
+   "kinds": [
+    "idom",
+    "frontier"
+   ],
+   "want": [
+    "idom: 1 0",
+    "idom: 2 1",
+    "idom: 3 1",
+    "idom: 4 3",
+    "frontier: 1 gets 0",
+    "frontier: 0 gets 0",
+    "frontier: 2 gets 0",
+    "frontier: 1 gets 0",
+    "frontier: 0 gets 0",
+    "frontier: 4 gets 2",
+    "frontier: 3 gets 2",
+    "frontier: 2 gets 3",
+    "frontier: 4 gets 4"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "013 source": {
+   "graph": "dir",
+   "proc": "gds.unweightedShortestPaths.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    }
+   },
+   "kinds": [
+    "visit"
+   ],
+   "want": [
+    "visit: 1 from 0",
+    "visit: 2 from 0",
+    "visit: 3 from 1",
+    "visit: 4 from 1",
+    "visit: 5 from 4"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "013 target": {
+   "graph": "dir",
+   "proc": "gds.unweightedShortestPaths.stream",
+   "args": [],
+   "config": {
+    "targetNode": {
+     "node": 5
+    }
+   },
+   "kinds": [
+    "visit"
+   ],
+   "want": [
+    "visit: 4 from 5",
+    "visit: 1 from 4",
+    "visit: 3 from 4",
+    "visit: 0 from 1",
+    "visit: 2 from 1",
+    "visit: 6 from 0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "013 pair": {
+   "graph": "dir",
+   "proc": "gds.unweightedShortestPaths.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNode": {
+     "node": 5
+    }
+   },
+   "kinds": [
+    "visit"
+   ],
+   "want": [
+    "visit: 1 from 0",
+    "visit: 2 from 0",
+    "visit: 3 from 1",
+    "visit: 4 from 1",
+    "visit: 5 from 4"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "014 pair": {
+   "graph": "dir",
+   "proc": "gds.shortestPath.dijkstra.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNode": {
+     "node": 5
+    },
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "pop",
+    "relax"
+   ],
+   "want": [
+    "pop: 0 0.0",
+    "relax: 1 4.0 0 7",
+    "relax: 2 1.0 0 8",
+    "pop: 2 1.0",
+    "relax: 1 3.0 2 9",
+    "relax: 3 6.0 2 11",
+    "pop: 1 3.0",
+    "relax: 3 4.0 1 10",
+    "relax: 4 10.0 1 13",
+    "pop: 3 4.0",
+    "relax: 4 7.0 3 12",
+    "pop: 4 7.0",
+    "relax: 5 8.0 4 14",
+    "pop: 5 8.0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "014 all": {
+   "graph": "dir",
+   "proc": "gds.allShortestPaths.dijkstra.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "pop",
+    "relax"
+   ],
+   "want": [
+    "pop: 0 0.0",
+    "relax: 1 4.0 0 7",
+    "relax: 2 1.0 0 8",
+    "pop: 2 1.0",
+    "relax: 1 3.0 2 9",
+    "relax: 3 6.0 2 11",
+    "pop: 1 3.0",
+    "relax: 3 4.0 1 10",
+    "relax: 4 10.0 1 13",
+    "pop: 3 4.0",
+    "relax: 4 7.0 3 12",
+    "pop: 4 7.0",
+    "relax: 5 8.0 4 14",
+    "pop: 5 8.0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "014 reverse": {
+   "graph": "dir",
+   "proc": "gds.allShortestPaths.dijkstra.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 5
+    },
+    "relationshipWeightProperty": "weight",
+    "orientation": "REVERSE"
+   },
+   "kinds": [
+    "pop",
+    "relax"
+   ],
+   "want": [
+    "pop: 5 0.0",
+    "relax: 4 1.0 5 14",
+    "pop: 4 1.0",
+    "relax: 1 8.0 4 13",
+    "relax: 3 4.0 4 12",
+    "pop: 3 4.0",
+    "relax: 1 5.0 3 10",
+    "relax: 2 9.0 3 11",
+    "pop: 1 5.0",
+    "relax: 0 9.0 1 7",
+    "relax: 2 7.0 1 9",
+    "pop: 2 7.0",
+    "relax: 0 8.0 2 8",
+    "pop: 0 8.0",
+    "relax: 6 9.0 0 18",
+    "pop: 6 9.0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "015": {
+   "graph": "dir",
+   "proc": "gds.bidirectionalDijkstra.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNode": {
+     "node": 5
+    },
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "pop",
+    "best",
+    "stop"
+   ],
+   "want": [
+    "pop: 0 0.0 5 0.0",
+    "pop: 2 1.0 4 1.0",
+    "pop: 1 3.0 3 4.0",
+    "best: 8.0 1 3",
+    "pop: 1 3.0 1 5.0",
+    "stop: 8.0 >= 8.0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "019 neg": {
+   "graph": "neg",
+   "proc": "gds.bellmanFord.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "round",
+    "stop"
+   ],
+   "want": [
+    "round: 1 [0.0, 4.0, 2.0, inf, inf, inf]",
+    "round: 2 [0.0, -1.0, 2.0, 6.0, inf, inf]",
+    "round: 3 [0.0, -1.0, 2.0, 1.0, 5.0, inf]",
+    "round: 4 [0.0, -1.0, 2.0, 1.0, 0.0, inf]",
+    "round: 5 [0.0, -1.0, 2.0, 1.0, 0.0, inf]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "019 negcyc": {
+   "graph": "negcyc",
+   "proc": "gds.bellmanFord.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "round",
+    "stop"
+   ],
+   "want": [
+    "round: 1 [0.0, 4.0, 2.0, inf, inf, inf]",
+    "round: 2 [0.0, -1.0, 2.0, 6.0, inf, inf]",
+    "round: 3 [0.0, -1.0, 2.0, 1.0, 5.0, inf]",
+    "round: 4 [0.0, -1.0, 2.0, 1.0, 0.0, inf]",
+    "round: 5 [0.0, -1.0, -2.0, 1.0, 0.0, inf]",
+    "round: 6 [0.0, -5.0, -2.0, 1.0, 0.0, inf]",
+    "stop: changing [1]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "019 dir": {
+   "graph": "dir",
+   "proc": "gds.bellmanFord.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "round",
+    "stop"
+   ],
+   "want": [
+    "round: 1 [0.0, 4.0, 1.0, inf, inf, inf, inf]",
+    "round: 2 [0.0, 3.0, 1.0, 5.0, 11.0, inf, inf]",
+    "round: 3 [0.0, 3.0, 1.0, 4.0, 8.0, 12.0, inf]",
+    "round: 4 [0.0, 3.0, 1.0, 4.0, 7.0, 9.0, inf]",
+    "round: 5 [0.0, 3.0, 1.0, 4.0, 7.0, 8.0, inf]",
+    "round: 6 [0.0, 3.0, 1.0, 4.0, 7.0, 8.0, inf]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "023 delta 2.0": {
+   "graph": "dir",
+   "proc": "gds.allShortestPaths.delta.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "delta": 2.0,
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "light",
+    "heavy",
+    "relax"
+   ],
+   "want": [
+    "light: 0 [0]",
+    "relax: 2 1.0 0",
+    "light: 0 [2]",
+    "relax: 1 3.0 2",
+    "heavy: 0 [0, 2]",
+    "relax: 3 6.0 2",
+    "light: 1 [1]",
+    "relax: 3 4.0 1",
+    "heavy: 1 [1]",
+    "relax: 4 10.0 1",
+    "light: 2 [3]",
+    "heavy: 2 [3]",
+    "relax: 4 7.0 3",
+    "light: 3 [4]",
+    "relax: 5 8.0 4",
+    "heavy: 3 [4]",
+    "light: 4 [5]",
+    "heavy: 4 [5]",
+    "heavy: 5 []"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "023 delta 3.0": {
+   "graph": "dir",
+   "proc": "gds.allShortestPaths.delta.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "delta": 3.0,
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "light",
+    "heavy",
+    "relax"
+   ],
+   "want": [
+    "light: 0 [0]",
+    "relax: 2 1.0 0",
+    "light: 0 [2]",
+    "relax: 1 3.0 2",
+    "heavy: 0 [0, 2]",
+    "relax: 3 6.0 2",
+    "light: 1 [1]",
+    "relax: 3 4.0 1",
+    "light: 1 [3]",
+    "relax: 4 7.0 3",
+    "heavy: 1 [1, 3]",
+    "light: 2 [4]",
+    "relax: 5 8.0 4",
+    "light: 2 [5]",
+    "heavy: 2 [4, 5]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "024": {
+   "graph": "neg",
+   "proc": "gds.johnson.stream",
+   "args": [],
+   "config": {
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "round",
+    "potential",
+    "source"
+   ],
+   "want": [
+    "round: 1 [0.0, -3.0, 0.0, 0.0, -1.0, 0.0]",
+    "round: 2 [0.0, -3.0, 0.0, -1.0, -1.0, 0.0]",
+    "round: 3 [0.0, -3.0, 0.0, -1.0, -2.0, 0.0]",
+    "round: 4 [0.0, -3.0, 0.0, -1.0, -2.0, 0.0]",
+    "potential: [0.0, -3.0, 0.0, -1.0, -2.0, 0.0]",
+    "source: 0 [0.0, -1.0, 2.0, 1.0, 0.0, inf]",
+    "source: 1 [inf, 0.0, 4.0, 2.0, 1.0, inf]",
+    "source: 2 [inf, -3.0, 0.0, -1.0, -2.0, inf]",
+    "source: 3 [inf, -1.0, 2.0, 0.0, -1.0, inf]",
+    "source: 4 [inf, 0.0, 3.0, 2.0, 0.0, inf]",
+    "source: 5 [1.0, 0.0, 3.0, 2.0, 1.0, 0.0]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "026 und": {
+   "graph": "und",
+   "proc": "gds.seidel.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "component",
+    "apd"
+   ],
+   "want": [
+    "component: [0, 1, 2, 3, 4]",
+    "apd: complete",
+    "apd: [[0, 1, 1, 2, 2], [1, 0, 1, 1, 2], [1, 1, 0, 1, 1], [2, 1, 1, 0, 1], [2, 2, 1, 1, 0]]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "026 bip": {
+   "graph": "bip",
+   "proc": "gds.seidel.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "component",
+    "apd"
+   ],
+   "want": [
+    "component: [0, 1, 2, 3]",
+    "apd: complete",
+    "apd: [[0, 1, 2, 1], [1, 0, 1, 2], [2, 1, 0, 1], [1, 2, 1, 0]]",
+    "component: [4, 5]",
+    "apd: complete"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "027 weighted": {
+   "graph": "dir",
+   "proc": "gds.allShortestPaths.stream",
+   "args": [],
+   "config": {
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "source"
+   ],
+   "want": [
+    "source: 0 [0.0, 3.0, 1.0, 4.0, 7.0, 8.0, inf]",
+    "source: 1 [inf, 0.0, inf, 1.0, 4.0, 5.0, inf]",
+    "source: 2 [inf, 2.0, 0.0, 3.0, 6.0, 7.0, inf]",
+    "source: 3 [inf, inf, inf, 0.0, 3.0, 4.0, inf]",
+    "source: 4 [inf, inf, inf, 3.0, 0.0, 1.0, inf]",
+    "source: 5 [inf, inf, inf, 2.0, 5.0, 0.0, inf]",
+    "source: 6 [1.0, 4.0, 2.0, 5.0, 8.0, 9.0, 0.0]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "027 unweighted": {
+   "graph": "dir",
+   "proc": "gds.allShortestPaths.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "source"
+   ],
+   "want": [
+    "source: 0 [0.0, 1.0, 1.0, 2.0, 2.0, 3.0, inf]",
+    "source: 1 [inf, 0.0, inf, 1.0, 1.0, 2.0, inf]",
+    "source: 2 [inf, 1.0, 0.0, 1.0, 2.0, 3.0, inf]",
+    "source: 3 [inf, inf, inf, 0.0, 1.0, 2.0, inf]",
+    "source: 4 [inf, inf, inf, 2.0, 0.0, 1.0, inf]",
+    "source: 5 [inf, inf, inf, 1.0, 2.0, 0.0, inf]",
+    "source: 6 [1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 0.0]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "028 unweighted": {
+   "graph": "und",
+   "proc": "gds.allShortestPathsBetweenNodes.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNode": {
+     "node": 4
+    }
+   },
+   "kinds": [
+    "preds",
+    "path"
+   ],
+   "want": [
+    "preds: 4 [3]",
+    "preds: 3 [1]",
+    "preds: 1 [0]",
+    "path: [0, 1, 3, 4]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "028 weighted": {
+   "graph": "dir",
+   "proc": "gds.allShortestPathsBetweenNodes.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNode": {
+     "node": 5
+    },
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "preds",
+    "path"
+   ],
+   "want": [
+    "preds: 5 [4]",
+    "preds: 4 [3]",
+    "preds: 3 [1]",
+    "preds: 1 [2]",
+    "preds: 2 [0]",
+    "path: [0, 2, 1, 3, 4, 5]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "029": {
+   "graph": "dir",
+   "proc": "gds.shortestPath.yens.stream",
+   "args": [],
+   "config": {
+    "sourceNode": {
+     "node": 0
+    },
+    "targetNode": {
+     "node": 5
+    },
+    "k": 5,
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "round",
+    "candidate",
+    "accept"
+   ],
+   "want": [
+    "round: 0 spurs 0..5",
+    "candidate: 9.0 [0, 1, 3, 4, 5] 0",
+    "candidate: 10.0 [0, 2, 3, 4, 5] 1",
+    "candidate: 11.0 [0, 2, 1, 4, 5] 2",
+    "accept: 9.0 [0, 1, 3, 4, 5]",
+    "round: 1 spurs 0..4",
+    "candidate: 10.0 [0, 2, 1, 3, 4, 5] 0",
+    "candidate: 12.0 [0, 1, 4, 5] 1",
+    "accept: 10.0 [0, 2, 3, 4, 5]",
+    "accept: 10.0 [0, 2, 1, 3, 4, 5]",
+    "round: 2 spurs 1..4",
+    "accept: 11.0 [0, 2, 1, 4, 5]"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "031 []": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 6, 2, 5, 1]",
+    "enter: [0, 6, 2, 5, 1, 7, 3]",
+    "emit: ",
+    "enter: [0, 6, 2, 5, 1, 8, 3]",
+    "emit: ",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 7, 3]",
+    "emit: ",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: ",
+    "enter: [0, 4, 1, 5, 2]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 10, 2, 5, 1]",
+    "enter: [0, 10, 2, 5, 1, 7, 3]",
+    "emit: ",
+    "enter: [0, 10, 2, 5, 1, 8, 3]",
+    "emit: ",
+    "enter: [0, 9, 3]",
+    "emit: "
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['A>']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     "A>"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: ",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['<B']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     "<B"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['A']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     "A"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: ",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['<A>']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     "<A>"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 10, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['A>', '<B']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     "A>",
+     "<B"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 7, 3]",
+    "emit: ",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: ",
+    "enter: [0, 10, 2]",
+    "enter: [0, 10, 2, 5, 1]",
+    "enter: [0, 10, 2, 5, 1, 7, 3]",
+    "emit: ",
+    "enter: [0, 10, 2, 5, 1, 8, 3]",
+    "emit: "
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['<']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     "<"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 6, 2]",
+    "enter: [0, 6, 2, 5, 1]",
+    "enter: [0, 6, 2, 5, 1, 7, 3]",
+    "emit: "
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['>']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     ">"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 4, 1]",
+    "enter: [0, 4, 1, 8, 3]",
+    "emit: ",
+    "enter: [0, 4, 1, 5, 2]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 9, 3]",
+    "emit: "
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "031 ['B', '<A>']": {
+   "graph": "typed",
+   "proc": "algo.all_simple_paths",
+   "args": [
+    {
+     "node": 0
+    },
+    {
+     "node": 3
+    },
+    [
+     "B",
+     "<A>"
+    ],
+    4
+   ],
+   "config": {},
+   "kinds": [
+    "enter",
+    "emit"
+   ],
+   "want": [
+    "enter: [0]",
+    "enter: [0, 10, 2]",
+    "enter: [0, 10, 2, 5, 1]",
+    "enter: [0, 10, 2, 5, 1, 7, 3]",
+    "emit: ",
+    "enter: [0, 9, 3]",
+    "emit: "
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "032": {
+   "graph": "dag",
+   "proc": "gds.dag.longestPath.stream",
+   "args": [],
+   "config": {
+    "relationshipWeightProperty": "weight"
+   },
+   "kinds": [
+    "level",
+    "settle"
+   ],
+   "want": [
+    "level: 0 [0, 5]",
+    "level: 1 [1, 2]",
+    "level: 2 [3]",
+    "level: 3 [4]",
+    "settle: 0 0.0 -1",
+    "settle: 5 0.0 -1",
+    "settle: 1 3.0 0",
+    "settle: 2 1.0 0",
+    "settle: 3 5.0 1",
+    "settle: 4 8.0 1"
+   ],
+   "concurrency": [
+    1,
+    16
+   ]
+  },
+  "180": {
+   "graph": "und",
+   "proc": "cycles.get",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "tree",
+    "nontree",
+    "fundamental",
+    "cycle"
+   ],
+   "want": [
+    "tree: 0 1",
+    "tree: 1 2",
+    "nontree: 2 0",
+    "tree: 2 3",
+    "tree: 3 4",
+    "nontree: 4 2",
+    "nontree: 4 4",
+    "nontree: 3 1",
+    "nontree: 2 4",
+    "nontree: 1 3",
+    "nontree: 0 2",
+    "fundamental: [[2, 1, 0, 2], [3, 2, 1, 3], [4, 3, 2, 4], [4, 4]]",
+    "cycle: 1 [0, 1, 2]",
+    "cycle: 2 [1, 2, 3]",
+    "cycle: 3 [0, 1, 3, 2]",
+    "cycle: 4 [2, 3, 4]",
+    "cycle: 6 [1, 2, 4, 3]",
+    "cycle: 7 [0, 1, 3, 4, 2]",
+    "cycle: pair 0 1",
+    "cycle: pair 4 4"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "180 bip": {
+   "graph": "bip",
+   "proc": "cycles.get",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "tree",
+    "nontree",
+    "fundamental",
+    "cycle"
+   ],
+   "want": [
+    "tree: 0 1",
+    "tree: 1 2",
+    "tree: 2 3",
+    "nontree: 3 0",
+    "nontree: 0 3",
+    "fundamental: [[3, 2, 1, 0, 3]]",
+    "cycle: 1 [0, 1, 2, 3]",
+    "tree: 4 5",
+    "fundamental: []"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "181": {
+   "graph": "dir",
+   "proc": "gds.elementaryCircuits.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "search",
+    "unblock",
+    "circuit"
+   ],
+   "want": [
+    "search: 0",
+    "search: 2",
+    "search: 3",
+    "search: 4",
+    "search: 5",
+    "unblock: 5",
+    "unblock: 4",
+    "unblock: 3",
+    "search: 1",
+    "search: 4",
+    "search: 5",
+    "search: 3",
+    "unblock: 3",
+    "unblock: 5",
+    "unblock: 4",
+    "search: 3",
+    "search: 4",
+    "search: 5",
+    "unblock: 5",
+    "unblock: 4",
+    "unblock: 3",
+    "unblock: 1",
+    "unblock: 2",
+    "search: 1",
+    "search: 4",
+    "search: 5",
+    "search: 3",
+    "unblock: 3",
+    "unblock: 5",
+    "unblock: 4",
+    "search: 3",
+    "search: 4",
+    "search: 5",
+    "unblock: 5",
+    "unblock: 4",
+    "unblock: 3",
+    "unblock: 1",
+    "unblock: 0",
+    "search: 1",
+    "search: 4",
+    "search: 5",
+    "search: 3",
+    "unblock: 3",
+    "unblock: 5",
+    "unblock: 4",
+    "search: 3",
+    "search: 4",
+    "search: 5",
+    "unblock: 5",
+    "unblock: 4",
+    "unblock: 3",
+    "unblock: 1",
+    "search: 2",
+    "circuit: [2]",
+    "search: 3",
+    "search: 4",
+    "search: 5",
+    "unblock: 5",
+    "unblock: 4",
+    "unblock: 3",
+    "unblock: 2",
+    "search: 3",
+    "search: 4",
+    "search: 5",
+    "circuit: [3, 4, 5]",
+    "unblock: 5",
+    "unblock: 4",
+    "unblock: 3",
+    "search: 4",
+    "search: 5",
+    "unblock: 5",
+    "unblock: 4",
+    "search: 5",
+    "unblock: 5",
+    "search: 6",
+    "unblock: 6"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "181 und": {
+   "graph": "und",
+   "proc": "gds.elementaryCircuits.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "search",
+    "unblock",
+    "circuit"
+   ],
+   "want": [
+    "search: 0",
+    "search: 1",
+    "circuit: [0, 1]",
+    "search: 3",
+    "search: 4",
+    "search: 2",
+    "circuit: [0, 1, 3, 4, 2]",
+    "unblock: 2",
+    "unblock: 4",
+    "unblock: 3",
+    "search: 2",
+    "circuit: [0, 1, 2]",
+    "search: 3",
+    "search: 4",
+    "unblock: 4",
+    "unblock: 3",
+    "unblock: 2",
+    "unblock: 1",
+    "unblock: 0",
+    "search: 1",
+    "search: 3",
+    "search: 4",
+    "search: 2",
+    "unblock: 2",
+    "unblock: 4",
+    "unblock: 3",
+    "search: 2",
+    "search: 3",
+    "search: 4",
+    "unblock: 4",
+    "unblock: 3",
+    "unblock: 2",
+    "unblock: 1",
+    "search: 2",
+    "search: 3",
+    "search: 4",
+    "circuit: [2, 3, 4]",
+    "unblock: 4",
+    "unblock: 3",
+    "unblock: 2",
+    "search: 3",
+    "search: 4",
+    "unblock: 4",
+    "unblock: 3",
+    "search: 4",
+    "circuit: [4]",
+    "unblock: 4"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "194 bip": {
+   "graph": "bip",
+   "proc": "gds.isBipartiteUndirected.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "colour",
+    "conflict"
+   ],
+   "want": [
+    "colour: 0 1",
+    "colour: 1 0",
+    "colour: 3 0",
+    "colour: 2 1",
+    "colour: 4 1",
+    "colour: 5 0"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "194 und": {
+   "graph": "und",
+   "proc": "gds.isBipartiteUndirected.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "colour",
+    "conflict"
+   ],
+   "want": [
+    "colour: 0 1",
+    "colour: 1 0",
+    "colour: 2 0",
+    "colour: 3 1",
+    "conflict: 2 1"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "204 [3, 3, 2, 2, 1, 1]": {
+   "graph": "bip",
+   "proc": "gds.isDegreeSequenceGraphlike.stream",
+   "args": [],
+   "config": {
+    "degreeSequence": [
+     3,
+     3,
+     2,
+     2,
+     1,
+     1
+    ]
+   },
+   "kinds": [
+    "pop"
+   ],
+   "want": [
+    "pop: 3 5",
+    "pop: 2 4",
+    "pop: 1 1"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "204 [3, 3, 3, 1]": {
+   "graph": "bip",
+   "proc": "gds.isDegreeSequenceGraphlike.stream",
+   "args": [],
+   "config": {
+    "degreeSequence": [
+     3,
+     3,
+     3,
+     1
+    ]
+   },
+   "kinds": [
+    "pop"
+   ],
+   "want": [
+    "pop: 3 3",
+    "pop: 2 1"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "204 [4, 1, 1, 1, 1]": {
+   "graph": "bip",
+   "proc": "gds.isDegreeSequenceGraphlike.stream",
+   "args": [],
+   "config": {
+    "degreeSequence": [
+     4,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   "kinds": [
+    "pop"
+   ],
+   "want": [
+    "pop: 4 4"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "204 [2, 2, 2]": {
+   "graph": "bip",
+   "proc": "gds.isDegreeSequenceGraphlike.stream",
+   "args": [],
+   "config": {
+    "degreeSequence": [
+     2,
+     2,
+     2
+    ]
+   },
+   "kinds": [
+    "pop"
+   ],
+   "want": [
+    "pop: 2 2",
+    "pop: 1 1"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "204 [5, 1, 1]": {
+   "graph": "bip",
+   "proc": "gds.isDegreeSequenceGraphlike.stream",
+   "args": [],
+   "config": {
+    "degreeSequence": [
+     5,
+     1,
+     1
+    ]
+   },
+   "kinds": [
+    "pop"
+   ],
+   "want": [],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "205": {
+   "graph": "dag",
+   "proc": "gds.transitiveClosure.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "level",
+    "order"
+   ],
+   "want": [
+    "level: 0 [0, 5]",
+    "level: 1 [1, 2]",
+    "level: 2 [3]",
+    "level: 3 [4]",
+    "order: [0, 5, 1, 2, 3, 4]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     0,
+     3
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     1,
+     3
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     2,
+     4
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     5,
+     4
+    ]
+   ]
+  },
+  "187": {
+   "graph": "geo",
+   "proc": "tsp.solve",
+   "args": [
+    [
+     {
+      "node": 0
+     },
+     {
+      "node": 1
+     },
+     {
+      "node": 2
+     },
+     {
+      "node": 3
+     },
+     {
+      "node": 4
+     },
+     {
+      "node": 5
+     }
+    ],
+    "1.5_approx"
+   ],
+   "config": {},
+   "kinds": [
+    "mst",
+    "odd",
+    "matching"
+   ],
+   "want": [
+    "mst: [(1, 5), (1, 3), (0, 4), (2, 4), (0, 3)]",
+    "odd: [2, 5]",
+    "matching: [(2, 5)]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "188 vehicles 1": {
+   "graph": "geo",
+   "proc": "vrp.route",
+   "args": [
+    {
+     "node": 0
+    },
+    1
+   ],
+   "config": {},
+   "kinds": [
+    "savings",
+    "merge",
+    "move"
+   ],
+   "want": [
+    "savings: [(1, 5), (3, 5), (1, 3), (2, 4), (3, 4), (4, 5), (1, 4), (2, 3), (2, 5), (1, 2)]",
+    "merge: 0 1 5 [1, 5]",
+    "merge: 0 3 5 [3, 5, 1]",
+    "merge: 0 2 4 [2, 4]",
+    "merge: 0 3 4 [1, 5, 3, 4, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "188 vehicles 2": {
+   "graph": "geo",
+   "proc": "vrp.route",
+   "args": [
+    {
+     "node": 0
+    },
+    2
+   ],
+   "config": {},
+   "kinds": [
+    "savings",
+    "merge",
+    "move"
+   ],
+   "want": [
+    "savings: [(1, 5), (3, 5), (1, 3), (2, 4), (3, 4), (4, 5), (1, 4), (2, 3), (2, 5), (1, 2)]",
+    "merge: 0 1 5 [1, 5]",
+    "merge: 0 3 5 [3, 5, 1]",
+    "merge: 0 2 4 [2, 4]",
+    "merge: 0 3 4 [1, 5, 3, 4, 2]"
+   ],
+   "concurrency": [
+    1
+   ]
+  },
+  "206": {
+   "graph": "dag",
+   "proc": "gds.transitiveReduction.stream",
+   "args": [],
+   "config": {},
+   "kinds": [
+    "level",
+    "order"
+   ],
+   "want": [
+    "level: 0 [0, 5]",
+    "level: 1 [1, 2]",
+    "level: 2 [3]",
+    "level: 3 [4]",
+    "order: [0, 5, 1, 2, 3, 4]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     0,
+     1,
+     6
+    ],
+    [
+     0,
+     2,
+     7
+    ],
+    [
+     1,
+     3,
+     8
+    ],
+    [
+     2,
+     3,
+     9
+    ],
+    [
+     3,
+     4,
+     10
+    ],
+    [
+     5,
+     4,
+     13
+    ]
+   ]
+  },
+  "isIsomorphic P-Q NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "Q"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 2), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (0, 2, 2), (1, 3, 1), (2, 1, 1), (3, 0, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph P-Q NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "Q"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 2), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (0, 2, 2), (1, 3, 1), (2, 1, 1), (3, 0, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "isIsomorphic P-Q UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "Q"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 2), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (0, 2, 2), (0, 3, 1), (1, 2, 1), (1, 3, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph P-Q UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "Q"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 2), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (0, 2, 2), (0, 3, 1), (1, 2, 1), (1, 3, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "isIsomorphic P-U NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "U"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 2), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph P-U NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "U"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 2), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphic P-U UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "U"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 2), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph P-U UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "U"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 2), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphic P-S NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 2), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph P-S NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 2), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "isIsomorphic P-S UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 2), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph P-S UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "P"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 2), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "isIsomorphic U-S NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "U"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 1), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph U-S NATURAL": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "U"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "NATURAL"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: false [(0, 1, 1), (0, 2, 1), (1, 2, 1), (2, 3, 1), (3, 0, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "isIsomorphic U-S UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphic.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "U"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 1), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false
+    ]
+   ]
+  },
+  "isIsomorphicSubgraph U-S UNDIRECTED": {
+   "graph": "iso",
+   "proc": "gds.isIsomorphicSubgraph.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "U"
+    ],
+    "otherNodeLabels": [
+     "S"
+    ],
+    "otherRelationshipTypes": [
+     "*"
+    ],
+    "orientation": "UNDIRECTED"
+   },
+   "kinds": [
+    "counted"
+   ],
+   "want": [
+    "counted: true [(0, 1, 1), (0, 2, 1), (0, 3, 1), (1, 2, 1), (2, 3, 1)] [(0, 1, 1), (1, 2, 1)]"
+   ],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true
+    ]
+   ]
+  },
+  "203 T": {
+   "graph": "tour",
+   "proc": "gds.isTournament.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "T"
+    ]
+   },
+   "kinds": [],
+   "want": [],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true,
+     true
+    ]
+   ]
+  },
+  "203 C": {
+   "graph": "tour",
+   "proc": "gds.isTournament.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "C"
+    ]
+   },
+   "kinds": [],
+   "want": [],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     true,
+     false
+    ]
+   ]
+  },
+  "203 X": {
+   "graph": "tour",
+   "proc": "gds.isTournament.stream",
+   "args": [],
+   "config": {
+    "nodeLabels": [
+     "X"
+    ]
+   },
+   "kinds": [],
+   "want": [],
+   "concurrency": [
+    1
+   ],
+   "rows": [
+    [
+     false,
+     false
+    ]
+   ]
+  }
+ },
+ "fixtures": {
+  "zipf60.gds.bfs.jsonl": {
+   "fixture": "zipf60",
+   "proc": "gds.bfs.stream",
+   "source": 1,
+   "maxDepth": null,
+   "targets": [],
+   "lpg": [
+    1,
+    51,
+    16,
+    17,
+    24,
+    25,
+    26,
+    49,
+    58,
+    29,
+    38,
+    48,
+    56,
+    14,
+    19,
+    23,
+    31,
+    34,
+    42,
+    7,
+    9,
+    15,
+    21,
+    22,
+    28,
+    30,
+    35,
+    4,
+    46,
+    47,
+    5,
+    50,
+    52,
+    53,
+    12,
+    36,
+    43,
+    55,
+    57,
+    0,
+    45,
+    37,
+    39,
+    20,
+    41,
+    54,
+    8
+   ],
+   "gds_equal": false
+  },
+  "zipf60.gds.bfs.depth2.jsonl": {
+   "fixture": "zipf60",
+   "proc": "gds.bfs.stream",
+   "source": 1,
+   "maxDepth": 2,
+   "targets": [],
+   "lpg": [
+    1,
+    51,
+    16,
+    17,
+    24,
+    25,
+    26,
+    49,
+    58
+   ],
+   "gds_equal": true
+  },
+  "zipf60.gds.bfs.target.jsonl": {
+   "fixture": "zipf60",
+   "proc": "gds.bfs.stream",
+   "source": 1,
+   "maxDepth": null,
+   "targets": [
+    8
+   ],
+   "lpg": [
+    1,
+    51,
+    16,
+    17,
+    24,
+    25,
+    26,
+    49,
+    58,
+    29,
+    38,
+    48,
+    56,
+    14,
+    19,
+    23,
+    31,
+    34,
+    42,
+    7,
+    9,
+    15,
+    21,
+    22,
+    28,
+    30,
+    35,
+    4,
+    46,
+    47,
+    5,
+    50,
+    52,
+    53,
+    12,
+    36,
+    43,
+    55,
+    57,
+    0,
+    45,
+    37,
+    39,
+    20,
+    41,
+    54,
+    8
+   ],
+   "gds_equal": false
+  },
+  "uniform60.gds.bfs.jsonl": {
+   "fixture": "uniform60",
+   "proc": "gds.bfs.stream",
+   "source": 14,
+   "maxDepth": null,
+   "targets": [],
+   "lpg": [
+    14,
+    28,
+    32,
+    35,
+    46,
+    1,
+    16,
+    3,
+    34,
+    8,
+    45,
+    56,
+    58,
+    11,
+    55,
+    10,
+    24,
+    38,
+    50,
+    0,
+    53,
+    7,
+    19,
+    21,
+    48,
+    27,
+    41,
+    17,
+    36,
+    37,
+    5,
+    51,
+    31,
+    54,
+    18,
+    40,
+    59,
+    29,
+    4,
+    23,
+    39,
+    42,
+    44,
+    33,
+    6,
+    22,
+    57,
+    2,
+    47,
+    13,
+    26,
+    30,
+    52,
+    20,
+    49,
+    12,
+    15,
+    43
+   ],
+   "gds_equal": false
+  },
+  "zipf60.gds.dfs.jsonl": {
+   "fixture": "zipf60",
+   "proc": "gds.dfs.stream",
+   "source": 1,
+   "maxDepth": null,
+   "targets": [],
+   "lpg": [
+    1,
+    51,
+    58,
+    31,
+    48,
+    35,
+    4,
+    52,
+    29,
+    38,
+    28,
+    22,
+    47,
+    30,
+    39,
+    14,
+    0,
+    56,
+    34,
+    42,
+    49,
+    57,
+    43,
+    26,
+    55,
+    36,
+    45,
+    19,
+    12,
+    25,
+    53,
+    50,
+    41,
+    8,
+    5,
+    20,
+    46,
+    23,
+    9,
+    21,
+    37,
+    54,
+    15,
+    7,
+    24,
+    17,
+    16
+   ],
+   "gds_equal": false
+  },
+  "zipf60.gds.dfs.target.jsonl": {
+   "fixture": "zipf60",
+   "proc": "gds.dfs.stream",
+   "source": 1,
+   "maxDepth": null,
+   "targets": [
+    8
+   ],
+   "lpg": [
+    1,
+    51,
+    58,
+    31,
+    48,
+    35,
+    4,
+    52,
+    29,
+    38,
+    28,
+    22,
+    47,
+    30,
+    39,
+    14,
+    0,
+    56,
+    34,
+    42,
+    49,
+    57,
+    43,
+    26,
+    55,
+    36,
+    45,
+    19,
+    12,
+    25,
+    53,
+    50,
+    41,
+    8
+   ],
+   "gds_equal": true
+  },
+  "uniform60.gds.dfs.depth3.jsonl": {
+   "fixture": "uniform60",
+   "proc": "gds.dfs.stream",
+   "source": 14,
+   "maxDepth": 3,
+   "targets": [],
+   "lpg": [
+    14,
+    46,
+    35,
+    55,
+    8,
+    54,
+    48,
+    31,
+    34,
+    3,
+    16,
+    11,
+    51,
+    5,
+    37,
+    36,
+    17,
+    32,
+    58,
+    56,
+    53,
+    50,
+    41,
+    27,
+    45,
+    38,
+    28,
+    1,
+    24,
+    10
+   ],
+   "gds_equal": false
+  }
+ },
+ "two_opt": {
+  "dm": [
+   [
+    0.0,
+    111194.92664455874,
+    157249.38127194397,
+    111194.92664455874,
+    55597.46332227937,
+    124318.44499509814,
+    124318.44499509812
+   ],
+   [
+    111194.92664455874,
+    0.0,
+    111194.92664455874,
+    157249.38127194397,
+    55597.46332227937,
+    55597.46332227937,
+    124318.44499509812
+   ],
+   [
+    157249.38127194397,
+    111194.92664455874,
+    0.0,
+    111177.99068882648,
+    124318.44499509812,
+    55597.46332227937,
+    55588.99550559681
+   ],
+   [
+    111194.92664455874,
+    157249.38127194397,
+    111177.99068882648,
+    0.0,
+    124318.44499509812,
+    124310.87089006702,
+    55588.99550559681
+   ],
+   [
+    55597.46332227937,
+    55597.46332227937,
+    124318.44499509812,
+    124318.44499509812,
+    0.0,
+    78626.18767687456,
+    111194.92664455874
+   ],
+   [
+    124318.44499509814,
+    55597.46332227937,
+    55597.46332227937,
+    124310.87089006702,
+    78626.18767687456,
+    0.0,
+    78623.19385157603
+   ],
+   [
+    124318.44499509812,
+    124318.44499509812,
+    55588.99550559681,
+    55588.99550559681,
+    111194.92664455874,
+    78623.19385157603,
+    0.0
+   ]
+  ],
+  "route": [
+   2,
+   4,
+   6,
+   1,
+   3,
+   5
+  ],
+  "want": [
+   "move: 0 1 [4, 2, 6, 1, 3, 5]",
+   "move: 1 2 [4, 6, 2, 1, 3, 5]",
+   "move: 1 3 [4, 1, 2, 6, 3, 5]",
+   "move: 2 4 [4, 1, 3, 6, 2, 5]",
+   "move: 2 5 [4, 1, 5, 2, 6, 3]"
+  ]
+ }
+}

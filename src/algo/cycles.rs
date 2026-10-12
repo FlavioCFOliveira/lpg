@@ -144,9 +144,11 @@ fn spanning_tree<I: Ix>(
         }
         unique.insert(next);
         if visited[next] {
+            trace!("nontree", "{v} {next}");
             non_tree.insert((v.min(next), v.max(next)));
             continue;
         }
+        trace!("tree", "{v} {next}");
         parent[next] = v;
         depth[next] = depth[v] + 1;
         visited[next] = true;
@@ -233,6 +235,7 @@ fn cycles<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
             .iter()
             .filter_map(|(a, b)| fundamental(*a, *b, &parent, &depth))
             .collect();
+        trace!("fundamental", "{fundamentals:?}");
         if fundamentals.len() > 63 {
             return Err(invalid(
                 "a component has more than 63 fundamental cycles, too many to combine",
@@ -243,6 +246,7 @@ fn cycles<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
                 r.mem.check_now()?;
             }
             if let Some(c) = combine(mask, &fundamentals) {
+                trace!("cycle", "{mask} {c:?}");
                 r.mem.grow(c.len() * size_of::<usize>())?;
                 found.push(c);
             }
@@ -263,6 +267,7 @@ fn cycles<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
         // end, a self-loop twice.
         let edges = if a == b { c / 2 } else { c };
         if edges > 1 || a == b {
+            trace!("cycle", "pair {a} {b}");
             found.push(vec![a, b]);
         }
     }
@@ -306,6 +311,7 @@ fn circuits<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Err
         while let Some(task) = tasks.pop() {
             match task {
                 Task::Search(v) => {
+                    trace!("search", "{v}");
                     steps += 1;
                     if steps.is_multiple_of(4096) {
                         r.mem.check_now()?;
@@ -314,6 +320,7 @@ fn circuits<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Err
                     blocked[v] = true;
                     tasks.push(Task::Unblock(v));
                     if is_pred[v] {
+                        trace!("circuit", "{path:?}");
                         let mut closed = path.clone();
                         closed.push(s);
                         let (slots, _) = kernels::path_edges(p, false, &closed);
@@ -332,6 +339,7 @@ fn circuits<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Err
                     }
                 }
                 Task::Unblock(v) => {
+                    trace!("unblock", "{v}");
                     blocked[v] = false;
                     path.pop();
                 }
@@ -548,8 +556,11 @@ pub(crate) fn christofides(dm: &[Vec<f64>]) -> Vec<usize> {
         degree[*j] += 1;
     }
     let odd: Vec<usize> = (0..k).filter(|v| degree[*v] % 2 == 1).collect();
+    trace!("mst", "{tree:?}");
+    trace!("odd", "{odd:?}");
     let mut edges = tree.clone();
     edges.extend(min_matching(dm, &odd));
+    trace!("matching", "{:?}", &edges[tree.len()..]);
     // Hierholzer's circuit over the multigraph `edges`.
     let mut adj: Vec<Vec<(usize, usize)>> = vec![Vec::new(); k];
     for (e, (i, j)) in edges.iter().enumerate() {
@@ -575,6 +586,7 @@ pub(crate) fn christofides(dm: &[Vec<f64>]) -> Vec<usize> {
         }
     }
     circuit.reverse();
+    trace!("circuit", "{circuit:?}");
     // MAGE's `get_hamiltonian_circuit`: first visits, closed.
     let mut seen = vec![false; k];
     let mut path: Vec<usize> = circuit
@@ -644,6 +656,7 @@ pub(crate) fn two_opt(dm: &[Vec<f64>], route: &mut [usize]) {
                 let delta = dm[a][c] + dm[b][d] - dm[a][b] - dm[c][d];
                 if delta < -1e-9 {
                     route[i..=j].reverse();
+                    trace!("move", "{i} {j} {route:?}");
                     improved = true;
                 }
             }
@@ -667,6 +680,11 @@ pub(crate) fn savings(dm: &[Vec<f64>], vehicles: usize) -> Vec<Vec<usize>> {
         }
     }
     s.sort_by(|x, y| y.0.total_cmp(&x.0).then((x.1, x.2).cmp(&(y.1, y.2))));
+    trace!(
+        "savings",
+        "{:?}",
+        s.iter().map(|x| (x.1, x.2)).collect::<Vec<_>>()
+    );
     let mut count = k.saturating_sub(1);
     for pass in 0..2 {
         for &(saving, i, j) in &s {
@@ -699,6 +717,7 @@ pub(crate) fn savings(dm: &[Vec<f64>], vehicles: usize) -> Vec<Vec<usize>> {
                 b.reverse();
             }
             a.extend(b);
+            trace!("merge", "{pass} {i} {j} {a:?}");
             for v in &a {
                 of[*v] = ri;
             }

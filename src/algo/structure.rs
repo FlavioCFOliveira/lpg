@@ -180,6 +180,7 @@ fn vf2(r: &mut Run<'_, '_>, subgraph: bool) -> Result<Output, Error> {
         Any::Small(p) => (counted(p), p.node_count()),
         Any::Large(p) => (counted(p), p.node_count()),
     };
+    trace!("counted", "{undirected} {a:?} {b:?}");
     r.mem
         .grow((na + nb) * 64 + (a.len() + b.len()) * 48 + (na * na + nb * nb) / 8 + 64)?;
     let em = |x: &u32, y: &u32| x == y;
@@ -246,6 +247,7 @@ fn two_color<I: Ix>(p: &Projection<I>) -> Option<Vec<u8>> {
             continue;
         }
         let mut queue = vec![node];
+        trace!("colour", "{node} 1");
         colors[node] = Some(1);
         while let Some(v) = queue.pop() {
             let v_color = colors[v].expect("coloured");
@@ -253,9 +255,13 @@ fn two_color<I: Ix>(p: &Projection<I>) -> Option<Vec<u8>> {
             for (w, _) in p.out(v).chain(p.inc(v)) {
                 let w = w.index();
                 match colors[w] {
-                    Some(c) if c == v_color => return None,
+                    Some(c) if c == v_color => {
+                        trace!("conflict", "{v} {w}");
+                        return None;
+                    }
                     Some(_) => {}
                     None => {
+                        trace!("colour", "{w} {color}");
                         colors[w] = Some(color);
                         queue.push(w);
                     }
@@ -349,6 +355,7 @@ pub(crate) fn graphlike(degrees: &[usize]) -> bool {
     }
     let mut heap: BinaryHeap<usize> = degrees.iter().copied().filter(|d| *d > 0).collect();
     while let Some(d) = heap.pop() {
+        trace!("pop", "{d} {}", heap.len());
         if d > heap.len() {
             return false;
         }
@@ -413,6 +420,7 @@ fn closure_reduction<I: Ix>(
             list.add_edge(pre, ix, ());
         }
     }
+    trace!("order", "{order:?}");
     let (tred, tclos) = petgraph::algo::tred::dag_transitive_reduction_closure(&list);
     let picked = if closure { &tclos } else { &tred };
     let mut pairs: Vec<(usize, usize)> = Vec::new();

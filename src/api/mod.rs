@@ -73,7 +73,15 @@ pub(crate) async fn blocking<T: Send + 'static>(
     f: impl FnOnce() -> T + Send + 'static,
 ) -> Result<T, Error> {
     let d = tracing::dispatcher::get_default(Clone::clone);
-    tokio::task::spawn_blocking(move || tracing::dispatcher::with_default(&d, f))
-        .await
-        .map_err(|_| internal("a statement's thread panicked"))
+    // The algorithm trace of the caller's thread (rmp #71, test only):
+    // every pooled thread adopts the caller's, or none.
+    #[cfg(test)]
+    let sink = crate::algo::trace::current();
+    tokio::task::spawn_blocking(move || {
+        #[cfg(test)]
+        crate::algo::trace::adopt(sink);
+        tracing::dispatcher::with_default(&d, f)
+    })
+    .await
+    .map_err(|_| internal("a statement's thread panicked"))
 }

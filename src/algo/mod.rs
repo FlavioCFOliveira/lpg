@@ -46,6 +46,24 @@
 //!
 //! [TS-25]: ../../docs/technical-spec/algorithms.md
 
+/// Records an operation of an entry in the test trace ([`trace`]):
+/// `trace!(kind, format, args…)`. Under `cfg(test)` only; in normal and
+/// release builds it expands to nothing.
+#[cfg(test)]
+macro_rules! trace {
+    ($kind:expr, $($arg:tt)*) => {
+        if $crate::algo::trace::on() {
+            $crate::algo::trace::push($kind, &format!($($arg)*));
+        }
+    };
+}
+
+/// The release form of the trace macro: nothing.
+#[cfg(not(test))]
+macro_rules! trace {
+    ($($arg:tt)*) => {};
+}
+
 mod blossom;
 mod centrality;
 mod clustering;
@@ -80,6 +98,10 @@ mod tests_flow;
 mod tests_paths;
 #[cfg(test)]
 mod tests_structure;
+#[cfg(test)]
+mod tests_trace_a;
+#[cfg(test)]
+pub(crate) mod trace;
 mod traversal;
 mod trees;
 

@@ -667,3 +667,94 @@ Every stream entry: bit-equal rows at `concurrency` 1–16, twice each, and `CAL
 | `/tmp` | 2.5 G used | 2.5 G used | `/tmp/pcst_fast` clone (reference, 9.5 MB) kept; case files deleted |
 | `/tmp/lpgram` | empty | empty | every test removes its directory |
 | `/dev/shm/lpg-target` | 8.2 G | 5.4 G | the build in use; 7.6 G of stale `debug/incremental` and the `llvm-cov-target` deleted (the first coverage run hit the quota) |
+
+## #71 mechanical review
+
+Independent review of every entry's operation sequence against its reference execution (rmp #71), in three serial passes. Pass A: the 37 entries of #64 and #69, at `3f9e2b2` plus uncommitted changes, on 2026-10-12. Correctness only; no timing.
+
+### Trace infrastructure (shared by passes A, B and C)
+
+* **`trace!(kind, format, args…)`** (`src/algo/mod.rs`): under `cfg(test)` it appends the event `"kind: text"` to the recording of the current thread; in normal and release builds it expands to nothing. Evidence: in the `cargo build --release` artefact `liblpg.rlib`, the trace-only literals `nontree`, `unblock`, `fallback`, `potential`, `spurs `, `changing ` and the symbols `5trace4push`, `trace5adopt` occur 0 times; in the test binary each occurs at least once.
+* **`src/algo/trace.rs`** (`#[cfg(test)]` module): `Recording::start()` and `take()`. The sink follows the run onto the statement's blocking thread (`src/api/mod.rs` `blocking`, test-only lines) and onto the scheduler's workers (`src/algo/sched.rs` `workers`); an event emitted inside a block carries the block index, and `take()` sorts each run of block events by block, so the sequence is the block-ordered one at every `concurrency`. Per-round state is emitted from the coordinating thread after the merge.
+* **`TraceGraph`** builds a small graph under `/tmp/lpgram`: node `i` has `uid` `i`, edge `i` has `eid` `i`; it asserts that dense index `i` is node `i` and that edge `i` has element identifier `n + i`, so a reference script can name nodes and edges. `trace()`, `workers()` (worker-count probe), `uid`, `uids`, `path_uids`; `only()` filters kinds; `assert_steps()` names the first differing step.
+* **Reference cases**: `docs/evidence/lab-sprint-5/trace_ref_a.py` ports each reference (source file and line in each function's docstring) and writes `src/algo/testdata/expected/trace_a.json`: the trace graphs and, per case, the call, the event kinds, the expected events and optionally the expected rows. `tests_trace_a::reference_traces` runs every case at each listed `concurrency` (1 and 16 for parallel entries; a graph of n ≤ 64 nodes has n one-node blocks, and the test checks that more than one worker ran at 16) and compares step by step. Passes B and C add their own script, JSON file and runner on the same pattern.
+
+Pass A: 126 reference cases (1 048 expected events), 12 tests in `src/algo/tests_trace_a.rs`.
+
+### Review table
+
+| Entry | Reference execution source | Trace graph | Verdict | Divergences | Tests added |
+|---|---|---|---|---|---|
+| 001 BFS | GDS `BFS.java`, `BFSTask.java` (level order: smallest predecessor position, then adjacency order); sequential FIFO by level | `dir` (7 nodes, parallel edge, self-loop); `zipf60`, `uniform60` | conforms | none: the 5 of 7 lab differences are GDS's algorithm on a different node numbering (below) | `reference_traces` (001 ×3, c 1 and 16); `bfs_and_dfs_orders_are_gds_executions_on_lpg_numbering` |
+| 002 DFS | GDS `DFS.java` `compute` | `dir`; `zipf60`, `uniform60` | conforms | as 001 | `reference_traces` (002 ×3); as 001 |
+| 003 neighbours at hop | MAGE `neighbors.cpp` `DetermineDirection`, `AtHop`, `ByHop` | `typed` (types A, B) | conforms | none | `reference_traces` (003 ×12, six filters) |
+| 004 path expansion, subgraph | MAGE `path.cpp` `PathExpand::DFS`:359, `PathSubgraph::BFS`:488, `PathHelper`:86-104 | `typed` (labels X, Y) | fixed | `pathSubgraphAll` listed each relationship twice under `UNDIRECTED` | `reference_traces` (004 ×37: 30 expand filter pairs, 7 subgraph); `path_subgraph_all_lists_each_relationship_once` |
+| 006 random walk | node2vec bias (Grover and Leskovec 2016 §3.2.2); GDS `RandomWalkSampler.java` `walkOneStep`, `RandomWalkTask.java` `run` | `dir` weighted, p 0.5, q 2.0; a DAG | fixed | walks started from nodes without outgoing edges | `random_walk_steps_follow_node2vec`; `random_walk_starts_no_walk_from_a_node_without_out_edges`; `random_walk_quality` count corrected |
+| 007 topological sort | Kahn by levels; NetworkX `topological_generations` | `dag` (two sources, parallel edge), `dir` (cyclic) | conforms | none | `reference_traces` (007 ×2, c 1 and 16) |
+| 008 ancestors, descendants | NetworkX `bfs_edges` (FIFO) | `dir` | conforms | none | `reference_traces` (008 ×2) |
+| 009 reachability | petgraph `has_path_connecting` on a `DiGraph` of the same edges | `dir`, all 49 pairs | conforms | none | `petgraph_entries_equal_petgraph_on_the_same_graph` |
+| 011 dominators | NetworkX `immediate_dominators`, `dominance_frontiers` climbs | `dir`, `und` | conforms | none | `reference_traces` (011 ×2) |
+| 013 unweighted paths | BFS tree (NetworkX `bfs_predecessors`) | `dir`: source, target, pair | conforms | none | `reference_traces` (013 ×3); `path_write_modes_one_by_one` |
+| 014 Dijkstra | rustworkx `dijkstra.rs` (petgraph fork); GDS settle order without ties | `dir`: pair, all, `REVERSE` | conforms | none | `reference_traces` (014 ×3); write mode |
+| 015 bidirectional Dijkstra | petgraph `dijkstra.rs` `bidirectional_dijkstra`:287-407 | `dir`; all pairs of 3 graphs | conforms | none; the fallback is reached only with no meeting | `reference_traces` (015); `bidirectional_fallback_has_no_meeting`; write mode |
+| 018 A* | petgraph `astar` on a `DiGraph`, GDS haversine heuristic | `dir` with coordinates, 2 targets | conforms | none | `petgraph_entries_…`; write mode |
+| 019 Bellman-Ford | round form d_k = min(d_{k-1}, d_{k-1}(u) + w) (Bellman 1958; CLRS §24.1) | `neg`, `negcyc`, `dir` | conforms | none | `reference_traces` (019 ×3, c 1 and 16) |
+| 020 negative cycle | petgraph `find_negative_cycle` on a `DiGraph` | `negcyc` | conforms | none | `petgraph_entries_…` |
+| 021 SPFA | petgraph `spfa` on a `DiGraph` (distances, predecessors) | `neg` | conforms | none | `petgraph_entries_…`; `edge_cases_and_errors`; write mode |
+| 023 delta-stepping | Meyer and Sanders 2003, Fig. 1 (light phases, heavy phase) | `dir`, Δ 2 and 3 | conforms | none | `reference_traces` (023 ×2, c 1 and 16); write mode |
+| 024 Johnson | petgraph `johnson.rs`; potentials by the 019 rounds; NetworkX `johnson` distances | `neg` | conforms | none | `reference_traces` (024, c 1 and 16); `floyd_warshall_fails_on_a_negative_self_loop` |
+| 025 Floyd-Warshall | petgraph `floyd_warshall` on a `DiGraph`; negative cycle by definition | `neg`; a negative self-loop | fixed | a negative self-loop returned distances instead of 22N11 | `petgraph_entries_…`; `floyd_warshall_fails_on_a_negative_self_loop` |
+| 026 Seidel | graphalgs `seidel.rs` `apd` per component | `und`, `bip` | conforms | none | `reference_traces` (026 ×2) |
+| 027 all-pairs distances | one BFS or Dijkstra per source | `dir`, weighted and not | conforms | none | `reference_traces` (027 ×2, c 1 and 16) |
+| 028 all shortest paths | NetworkX `dijkstra_predecessor_and_distance`, `all_shortest_paths` | `und` (ties), `dir` | conforms | none | `reference_traces` (028 ×2); write mode |
+| 029 Yen | pathfinding `yen.rs` `yen` with edge paths | `dir`, k 5 | conforms | none | `reference_traces` (029, c 1 and 16); write mode |
+| 030 k-th shortest length | petgraph `k_shortest_path` on a `DiGraph` | `dir`, k 1-3, with a target | conforms | none | `petgraph_entries_…` |
+| 031 all simple paths | MAGE `algo.cpp` `UpdateRelationshipDirection`:11, `DFS`:75 | `typed`, nine filters | conforms | none | `reference_traces` (031 ×9) |
+| 032 longest path | DAG DP by levels (CLRS §24.2) | `dag` | conforms | none | `reference_traces` (032, c 1 and 16) |
+| 180 cycles | MAGE `cycles.cpp` `FindNonSpanningTreeEdges`:29, `FindFundamentalCycle`:64, `CombineCycles`:93, `GetCycles`:170 | `und` (parallel edge, self-loop), `bip` | conforms | none | `reference_traces` (180 ×2) |
+| 181 elementary circuits | graphalgs `elementary_circuits.rs`:13, 71; count checked with NetworkX `simple_cycles` | `dir`, `und` | conforms | none | `reference_traces` (181 ×2) |
+| 187 TSP (`1.5_approx`) | NetworkX `christofides` steps: Kruskal tree, odd nodes, `min_weight_matching`; Euler circuit and shortcut checked | `geo` (6 points) | conforms | none | `reference_traces` (187); `christofides_circuit_and_shortcut` |
+| 188 VRP | Clarke and Wright savings with TS-25's rules; 2-opt (Croes 1958) | `geo`, 1 and 2 vehicles; a crossed route | conforms | none | `reference_traces` (188 ×2); `two_opt_moves` |
+| 189 isomorphism | NetworkX `is_isomorphic` with edge counts; lpg's `counted` collapse | `iso` (P, Q, U, S), `NATURAL` and `UNDIRECTED` | conforms | none | `reference_traces` (8 cases) |
+| 190 subgraph isomorphism | NetworkX `subgraph_is_isomorphic` (node-induced) with edge counts | `iso`, both orientations | conforms | none | `reference_traces` (8 cases) |
+| 194 bipartiteness | rustworkx `coloring.rs` `two_color` | `bip`, `und` (conflict) | conforms | none | `reference_traces` (194 ×2) |
+| 203 tournament | NetworkX `is_tournament`, `is_directed_acyclic_graph` | `tour`: transitive, 3-cycle, non-tournament with n(n−1)/2 edges | conforms | none | `reference_traces` (203 ×3) |
+| 204 graphical sequence | graphalgs `spec/mod.rs` (Havel-Hakimi pops); NetworkX `is_graphical` | five sequences | conforms | none | `reference_traces` (204 ×5) |
+| 205 transitive closure | Kahn order handed to petgraph `tred`; NetworkX `transitive_closure_dag` rows | `dag` | conforms | none | `reference_traces` (205) |
+| 206 transitive reduction | as 205; NetworkX `transitive_reduction` rows; first parallel edge's identifier | `dag` | conforms | none | `reference_traces` (206) |
+
+`edge_cases_and_errors` (all entries): the empty projection, one node with a self-loop, and the error codes (22N11 missing or unknown key, node outside the projection, `maxDepth` below −1, negative cost, negative cycle, no target; 22G03 wrong type).
+
+### Findings of pass A
+
+1. **ALG-006** (fixed). GDS starts no walk from a node without outgoing edges (`traversal/RandomWalkTask.java` `run`: `if (graph.degree(nodeId) == 0) continue;`); lpg returned `walksPerNode` one-node walks for it (measured: `[0, 0, 4, 4]` start nodes for `sourceNodes` [4, 0] on a DAG where node 4 has no outgoing edge). Fix: such start nodes are skipped (`traversal.rs` `random_walk`). The existing `random_walk_quality` expected 120 walks on `zipf60` (60 × 2); 10 of its nodes have no outgoing edge, so it now expects 2 × 50.
+2. **ALG-025** (fixed). A negative self-loop is a negative cycle, which fails 025 with 22N11 (TS-25 Costs); lpg returned distances (measured on 0→1, 1→1 at −1, 1→2: 6 rows, no error; 021 and 024 failed with 22N11). Cause: petgraph 0.8.3 `floyd_warshall` sets every node's distance to itself to 0 after loading the edges (`src/algo/floyd_warshall.rs:284-288`). Fix: `paths.rs` `floyd` fails with 22N11 on a negative self-loop before calling petgraph.
+3. **ALG-004** (fixed). `gds.pathSubgraphAll.stream` under `UNDIRECTED` listed every relationship twice and a self-loop four times (measured: `[3, 3, 4, 4, 5, 5, 6, 6]` for 4 relationships), since `out` lists an edge from both ends. Fix: each relationship once (`traversal.rs` `subgraph_all`).
+4. **ALG-001, 002** (no divergence). `trace_ref_a.py` runs GDS's BFS and DFS ported from the GDS source on `zipf60` and `uniform60` with two node numberings. On GDS's numbering (Neo4j's import order: numeric `uid`) it reproduces all 7 GDS outputs exactly; on lpg's (element identifiers, assigned by lpg's CSV import in the string order of `id:ID`, measured: dense order 0, 1, 10, 11, …, 19, 2, 20, …) it gives lpg's 7 outputs exactly, 2 of them equal to GDS's. lpg's orders are legal executions of GDS's algorithm. GDS documents BFS as visiting "in order of increasing distance" (`doc/.../algorithms/bfs.adoc:17`) and no neighbour order, which follows its internal node identifiers; matching GDS byte for byte would need lpg to number nodes in Neo4j's import order.
+
+### Reported, not changed (specification or open points)
+
+1. **ALG-004 `pathExpand` and ALG-031 under `UNDIRECTED`** return each path twice: MAGE's DFS follows a node's incoming and then its outgoing relationships, and under `UNDIRECTED` both lists hold every incident edge (measured: `algo.all_simple_paths` from node 0 to node 2 returned 10 rows for 3 distinct paths: each one-edge path twice, each two-edge path four times). MAGE has no orientation; the specification does not say how MAGE's direction filters apply under `UNDIRECTED`. A specification decision is needed.
+2. **ALG-006 verification rule Q** says "`walksPerNode` walks per start node"; after finding 1 it holds per start node with an outgoing edge.
+3. **ALG-006 zero weights**: when every outgoing weight of a node is 0, GDS's `randomNeighbour` takes the first neighbour (`RandomWalkSampler.java`: `randomWeight <= currentWeight` with both 0) and lpg ends the walk. From the source only; not run on GDS.
+4. **ALG-015**: the comment of the fallback branch (`paths.rs` `bidirectional`) says the best meeting found there is the shortest path; the branch is reached only with no meeting (t unreachable), and returns no path, as petgraph does (`bidirectional_fallback_has_no_meeting`, 110 pairs).
+5. **Limits of the method.** The reference sequences are Python ports of the cited sources, not instrumented runs of GDS, MAGE or petgraph; they share lpg's adjacency order (type, neighbour, edge identifier), which a step comparison needs. For the entries that call petgraph (009, 018, 020, 021, 025, 030), the mechanical check covers lpg's own steps (the projection handed to petgraph, petgraph's raw result, the rows built from it), compared with petgraph on a `DiGraph` of the same edges; petgraph's internals are not traced. Ties are avoided in the trace graphs except where the case tests them (028).
+
+### Quality gate (pass A)
+
+| Command | Result |
+|---|---|
+| `cargo nextest run --no-fail-fast` | 663 passed, 38 skipped, 0 failed |
+| `cargo clippy --all-targets -- -D warnings` | no warning |
+| `cargo fmt --check` | clean |
+| `cargo deny check licenses` | "licenses ok" |
+| `cargo build --release` | trace code absent (literals and symbols above) |
+| `Cargo.toml`, `Cargo.lock` | unchanged; no new crate |
+
+### RAM space (pass A)
+
+| Location | Before | After | Left and why |
+|---|---|---|---|
+| `/tmp` | 2.5 G used | 2.5 G used | no new file |
+| `/tmp/lpgram` | empty | empty | every test removes its directory |
+| `/dev/shm/lpg-target` | 5.4 G | 7.4 G | the build in use (`debug` 7.1 G, `release` 249 M, which held its dependencies before this pass) |

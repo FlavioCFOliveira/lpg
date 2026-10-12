@@ -22,7 +22,8 @@
 //! * **006** follows GDS's random walk (node2vec-biased, studied in GDS
 //!   `traversal/RandomWalk*.java`): `walksPerNode` walks of `walkLength`
 //!   nodes from each start node, a walk ending early at a node without
-//!   outgoing edges. lpg draws each step exactly from the biased
+//!   outgoing edges; a start node without outgoing edges has no walk, as
+//!   GDS skips it (`RandomWalkTask.java` `run`). lpg draws each step exactly from the biased
 //!   distribution (weight × 1/`returnFactor` back to the previous node,
 //!   × 1 to a neighbour of it, × 1/`inOutFactor` otherwise) instead of
 //!   GDS's rejection sampling, so its walks differ from GDS's (a parity
@@ -436,6 +437,7 @@ fn hop_levels<I: Ix>(
         }
         set.sort_unstable();
         set.dedup();
+        trace!("level", "{} {set:?}", levels.len());
         if set.is_empty() && stop_empty {
             return Ok(None);
         }
@@ -639,6 +641,17 @@ struct Expand<'a, I> {
 }
 
 impl<I: Ix> Expand<'_, I> {
+    /// The current trail as node, edge, node… (the test trace).
+    #[cfg(test)]
+    fn trail(&self) -> Vec<u64> {
+        let mut t = vec![self.nodes[0] as u64];
+        for (slot, v) in self.slots.iter().zip(&self.nodes[1..]) {
+            t.push(self.p.edge_id(*slot));
+            t.push(*v as u64);
+        }
+        t
+    }
+
     /// The edges MAGE's `ExpandFromRelationships` follows from the path's
     /// last node, incoming first, then outgoing.
     fn candidates(&self, v: usize) -> Vec<(usize, usize)> {
@@ -684,7 +697,9 @@ impl<I: Ix> Expand<'_, I> {
             let v = *self.nodes.last().expect("a node");
             let size = self.slots.len() as i64;
             let b = self.h.label_bools(self.p, v);
+            trace!("enter", "{:?}", self.trail());
             if size >= self.h.min_hops && size <= self.h.max_hops && self.h.labels_valid(b) {
+                trace!("emit", "{:?}", self.trail());
                 let path = kernels::path_value(self.p, &self.nodes, &self.slots);
                 r.mem.grow(crate::query::exec::value_bytes(&path))?;
                 self.out.push(path);
@@ -806,6 +821,7 @@ fn subgraph<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Vec<usize>,
     }
     let mut out = Vec::new();
     while let Some((v, hops)) = queue.pop_front() {
+        trace!("pop", "{v} {hops}");
         if hops > h.max_hops {
             continue;
         }
@@ -840,10 +856,12 @@ fn subgraph<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Vec<usize>,
                     Dir::Incoming
                 };
                 if wanted == Dir::Any || current == wanted || h.any_directed(outgoing) {
+                    trace!("push", "{w} {}", hops + 1);
                     visited[w] = true;
                     queue.push_back((w, hops + 1));
                 } else if wanted == Dir::Both {
                     if outgoing && seen.contains(&(ty, w)) {
+                        trace!("push", "{w} {} both", hops + 1);
                         visited[w] = true;
                         queue.push_back((w, hops + 1));
                         out.push(w);
@@ -883,10 +901,13 @@ fn subgraph_all<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output,
     for v in &nodes {
         member[*v] = true;
     }
+    // Each relationship once: under `UNDIRECTED` `out` lists an edge from
+    // both ends (rmp #71).
+    let mut taken = r.mem.vec(p.edge_ids.len(), false)?;
     let mut rels = Vec::new();
     for v in &nodes {
         for (w, slot) in p.out(*v) {
-            if member[w.index()] {
+            if member[w.index()] && !std::mem::replace(&mut taken[slot], true) {
                 r.mem.grow(crate::query::exec::value_bytes(&Value::Null))?;
                 rels.push(Value::Edge(p.edge_id(slot)));
             }
@@ -953,6 +974,11 @@ fn random_walk<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, 
         };
         let mut out = Vec::new();
         for s in nodes {
+            // GDS starts no walk from a node without outgoing edges
+            // (`traversal/RandomWalkTask.java` `run`; rmp #71).
+            if p.out(s).next().is_none() {
+                continue;
+            }
             for _ in 0..w.per_node {
                 out.push(one_walk(p, &w, s, &mut rng));
             }
@@ -1002,12 +1028,19 @@ fn one_walk<I: Ix>(
             choices.push((t, slot, total));
         }
         if choices.is_empty() || total <= 0.0 {
+            trace!("stop", "{v}");
             break;
         }
         let u: f64 = rng.random::<f64>() * total;
         let at = choices
             .partition_point(|(_, _, c)| *c <= u)
             .min(choices.len() - 1);
+        trace!(
+            "step",
+            "{prev:?} {v} {:?} {u:?} -> {}",
+            choices.iter().map(|c| (c.0, c.2)).collect::<Vec<_>>(),
+            choices[at].0
+        );
         nodes.push(choices[at].0);
         slots.push(choices[at].1);
     }
@@ -1062,6 +1095,7 @@ fn reach<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>, forward: bool) -> Result
         for (w, _) in adj {
             let w = w.index();
             if !seen[w] {
+                trace!("visit", "{w} from {v}");
                 seen[w] = true;
                 out.push(w);
                 queue.push_back(w);
@@ -1114,6 +1148,7 @@ fn dominators<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, E
         if let Some(x) = d.immediate_dominator(I::new(v)) {
             *slot = x.index();
             reached[v] = true;
+            trace!("idom", "{v} {}", x.index());
         }
     }
     let mut frontier: Vec<Vec<usize>> = vec![Vec::new(); n];
@@ -1127,6 +1162,7 @@ fn dominators<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, E
                     continue;
                 }
                 while v != idom[u] {
+                    trace!("frontier", "{v} gets {u}");
                     frontier[v].push(u);
                     if v == root {
                         break;

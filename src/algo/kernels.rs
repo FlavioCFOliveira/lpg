@@ -301,6 +301,7 @@ pub(crate) fn dijkstra<I: Ix>(
         if visited[u] {
             continue;
         }
+        trace!("pop", "{u} {d:?}");
         if stop == Some(u) {
             break;
         }
@@ -311,6 +312,7 @@ pub(crate) fn dijkstra<I: Ix>(
             }
             let next = d + cost(slot);
             if next < t.dist[w] {
+                trace!("relax", "{w} {next:?} {u} {}", p.edge_id(slot));
                 t.dist[w] = next;
                 t.pred[w] = u;
                 t.slot[w] = slot;
@@ -353,10 +355,13 @@ pub(crate) fn bfs<I: Ix>(
     let mut depth = 0u64;
     loop {
         if max_depth == Some(depth) {
+            trace!("stop", "maxDepth {depth}");
             break;
         }
         let level = &order[start..];
+        trace!("level", "{depth} {level:?}");
         if let Some(pos) = level.iter().position(|v| targets_of.contains(v)) {
+            trace!("stop", "target {}", level[pos]);
             order.truncate(start + pos + 1);
             break;
         }
@@ -374,6 +379,7 @@ pub(crate) fn bfs<I: Ix>(
                         out.push((*pos, rank, w));
                     }
                 }
+                trace!("expand", "{v} at {pos}");
             }
             out
         })?;
@@ -386,7 +392,9 @@ pub(crate) fn bfs<I: Ix>(
                 order.push(w);
             }
         }
+        trace!("append", "{:?}", &order[next..]);
         if order.len() == next {
+            trace!("stop", "empty");
             break;
         }
         start = next;
@@ -417,13 +425,16 @@ pub(crate) fn dfs<I: Ix>(
     visited[source] = true;
     stack.push((source, 0));
     while let Some((v, depth)) = stack.pop() {
+        trace!("pop", "{v} {depth}");
         order.push(v);
         if targets_of.contains(&v) {
+            trace!("stop", "target {v}");
             break;
         }
         if max_depth.is_none_or(|m| depth < m) {
             for w in targets(p, v) {
                 if !visited[w] {
+                    trace!("push", "{w} {}", depth + 1);
                     visited[w] = true;
                     stack.push((w, depth + 1));
                 }
@@ -456,6 +467,7 @@ pub(crate) fn levels<I: Ix>(
     let mut level: Vec<usize> = (0..n).filter(|v| indeg[*v] == 0).collect();
     let mut out = Vec::new();
     while !level.is_empty() {
+        trace!("level", "{} {level:?}", out.len());
         let parts = sched.map(|_, range| {
             let lo = level.partition_point(|v| *v < range.start);
             let hi = level.partition_point(|v| *v < range.end);

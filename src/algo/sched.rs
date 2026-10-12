@@ -263,7 +263,11 @@ impl Sched {
                     fail(e);
                     return;
                 }
+                #[cfg(test)]
+                super::trace::block(Some(b));
                 f(b);
+                #[cfg(test)]
+                super::trace::block(None);
             }
         };
         #[cfg(test)]
@@ -295,6 +299,8 @@ pub(crate) fn workers(
 ) -> Result<(), Error> {
     #[cfg(test)]
     let seen = probe::Scope::default();
+    #[cfg(test)]
+    let sink = super::trace::current();
     #[cfg(not(test))]
     let _ = key;
     std::thread::scope(|s| {
@@ -302,11 +308,15 @@ pub(crate) fn workers(
             let body = &body;
             #[cfg(test)]
             let seen = &seen;
+            #[cfg(test)]
+            let sink = sink.clone();
             std::thread::Builder::new()
                 .name(format!("lpg-algo-{w}"))
                 .spawn_scoped(s, move || {
                     #[cfg(test)]
                     seen.enter();
+                    #[cfg(test)]
+                    super::trace::adopt(sink);
                     body(w);
                 })
                 .map_err(|_| {

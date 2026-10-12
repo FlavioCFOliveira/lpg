@@ -1654,7 +1654,8 @@ fn path_family_matches_oracles_on_small_fixtures() {
 
 /// rmp #64 (ALG-006, rule Q): every walk is a walk of the projection,
 /// `walkLength` nodes long or ending at a node without outgoing edges;
-/// `walksPerNode` walks per start node; over 10 000 walks the first-step
+/// `walksPerNode` walks per start node that has an outgoing edge (rmp
+/// #71: GDS starts none from the others); over 10 000 walks the first-step
 /// frequencies of each start node are within 4 standard errors of its
 /// weighted out-edge probabilities; bit-equal at 1 to 16 with two seeds.
 #[test]
@@ -1677,7 +1678,12 @@ fn random_walk_quality() {
                     true,
                 )
                 .await;
-            assert_eq!(rows.len(), 120);
+            // `walksPerNode` walks per node with an outgoing edge: GDS starts
+            // none from a node without one (rmp #71).
+            let with_out = (0..60)
+                .filter(|u| z.edges.values().any(|e| e.src == *u))
+                .count();
+            assert_eq!(rows.len(), 2 * with_out);
             for r in &rows {
                 let nodes = z.uids(&r[0]);
                 z.check_path(&r[1], &nodes, None, true, false);
