@@ -46,12 +46,13 @@ related:
     - A projection with fewer than two blocks (`n` = 1) has nothing to split and runs on one worker.
     - Per-block partial results are merged in block order, so floating-point sums are always added in the same order.
     - Iterative parallel entries use synchronous rounds: round *k* reads only the state of round *k*−1. Single-worker entries keep the reference's sequential formulation.
+    - ALG-061 to ALG-065 and ALG-078 divide a round into greedy colour classes, taken in turn; each class is computed by blocks and applied in node order (rmp #66 DECISION 552). In 063, 064 and 078 a class step equals the sequential updates of its nodes. In 061, 062 and 065 the nodes of a class read the community totals from before the class, as GDS's `ModularityOptimization.optimizeColor`, which differs from the sequential local move (measured on a 4-cycle, rmp #71 FINDING 574).
   - **Randomness.** Randomised entries take GDS's seed key, `randomSeed` (`samplingSeed` for ALG-035); when it is absent the seed is 0. Block *b* draws from `ChaCha8Rng::seed_from_u64(seed)` after `set_stream(b)`; an entry on one worker uses stream 0. `StdRng` is not used: its documentation states that "any future library version may replace the algorithm" ([reuse map](../evidence/planning/sprint-5-reuse-map.md) §3.3, `rand-0.10.3/src/rngs/std.rs:20-37`).
   - **Determinism.** For one snapshot and equal parameters, every run gives equal results, whatever `concurrency` is.
   - **Write-back** writes properties and relationships through the caller's transaction write set, bounded by the memory cap ([TS-14](transactions-and-recovery.md#ts-14-mvcc), FR-LIM-007).
   - **Verification.** Each entry has an oracle and a comparison rule in [algorithm-entries.md](algorithm-entries.md#verification): a GDS run for GDS-named entries, since GDS's values differ from NetworkX's (PageRank is not normalised to sum 1, M-S5 §0); NetworkX or petgraph otherwise; a MAGE run where only MAGE defines the semantics. Floats are compared within the entry's own tolerance parameter, or 1e-9 relative where it has none; results that are not unique by validity and equal objective value.
   - **Parity entries.** These 15 entries are verified by determinism and a quality measure, not by equality with a reference ([algorithm-entries.md](algorithm-entries.md#verification), rule Q):
-    - GDS updates shared state in parallel without order, so lpg's results may differ from GDS's: documented as non-deterministic in GDS, ALG-106 KNN, ALG-078 Approximate Maximum k-cut, ALG-064 SLLPA; not stated in the GDS documentation, ALG-061 Louvain, ALG-062 Leiden, ALG-063 Label Propagation, ALG-065 Modularity Optimisation, ALG-176 K-1 colouring, ALG-080 K-means, ALG-081 HDBSCAN, ALG-006 random walk, ALG-059 CELF (unverified).
+    - GDS updates shared state in parallel without order, so lpg's results may differ from GDS's: documented as non-deterministic in GDS, ALG-106 KNN, ALG-078 Approximate Maximum k-cut, ALG-064 SLLPA; not stated in the GDS documentation, ALG-061 Louvain, ALG-062 Leiden, ALG-063 Label Propagation, ALG-065 Modularity Optimisation, ALG-176 K-1 colouring, ALG-080 K-means, ALG-081 HDBSCAN, ALG-006 random walk, ALG-059 CELF. GDS 2026.09.0 runs: [quality-and-testing.md](quality-and-testing.md#unverified-points) point 9.
     - No runnable reference (user decision 2026-10-12, item E): ALG-076 (modularity), ALG-077 (ratio-cut value), ALG-188 (feasibility and distance against the exact optimum on small instances).
 - **Satisfies**: FR-ALG-001, FR-ALG-002, FR-ALG-003, FR-ALG-004, FR-ALG-005, FR-ALG-006, FR-ALG-007, FR-LIM-001, FR-LIM-003, FR-LIM-007, NFR-REL-004, NFR-PERF-007.
 - **Evidence**:
@@ -82,4 +83,4 @@ related:
   - Splitting work into one block per thread: results would then depend on `concurrency`.
   - `StdRng`: not portable across rand versions.
 
-Whether a synchronous round converges as fast as the asynchronous reference is not measured (unverified).
+Rounds of the synchronous entries against the references' counts: [quality-and-testing.md](quality-and-testing.md#unverified-points) point 9. Their time is not measured.

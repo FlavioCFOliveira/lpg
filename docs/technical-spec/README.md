@@ -24,7 +24,7 @@ This folder states how the `lpg` crate is built. The [functional specification](
 | [values-and-types.md](values-and-types.md) | Runtime values, temporal and spatial types, encodings. | TS-21 |
 | [bolt.md](bolt.md) | Bolt and PackStream endpoints. | TS-22 |
 | [algorithms.md](algorithms.md) | Graph-algorithm runs, projection, parallelism, determinism. | TS-25 |
-| [algorithm-entries.md](algorithm-entries.md) | Per-entry tables of TS-25: parallel classification, signatures, verification. | TS-25 |
+| [algorithm-entries.md](algorithm-entries.md) | Per-entry tables of TS-25: parallel classification, signatures, entry notes, verification. | TS-25 |
 | [operations.md](operations.md) | Backup, restore, import, export, format migration. | TS-26, TS-28 |
 | [quality-and-testing.md](quality-and-testing.md) | Toolchain, tests, conformance, measurement, unverified points. | TS-29, TS-30 |
 | [dependencies.md](dependencies.md) | The dependency set and the crates considered. | TS-31 |
