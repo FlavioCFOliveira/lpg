@@ -1,7 +1,7 @@
 ---
 title: Quality and testing
 status: draft
-last-reviewed: 2026-10-11
+last-reviewed: 2026-10-12
 related:
   - dependencies.md
   - ../functional-spec/non-functional-requirements.md
@@ -152,7 +152,9 @@ related:
 6. The free-page reserve estimate and the 64 MiB extent size ([TS-05](storage.md#ts-05-files-and-pages)); derived, not measured. Deferred to Sprint 6 (DECISION 244 on rmp #35).
 7. Closed: the index side-tree protocol is tested ([TS-18](catalog-and-indexes.md#ts-18-indexes-and-constraints) Evidence). The number is kept so that earlier citations of the points that follow stay valid.
 8. Parse speed of the hand-written GQL parser; only a SQL proxy was measured ([TS-19](query-engine.md#ts-19-parser)). Deferred to Sprint 6 with the timing of the micro-workloads (user decision 2026-10-08, "Definir agora, medir no S6", rmp task #39 point 16). Sprint 3 defines the micro-workloads and checks their results (Performance, above; `src/lab/micro.rs`); it measures no time.
-9. The parallel classification of every inventory entry other than ALG-024 and ALG-042; the GDS determinism statements for the algorithms listed in [algorithms.md](algorithms.md#ts-25-graph-algorithms); convergence of synchronous rounds.
+9. The parallel classification of every inventory entry; the GDS determinism statements for the parity entries of [TS-25](algorithms.md#ts-25-graph-algorithms); convergence of synchronous rounds.
+   - **Closed: the classification** (rmp #62). All 97 entries are classified, each with its reference: 38 parallel, 59 single-thread ([algorithm-entries.md](algorithm-entries.md#parallel-classification)). The evidence is GDS and MAGE source and documentation and petgraph's `rayon` gates ([M-S5](../evidence/planning/sprint-5-reuse-map.md) §2), after the user's items A to C. GDS has no open source for ALG-081, ALG-155, ALG-157 and ALG-171; for these, GDS 2026.09.0 was run at `concurrency` 1 and 4 and the Neo4j JVM's CPU time over wall time recorded: ALG-081 and ALG-171 used several cores; ALG-157 used one (1.01 at both values) and is single-thread; ALG-155 rose only from 1.12 to 1.24 and stays parallel on GDS's documented "parallel push-relabel".
+   - **Open**: the GDS determinism statements and the convergence of synchronous rounds, measured by the Sprint 5 exit task (rmp #70).
 10. Bolt 6.1 changes ([bolt.md](bolt.md)).
 11. Whether `cargo-deny` accepts the older licence notation of `crc32c` (`Apache-2.0/MIT`) and `csv` (`Unlicense/MIT`) without configuration.
    - **Closed for `csv`.** `cargo deny check licenses` (cargo-deny 0.20.2), run with lpg's `deny.toml`, which has no exception or clarification, on a probe crate that depends on `csv` 1.4.0, `serde_json` 1.0.154 (`float_roundtrip`) and `quick-xml` 0.42.0, printed "licenses ok" and exited 0. Its one warning is `license-not-encountered` for `Apache-2.0 WITH LLVM-exception`, which no crate of the probe uses. Measured in planning ([M-S4](../evidence/planning/sprint-4-plan.md) §0) and again on 2026-10-11 (rmp #55 TEST).

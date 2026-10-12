@@ -1,7 +1,7 @@
 ---
 title: Use cases
 status: draft
-last-reviewed: 2026-10-11
+last-reviewed: 2026-10-12
 related:
   - functional-requirements.md
   - non-functional-requirements.md
@@ -205,9 +205,9 @@ Each use case describes one main flow of the crate in terms of its [actors](scop
   1. The crate reads the graph, filtered by labels and edge types, from the transaction's snapshot ([FR-ALG-004](functional-requirements.md#graph-algorithms)).
   2. The crate streams the results to the caller ([FR-ALG-003](functional-requirements.md#graph-algorithms)).
 - **Alternate flows**:
-  - A1. The caller chose write-back: the crate writes the results to properties in the caller's transaction.
+  - A1. The caller chose write-back, for a procedure that has a write mode: the crate writes the results to properties, or to relationships where the procedure's reference writes relationships, in the caller's transaction ([FR-ALG-003](functional-requirements.md#graph-algorithms)).
   - A2. A resource limit is exceeded: the statement fails and the transaction is aborted ([FR-LIM-001](functional-requirements.md#resource-limits)).
-- **Postconditions**: The caller has the results, or the properties are written when the transaction commits.
+- **Postconditions**: The caller has the results, or the written properties or relationships persist when the transaction commits.
 
 ### UC-OPS-005 Migrate the on-disk format
 
