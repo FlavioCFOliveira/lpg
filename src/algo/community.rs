@@ -30,9 +30,16 @@
 //!   γ k_v tot_c / 2m` (its own community after leaving it included); a
 //!   tie goes to the lower community index and staying wins a tie. The
 //!   moves of the class are then applied in node order. Nodes of one class
-//!   share no edge, so a node's gain does not depend on another's move of
-//!   the same class; the classes are computed by blocks and applied in
-//!   node order, so every run is the same at every `concurrency`. A run
+//!   share no edge, so a node's link weights `k_{v,c}` do not depend on
+//!   another's move of the same class, but the totals `tot_c` do: every
+//!   node of a class reads the totals before the class, as GDS's
+//!   `ModularityOptimization.optimizeColor` applies a colour's weight
+//!   updates after it. A class step is therefore not the sequential local
+//!   move of its nodes when two of them join or leave one community (rmp
+//!   #71: on the 4-cycle, nodes 0 and 2 both join node 1's community; one
+//!   after the other, node 2 joins node 3). The classes are computed by
+//!   blocks and applied in node order, so every run is the same at every
+//!   `concurrency`. A run
 //!   stops after a round without a move, after a round whose modularity
 //!   gain is below `tolerance`, or after `maxIterations` rounds. This is
 //!   the colouring method of Lu, Halappanavar and Kalyanaraman, "Parallel
@@ -57,11 +64,17 @@
 //!   block refines it. `theta` is its randomness, `gamma` the resolution.
 //! * **063 label propagation**: each node takes the label of greatest
 //!   weight among its out-neighbours' (edge weight times the neighbour's
-//!   `nodeWeightProperty`), the lowest label on a tie, as GDS's
-//!   `labelpropagation/ComputeStepConsumer.java` tallies votes (studied);
-//!   a node without neighbours keeps its label. Rounds run over the colour
-//!   classes like local moving. Labels start as the node's element
-//!   identifier, or its `seedProperty`.
+//!   `nodeWeightProperty`), as GDS's `labelpropagation/
+//!   ComputeStepConsumer.java` tallies votes (studied); a node without
+//!   neighbours keeps its label. On a tie the node keeps its label when it
+//!   is among the best, else takes the best label whose hash `mix(label ^
+//!   node ^ round)` is least: Raghavan, Albert and Kumara (Phys. Rev. E 76,
+//!   2007) break ties at random, and NetworkX `asyn_lpa_communities` keeps
+//!   a best current label. GDS takes the lowest label (`tallyVotes`),
+//!   which leaves one community on `rc24` and karate (rmp #66). A node's
+//!   votes depend only on its neighbours' labels, so a colour class gives
+//!   the sequential updates of its nodes. Labels start as the node's
+//!   element identifier, or its `seedProperty`.
 //! * **064 SLLPA** (Xie, Szymanski and Liu, "SLPA", 2011; GDS
 //!   `sllpa/SpeakerListenerLPAComputation.java`, studied): each node
 //!   has `maxIterations` memory slots, all its own label at first. In
@@ -105,7 +118,9 @@
 //!   `c`'s modularity is `(e_c − K_c² / m) / m`, where `e_c` sums the
 //!   weights of edges inside `c`, `K_c` those of edges leaving a node of
 //!   `c`, `m` all; its conductance is `ext_c / (ext_c + int_c)` for the
-//!   communities with an edge, a negative or absent community skipped.
+//!   communities with an edge. An absent community is skipped; a negative
+//!   one counts for modularity, as GDS's, and is skipped by conductance,
+//!   as GDS's.
 //!
 //! **Community identifiers.** With `consecutiveIds`, communities are
 //! numbered 0, 1, … in the order of their first node; otherwise a
@@ -428,11 +443,14 @@ fn local_move(
         tot[part[v]] += net.k[v];
     }
     let classes = net.colours();
+    trace!("colours", "{classes:?}");
     let mut q = net.modularity(part, gamma);
     let mut moved_any = false;
     for round in 1..=max_rounds {
         let mut moved = 0usize;
-        for class in &classes {
+        // The class index is read by the test trace only.
+        #[cfg_attr(not(test), allow(clippy::unused_enumerate_index))]
+        for (_ci, class) in classes.iter().enumerate() {
             let (snapshot, tot_ref) = (&*part, &tot);
             let moves = sched.map(|_, range| {
                 let lo = class.partition_point(|v| *v < range.start);
@@ -442,14 +460,18 @@ fn local_move(
                     .filter_map(|v| best_move(net, snapshot, tot_ref, *v, gamma).map(|c| (*v, c)))
                     .collect::<Vec<_>>()
             })?;
-            for (v, c) in moves.into_iter().flatten() {
+            let moves: Vec<(usize, usize)> = moves.into_iter().flatten().collect();
+            trace!("class", "{round} {_ci} {moves:?}");
+            for (v, c) in moves {
                 tot[part[v]] -= net.k[v];
                 tot[c] += net.k[v];
                 part[v] = c;
                 moved += 1;
             }
         }
+        trace!("round", "{round} {part:?}");
         if moved == 0 {
+            trace!("stop", "{round} no move");
             return Ok((round, moved_any, true));
         }
         moved_any = true;
@@ -457,9 +479,11 @@ fn local_move(
         let gain = next - q;
         q = next;
         if gain < tolerance {
+            trace!("stop", "{round} gain");
             return Ok((round, moved_any, true));
         }
     }
+    trace!("stop", "{max_rounds} max");
     Ok((max_rounds, moved_any, false))
 }
 
@@ -518,7 +542,11 @@ pub(crate) const LOUVAIN: Entry = Entry {
         "configuration",
     ],
     run: run_louvain,
-    write_kind: WriteKind::NodeProp { id: 0, value: 2 },
+    write_kind: WriteKind::Levels {
+        id: 0,
+        levels: 1,
+        value: 2,
+    },
     ..Entry::BASE
 };
 
@@ -577,7 +605,11 @@ pub(crate) const LEIDEN: Entry = Entry {
         "configuration",
     ],
     run: run_leiden,
-    write_kind: WriteKind::NodeProp { id: 0, value: 2 },
+    write_kind: WriteKind::Levels {
+        id: 0,
+        levels: 1,
+        value: 2,
+    },
     ..Entry::BASE
 };
 
@@ -631,7 +663,11 @@ pub(crate) const SLLPA: Entry = Entry {
             },
             Def::Float(0.2),
         ),
-        Key::new("partitioning", Ty::Str, Def::Str("RANGE")),
+        Key::new(
+            "partitioning",
+            Ty::Choice(super::centrality::PARTITIONINGS),
+            Def::Str("RANGE"),
+        ),
         Key::new("mutateProperty", Ty::Str, Def::Absent),
     ],
     parallel: true,
@@ -933,7 +969,19 @@ fn run_louvain(r: &mut Run<'_, '_>) -> Result<Output, Error> {
     with_projection!(r.graph, p => louvain(p, r))
 }
 
+/// GDS `LouvainBaseConfig.validate`, `LeidenBaseConfig.validate`.
+fn check_levels_config(r: &Run<'_, '_>) -> Result<(), Error> {
+    if r.cfg.bool("includeIntermediateCommunities") && r.cfg.bool("consecutiveIds") {
+        return Err(Error::new(
+            codes::C22N11,
+            "invalid argument: includeIntermediateCommunities and consecutiveIds cannot be combined",
+        ));
+    }
+    Ok(())
+}
+
 fn louvain<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
+    check_levels_config(r)?;
     let n = p.node_count();
     let net = Net::of(p, weighted(r));
     r.mem.grow(3 * net.bytes() + n * 24)?;
@@ -958,6 +1006,7 @@ fn louvain<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Erro
         let q = net.modularity(&part, 1.0);
         let membership: Vec<usize> = node_of.iter().map(|v| part[*v]).collect();
         let gain = q - modularities.last().copied().unwrap_or(f64::NEG_INFINITY);
+        trace!("level", "{} {membership:?}", levels.len());
         levels.push(membership);
         modularities.push(q);
         if c == net.len() || gain < tolerance {
@@ -987,6 +1036,7 @@ fn run_leiden(r: &mut Run<'_, '_>) -> Result<Output, Error> {
 }
 
 fn leiden<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
+    check_levels_config(r)?;
     let n = p.node_count();
     let mut net = Net::of(p, weighted(r));
     r.mem.grow(3 * net.bytes() + n * 32)?;
@@ -1013,6 +1063,12 @@ fn leiden<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
         let q = net.modularity(&part, gamma);
         let gain = q - modularities.last().copied().unwrap_or(f64::NEG_INFINITY);
         levels.push(node_of.iter().map(|v| part[*v]).collect::<Vec<usize>>());
+        trace!(
+            "level",
+            "{} {:?}",
+            levels.len() - 1,
+            levels[levels.len() - 1]
+        );
         modularities.push(q);
         if gain < tolerance && levels.len() > 1 {
             converged = true;
@@ -1021,6 +1077,7 @@ fn leiden<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
         let refined = refine(&net, &sched, &part, c, gamma, theta, seed, levels.len() - 1)?;
         let mut refined = refined;
         let rc = renumber(&mut refined);
+        trace!("refine", "{} {refined:?}", levels.len() - 1);
         if rc == net.len() {
             converged = true;
             break;
@@ -1271,12 +1328,15 @@ fn label_propagation<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Ou
     let sched = r.sched;
     let mut ran = 0u64;
     let mut converged = false;
+    trace!("colours", "{classes:?}");
     while ran < rounds {
         r.mem.check_now()?;
         ran += 1;
         let round = ran.rotate_left(48);
         let mut changed = 0usize;
-        for class in &classes {
+        // The class index is read by the test trace only.
+        #[cfg_attr(not(test), allow(clippy::unused_enumerate_index))]
+        for (_ci, class) in classes.iter().enumerate() {
             let current = &label;
             let updates = sched.map(|_, range| {
                 let lo = class.partition_point(|v| *v < range.start);
@@ -1322,11 +1382,14 @@ fn label_propagation<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Ou
                 }
                 out
             })?;
-            for (v, l) in updates.into_iter().flatten() {
+            let updates: Vec<(usize, i64)> = updates.into_iter().flatten().collect();
+            trace!("class", "{ran} {_ci} {updates:?}");
+            for (v, l) in updates {
                 label[v] = l;
                 changed += 1;
             }
         }
+        trace!("round", "{ran} {label:?}");
         if changed == 0 {
             converged = true;
             break;
@@ -1426,6 +1489,7 @@ fn sllpa<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error>
                         if ls.is_empty() {
                             return (v, None);
                         }
+                        trace!("hear", "{step} {v} {ls:?}");
                         ls.sort_unstable();
                         let mut best: Vec<usize> = Vec::new();
                         let mut most = 0;
@@ -1457,6 +1521,11 @@ fn sllpa<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error>
                 }
                 written[v] = step + 1;
             }
+            trace!(
+                "memory",
+                "{step} {:?}",
+                memory.iter().map(|m| m[step]).collect::<Vec<usize>>()
+            );
         }
     }
     let mut rows = Vec::new();
@@ -1651,6 +1720,13 @@ fn cut_search(
 fn max_k_cut<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
     let n = p.node_count();
     let k = usize::try_from(r.cfg.int("k")).unwrap_or(usize::MAX);
+    if k > 127 {
+        // GDS `ApproxMaxKCutBaseConfig.k`: at most `Byte.MAX_VALUE`.
+        return Err(Error::new(
+            codes::C22N11,
+            "invalid argument: k must be at most 127",
+        ));
+    }
     let restarts = usize::try_from(r.cfg.int("iterations")).unwrap_or(usize::MAX);
     let order = usize::try_from(r.cfg.int("vnsMaxNeighborhoodOrder")).unwrap_or(0);
     let min = match r.cfg.get("minCommunitySize") {
@@ -1681,6 +1757,7 @@ fn max_k_cut<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Er
             let j = g.random_range(i..n);
             perm.swap(i, j);
         }
+        trace!("perm", "{perm:?}");
         let mut part = vec![usize::MAX; n];
         for &v in &perm {
             let mut to = vec![0.0f64; k];
@@ -1720,9 +1797,14 @@ fn max_k_cut<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Er
                 *slot = small;
             }
         }
+        trace!("construct", "{part:?}");
         cut_search(&net, sched, &classes, &mut part, k, min)?;
-        while refine_cut(&net, &mut part, k, min) > 0.0 {}
+        trace!("search", "{part:?}");
+        while refine_cut(&net, &mut part, k, min) > 0.0 {
+            trace!("fm", "{part:?}");
+        }
         let mut value = cut(&net, &part);
+        trace!("cut", "{value:?}");
         for o in 1..=order {
             let mut trial = part.clone();
             let mut sizes = vec![0usize; k];
@@ -1765,11 +1847,13 @@ fn max_k_cut<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Er
 }
 
 /// The community of each node for ALG-082: the property's value as an
-/// integer, `None` for NaN or a negative value.
-fn communities<I: Ix>(p: &Projection<I>) -> Vec<Option<i64>> {
+/// integer, `None` for NaN, and for a negative value unless `negative`
+/// (GDS's modularity counts every value, `ModularityCalculator.create`;
+/// its conductance skips a negative one, `Conductance.java:276-280`).
+fn communities<I: Ix>(p: &Projection<I>, negative: bool) -> Vec<Option<i64>> {
     p.node_props[0]
         .iter()
-        .map(|x| (!x.is_nan() && *x >= 0.0).then_some(*x as i64))
+        .map(|x| (!x.is_nan() && (negative || *x >= 0.0)).then_some(*x as i64))
         .collect()
 }
 
@@ -1811,12 +1895,13 @@ fn counts<I: Ix>(
             e.1 += a;
         }
     }
+    trace!("counts", "{out:?} {total:?}");
     Ok((out, total))
 }
 
 fn run_modularity(r: &mut Run<'_, '_>) -> Result<Output, Error> {
     with_projection!(r.graph, p => {
-        let comm = communities(p);
+        let comm = communities(p, true);
         let (m, total) = counts(p, r, &comm)?;
         let mut rows = Vec::new();
         for (c, (inside, all)) in m {
@@ -1829,7 +1914,7 @@ fn run_modularity(r: &mut Run<'_, '_>) -> Result<Output, Error> {
 
 fn run_conductance(r: &mut Run<'_, '_>) -> Result<Output, Error> {
     with_projection!(r.graph, p => {
-        let comm = communities(p);
+        let comm = communities(p, false);
         let (m, _) = counts(p, r, &comm)?;
         let mut rows = Vec::new();
         for (c, (inside, all)) in m {

@@ -101,6 +101,8 @@ mod tests_structure;
 #[cfg(test)]
 mod tests_trace_a;
 #[cfg(test)]
+mod tests_trace_b;
+#[cfg(test)]
 pub(crate) mod trace;
 mod traversal;
 mod trees;
@@ -236,6 +238,15 @@ pub(crate) enum WriteKind {
     /// Node property `writeProperty` of each node in the list in column
     /// `ids` is set to column `value` (the condensation's `componentId`).
     NodeList { ids: usize, value: usize },
+    /// As `NodeProp` with column `value`, or column `levels` when
+    /// `includeIntermediateCommunities` is true: Louvain and Leiden write
+    /// the list of intermediate communities then (GDS
+    /// `LouvainWriteStep.java:68-72`, `LeidenWriteStep.java:71-75`).
+    Levels {
+        id: usize,
+        levels: usize,
+        value: usize,
+    },
 }
 
 /// An algorithm of the inventory (module documentation).
@@ -992,6 +1003,18 @@ fn write_rows(
             let pairs: Vec<(u64, Value)> = rows
                 .iter()
                 .filter_map(|r| Some((row_node(&r[id])?, r[value].clone())))
+                .collect();
+            Ok((write_node_values(cx, g, cfg, &pairs)?, 0, 0))
+        }
+        WriteKind::Levels { id, levels, value } => {
+            let column = if cfg.bool("includeIntermediateCommunities") {
+                levels
+            } else {
+                value
+            };
+            let pairs: Vec<(u64, Value)> = rows
+                .iter()
+                .filter_map(|r| Some((row_node(&r[id])?, r[column].clone())))
                 .collect();
             Ok((write_node_values(cx, g, cfg, &pairs)?, 0, 0))
         }

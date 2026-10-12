@@ -8,11 +8,15 @@
 //!   centroid (squared Euclidean distance, the lower centroid on a tie) by
 //!   blocks, each block returning its centroid sums and counts, which are
 //!   added in block order; a centroid without points keeps its place. The
-//!   run stops when the share of points that changed centroid is below
-//!   `deltaThreshold` (GDS), or when no centroid moved by more than a
-//!   tolerance (cuGraph's `kmean_tolerance`), or after the iteration
-//!   limit. The best of the restarts by inertia (sum of squared distances)
-//!   wins, the first on a tie.
+//!   run stops after the iteration limit, or, for 080, after an iteration
+//!   other than the first in which at most `(n × deltaThreshold)` points
+//!   (truncated) changed centroid (GDS `KmeansIterationStopper`); for 076
+//!   and 077 when no centroid moved by more than `kmean_tolerance`
+//!   (cuGraph). 080 keeps the last assignment and measures its distances
+//!   to the final centroids (GDS `Kmeans.kMeans`), and the restart of
+//!   least average distance wins (GDS `updateBestSolution`); 076 and 077
+//!   assign the points to the final centroids and keep the restart of
+//!   least inertia (cuVS). The first restart wins a tie.
 //! * **Initialisation** (the generator of stream 0, the run's sequential
 //!   part): `UNIFORM` draws `k` distinct points; `KMEANS++` draws the
 //!   first point uniformly and each next one with probability
@@ -21,7 +25,11 @@
 //!   `kmeans/KmeansPlusPlusSampler.java`, studied); `seedCentroids` gives
 //!   the centroids.
 //! * **080** (GDS `kmeans/Kmeans.java`, studied): `nodeProperty` is a
-//!   number or a list of numbers per node; `distanceFromCentroid` is the
+//!   list of numbers per node (a number fails with 22N11, as GDS's
+//!   `nodePropertyTypeValidation`); `seedCentroids` needs exactly `k`
+//!   centroids and one restart (GDS `CommunityAlgorithms.kMeans`); with
+//!   `k` above the node count each node is its own community, at distance
+//!   0 (GDS `Kmeans.compute`); `distanceFromCentroid` is the
 //!   Euclidean distance; `silhouette` is `(b − a) / max(a, b)` with `a`
 //!   the mean distance to the node's own cluster and `b` the least mean
 //!   distance to another, when `computeSilhouette` is true, else −1 as
@@ -195,11 +203,14 @@ pub(crate) fn kmeans(
     sched: &Sched,
 ) -> Result<Clusters, Error> {
     let n = x.len() / d;
-    let mut best: Option<Clusters> = None;
+    // The best restart and its score: GDS's average distance to the
+    // centroid for `Stop::Changed`, the inertia for `Stop::Shift`.
+    let mut best: Option<(Clusters, f64)> = None;
     for _ in 0..restarts.max(1) {
         let mut c = init(x, d, k, how, g);
+        trace!("init", "{c:?}");
         let mut assign = vec![usize::MAX; n];
-        for _ in 0..max_iterations {
+        for iteration in 1..=max_iterations {
             let cref = &c;
             let blocks = sched.fill(&mut assign, |_, range, out| {
                 let mut sums = vec![0.0; k * d];
@@ -250,39 +261,63 @@ pub(crate) fn kmeans(
                     c[j * d + t] = v;
                 }
             }
+            trace!("iteration", "{iteration} {assign:?} {changed} {c:?}");
+            // GDS `KmeansIterationStopper.shouldQuit`: never on the first
+            // iteration, then at most `(long) (n × deltaThreshold)` swaps.
             let done = match stop {
-                Stop::Changed(delta) => (changed as f64) / (n as f64) < delta,
+                Stop::Changed(delta) => iteration > 1 && changed <= (n as f64 * delta) as usize,
                 Stop::Shift(tol) => shift <= tol,
             };
             if done {
                 break;
             }
         }
-        // Final assignment to the final centroids.
-        let mut inertia = 0.0;
-        for i in 0..n {
-            let p = &x[i * d..(i + 1) * d];
-            let mut bestc = 0;
-            let mut bestd = f64::INFINITY;
-            for j in 0..k {
-                let dd = sq(p, &c[j * d..(j + 1) * d]);
-                if dd < bestd {
-                    bestd = dd;
-                    bestc = j;
+        let (mut inertia, mut total) = (0.0, 0.0);
+        if let Stop::Shift(_) = stop {
+            // cuVS: the points are assigned to the final centroids.
+            for i in 0..n {
+                let p = &x[i * d..(i + 1) * d];
+                let mut bestc = 0;
+                let mut bestd = f64::INFINITY;
+                for j in 0..k {
+                    let dd = sq(p, &c[j * d..(j + 1) * d]);
+                    if dd < bestd {
+                        bestd = dd;
+                        bestc = j;
+                    }
                 }
+                assign[i] = bestc;
+                inertia += bestd;
             }
-            assign[i] = bestc;
-            inertia += bestd;
+        } else {
+            // GDS `Kmeans.kMeans`: the last assignment is kept, and its
+            // distances to the final centroids are measured
+            // (`KmeansTask.calculateFinalDistance`).
+            for (i, a) in assign.iter().enumerate() {
+                let dd = sq(&x[i * d..(i + 1) * d], &c[a * d..(a + 1) * d]);
+                inertia += dd;
+                total += dd.sqrt();
+            }
         }
-        if best.as_ref().is_none_or(|b| inertia < b.inertia) {
-            best = Some(Clusters {
-                assign,
-                centroids: c,
-                inertia,
-            });
+        // GDS `updateBestSolution`: the least average distance to the
+        // centroid; cuVS: the least inertia. The first restart on a tie.
+        let score = match stop {
+            Stop::Changed(_) => total / n as f64,
+            Stop::Shift(_) => inertia,
+        };
+        trace!("restart", "{assign:?} {score:?}");
+        if best.as_ref().is_none_or(|b| score < b.1) {
+            best = Some((
+                Clusters {
+                    assign,
+                    centroids: c,
+                    inertia,
+                },
+                score,
+            ));
         }
     }
-    Ok(best.expect("at least one restart"))
+    Ok(best.expect("at least one restart").0)
 }
 
 /// The points of vector property `0`: `n × d`, row-major.
@@ -357,6 +392,13 @@ fn run_kmeans(r: &mut Run<'_, '_>) -> Result<Output, Error> {
 fn kmeans_entry<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
     let n = p.node_count();
     let (x, d) = points(p, r.cfg.str("nodeProperty").unwrap_or_default())?;
+    if p.vectors[0].scalar {
+        // GDS `KmeansBaseConfig.nodePropertyTypeValidation`: a list of
+        // numbers per node, not a number.
+        return Err(invalid(
+            "nodeProperty must hold a list of numbers per node, not a number",
+        ));
+    }
     r.mem
         .grow(x.len() * 8 + n * 32 + r.sched.worker_count() * 1024)?;
     let given: Vec<Vec<f64>> = match r.cfg.get("seedCentroids") {
@@ -383,28 +425,45 @@ fn kmeans_entry<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output,
                 "each seed centroid needs the dimension of nodeProperty",
             ));
         }
-        k = given.len();
+        // GDS `CommunityAlgorithms.kMeans`: seeded runs restart once, with
+        // exactly `k` centroids.
+        if r.cfg.int("numberOfRestarts") > 1 {
+            return Err(invalid(
+                "k-means cannot restart when seedCentroids is given",
+            ));
+        }
+        if given.len() != k {
+            return Err(invalid("seedCentroids must hold exactly k centroids"));
+        }
         Init::Given(given.concat())
     } else if r.cfg.str("initialSampler") == Some("KMEANS++") {
         Init::PlusPlus
     } else {
         Init::Uniform
     };
-    if k > n {
-        return Err(invalid("k must be at most the number of nodes"));
-    }
-    let mut g = rng(r.cfg.seed(), 0);
-    let res = kmeans(
-        &x,
-        d,
-        k,
-        usize::try_from(r.cfg.int("maxIterations")).unwrap_or(usize::MAX),
-        Stop::Changed(r.cfg.float("deltaThreshold")),
-        &how,
-        usize::try_from(r.cfg.int("numberOfRestarts")).unwrap_or(1),
-        &mut g,
-        r.sched,
-    )?;
+    let res = if k > n {
+        // GDS `Kmeans.compute`: more clusters than nodes puts each node
+        // in its own community, at distance 0 from itself as centroid.
+        k = n;
+        Clusters {
+            assign: (0..n).collect(),
+            centroids: x.clone(),
+            inertia: 0.0,
+        }
+    } else {
+        let mut g = rng(r.cfg.seed(), 0);
+        kmeans(
+            &x,
+            d,
+            k,
+            usize::try_from(r.cfg.int("maxIterations")).unwrap_or(usize::MAX),
+            Stop::Changed(r.cfg.float("deltaThreshold")),
+            &how,
+            usize::try_from(r.cfg.int("numberOfRestarts")).unwrap_or(1),
+            &mut g,
+            r.sched,
+        )?
+    };
     let point = |i: usize| &x[i * d..(i + 1) * d];
     let silhouette: Option<Vec<f64>> = r.cfg.bool("computeSilhouette").then(|| {
         (0..n)
@@ -549,6 +608,7 @@ fn hdbscan_entry<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output
             *c = row[samples - 1];
         }
     })?;
+    trace!("core", "{core:?}");
     let labels = hdbscan(&x, d, &core, min_size);
     let mut rows = Vec::new();
     for (id, label) in p.ids.iter().zip(&labels) {
@@ -664,6 +724,7 @@ fn hdbscan(x: &[f64], d: usize, core: &[f64], min_size: usize) -> Vec<i64> {
         left = right;
     }
     mst.sort_by(|a, b| a.2.total_cmp(&b.2));
+    trace!("mst", "{mst:?}");
     // Single linkage.
     let mut uf = UnionFind::new(n);
     let mut slt: Vec<Link> = Vec::with_capacity(n - 1);
@@ -753,6 +814,13 @@ fn hdbscan(x: &[f64], d: usize, core: &[f64], min_size: usize) -> Vec<i64> {
             }
         }
     }
+    trace!(
+        "condensed",
+        "{:?}",
+        tree.iter()
+            .map(|t| (t.node, t.parent, t.lambda, t.size))
+            .collect::<Vec<_>>()
+    );
     // Excess-of-mass selection.
     let lower = n + 1;
     let upper = lower + tree.len().saturating_sub(n);
@@ -799,6 +867,7 @@ fn hdbscan(x: &[f64], d: usize, core: &[f64], min_size: usize) -> Vec<i64> {
     // Labels.
     let mut labels = vec![-1i64; n];
     let winners: Vec<usize> = (lower..upper).filter(|c| selected[c - lower]).collect();
+    trace!("selected", "{winners:?} {stability:?}");
     for (label, c) in winners.iter().enumerate() {
         let mut q = VecDeque::from([*c]);
         while let Some(cur) = q.pop_front() {
@@ -889,6 +958,18 @@ fn float_arg(v: &Value, name: &str) -> Result<f64, Error> {
     }
 }
 
+/// `x` rounded to 6 decimals, 0 below `5e-7` in magnitude: eigenvalues
+/// and eigenvectors in a trace, which nalgebra and the reference compute
+/// to different last bits (rmp #71).
+#[cfg(test)]
+fn rounded(x: f64) -> f64 {
+    if x.abs() < 5e-7 {
+        0.0
+    } else {
+        (x * 1e6).round() / 1e6
+    }
+}
+
 /// The weighted net of ALG-076 and 077: an edge without the property
 /// weighs 1.
 fn spectral_net<I: Ix>(p: &Projection<I>) -> Net {
@@ -949,6 +1030,7 @@ fn spectral<I: Ix>(
         }
     }
     r.mem.check_now()?;
+    trace!("matrix", "{:?}", m.transpose().as_slice());
     let eig = nalgebra::SymmetricEigen::new(m);
     let mut order: Vec<usize> = (0..n).collect();
     order.sort_by(|a, b| {
@@ -956,6 +1038,29 @@ fn spectral<I: Ix>(
             .total_cmp(&eig.eigenvalues[*b])
             .then(a.cmp(b))
     });
+    trace!(
+        "eigenvalues",
+        "{:?}",
+        order
+            .iter()
+            .map(|i| rounded(eig.eigenvalues[*i]))
+            .collect::<Vec<f64>>()
+    );
+    #[cfg(test)]
+    for col in &order[1..=e] {
+        // Each eigenvector up to its sign: the first entry of magnitude
+        // above 1e-6 made positive (the trace compares it, rmp #71).
+        let v = eig.eigenvectors.column(*col);
+        let sign = v
+            .iter()
+            .find(|x| x.abs() > 1e-6)
+            .map_or(1.0, |x| x.signum());
+        trace!(
+            "eigenvector",
+            "{:?}",
+            v.iter().map(|x| rounded(sign * x)).collect::<Vec<f64>>()
+        );
+    }
     let mut x = vec![0.0f64; n * e];
     for i in 0..n {
         for (t, col) in order[1..=e].iter().enumerate() {

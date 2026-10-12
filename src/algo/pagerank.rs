@@ -269,6 +269,8 @@ fn supersteps<I: Ix>(
             };
         }
     })?;
+    #[cfg(test)]
+    trace_superstep(0, prev);
     for iteration in 1..params.max_iterations {
         let old = &**prev;
         let summary = sched.fill(next, |_, range, out| {
@@ -314,11 +316,33 @@ fn supersteps<I: Ix>(
             (sent, halted)
         })?;
         std::mem::swap(prev, next);
+        #[cfg(test)]
+        trace_superstep(iteration, prev);
         if summary.iter().all(|(sent, halted)| !sent && *halted) {
+            trace!("stop", "{iteration} converged");
             return Ok((iteration, true));
         }
     }
+    trace!("stop", "{} max", params.max_iterations);
     Ok((params.max_iterations, false))
+}
+
+/// The trace of superstep `k` (rmp #71): the ranks, and the nodes that
+/// sent a message.
+#[cfg(test)]
+fn trace_superstep(k: usize, state: &[NodeState]) {
+    trace!(
+        "round",
+        "{k} {:?}",
+        state.iter().map(|s| s.rank).collect::<Vec<f64>>()
+    );
+    trace!(
+        "send",
+        "{k} {:?}",
+        (0..state.len())
+            .filter(|v| state[*v].sent)
+            .collect::<Vec<usize>>()
+    );
 }
 
 /// The degree array of a run: the out-degree, or the sum of the positive
@@ -384,6 +408,11 @@ fn eigenvector<I: Ix>(
         }
     })?;
     normalise(sched, prev, None, params.tolerance)?;
+    trace!(
+        "round",
+        "0 {:?}",
+        prev.iter().map(|s| s.rank).collect::<Vec<f64>>()
+    );
     for iteration in 1..params.max_iterations {
         let old = &**prev;
         sched.fill(next, |_, range, out| {
@@ -409,10 +438,17 @@ fn eigenvector<I: Ix>(
         })?;
         let converged = normalise(sched, next, Some(old), params.tolerance)?;
         std::mem::swap(prev, next);
+        trace!(
+            "round",
+            "{iteration} {:?}",
+            prev.iter().map(|s| s.rank).collect::<Vec<f64>>()
+        );
         if converged {
+            trace!("stop", "{iteration} converged");
             return Ok((iteration, true));
         }
     }
+    trace!("stop", "{} max", params.max_iterations);
     Ok((params.max_iterations, false))
 }
 

@@ -106,6 +106,10 @@ pub(crate) const CENTRALITY_WRITE: &[&str] = &[
 
 const WEIGHT: Key = Key::new("relationshipWeightProperty", Ty::Str, Def::Absent);
 
+/// The values of GDS's Pregel `partitioning` key (`Partitioning.parse`),
+/// which has no effect in lpg.
+pub(crate) const PARTITIONINGS: &[&str] = &["RANGE", "DEGREE", "AUTO"];
+
 /// ALG-034: `gds.degree.stream`, `gds.degree.write`.
 pub(crate) const DEGREE: Entry = Entry {
     algs: &[34],
@@ -186,7 +190,7 @@ pub(crate) const HITS: Entry = Entry {
         Key::new("authProperty", Ty::Str, Def::Str("auth")),
         Key::new("hubProperty", Ty::Str, Def::Str("hub")),
         WEIGHT,
-        Key::new("partitioning", Ty::Str, Def::Str("AUTO")),
+        Key::new("partitioning", Ty::Choice(PARTITIONINGS), Def::Str("AUTO")),
         Key::new("mutateProperty", Ty::Str, Def::Absent),
     ],
     parallel: true,
@@ -216,8 +220,9 @@ pub(crate) const CELF: Entry = Entry {
         Key::new("monteCarloSimulations", Ty::Int { min: 1 }, Def::Int(100)),
         Key::new(
             "propagationProbability",
+            // GDS `InfluenceMaximizationBaseConfig`: [0.01, 1].
             Ty::Float {
-                min: 0.0,
+                min: 0.01,
                 max: 1.0,
                 max_open: false,
             },
@@ -265,6 +270,7 @@ fn degree<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
             } else {
                 p.out_degree(v) as f64
             };
+            trace!("degree", "{v} {x:?}");
         }
     })?;
     Ok(floats(values))
@@ -417,6 +423,10 @@ impl Brandes {
                 acc[w] += self.delta[w] / divisor;
             }
         }
+        trace!(
+            "source",
+            "{s} order={:?} sigma={:?} delta={:?}", self.stack, self.sigma, self.delta
+        );
     }
 }
 
@@ -428,6 +438,7 @@ fn betweenness<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, 
         _ => None,
     };
     let src = sources(p, r.sched, size, r.cfg.int("samplingSeed").cast_unsigned());
+    trace!("sources", "{src:?}");
     let divisor = if p.orientation == super::projection::Orientation::Undirected {
         2.0
     } else {
@@ -465,6 +476,7 @@ fn betweenness<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, 
             }
         },
     )?;
+    trace!("score", "{acc:?}");
     Ok(floats(acc))
 }
 
@@ -518,7 +530,9 @@ fn by_depths<I: Ix>(
         let mut dist = vec![u32::MAX; n];
         let mut queue = Vec::new();
         for (x, v) in out.iter_mut().zip(range) {
-            *x = value(&reverse_depths(p, v, &mut dist, &mut queue));
+            let counts = reverse_depths(p, v, &mut dist, &mut queue);
+            *x = value(&counts);
+            trace!("depths", "{v} {counts:?} {x:?}");
         }
     })?;
     Ok(floats(values))
@@ -597,7 +611,9 @@ fn katz<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> 
                 *o = i;
             }
             order.sort_by(|a, b| c[*b].total_cmp(&c[*a]).then(a.cmp(b)));
+            trace!("round", "{k} c={c:?} ur={ur:?} order={order:?}");
             if order.windows(2).all(|w| ur[w[1]] - epsilon < c[w[0]]) {
+                trace!("stop", "{k}");
                 break;
             }
         }
@@ -623,6 +639,18 @@ fn l2(sched: &Sched, xs: &mut [f64]) -> Result<f64, Error> {
 }
 
 fn hits<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
+    for key in ["authProperty", "hubProperty"] {
+        // GDS `HitsConfig.validateAuthProperty`, `validateHubProperty`.
+        if r.cfg
+            .str(key)
+            .is_some_and(|s| s.chars().any(char::is_whitespace))
+        {
+            return Err(Error::new(
+                codes::C22N11,
+                format!("invalid argument: {key} must not contain whitespace"),
+            ));
+        }
+    }
     if p.orientation == super::projection::Orientation::Undirected {
         // GDS 2026.09.0 refuses an undirected projection (measured, rmp
         // #65: "The Hits algorithm requires relationship projections to
@@ -644,6 +672,7 @@ fn hits<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> 
         }
     })?;
     let mut norm = l2(sched, &mut auth)?;
+    trace!("step", "0 auth={auth:?} hub={hub:?} norm={norm:?}");
     let steps = rounds.saturating_mul(4);
     for step in 1..steps {
         r.mem.check_now()?;
@@ -678,6 +707,7 @@ fn hits<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> 
                 norm = l2(sched, &mut auth)?;
             }
         }
+        trace!("step", "{step} auth={auth:?} hub={hub:?} norm={norm:?}");
     }
     let (a, h) = (
         std::sync::Arc::<str>::from(r.cfg.str("authProperty").unwrap_or("auth")),
@@ -797,6 +827,7 @@ fn celf<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> 
             self.0.total_cmp(&o.0).then(o.2.cmp(&self.2))
         }
     }
+    trace!("single", "{single:?}");
     let mut heap: BinaryHeap<Item> = (0..n).map(|v| Item(single[v], 0, v)).collect();
     let mut set: Vec<usize> = Vec::with_capacity(k);
     let mut rows = Vec::new();
@@ -806,7 +837,9 @@ fn celf<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> 
         let Some(Item(gain, round, v)) = heap.pop() else {
             break;
         };
+        trace!("pop", "{v} {gain:?} {round}");
         if round == set.len() {
+            trace!("select", "{v} {gain:?}");
             set.push(v);
             total += gain;
             r.emit(
@@ -819,6 +852,7 @@ fn celf<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> 
         set.push(v);
         let with = cascades.spread(p, &set, &mut seen);
         set.pop();
+        trace!("gain", "{v} {:?}", with - total);
         heap.push(Item(with - total, set.len(), v));
     }
     Ok(Output::Rows {

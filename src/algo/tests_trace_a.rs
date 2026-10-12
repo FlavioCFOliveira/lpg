@@ -25,7 +25,7 @@ fn nodes(g: &TraceGraph, xs: &[usize]) -> Value {
 }
 
 /// A JSON value of a case as a parameter: `{"node": i}` is node `i`.
-fn value(g: &TraceGraph, v: &serde_json::Value) -> Value {
+pub(super) fn value(g: &TraceGraph, v: &serde_json::Value) -> Value {
     use serde_json::Value as J;
     match v {
         J::Null => Value::Null,
@@ -50,7 +50,7 @@ fn value(g: &TraceGraph, v: &serde_json::Value) -> Value {
 }
 
 /// The trace graph `spec` of the reference file.
-async fn build(spec: &serde_json::Value) -> TraceGraph {
+pub(super) async fn build(spec: &serde_json::Value) -> TraceGraph {
     let n = usize::try_from(spec["n"].as_u64().expect("n")).unwrap();
     let labels: Vec<String> = match spec.get("nodes") {
         Some(l) => l

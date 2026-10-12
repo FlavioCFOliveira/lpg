@@ -48,9 +48,11 @@
 //! * `randomJoins` random candidates per node and round, and the initial
 //!   samples (`UNIFORM`, or `RANDOMWALK`: the distinct nodes of a random
 //!   walk from the node, topped up uniformly), are drawn from the block
-//!   generator. `perturbationRate` is the probability that a proposal no
-//!   better than a list's worst still replaces it, drawn from the
-//!   generator of stream `blocks`, applied in the same order.
+//!   generator. `perturbationRate` is the probability that a proposal of
+//!   the same similarity as a full list's worst replaces it (GDS
+//!   `NeighborList.add`:107-115; `knn-specific-algo-config.adoc:21`),
+//!   drawn from the generator of stream `blocks`, applied in the same
+//!   order.
 //! * The run stops when a round makes fewer than `deltaThreshold × topK ×
 //!   n` updates, or after `maxIterations` rounds.
 //!
@@ -100,11 +102,8 @@ const NODE_SIMILARITY_KEYS: &[Key] = &[
     Key::new("bottomN", Ty::Int { min: 0 }, Def::Int(0)),
     Key::new(
         "similarityCutoff",
-        Ty::Float {
-            min: 0.0,
-            max: f64::INFINITY,
-            max_open: false,
-        },
+        // GDS `NodeSimilarityBaseConfig.similarityCutoff`: [0, 1].
+        UNIT,
         Def::Float(1.0e-42),
     ),
     Key::new("degreeCutoff", Ty::Int { min: 1 }, Def::Int(1)),
@@ -542,6 +541,7 @@ fn node_similarity<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Outp
                 }
             }
             keep_best(&mut list, k, top_k);
+            trace!("source", "{s} {list:?}");
             out.push((s, list));
         }
         out
@@ -665,8 +665,9 @@ struct Nb {
 
 /// Inserts `(id, sim)` into the sorted list `l` of at most `k` entries
 /// (best first, ties to the lower index) unless `id` is in it or it is
-/// no better than the worst of a full list, which `force` overrides;
-/// returns whether the list changed.
+/// no better than the worst of a full list; `force` replaces the worst
+/// with a candidate of equal similarity (GDS `NeighborList.add`:107-115,
+/// `perturbationRate`); returns whether the list changed.
 fn update(l: &mut Vec<Nb>, k: usize, id: usize, sim: f64, force: bool) -> bool {
     if l.iter().any(|x| x.id == id) {
         return false;
@@ -676,7 +677,7 @@ fn update(l: &mut Vec<Nb>, k: usize, id: usize, sim: f64, force: bool) -> bool {
         .position(|x| sim > x.sim || (sim == x.sim && id < x.id))
         .unwrap_or(l.len());
     if pos >= k {
-        if !force || l.is_empty() {
+        if !force || l.last().is_none_or(|w| w.sim != sim) {
             return false;
         }
         l.pop();
@@ -741,6 +742,10 @@ fn knn<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
     let targets: Vec<usize> = (0..n).filter(|v| is_target(*v)).collect();
     let seed = cfg.seed();
     let rate = cfg.float("sampleRate");
+    if rate <= 0.0 {
+        // GDS `KnnBaseConfig.sampleRate`: (0, 1].
+        return Err(invalid("sampleRate must be above 0"));
+    }
     let rho = ((rate * k as f64) as usize).max(1);
     let joins = usize::try_from(cfg.int("randomJoins")).unwrap_or(0);
     let walk = cfg.str("initialSampler") == Some("RANDOMWALK");
@@ -784,6 +789,7 @@ fn knn<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
                 .collect();
             let more = sample(&mut g, &rest, k.saturating_sub(picked.len()));
             picked.extend(more);
+            trace!("init", "{v} {picked:?}");
             for t in picked {
                 update(l, k, t, props.similarity(v, t), false);
             }
@@ -805,7 +811,7 @@ fn knn<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
             .collect();
         sched.fill(&mut split, |b, range, out| {
             let mut g = gen_of(b);
-            for (slot, _) in out.iter_mut().zip(range) {
+            for (slot, _v) in out.iter_mut().zip(range) {
                 let (old, new, l) = slot;
                 let fresh: Vec<usize> = (0..l.len()).filter(|i| l[*i].new).collect();
                 for x in l.iter().filter(|x| !x.new) {
@@ -815,6 +821,7 @@ fn knn<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
                     new.push(l[i].id);
                     l[i].new = false;
                 }
+                trace!("split", "{_v} old={old:?} new={new:?}");
             }
         })?;
         for (v, (old, new, l)) in split.into_iter().enumerate() {
@@ -850,6 +857,7 @@ fn knn<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
                         new.push(u);
                     }
                 }
+                trace!("join", "{v} old={old:?} new={new:?}");
                 let mut propose = |a: usize, b: usize, out: &mut Vec<(usize, usize, f64)>| {
                     pairs += 1;
                     let s = props.similarity(a, b);
@@ -875,6 +883,7 @@ fn knn<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
                         break;
                     }
                     let u = targets_ref[g.random_range(0..targets_ref.len())];
+                    trace!("random", "{v} {u}");
                     if u != v {
                         pairs += 1;
                         out.push((v, u, props.similarity(v, u)));
@@ -892,10 +901,19 @@ fn knn<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error> {
                 }
                 let force = perturbation > 0.0 && perturb.random::<f64>() < perturbation;
                 if update(&mut lists[a], k, b, s, force) {
+                    trace!("update", "{a} {b} {s:?}");
                     updates += 1;
                 }
             }
         }
+        trace!(
+            "round",
+            "{ran} {updates} {:?}",
+            lists
+                .iter()
+                .map(|l| l.iter().map(|x| x.id).collect::<Vec<usize>>())
+                .collect::<Vec<_>>()
+        );
         if (updates as f64) < delta * k as f64 * n as f64 {
             converged = true;
             break;

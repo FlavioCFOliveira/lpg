@@ -627,6 +627,7 @@ fn clustering_quality_on_planted_points() {
         let config = record(&[
             ("nodeLabels", txt("C")),
             ("nodeProperty", txt("vec")),
+            ("k", int(4)),
             (
                 "seedCentroids",
                 Value::List(
@@ -935,11 +936,9 @@ fn community_options() {
         assert_eq!(by_uid(&l, &rows, 1), planted, "063 keeps the seeds");
         let rows = l.det("gds.louvain.stream", &[], seeded, true).await;
         compare(Rule::Partition, &by_uid(&l, &rows, 2), &planted).unwrap();
-        // Intermediate and consecutive identifiers.
-        let config = undirected(&[
-            ("includeIntermediateCommunities", Value::Bool(true)),
-            ("consecutiveIds", Value::Bool(true)),
-        ]);
+        // Intermediate and consecutive identifiers; GDS refuses both at
+        // once (`LouvainBaseConfig.validate`, rmp #71).
+        let config = undirected(&[("includeIntermediateCommunities", Value::Bool(true))]);
         let rows = l.det("gds.louvain.stream", &[], config.clone(), true).await;
         let levels = summary(&l, "gds.louvain.stream", &[], &config, "ranLevels").await;
         for r in &rows {
@@ -948,8 +947,15 @@ fn community_options() {
             };
             assert_eq!(Value::Int(inter.len() as i64), levels);
             assert_eq!(inter.last(), Some(&r[2]));
+        }
+        let config = undirected(&[("consecutiveIds", Value::Bool(true))]);
+        let rows = l.det("gds.louvain.stream", &[], config.clone(), true).await;
+        for r in &rows {
             assert!(matches!(r[2], Value::Int(c) if (0..4).contains(&c)));
         }
+        let both = with(&config, "includeIntermediateCommunities", Value::Bool(true));
+        let e = l.call("gds.louvain.stream", &[], &both).await.unwrap_err();
+        assert_eq!(e.code(), "22N11");
         // `minCommunitySize` keeps the cliques of 6 and drops them at 7.
         for (min, kept) in [(6, 24), (7, 0)] {
             for proc in [
@@ -996,12 +1002,13 @@ fn community_options() {
             .await
             .unwrap_err();
         assert_eq!(e.code(), "22N11");
-        // K-means restarts: inertia no greater than one restart's.
+        // K-means restarts: GDS keeps the restart of least average
+        // distance to the centroid (`Kmeans.updateBestSolution`).
         let base = record(&[("nodeProperty", txt("vec")), ("k", int(4))]);
         let inertia = |rows: &[Vec<Value>]| {
             rows.iter()
                 .map(|r| match r[2] {
-                    Value::Float(d) => d * d,
+                    Value::Float(d) => d,
                     _ => panic!(),
                 })
                 .sum::<f64>()
@@ -1016,10 +1023,11 @@ fn community_options() {
             )
             .await,
         );
-        eprintln!("LAB planted60 080: inertia {one:.6} with one restart, {five:.6} with five");
+        eprintln!(
+            "LAB planted60 080: total distance {one:.6} with one restart, {five:.6} with five"
+        );
         assert!(five <= one);
         for (proc, config) in [
-            ("gds.kmeans.stream", with(&base, "k", int(61))),
             (
                 "gds.kmeans.stream",
                 with(

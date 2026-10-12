@@ -239,6 +239,24 @@ impl TraceGraph {
         }
     }
 
+    /// The fixture `name` of `src/algo/testdata` as a trace graph, for
+    /// list-valued properties, which `INSERT` cannot write (GV50; rmp #71
+    /// pass B); node `i` must have element identifier `i`.
+    pub(crate) async fn fixture(name: &str) -> TraceGraph {
+        let f = crate::test_support::algo::Fixture::load(name, 32 << 20).await;
+        assert!(
+            f.ids.iter().copied().eq(0..f.ids.len() as u64),
+            "node i must have element identifier i: {:?}",
+            f.ids
+        );
+        TraceGraph {
+            _dir: f._dir,
+            db: f.db,
+            s: f.s,
+            ids: f.ids,
+        }
+    }
+
     /// The largest number of worker threads a run on this database
     /// started since the last call (the worker-count probe, [`super::sched`]).
     pub(crate) fn workers(&self) -> Option<usize> {
