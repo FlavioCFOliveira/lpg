@@ -366,6 +366,12 @@ pub(crate) fn wcc_labels<I: Ix>(
             }
             changed
         })?;
+        trace!(
+            "round",
+            "{rounds} min {:?} jump {:?}",
+            &next[..],
+            &labels[..]
+        );
         if !changed.contains(&true) && !jumped.contains(&true) {
             break;
         }
@@ -426,10 +432,12 @@ fn connected<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Er
     let mut uf = UnionFind::<usize>::new(n);
     for v in 0..n {
         for (w, _) in p.out(v) {
-            uf.union(v, w.index());
+            let _merged = uf.union(v, w.index());
+            trace!("union", "{v} {} {_merged}", w.index());
         }
     }
     let rep = uf.into_labeling();
+    trace!("label", "{rep:?}");
     let mut smallest = vec![usize::MAX; n];
     for (v, c) in rep.iter().enumerate() {
         smallest[*c] = smallest[*c].min(v);
@@ -454,6 +462,7 @@ fn scc_labels<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Vec<Vec<u
         .into_iter()
         .map(|c| {
             let mut c: Vec<usize> = c.into_iter().map(|v| v.index()).collect();
+            trace!("scc", "{c:?}");
             c.sort_unstable();
             c
         })
@@ -504,6 +513,7 @@ fn condensation<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output,
         let s = &mut succ[i];
         s.sort_unstable();
         s.dedup();
+        trace!("succ", "{i} {s:?}");
         let row = vec![
             Value::Int(i as i64),
             Value::List(c.iter().map(|v| id_value(p, *v)).collect::<Vec<_>>().into()),
@@ -556,10 +566,12 @@ pub(crate) fn biconnected_edges(s: &kernels::Simple) -> Vec<Vec<(usize, usize)>>
                     disc[w] = time;
                     low[w] = time;
                     time += 1;
+                    trace!("tree", "{v} {w}");
                     edges.push((v, w));
                     stack.push((w, 0));
                 } else if disc[w] < disc[v] {
                     low[v] = low[v].min(disc[w]);
+                    trace!("back", "{v} {w}");
                     edges.push((v, w));
                 }
             } else {
@@ -576,6 +588,7 @@ pub(crate) fn biconnected_edges(s: &kernels::Simple) -> Vec<Vec<(usize, usize)>>
                             }
                         }
                         comp.reverse();
+                        trace!("comp", "{comp:?}");
                         out.push(comp);
                     }
                 }
@@ -655,6 +668,7 @@ pub(crate) fn low_link<I: Ix>(p: &Projection<I>) -> LowLink {
                 *next += 1;
                 if w == ll.parent[v] && !*skipped {
                     *skipped = true;
+                    trace!("skip", "{v} {w}");
                     continue;
                 }
                 if ll.tin[w] == NONE {
@@ -663,12 +677,15 @@ pub(crate) fn low_link<I: Ix>(p: &Projection<I>) -> LowLink {
                     ll.low[w] = time;
                     ll.root[w] = start;
                     time += 1;
+                    trace!("tree", "{v} {w}");
                     stack.push((w, 0, false));
                 } else {
                     ll.low[v] = ll.low[v].min(ll.tin[w]);
+                    trace!("back", "{v} {w}");
                 }
             } else {
                 stack.pop();
+                trace!("done", "{v} low {} size {}", ll.low[v], ll.size[v]);
                 let pa = ll.parent[v];
                 if pa != NONE {
                     ll.low[pa] = ll.low[pa].min(ll.low[v]);
@@ -823,9 +840,11 @@ pub(crate) fn core_values<I: Ix>(
                 .into_iter()
                 .min()
                 .unwrap_or(k);
+            trace!("level", "{k}");
             continue;
         }
         rounds += 1;
+        trace!("peel", "{k} {removed:?}");
         for v in &removed {
             core[*v] = k;
         }

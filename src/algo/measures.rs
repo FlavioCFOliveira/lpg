@@ -197,17 +197,23 @@ fn triangle_counts(s: &Simple, ex: &[bool], r: &mut Run<'_, '_>) -> Result<Vec<i
             }
             let nv = s.of(v);
             let mut twice = 0usize;
+            #[cfg(test)]
+            let mut each = Vec::new();
             for w in nv {
                 if ex[*w] {
                     continue;
                 }
-                twice += if any {
+                let c = if any {
                     common(nv, s.of(*w), ex)
                 } else {
                     kernels::intersect_count(nv, s.of(*w))
                 };
+                #[cfg(test)]
+                each.push((*w, c));
+                twice += c;
             }
             *o = (twice / 2) as i64;
+            trace!("tri", "{v} {each:?} {}", *o);
         }
     })?;
     Ok(t)
@@ -322,6 +328,7 @@ fn local_clustering<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Out
             } else {
                 tv * 2.0 / (d * (d - 1.0))
             };
+            trace!("lcc", "{v} {tv:?} {d:?} {:?}", *o);
         }
     })?;
     let mut rows = Vec::new();
@@ -386,6 +393,7 @@ fn eccentricity<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output,
         } else {
             bfs_distances(p, v)
         };
+        trace!("dist", "{v} {dist:?}");
         ecc.push(dist.into_iter().fold(0.0f64, f64::max));
     }
     let mut rows = Vec::new();
@@ -457,6 +465,7 @@ pub(crate) fn girth_of<I: Ix>(p: &Projection<I>) -> f64 {
                 }
             }
         }
+        trace!("girth", "{s} {}", if best == usize::MAX { 0 } else { best });
         if best == 1 {
             break;
         }
@@ -496,6 +505,7 @@ pub(crate) fn laplacian_of<I: Ix>(p: &Projection<I>, weighted: bool) -> DMatrix<
                 continue;
             }
             let cost = kernels::cost(p, weighted, slot);
+            trace!("cell", "{i} {j} {cost:?}");
             kirch[(i, j)] -= cost;
             diagonal[i] += cost;
         }

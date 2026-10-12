@@ -17,8 +17,10 @@
 //! `add_blossom` is two vectors; `verify_optimum` is not kept (the tests
 //! check optimality against exhaustive search and NetworkX); and in
 //! `augment_blossom` a sub-blossom is recognised by `index >= n`, as
-//! NetworkX's `isinstance(t, Blossom)`, where rustworkx tests `> n` and
-//! misses the blossom numbered `n`.
+//! NetworkX's `isinstance(t, Blossom)`, where rustworkx tests `> n`. The
+//! two tests agree in practice: blossom id `n` is never allocated, because
+//! at most `(n - 1) / 2` blossoms exist at once (rmp #71 pass C, measured
+//! on 3,000 random graphs).
 //!
 //! Weights are integers (`i128`): dual variables are kept doubled, so
 //! every quantity stays an integer, as in rustworkx.
@@ -212,6 +214,11 @@ impl State<'_> {
             self.best_edge[bv] = None;
         }
         self.blossom_best_edges[b] = order.iter().map(|x| best_to[*x].expect("set")).collect();
+        trace!("blossom", "{b} base {base} {:?}", {
+            let mut l = self.leaves(b);
+            l.sort_unstable();
+            l
+        });
         self.best_edge[b] = None;
         for k in self.blossom_best_edges[b].clone() {
             if self.best_edge[b].is_none_or(|e| self.slack(k) < self.slack(e)) {
@@ -221,6 +228,11 @@ impl State<'_> {
     }
 
     fn expand_blossom(&mut self, b: usize, end_stage: bool) {
+        trace!("expand", "{b} {end_stage} {:?}", {
+            let mut l = self.leaves(b);
+            l.sort_unstable();
+            l
+        });
         for s in self.blossom_children[b].clone() {
             self.blossom_parents[s] = None;
             if s < self.n {
@@ -301,6 +313,7 @@ impl State<'_> {
     /// Swaps the matched and unmatched edges along the path from vertex
     /// `v` to the base of blossom `b`, and makes `v` the base.
     fn augment_blossom(&mut self, b: usize, v: usize) {
+        trace!("augblossom", "{b} {v}");
         let mut t = v;
         while self.blossom_parents[t] != Some(b) {
             t = self.blossom_parents[t].expect("a parent");
@@ -342,6 +355,7 @@ impl State<'_> {
     /// through edge `k`.
     fn augment_matching(&mut self, k: usize) {
         let (v, w, _) = self.edges[k];
+        trace!("augment", "{v} {w}");
         for (s0, p0) in [(v, 2 * k + 1), (w, 2 * k)] {
             let (mut s, mut p) = (s0, p0);
             loop {
@@ -552,6 +566,7 @@ pub(crate) fn max_weight_matching(
                     }
                 }
             }
+            trace!("delta", "{kind} {delta}");
             match kind {
                 1 => break,
                 2 => {

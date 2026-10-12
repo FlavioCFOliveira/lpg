@@ -280,6 +280,7 @@ pub(crate) fn prim<I: Ix>(p: &Projection<I>, source: usize, weighted: bool, max:
             key
         };
         t.order.push(u);
+        trace!("pop", "{u} {} {:?}", t.parent[u], t.cost[u]);
         for (w, slot) in sorted_out(p, u) {
             if done[w] {
                 continue;
@@ -289,6 +290,7 @@ pub(crate) fn prim<I: Ix>(p: &Projection<I>, source: usize, weighted: bool, max:
             if !heap.contains(w) || key < heap.cost(w) {
                 heap.set(w, key);
                 via[w] = u;
+                trace!("key", "{w} {u} {key:?}");
             }
         }
     }
@@ -392,6 +394,7 @@ pub(crate) fn k_tree(mst: &Tree, source: usize, k: usize, max: bool) -> (Vec<boo
         let c = heap.cost(v);
         let pa = mst.parent[v];
         if v != source && !included[pa] {
+            trace!("drop", "{v}");
             continue;
         }
         if count >= k {
@@ -421,13 +424,20 @@ pub(crate) fn k_tree(mst: &Tree, source: usize, k: usize, max: bool) -> (Vec<boo
                 }
             }
             let Some((leaf_cost, leaf)) = worst else {
+                trace!("reject", "{v} no leaf");
                 continue;
             };
-            if pa == leaf || c >= leaf_cost {
+            if pa == leaf {
+                trace!("skip", "{v} parent {leaf}");
+                continue;
+            }
+            if c >= leaf_cost {
+                trace!("reject", "{v} {c:?} worst {leaf} {leaf_cost:?}");
                 continue;
             }
             included[leaf] = false;
             count -= 1;
+            trace!("trim", "{leaf} for {v}");
             if leaf == root {
                 root = children[leaf]
                     .iter()
@@ -435,6 +445,7 @@ pub(crate) fn k_tree(mst: &Tree, source: usize, k: usize, max: bool) -> (Vec<boo
                     .copied()
                     .expect("one child");
                 root_leaf = kids[root] == 1;
+                trace!("root", "{root} leaf {root_leaf}");
             } else {
                 let pl = mst.parent[leaf];
                 kids[pl] -= 1;
@@ -445,6 +456,7 @@ pub(crate) fn k_tree(mst: &Tree, source: usize, k: usize, max: bool) -> (Vec<boo
         }
         included[v] = true;
         count += 1;
+        trace!("add", "{v} {c:?}");
         if v != root {
             kids[pa] += 1;
             if pa == root {
@@ -536,6 +548,7 @@ fn det_mod(a: &[i64], k: usize, m: u64) -> u64 {
 pub(crate) fn exact_det(a: &[i64], k: usize) -> Option<i64> {
     let r1 = det_mod(a, k, PRIMES[0]);
     let r2 = det_mod(a, k, PRIMES[1]);
+    trace!("residue", "{r1} {r2}");
     let (p1, p2) = (u128::from(PRIMES[0]), u128::from(PRIMES[1]));
     // x = r1 + p1 · ((r2 − r1) · p1⁻¹ mod p2)
     let inv = u128::from(pow_mod(PRIMES[0] % PRIMES[1], PRIMES[1] - 2, PRIMES[1]));
@@ -548,9 +561,12 @@ pub(crate) fn exact_det(a: &[i64], k: usize) -> Option<i64> {
         let d = u128::try_from(a[i * k + i].max(0)).unwrap_or(0);
         bound = bound.saturating_mul(d);
     }
+    trace!("crt", "{residue} bound {bound} {}", bound < modulus);
     let exact = bound < modulus || {
         let m = nalgebra::DMatrix::from_fn(k, k, |i, j| a[i * k + j] as f64);
-        m.determinant().abs() < 2f64.powi(100)
+        let d = m.determinant();
+        trace!("f64", "{d:?}");
+        d.abs() < 2f64.powi(100)
     };
     if residue > i64::MAX as u128 || !exact {
         return None;
@@ -684,6 +700,16 @@ pub(crate) fn steiner_tree<I: Ix>(
                 changed
             })?;
             std::mem::swap(&mut state, &mut next);
+            trace!(
+                "round",
+                "{rounds} {:?}",
+                state
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, d)| d.0.is_finite() && d.1 != NONE)
+                    .map(|(v, d)| (v, d.0, d.1))
+                    .collect::<Vec<_>>()
+            );
             if !changed.contains(&true) {
                 break;
             }
@@ -707,6 +733,12 @@ pub(crate) fn steiner_tree<I: Ix>(
             tree.cost[v] = kernels::cost(p, weighted, slot);
             v = u;
         }
+        trace!("join", "{t} {:?} {:?}", state[t].0, {
+            let mut p = path.clone();
+            p.push(v);
+            p.reverse();
+            p
+        });
         for v in path.into_iter().rev() {
             tree.order.push(v);
             state[v] = (0.0, NONE, NONE);
@@ -757,6 +789,7 @@ fn reroute_tree<I: Ix>(
             }
             let w = kernels::cost(p, weighted, slot);
             if w < tree.cost[t] && !below(tree, s, t) {
+                trace!("reroute", "{t} {pa} -> {s} {w:?}");
                 tree.parent[t] = s;
                 tree.cost[t] = w;
                 changed = true;
@@ -778,6 +811,9 @@ fn reroute_tree<I: Ix>(
         }
         for (v, k) in keep.iter().enumerate() {
             if !k {
+                if tree.parent[v] != NONE {
+                    trace!("cut", "{v}");
+                }
                 tree.parent[v] = NONE;
             }
         }
@@ -910,6 +946,7 @@ pub(crate) fn gw_growth(prizes: &[f64], edges: &[(usize, usize, f64)]) -> (Vec<b
                 let new = merge(&mut cl, a, b, 0.0);
                 cl[new].left -= w;
                 active = active + 1 - before;
+                trace!("negative", "{i} {a} {b} -> {new}");
                 tree.push(i);
             }
         }
@@ -950,12 +987,14 @@ pub(crate) fn gw_growth(prizes: &[f64], edges: &[(usize, usize, f64)]) -> (Vec<b
                 now = now.max(tc);
                 deactivate(&mut cl, c, now);
                 active -= 1;
+                trace!("deactivate", "{c} {now:?}");
             }
             (_, Some((te, i, a, b))) => {
                 now = now.max(te);
                 let before = usize::from(cl[a].active) + usize::from(cl[b].active);
-                merge(&mut cl, a, b, now);
+                let _new = merge(&mut cl, a, b, now);
                 active = active + 1 - before;
+                trace!("merge", "{i} {a} {b} -> {_new} {now:?}");
                 tree.push(i);
             }
             _ => break,
@@ -1031,6 +1070,7 @@ pub(crate) fn strong_pruning(
             best = Some(leaf);
         }
         let Some(&(pa, w)) = adj[leaf].iter().find(|(x, _)| degree[*x] > 0) else {
+            trace!("leaf", "{leaf} {:?} root", dp[leaf]);
             continue;
         };
         if w < dp[leaf] {
@@ -1038,12 +1078,24 @@ pub(crate) fn strong_pruning(
             parent[leaf] = pa;
             out.cost[leaf] = w;
         }
+        trace!(
+            "leaf",
+            "{leaf} {:?} {} {pa}",
+            dp[leaf],
+            if parent[leaf] == pa { "keep" } else { "cut" }
+        );
         degree[pa] -= 1;
         if degree[pa] == 1 {
             queue.push(pa);
         }
     }
     let best = best.expect("a leaf");
+    trace!(
+        "best",
+        "{best} {:?} detached {}",
+        dp[best],
+        parent[best] != best
+    );
     parent[best] = best;
     // Keep `best`'s subtree: the nodes whose parent chain reaches it.
     let mut keep = vec![None; n];

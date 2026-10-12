@@ -36,7 +36,7 @@ fn reference() -> serde_json::Value {
 }
 
 /// The trace graph `spec` of the reference file: pass A's, or a fixture.
-async fn build_b(spec: &serde_json::Value) -> TraceGraph {
+pub(super) async fn build_b(spec: &serde_json::Value) -> TraceGraph {
     match spec.get("fixture").and_then(serde_json::Value::as_str) {
         Some(name) => TraceGraph::fixture(name).await,
         None => build(spec).await,

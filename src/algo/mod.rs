@@ -103,6 +103,8 @@ mod tests_trace_a;
 #[cfg(test)]
 mod tests_trace_b;
 #[cfg(test)]
+mod tests_trace_c;
+#[cfg(test)]
 pub(crate) mod trace;
 mod traversal;
 mod trees;

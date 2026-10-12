@@ -1,0 +1,232 @@
+# GDS 2026.09.0 (neo4j:2026.09.0-community) on the rmp #71 pass C trace graphs: oracle-cases/gds_probes_71c.sh, run 2026-10-12, concurrency 1. One section per case file.
+== kd.gds.kst.4.jsonl
+{"uid": 0, "c": 4, "k": 0}
+{"uid": 1, "c": 4, "k": 1}
+{"uid": 2, "c": 4, "k": 2}
+{"uid": 3, "c": 4, "k": 3}
+{"uid": 4, "c": 4, "k": 4}
+{"uid": 5, "c": 4, "k": 5}
+{"uid": 6, "c": 4, "k": 6}
+{"uid": 7, "c": 4, "k": 7}
+{"uid": 8, "c": 4, "k": 8}
+{"uid": 20, "c": 4, "k": 9}
+{"uid": 21, "c": 4, "k": 10}
+{"uid": 22, "c": 4, "k": 11}
+{"uid": 23, "c": 4, "k": 12}
+{"uid": 24, "c": 4, "k": 13}
+{"uid": 25, "c": 4, "k": 14}
+{"uid": 26, "c": 4, "k": 15}
+{"uid": 27, "c": 4, "k": 16}
+{"uid": 30, "c": 4, "k": 17}
+{"uid": 31, "c": 4, "k": 18}
+{"uid": 32, "c": 4, "k": 19}
+{"uid": 33, "c": 4, "k": 20}
+{"uid": 34, "c": 4, "k": 21}
+{"uid": 35, "c": 4, "k": 22}
+{"uid": 40, "c": 4, "k": 23}
+{"uid": 41, "c": 4, "k": 24}
+{"uid": 42, "c": 4, "k": 23}
+{"uid": 43, "c": 4, "k": 26}
+{"uid": 44, "c": 4, "k": 23}
+{"uid": 45, "c": 4, "k": 23}
+== kq.gds.kst.4.jsonl
+{"uid": 0, "c": 4, "k": 0}
+{"uid": 1, "c": 4, "k": 1}
+{"uid": 2, "c": 4, "k": 2}
+{"uid": 3, "c": 4, "k": 3}
+{"uid": 4, "c": 4, "k": 4}
+{"uid": 5, "c": 4, "k": 5}
+{"uid": 6, "c": 4, "k": 6}
+{"uid": 7, "c": 4, "k": 7}
+{"uid": 8, "c": 4, "k": 8}
+{"uid": 20, "c": 4, "k": 9}
+{"uid": 21, "c": 4, "k": 10}
+{"uid": 22, "c": 4, "k": 11}
+{"uid": 23, "c": 4, "k": 12}
+{"uid": 24, "c": 4, "k": 13}
+{"uid": 25, "c": 4, "k": 14}
+{"uid": 26, "c": 4, "k": 15}
+{"uid": 27, "c": 4, "k": 16}
+{"uid": 30, "c": 4, "k": 17}
+{"uid": 31, "c": 4, "k": 18}
+{"uid": 32, "c": 4, "k": 18}
+{"uid": 33, "c": 4, "k": 20}
+{"uid": 34, "c": 4, "k": 21}
+{"uid": 35, "c": 4, "k": 22}
+{"uid": 40, "c": 4, "k": 23}
+{"uid": 41, "c": 4, "k": 24}
+{"uid": 42, "c": 4, "k": 25}
+{"uid": 43, "c": 4, "k": 26}
+{"uid": 44, "c": 4, "k": 27}
+{"uid": 45, "c": 4, "k": 28}
+== kst.ids.jsonl
+{"uid": 0, "id": 0}
+{"uid": 1, "id": 1}
+{"uid": 2, "id": 2}
+{"uid": 3, "id": 3}
+{"uid": 4, "id": 4}
+{"uid": 5, "id": 5}
+{"uid": 6, "id": 6}
+{"uid": 7, "id": 7}
+{"uid": 8, "id": 8}
+{"uid": 20, "id": 9}
+{"uid": 21, "id": 10}
+{"uid": 22, "id": 11}
+{"uid": 23, "id": 12}
+{"uid": 24, "id": 13}
+{"uid": 25, "id": 14}
+{"uid": 26, "id": 15}
+{"uid": 27, "id": 16}
+{"uid": 30, "id": 17}
+{"uid": 31, "id": 18}
+{"uid": 32, "id": 19}
+{"uid": 33, "id": 20}
+{"uid": 34, "id": 21}
+{"uid": 35, "id": 22}
+{"uid": 40, "id": 23}
+{"uid": 41, "id": 24}
+{"uid": 42, "id": 25}
+{"uid": 43, "id": 26}
+{"uid": 44, "id": 27}
+{"uid": 45, "id": 28}
+== pc.gds.pcst.jsonl
+{"weight": 0.5, "nodeId": 6, "parentId": 5}
+== pc.gds.pcst.write.jsonl
+{"totalWeight": 0.5, "effectiveNodeCount": 2, "sumOfPrizes": 7.0}
+== pp.gds.pcst.jsonl
+== pp.gds.pcst.write.jsonl
+{"totalWeight": 0.0, "effectiveNodeCount": 0, "sumOfPrizes": 0.0}
+== st.gds.steiner.jsonl
+{"weight": 0.0, "nodeId": 0, "parentId": 0}
+{"weight": 1.0, "nodeId": 1, "parentId": 0}
+{"weight": 1.5, "nodeId": 2, "parentId": 1}
+{"weight": 1.25, "nodeId": 3, "parentId": 2}
+{"weight": 2.75, "nodeId": 5, "parentId": 1}
+{"weight": 0.5, "nodeId": 6, "parentId": 5}
+{"weight": 0.125, "nodeId": 7, "parentId": 8}
+{"weight": 2.0, "nodeId": 8, "parentId": 6}
+== st.gds.steiner.reroute.jsonl
+{"weight": 0.0, "nodeId": 0, "parentId": 0}
+{"weight": 1.0, "nodeId": 1, "parentId": 0}
+{"weight": 0.375, "nodeId": 3, "parentId": 7}
+{"weight": 2.75, "nodeId": 5, "parentId": 1}
+{"weight": 0.5, "nodeId": 6, "parentId": 5}
+{"weight": 0.125, "nodeId": 7, "parentId": 8}
+{"weight": 2.0, "nodeId": 8, "parentId": 6}
+== st.gds.steiner.unweighted.jsonl
+{"weight": 0.0, "nodeId": 0, "parentId": 0}
+{"weight": 1.0, "nodeId": 1, "parentId": 0}
+{"weight": 1.0, "nodeId": 3, "parentId": 7}
+{"weight": 1.0, "nodeId": 4, "parentId": 0}
+{"weight": 1.0, "nodeId": 5, "parentId": 1}
+{"weight": 1.0, "nodeId": 6, "parentId": 5}
+{"weight": 1.0, "nodeId": 7, "parentId": 4}
+{"weight": 1.0, "nodeId": 8, "parentId": 6}
+== wt.gds.kst.3.jsonl
+{"uid": 0, "c": 3, "k": 0}
+{"uid": 1, "c": 3, "k": 1}
+{"uid": 2, "c": 3, "k": 2}
+{"uid": 3, "c": 3, "k": 3}
+{"uid": 4, "c": 3, "k": 4}
+{"uid": 5, "c": 3, "k": 5}
+{"uid": 6, "c": 3, "k": 6}
+{"uid": 7, "c": 3, "k": 7}
+{"uid": 8, "c": 3, "k": 8}
+{"uid": 20, "c": 3, "k": 9}
+{"uid": 21, "c": 3, "k": 9}
+{"uid": 22, "c": 3, "k": 9}
+{"uid": 23, "c": 3, "k": 12}
+{"uid": 24, "c": 3, "k": 13}
+{"uid": 25, "c": 3, "k": 14}
+{"uid": 26, "c": 3, "k": 15}
+{"uid": 27, "c": 3, "k": 16}
+{"uid": 30, "c": 3, "k": 17}
+{"uid": 31, "c": 3, "k": 18}
+{"uid": 32, "c": 3, "k": 19}
+{"uid": 33, "c": 3, "k": 20}
+{"uid": 34, "c": 3, "k": 21}
+{"uid": 35, "c": 3, "k": 22}
+{"uid": 40, "c": 3, "k": 23}
+{"uid": 41, "c": 3, "k": 24}
+{"uid": 42, "c": 3, "k": 25}
+{"uid": 43, "c": 3, "k": 26}
+{"uid": 44, "c": 3, "k": 27}
+{"uid": 45, "c": 3, "k": 28}
+== wt.gds.kst.5.jsonl
+{"uid": 0, "c": 5, "k": 0}
+{"uid": 1, "c": 5, "k": 1}
+{"uid": 2, "c": 5, "k": 2}
+{"uid": 3, "c": 5, "k": 3}
+{"uid": 4, "c": 5, "k": 4}
+{"uid": 5, "c": 5, "k": 5}
+{"uid": 6, "c": 5, "k": 6}
+{"uid": 7, "c": 5, "k": 7}
+{"uid": 8, "c": 5, "k": 8}
+{"uid": 20, "c": 5, "k": 9}
+{"uid": 21, "c": 5, "k": 10}
+{"uid": 22, "c": 5, "k": 11}
+{"uid": 23, "c": 5, "k": 16}
+{"uid": 24, "c": 5, "k": 16}
+{"uid": 25, "c": 5, "k": 16}
+{"uid": 26, "c": 5, "k": 16}
+{"uid": 27, "c": 5, "k": 16}
+{"uid": 30, "c": 5, "k": 17}
+{"uid": 31, "c": 5, "k": 18}
+{"uid": 32, "c": 5, "k": 19}
+{"uid": 33, "c": 5, "k": 20}
+{"uid": 34, "c": 5, "k": 21}
+{"uid": 35, "c": 5, "k": 22}
+{"uid": 40, "c": 5, "k": 23}
+{"uid": 41, "c": 5, "k": 24}
+{"uid": 42, "c": 5, "k": 25}
+{"uid": 43, "c": 5, "k": 26}
+{"uid": 44, "c": 5, "k": 27}
+{"uid": 45, "c": 5, "k": 28}
+== wt.gds.kst.max.4.jsonl
+{"uid": 0, "c": 4, "k": 0}
+{"uid": 1, "c": 4, "k": 1}
+{"uid": 2, "c": 4, "k": 2}
+{"uid": 3, "c": 4, "k": 3}
+{"uid": 4, "c": 4, "k": 4}
+{"uid": 5, "c": 4, "k": 5}
+{"uid": 6, "c": 4, "k": 6}
+{"uid": 7, "c": 4, "k": 7}
+{"uid": 8, "c": 4, "k": 8}
+{"uid": 20, "c": 4, "k": 9}
+{"uid": 21, "c": 4, "k": 9}
+{"uid": 22, "c": 4, "k": 11}
+{"uid": 23, "c": 4, "k": 9}
+{"uid": 24, "c": 4, "k": 9}
+{"uid": 25, "c": 4, "k": 14}
+{"uid": 26, "c": 4, "k": 15}
+{"uid": 27, "c": 4, "k": 16}
+{"uid": 30, "c": 4, "k": 17}
+{"uid": 31, "c": 4, "k": 18}
+{"uid": 32, "c": 4, "k": 19}
+{"uid": 33, "c": 4, "k": 20}
+{"uid": 34, "c": 4, "k": 21}
+{"uid": 35, "c": 4, "k": 22}
+{"uid": 40, "c": 4, "k": 23}
+{"uid": 41, "c": 4, "k": 24}
+{"uid": 42, "c": 4, "k": 25}
+{"uid": 43, "c": 4, "k": 26}
+{"uid": 44, "c": 4, "k": 27}
+{"uid": 45, "c": 4, "k": 28}
+== wt.gds.mst.jsonl
+{"weight": 0.0, "nodeId": 20, "parentId": 20}
+{"weight": 2.5, "nodeId": 21, "parentId": 22}
+{"weight": 1.0, "nodeId": 22, "parentId": 20}
+{"weight": 6.0, "nodeId": 23, "parentId": 21}
+{"weight": 3.0, "nodeId": 24, "parentId": 23}
+{"weight": 0.5, "nodeId": 25, "parentId": 23}
+{"weight": 2.0, "nodeId": 26, "parentId": 24}
+{"weight": 1.75, "nodeId": 27, "parentId": 26}
+== wt.gds.mst.max.jsonl
+{"weight": 4.0, "nodeId": 20, "parentId": 21}
+{"weight": 6.0, "nodeId": 21, "parentId": 23}
+{"weight": 7.0, "nodeId": 22, "parentId": 24}
+{"weight": -0.0, "nodeId": 23, "parentId": 23}
+{"weight": 3.0, "nodeId": 24, "parentId": 23}
+{"weight": 9.0, "nodeId": 25, "parentId": 26}
+{"weight": 2.0, "nodeId": 26, "parentId": 24}
+{"weight": 8.0, "nodeId": 27, "parentId": 22}

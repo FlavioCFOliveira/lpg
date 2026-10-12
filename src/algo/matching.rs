@@ -25,7 +25,9 @@
 //!   [`super::projection`]). Modified: sorted vectors instead of hash
 //!   sets, so the order of the cliques is fixed (the pivot is the first
 //!   node of most neighbours); each clique is a row charged as it is
-//!   found (TS-25 exponential outputs).
+//!   found (TS-25 exponential outputs); no clique for the empty
+//!   projection, as NetworkX's `find_cliques` (petgraph returns the empty
+//!   clique; rmp #71).
 //! * **171** (parallel; no permissive source, written here) counts, for
 //!   each node `v`, the cliques of `k − 1` nodes among its neighbours, by
 //!   enumerating the cliques of increasing node index; each block counts
@@ -299,11 +301,25 @@ fn maximum_matching<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Out
     let n = p.node_count();
     r.mem.grow(n * 64 + s.col.len() * 48)?;
     let g = ungraph(&s);
+    trace!(
+        "graph",
+        "{:?}",
+        g.edge_references()
+            .map(|e| (e.source().index(), e.target().index()))
+            .collect::<Vec<_>>()
+    );
     let m = if r.cfg.bool("greedy") {
         petgraph::algo::greedy_matching(&g)
     } else {
         petgraph::algo::maximum_matching(&g)
     };
+    trace!(
+        "mate",
+        "{:?}",
+        (0..n)
+            .map(|v| m.mate(NodeIndex::new(v)).map(|w| w.index()))
+            .collect::<Vec<_>>()
+    );
     let mut rows = Vec::new();
     for v in 0..n {
         if let Some(w) = m.mate(NodeIndex::new(v))
@@ -348,6 +364,7 @@ pub(crate) fn bipartite_matching_size(s: &Simple, looped: bool) -> usize {
             }
         }
     }
+    trace!("colour", "{color:?}");
     // Kuhn's augmenting paths from each node of colour 0.
     let mut matched = vec![NONE; n];
     let mut size = 0;
@@ -374,6 +391,7 @@ pub(crate) fn bipartite_matching_size(s: &Simple, looped: bool) -> usize {
             let z = matched[y];
             if !visited[z] {
                 visited[z] = true;
+                trace!("visit", "{u} {x} {y} {z}");
                 via.push(y);
                 stack.push((z, 0));
             }
@@ -389,6 +407,7 @@ pub(crate) fn bipartite_matching_size(s: &Simple, looped: bool) -> usize {
             }
             size += 1;
         }
+        trace!("search", "{u} {found:?}");
     }
     size
 }
@@ -424,6 +443,7 @@ fn bron_kerbosch(
         if x.is_empty() {
             let mut c = clique.clone();
             c.sort_unstable();
+            trace!("clique", "{c:?}");
             found(&c)?;
         }
         return Ok(());
@@ -435,6 +455,7 @@ fn bron_kerbosch(
             u = *v;
         }
     }
+    trace!("pivot", "{clique:?} {p:?} {x:?} {u}");
     let mut todo: Vec<usize> = p
         .iter()
         .copied()
@@ -471,7 +492,9 @@ fn maximal_cliques<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Outp
     let mut rows = Vec::new();
     let mut count = 0i64;
     let mut clique = Vec::new();
-    {
+    // NetworkX's `find_cliques` yields no clique for the empty graph
+    // (`clique.py:250-251`); petgraph's search would return the empty one.
+    if n > 0 {
         let rows = &mut rows;
         let count = &mut count;
         let r = &mut *r;
@@ -534,6 +557,7 @@ pub(crate) fn clique_counts(s: &Simple, r: &mut Run<'_, '_>) -> Result<Vec<Vec<u
             // Cliques of `k − 1` nodes among the neighbours: `k − 1 ≥ 2`.
             let mut counts = Vec::new();
             extend_cliques(s, s.of(v), 0, &mut counts);
+            trace!("cq", "{v} {counts:?}");
             *o = counts;
         }
     })?;
@@ -587,6 +611,7 @@ pub(crate) fn greedy_colors(s: &Simple, order: &[usize]) -> Vec<usize> {
             }
         }
         colors[*v] = used.iter().position(|u| !u).unwrap_or(used.len());
+        trace!("colour", "{v} {}", colors[*v]);
     }
     colors
 }
@@ -793,6 +818,7 @@ fn greedy_coloring<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Outp
     r.mem.grow(n * 16 * size_of::<usize>())?;
     let order = strategy_order(&s, &strategy, r.cfg.seed())
         .ok_or_else(|| invalid(&format!("unknown strategy: {strategy}")))?;
+    trace!("order", "{order:?}");
     let colors = greedy_colors(&s, &order);
     let mut rows = Vec::new();
     for (v, c) in colors.iter().enumerate() {
@@ -816,6 +842,13 @@ fn dsatur<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Output, Error
     r.mem
         .grow(n * 96 + p.edge_ids.len() * 2 * size_of::<(f64, usize)>())?;
     let (colored, count) = petgraph::algo::dsatur_coloring(p);
+    trace!(
+        "dsatur",
+        "{:?} {count}",
+        (0..n)
+            .map(|v| colored.get(&I::new(v)).copied())
+            .collect::<Vec<_>>()
+    );
     let mut rows = Vec::new();
     for v in 0..n {
         let c = colored.get(&I::new(v)).copied().unwrap_or(0);
@@ -876,6 +909,14 @@ pub(crate) fn jones_plassmann(
             done
         })?;
         std::mem::swap(&mut colors, &mut next);
+        trace!(
+            "round",
+            "{rounds} {:?}",
+            (0..n)
+                .filter(|v| colors[*v] != NONE && next[*v] == NONE)
+                .map(|v| (v, colors[v]))
+                .collect::<Vec<_>>()
+        );
         left -= done.iter().sum::<usize>();
         r.mem.check_now()?;
     }
@@ -929,9 +970,21 @@ fn feedback_arc_set<I: Ix>(p: &Projection<I>, r: &mut Run<'_, '_>) -> Result<Out
         }
     }
     let mut rows = Vec::new();
+    trace!(
+        "graph",
+        "{:?}",
+        g.edge_references()
+            .map(|e| (e.source().index(), e.target().index()))
+            .collect::<Vec<_>>()
+    );
     let arcs: Vec<(usize, usize, usize)> = petgraph::algo::greedy_feedback_arc_set(&g)
         .map(|e| (e.source().index(), e.target().index(), *e.weight()))
         .collect();
+    trace!(
+        "arcs",
+        "{:?}",
+        arcs.iter().map(|(u, v, _)| (*u, *v)).collect::<Vec<_>>()
+    );
     for (u, v, slot) in arcs {
         r.emit(
             &mut rows,
@@ -1003,9 +1056,10 @@ pub(crate) fn greedy_cover(elements: &[u64], sets: &[u64]) -> Vec<u64> {
                 best = Some((gain, *s));
             }
         }
-        let Some((_, s)) = best else {
+        let Some((_gain, s)) = best else {
             break;
         };
+        trace!("pick", "{s} {_gain}");
         for e in &members[&s] {
             uncovered.remove(e);
         }

@@ -332,6 +332,7 @@ pub(crate) fn push_relabel(net: &mut Network, r: &mut Run<'_, '_>) -> Result<usi
             excess[s] -= d;
         }
     }
+    trace!("init", "{:?}", &excess[..n]);
     let mut next_height = vec![0usize; n];
     let mut rounds = 0;
     loop {
@@ -363,6 +364,15 @@ pub(crate) fn push_relabel(net: &mut Network, r: &mut Run<'_, '_>) -> Result<usi
             }
             out
         })?;
+        trace!(
+            "push",
+            "{rounds} {:?}",
+            pushes
+                .iter()
+                .flatten()
+                .map(|(a, d)| (net.tail(*a), net.head[*a], *a, *d))
+                .collect::<Vec<_>>()
+        );
         for (a, d) in pushes.into_iter().flatten() {
             net.res[a] -= d;
             net.res[a ^ 1] += d;
@@ -395,6 +405,7 @@ pub(crate) fn push_relabel(net: &mut Network, r: &mut Run<'_, '_>) -> Result<usi
             }
         })?;
         height[..n].copy_from_slice(&next_height);
+        trace!("height", "{rounds} {:?} {:?}", &height[..n], &excess[..n]);
         r.mem.check_now()?;
     }
     Ok(rounds)
@@ -451,6 +462,7 @@ pub(crate) fn successive_shortest_paths(
         if !updated {
             break;
         }
+        trace!("potential", "{i} {pot:?}");
         if i == total {
             return Err(Error::new(
                 codes::C22N11,
@@ -499,11 +511,21 @@ pub(crate) fn successive_shortest_paths(
         }
         let mut bottleneck = f64::INFINITY;
         let mut v = t;
+        #[cfg(test)]
+        let mut path = vec![t];
         while v != s {
             let a = via[v];
             bottleneck = bottleneck.min(net.res[a]);
             v = net.tail(a);
+            #[cfg(test)]
+            path.push(v);
         }
+        trace!(
+            "augment",
+            "{:?} {bottleneck:?} {:?}",
+            path.iter().rev().collect::<Vec<_>>(),
+            dist[t]
+        );
         let mut v = t;
         while v != s {
             let a = via[v];
