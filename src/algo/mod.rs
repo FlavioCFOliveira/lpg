@@ -93,6 +93,8 @@ mod tests_community;
 #[cfg(test)]
 mod tests_components;
 #[cfg(test)]
+mod tests_exit;
+#[cfg(test)]
 mod tests_flow;
 #[cfg(test)]
 mod tests_paths;

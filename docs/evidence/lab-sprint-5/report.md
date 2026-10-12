@@ -10,7 +10,7 @@ related:
 
 # Sprint 5 correctness laboratory
 
-This report records the Sprint 5 laboratory (rmp #61) and the algorithm runtime with its pilot entry, PageRank (rmp #63). The runs used branch `feature/5-graph-algorithm-library-all-97-inventory-entries` at `9a85eed` plus the uncommitted changes of #61 and #63, on 2026-10-12. Sprint 5 verifies correctness only (sprint UPDATE 57). No timing was measured, and durations printed by tools are not performance claims.
+This report records the Sprint 5 laboratory (rmp #61), the algorithm runtime with its pilot entry, PageRank (rmp #63), the family tasks (rmp #64 to #69), the mechanical review (rmp #71) and the exit check (rmp #70, [last section](#exit-check-rmp-70)). Each section names the commit it ran on; the first sections used branch `feature/5-graph-algorithm-library-all-97-inventory-entries` at `9a85eed` plus the uncommitted changes of #61 and #63, on 2026-10-12. Sprint 5 verifies correctness only (sprint UPDATE 57). No timing was measured, and durations printed by tools are not performance claims.
 
 Graph data lived in `/tmp/lpgram` (tmpfs). No durability or I/O claim rests on these runs.
 
@@ -129,11 +129,7 @@ Test `algo::tests::lab_zipf_projection_memory` (ignored; run alone). The graph `
 | Heap peak of the whole test | 76.81 MB | `heaptrack.sh <test-binary> algo::tests::lab_zipf_projection_memory 4algo10projection5build` |
 | heaptrack peak consumers under `projection::build` | 6.05 MB, 2.89 MB, 1.60 MB, 3.33 KB (merged backtraces; heaptrack states their peaks are approximate) | same |
 
-**Open point (unverified): the heap peak of the build exceeds the run's reservation by 2 861 500 B (about 2.86 MB).** The cause is not established.
-
-* **Indication.** A temporary measurement of the adjacency scan alone gave a heap peak of 14 024 288 B in the first build and 10 041 790 B in the second, on the same graph and the same arrays. The instrumentation was removed afterwards. The 3 982 498 B difference fits buffer-pool frames allocated on the statement thread when pages are first read. The pool reserves those frames from the accountant itself, not through the run. This is an indication, not an attribution.
-* **Known uncharged memory.** By design (`src/algo/mem.rs`), the run does not charge two things: the instant of a reallocation, when an array's old buffer is still held beside its new one, and the copy of one scan chunk (4 096 entries).
-* **Not shown.** That pool frames plus these two items account for the whole 2.86 MB, so the run may hold heap memory that no reservation covers. Closing this needs a measurement that separates pool-frame allocations from the run's own.
+**The heap peak of the build exceeds the run's reservation by 2 861 500 B (about 2.86 MB).** This point was open here; the exit check closed it: the excess is buffer-pool frames, which the pool charges to the accountant itself, and the run's own heap stays within its reservation ([Exit check, condition 5](#condition-5-a-projection-over-the-cap-fails-the-statement-fr-alg-004)). By design (`src/algo/mem.rs`), the run does not charge the instant of a reallocation, when an array's old buffer is still held beside its new one, nor the copy of one scan chunk (4 096 entries); in this measurement both fit within the reservation.
 
 The accountant's peak stayed at or below the cap in every test that checks it: `filters_snapshot_and_memory_cap`, `write_mode_and_signatures` and `lab_zipf_projection_memory`.
 
@@ -161,7 +157,7 @@ The accountant's peak stayed at or below the cap in every test that checks it: `
 | Worker counts (FR-ALG-006) | `worker_counts_follow_concurrency` | met |
 | Zipf rows bit-equal at 1 to 16, twice each; GDS rule F; rounds and `ranIterations` in the report | [PageRank against GDS](#pagerank-against-gds-2026090-rule-f), [Rounds](#rounds-to-convergence-against-gds-raniterations) | met |
 | A multigraph projection keeps parallel edges; forward and reverse rows equal the adjacency; petgraph `toposort`, `kosaraju_scc` and `dinics` run on the wrapper | `projection_keeps_the_multigraph_and_runs_petgraph`; `u32` and `usize` indexes also give equal PageRank output | met |
-| The accountant's peak stays at or below the cap; accountant and heaptrack peaks in the report | [Memory](#memory); the 2.86 MB gap between heap peak and run reservation is open | met, with the open point |
+| The accountant's peak stays at or below the cap; accountant and heaptrack peaks in the report | [Memory](#memory); the 2.86 MB gap between heap peak and run reservation, open here, is closed in the exit check (pool frames) | met |
 | `cargo deny check licenses` and `cargo +1.89 build` exit 0; `cargo tree -p lpg -e normal` lists only TS-31 crates | both exit 0; 47 crates besides lpg, each a row of TS-31 (`once_cell`, `pin-project-lite` and `tracing-core` are in the `tracing` row) | met |
 
 ## Quality gate
@@ -181,7 +177,7 @@ The accountant's peak stayed at or below the cap in every test that checks it: `
 * GDS reports `centralityDistribution` from an HdrHistogram. lpg's percentiles are exact nearest-rank values and were not compared with GDS's.
 * A source node outside the projection fails with 22N11. This follows GDS's source code (`SourceNodesConfig.nodesExistInGraph`), not a GDS run.
 * Synchronous convergence: PageRank's rounds are GDS's own synchronous supersteps, so equal `ranIterations` says nothing about the other entries.
-* The 2.86 MB gap between the build's heap peak and the run's reservation is open and unverified ([Memory](#memory)).
+* The 2.86 MB gap between the build's heap peak and the run's reservation was open here; the exit check attributes it to buffer-pool frames ([Memory](#memory)).
 * MAGE was not pulled; no #63 check needs it.
 
 ## RAM space
@@ -332,7 +328,7 @@ Every uncovered region, by reason:
 2. The `<T>` repetitions of `pathSubgraphNodes` (finding 2) are not compared with a reference.
 3. Rule V is applied to 001 and 002; lpg's visit order differs from GDS's in 5 of 7 cases, while the node sets are equal and the BFS order keeps depth order.
 4. Above 20 odd-degree vertices, 187's `1.5_approx` uses a greedy matching and its bound does not hold.
-5. The write modes of 013, 014 (single pair), 015, 018, 021, 023, 028 and 029 share the PathWrite code that the 014 all-paths write test covers; they were not run one by one.
+5. The write modes of 013, 014 (single pair), 015, 018, 021, 023, 028 and 029 share the PathWrite code that the 014 all-paths write test covers; they were not run one by one here. Closed in #71: `tests_trace_a::path_write_modes_one_by_one` runs each.
 6. The #69 heap peak (25.72 MB) is above the accountant peak (17.76 MB); the share the test's own rows take is not separated from the run's uncharged memory. The #63 open point on the projection build is unchanged.
 7. Rounds to convergence are compared with the hop depth of NetworkX's paths, not with a GDS round count, which GDS does not report.
 
@@ -486,7 +482,7 @@ Both peaks equal the fixture import's: no run of either family exceeded it, so t
 
 1. GDS's SLLPA is asynchronous and draws from `SplittableRandom`; lpg's semi-synchronous form is compared by its quality measure only.
 2. Accepted with no effect: `forceSeedOptimization` (its GDS semantics are not in the open repository), `seedTargetNodes` (initial samples always come from the targets), `ev_tolerance`, `ev_max_iter`, `leafSize`, `partitioning`, `mutateProperty`, `batchSize`; GDS-side behaviour of these is unverified.
-3. The Louvain and Leiden write modes write `communityId` even with `includeIntermediateCommunities`; GDS writes the list then (documentation, not measured). HITS's `nodePropertiesWritten` counts two properties per node; GDS's count is not measured.
+3. The Louvain and Leiden write modes wrote `communityId` even with `includeIntermediateCommunities`; GDS writes the list then. Fixed in #71 (`louvain_and_leiden_write_the_intermediate_communities`). HITS's `nodePropertiesWritten` counts two properties per node, as GDS's own test expects (`HitsWriteProcTest.java:82`, read in #71, not run on GDS).
 4. NetworkX's `partition_quality` and `constant_potts_model` have no lpg output to compare with.
 5. The heap peaks of the families are below the fixture import's and are not separated (Memory).
 6. MAGE's `GraphView::Neighbours` (the degree in Katz's `γ`) was not read (the `mg_graph` header is not in the clone); the results equal MAGE's on four graphs.
@@ -633,7 +629,7 @@ Every stream entry: bit-equal rows at `concurrency` 1–16, twice each, and `CAL
 2. **GDS's prize-collecting Steiner tree refuses an integer prize** ("Value type required: [DOUBLE]").
 3. **GDS's Steiner rows give rounded path-cost differences** (0.5641788520905568 for an edge of 0.5641788520905567); the tests compare edges within 1e-12.
 4. **GDS's degrees differ by entry** (measured): k-core counts parallel edges and a self-loop twice; the clustering coefficient's degree counts distinct neighbours and the node itself when it has a self-loop; triangle counts are the simple graph's; `maxDegree` uses the projected degree.
-5. **rustworkx's `augment_blossom` tests `> num_nodes`**, which misses the blossom numbered `num_nodes`; NetworkX tests any blossom; lpg tests `>=`.
+5. **Withdrawn in #71 (finding C7).** This finding said that rustworkx's `augment_blossom` test `> num_nodes` misses the blossom numbered `num_nodes`. That blossom is never allocated (`blossom_never_allocates_blossom_n`), so the test names no reachable defect; lpg's `>=` behaves the same.
 6. **MAGE's "greedy" set cover is a random order** (sizes 6, 4 and 7 in three runs on bip20).
 7. **lpg's CSV import numbers nodes in the string order of `id:ID`**, so order-dependent results (ties, heuristics) differ from GDS's native projection; in lpg's order, 153's rerouting equals GDS (zipf60: 4.0411 both; natively GDS 3.9209).
 
@@ -865,3 +861,289 @@ Pass C reviewed the 29 entries of #67 and #68 and the blossom matching of `bloss
 ### Review totals (passes A, B and C)
 
 The review table has 97 rows, one per entry. Pass A: 37 entries, 34 conform, 3 fixed (004, 006, 025); 126 cases, 1 048 events. Pass B: 31 entries, 21 conform, 10 fixed (045, 059, 061, 062, 064, 078, 080, 082, 105, 106); 126 cases, 1 582 events. Pass C: 29 entries, 28 conform, 1 fixed (169); 100 cases and 9 blossom cases, 886 events. In total 83 entries conform and 14 were fixed, each fix with a regression test that fails on the code before it.
+
+## Exit check (rmp #70)
+
+The exit condition of Sprint 5 (sprint DECISION 20, amended by UPDATE 57: timing deferred to Sprint 6) checked on the final code. **Tested commit: `dff277c`** (HEAD of `feature/5-graph-algorithm-library-all-97-inventory-entries` at the time of the runs, 2026-10-12) plus the uncommitted changes of #70, which add tests, laboratory instruments and one documentation comment and change no product code: `src/algo/tests_exit.rs` (new), one `#[cfg(test)]` module line in `src/algo/mod.rs`, the memory probe of `src/algo/tests.rs`, the FR-ALG-001 table in the documentation of `Session::run_algorithm` (`src/api/session.rs`), [`oracle-cases/gds_cases_70.sh`](oracle-cases/gds_cases_70.sh), [`oracle-cases/det_compare.py`](oracle-cases/det_compare.py), two GDS outputs in `src/algo/testdata/expected` [`raw/gds-determinism-70.txt`](raw/gds-determinism-70.txt) and [`raw/exit-check-70.txt`](raw/exit-check-70.txt). Toolchain as in [Tools](#tools) (rustc 1.99.0, nightly 1.101.0 `080cc2714`, cargo-nextest 0.9.148, cargo-llvm-cov 0.9.1, heaptrack 1.5.0). Correctness only: no timing was measured. Graph data lived in `/tmp/lpgram` (tmpfs); no durability or I/O claim rests on these runs.
+
+### Instruments added
+
+| Test or tool | What it checks |
+|---|---|
+| `algo::tests_exit::all_97_entries_meet_the_exit_conditions` | One table of 111 calls: the stream routine of every entry (the write routine of ALG-149, which has no stream) and the 12 functions. It asserts that the table names exactly the registered algorithm routines and covers the 97 inventory numbers, and that `Entry::parallel` equals the parallel column of `algorithm-entries.md`. For each call: rows bit-equal at `concurrency` 1 to 16, twice each; the worker count of each run; `CALL` and `Transaction::run_algorithm` equal in one transaction; under a 4 096 B transaction memory limit, 51N73, then 25N05 on the next statement. Graph: 11 nodes and 22 edges with every property an entry reads (`weight`, `capacity`, `cost`, `neg`, `lat`, `lng`, `vec`, `p`, `c`), two labels, two edge types, a DAG subgraph, a bridge, a negative cycle under `neg`, so that every routine returns at least one row. 3.1 s. Per-routine output: [`raw/exit-check-70.txt`](raw/exit-check-70.txt). |
+| `algo::tests_exit::rounds_against_the_references` | The round counts of ALG-176 and ALG-106 against GDS (condition 6), pinned. |
+| `algo::tests_exit::the_documented_entries_are_the_registered_ones` | The FR-ALG-001 table of the crate documentation equals the registry, row by row. |
+| `algo::tests::lab_zipf_projection_memory` (extended) | Also measures the buffer-pool frames the projection build adds (`Pool::buffer_frames`, × 8 192 B) and a second, warm build in the same transaction; asserts heap ≤ reservation + pool frames (cold) and heap ≤ reservation with no new frame (warm). |
+| [`oracle-cases/gds_cases_70.sh`](oracle-cases/gds_cases_70.sh), [`det_compare.py`](oracle-cases/det_compare.py) | GDS 2026.09.0: `gds.knn.stats` rounds on `zipf60` and `uniform60`; 5 repetitions of each GDS parity procedure on `zipf300`. Five containers in all (the script ran twice), each removed (`docker ps -a --filter ancestor=neo4j:2026.09.0-community` lists none). |
+
+### Condition 1: `CALL` and the Rust API give equal results on one snapshot (FR-ALG-002)
+
+**Met for all 97 entries.** `all_97_entries_meet_the_exit_conditions` runs each of the 111 routines by `CALL` and by `Transaction::run_algorithm` in one transaction and compares the rows bit for bit (for ALG-149's write routine: the summary columns other than the `…Millis` times and `configuration`, then every node's written property); all equal. The family tests (`Lab::det`, rmp #64 to #69) did the same on the oracle fixtures; they pass on the tested commit (quality gate below).
+
+### Condition 2: each entry matches its reference, except the parity entries
+
+**Met, with three divergences stated in the table.** The full suite runs every committed oracle comparison of rmp #63 to #69 and every trace case of rmp #71 (1 048 + 1 582 + 886 expected events): 681 tests pass, none fails. The 82 non-parity entries match their reference under their rule. Three cases do not reach rule V's "objective value equal to the oracle's", and each was attributed by measurement: ALG-004's `<T>` filter of `pathSubgraphNodes` (MAGE's result is undefined: dangling `string_view`, #64 finding 2); ALG-149 on karate, k 5 (lpg's tree weighs 7, GDS's 5: GDS's own algorithm, ported, gives 7 on lpg's node numbering; #71 C2); ALG-153 unweighted on `uniform60` (9 edges against GDS's 10: hop-count ties; #71 C6). The specification items these raise are listed in #71 "Reported, not changed (pass C)". The 15 parity entries (TS-25: 006, 059, 061–065, 076–078, 080, 081, 106, 176, 188) are verified by determinism and their quality measure ([Parity entries](#parity-entries-quality-measures-and-gds-determinism)).
+
+### Condition 3: equal results at every `concurrency` 1 to 16
+
+**Met for all 97 entries.** `all_97_entries_meet_the_exit_conditions`: every routine's rows at `concurrency` 1 to 16, twice each, are bit-equal to the first run's (floats by their bits). Functions take no `concurrency`; they were run 33 times and gave equal values. Randomised entries ran with `randomSeed` 7. The family tests check the same on the oracle fixtures (`Lab::det`, `check_cases`), and #71 compared each parallel entry's trace step by step at `concurrency` 1 and 16.
+
+### Condition 4: parallel entries use more than one and at most `concurrency` workers, the others one (FR-ALG-006)
+
+**Met for all 97 entries.** The 11-node graph gives every projection 11 one-node blocks. Measured by the worker-count probe in `all_97_entries_meet_the_exit_conditions`: each of the 38 parallel entries (42 routines) started exactly `min(concurrency, 11)` workers: 1, 2, …, 10 at `concurrency` 1 to 10 and 11 at 11 to 16; the test asserts this equality. Each of the 59 other entries started at most one worker at every `concurrency` (the statement's thread counts as one). The classification asserted equals `algorithm-entries.md`: 38 parallel, 59 single-thread.
+
+### Condition 5: a projection over the cap fails the statement (FR-ALG-004)
+
+**Met for the 90 entries that build a projection.** Under a 4 096 B transaction memory limit, every one of the 99 projecting routines failed with 51N73, and the next statement of the transaction failed with 25N05 (aborted); a streaming `MATCH` of the 11 nodes ran within the same limit first (`all_97_entries_meet_the_exit_conditions`). The 7 function entries (107, 112–117) build no projection. The memory cap itself (51N72 when the pool refuses) is covered by `algo::tests::filters_snapshot_and_memory_cap` (rmp #63). The accountant's peak never exceeded the cap in any run (table below).
+
+**Memory gap of rmp #63: closed, no accounting change.** Measured with `lab_zipf_projection_memory` (20 000 nodes, 200 000 edges, 64 MiB cap) and `heaptrack.sh … 4algo10projection5build`:
+
+| Measure | Cold build (pages read first) | Warm build (same transaction, pages cached) |
+|---|---|---|
+| Heap peak on the statement thread (`allocation-counter`) | 18 436 540 B | 13 988 236 B |
+| The run's reservation (`Held` peak) | 15 575 040 B | 15 575 040 B |
+| Buffer-pool frames added during the build (`Pool::buffer_frames` × 8 192) | 4 448 256 B (543 frames) | 0 B |
+| Heap peak minus pool frames | 13 988 284 B | 13 988 236 B |
+| Margin of the reservation over the run's own heap | 1 586 756 B | 1 586 804 B |
+
+heaptrack attributes the frames by call stack: under `projection::build`, 539 + 4 allocations from `Pool::grow` (`src/storage/pool.rs:601`, reached through `Pool::fetch` from the projection's `scan`), 4.42 MB + 32.77 KB, the 543 frames above. The pool charges a frame to the accountant itself (`Pool::grow`: `try_charge(PAGE_BYTES)` above its floor, whose frames its fixed charge covers), never to the run. Without frames the build's heap stays below its reservation, and the cold build's heap minus its frames equals the warm build's heap within 48 B. The 2 861 500 B gap is therefore the pool's frames. The run's two uncharged instants by design (`mem.rs`: a reallocation's old buffer, one scan chunk) fit within the reservation here; that they do on every graph is not shown.
+
+**Accountant and heap peaks per family** (`heaptrack.sh <test-binary> <test>`, each test alone; the heap peak is of the whole test, fixture import included):
+
+| Family | Test | Accountant peak | Cap | heaptrack peak |
+|---|---|---|---|---|
+| #63 PageRank projection, 20 000 / 200 000 | `algo::tests::lab_zipf_projection_memory` | 24 842 105 B | 67 108 864 B | 76.91 MB |
+| #64 traversal and paths (10 entries, `zipf300`) | `algo::tests_paths::lab_family64_memory` | 19 787 177 B | 33 554 432 B | 15.19 MB |
+| #65 centrality and similarity (11 entries) | `algo::tests_centrality::lab_family65_memory` | 3 476 197 B | 33 554 432 B | 3.58 MB |
+| #66 community and clustering (10 entries) | `algo::tests_community::lab_family66_memory` | 3 476 197 B | 33 554 432 B | 3.58 MB |
+| #67 components and measures (14 entries) | `algo::tests_components::lab_family67_memory_and_rounds` | 5 269 825 B | 33 554 432 B | 4.23 MB |
+| #68 trees, flows, matching, colouring (14 entries) | `algo::tests_flow::lab_family68_memory` | 3 476 197 B | 33 554 432 B | 3.85 MB |
+| #69 cycles, isomorphism, structure (6 entries) | `algo::tests_structure::lab_family69_memory` | 17 762 193 B | 33 554 432 B | 25.79 MB |
+| All 97 entries on the 11-node graph | `algo::tests_exit::all_97_entries_meet_the_exit_conditions` | 1 118 527 B | 33 554 432 B | not run under heaptrack (`heaptrack.sh` runs ignored tests only) |
+
+The accountant's peak is below the cap in every row. In the #65, #66 and #68 rows the peak is the fixture import's, so those families' own peaks are lower and not separated (as in their sections). The #69 heap peak includes the 187 684 rows the test holds after the statement, which the accountant no longer counts once delivered; this share is still not separated (#64/#69 open point 6).
+
+### Condition 6: convergence of synchronous rounds against the reference
+
+Each iterative parallel entry, its rounds against the reference on the same graphs. The parallel entries without rounds run one pass or independent per-node or per-source work: 006, 024, 027, 029, 034, 035, 038, 039, 059, 081, 082, 105, 120, 121, 171.
+
+| ALG | Rounds counted | Graphs | lpg | Reference | Evidence |
+|---|---|---|---|---|---|
+| 001 | BFS levels | trace graphs `dir`, `zipf60`, `uniform60` | each level equal to GDS's BFS ported | GDS `BFS.java` levels | #71 `tests_trace_a::reference_traces`, c 1 and 16 |
+| 007 | Kahn levels | `dag` | each level equal | NetworkX `topological_generations` | #71 |
+| 019 | Bellman-Ford rounds | `zipf60`, `negw30` | 7, 6 | h + 1 = 7, 6 (h from NetworkX's paths) | #64 |
+| 023 | light and heavy phases | `dir`, Δ 2 and 3 | each phase equal | Meyer and Sanders 2003 ported; GDS reports no count | #71 |
+| 032 | DAG levels | `dag` | each level equal | DAG DP by levels | #71 |
+| 040 | iterations | `zipf60`, `uniform60`, karate | 17, 42, 46 | GDS 17, 42, 46 | #65 |
+| 042 | iterations | `zipf300`: natural, converged, weighted, scaled | 20, 79, 20, 7 | GDS 20, 79, 20, 7 | #63 |
+| 043 | iterations | `zipf60`, `uniform60` | 73, 71 | GDS 73, 71 | #65 |
+| 044 | iterations | `zipf60`, `uniform60`, karate | 26, 21, 26 | GDS 26, 21, 26 | #65 |
+| 045 | iterations | `zipf60` | 20 | GDS 20 | #65 |
+| 061 | levels | `rc24`, karate, `planted60` | 1, 2, 2 | GDS 1, 2, 2 | #66 |
+| 062 | levels | same | 1, 2, 2 | GDS 1, 2, 2 | #66 |
+| 063 | iterations | same | 2, 4, 5 | GDS 2, 4, 3 | #66; #71: GDS's algorithm on GDS's numbering gives GDS's counts, lpg's rule on lpg's numbering lpg's |
+| 064 | iterations | — | `maxIterations` (fixed) | GDS: `maxIterations` supersteps (`SpeakerListenerLPAComputation.java` `compute`: no vote to halt; read, not run) | code |
+| 065 | iterations | same as 061 | 3, 3, 4 | GDS 3, 4, 5 | #66; #71: node numbering, as 063 |
+| 078 | restarts | — | `iterations` (fixed) | GDS `iterations` | not convergence-based |
+| 080 | Lloyd iterations | `pts` (10 points) | each iteration equal | GDS `Kmeans.java` ported; GDS reports no count (`KmeansStatsResult` fields) | #71 |
+| 083 | minimum-label and jump rounds | karate, `zipf60`, `uniform60`, `zipf300` | 3, 4, 4, 4 | GDS: no rounds (one union-find pass) | #67 |
+| 093 | peeling rounds | same | 7, 17, 11, 42 | GDS phases 4, 8, 4, 20 | #67; #71 C3: lpg's rounds are the cascade depths, GDS's phases its scan and act steps |
+| 106 | iterations | `zipf60`, `uniform60` | 7, 6, converged | GDS 5, 4, converged (`concurrency` 1, seed 42) | #70 `rounds_against_the_references` |
+| 153 | Bellman-Ford rounds per join | `st` | each round equal to Dijkstra from the tree, sequential | GDS reports no count | #71 |
+| 155 | push-relabel rounds | `fl8` | each round replayed on Goldberg and Tarjan's generic algorithm | GDS reports no count | #71 |
+| 176 | Jones-Plassmann rounds | karate, `zipf60`, `uniform60`, `zipf300` | 6, 9, 13, 24 | GDS `ranIterations` 6, 3, 3, 4 (speculative colouring and validation passes, a different quantity) | #70 `rounds_against_the_references` |
+
+Where both report a count of the same quantity, lpg's synchronous rounds equal the reference's (040 to 045, 061, 062) or equal the hop-depth bound h + 1 (019). Where they differ (063, 065, 093, 106, 176), the cause is measured (node numbering, tie rule, quantity counted) or, for 106, lpg's sampling differs from GDS's by design (parity entry). No timing was measured: more rounds say nothing about time here.
+
+### Parity entries: quality measures and GDS determinism
+
+The 15 parity entries of TS-25, each bit-equal at `concurrency` 1 to 16 (condition 3), with its quality measure (rule Q) and the reference value on the same graph, from the family sections. The last column is new (rmp #70): each GDS procedure ran 5 times on `zipf300` in one container ([`raw/gds-determinism-70.txt`](raw/gds-determinism-70.txt); rows ordered by node, so only a change of result counts).
+
+| ALG | Quality measure | lpg | Reference value | GDS 2026.09.0, 5 runs |
+|---|---|---|---|---|
+| 006 | walks valid; first-step frequencies within 4 SE of the weighted probabilities | largest 2.98 SE over 30 000 walks | the probabilities | `concurrency` 4, seed 42: 1 distinct result |
+| 059 | `propagationProbability` 1: exact greedy cover; default: spread ≥ GDS − 3 SE (10 000 cascades) | cover 50; spread 10.836 (`zipf60`), 9.018 (`uniform60`) | GDS 50; 10.084 (SE 0.029), 8.880 (SE 0.024) | `concurrency` 4, seed 42: 1 |
+| 061 | planted partition of `rc24`; modularity | 0.6875 (planted), karate 0.4188, `planted60` 0.6149 | GDS 0.6875, 0.4188, 0.6143 | `concurrency` 4: 1 |
+| 062 | as 061 | 0.6875, 0.4188, 0.6149 | GDS 0.6875, 0.4188, 0.6149 | `concurrency` 4, seed 42: **5 distinct partitions** |
+| 063 | as 061 | 0.6875 (planted), 0.3991, 0.5701 | GDS 0.0 (one community), 0.0, 0.3571 | `concurrency` 4: 1 |
+| 064 | strongest label of each `rc24` node = its clique | 4 labels, the cliques | GDS (strength 0.2): 30, 42, 79 labels | `concurrency` 4: **5 distinct**; `concurrency` 1: **5 distinct** (GDS refuses `randomSeed`) |
+| 065 | as 061 | 0.6875 (planted), 0.3466, 0.5559 | GDS 0.6875, 0.3466, 0.5525 | `concurrency` 4: 1 |
+| 076 | planted partition of `rc24` (4 clusters); modularity | planted, 0.6875; karate 0.3715; `planted60` 0.5947 | no runnable reference (TS-25 item E) | not applicable |
+| 077 | as 076; ratio cut | planted, 1.3333; karate 0.9379; `planted60` 3.5005 | no runnable reference | not applicable |
+| 078 | cut ≥ GDS's; enumerated optimum on 12 nodes | `rc24` 40, karate 61, `planted60` 134–135 (k 2) and 174 (k 4), `cyc12` 19 and 23 | GDS 40, 61, 131, 169, 19, 23; optimum 19, 23 | `concurrency` 4 (seed refused): **5 distinct**; `concurrency` 1, seed 42: 1 |
+| 080 | four planted clusters; inertia ≤ GDS's | planted; 20.3279 (KMEANS++, seeds 42 and 7) | GDS 20.3279 | `concurrency` 4, seed 42: 1 |
+| 081 | planted clusters with noise; noise labels equal | planted, 4 noise points | GDS: the same | `concurrency` 4: 1 |
+| 106 | recall against the exact top-K ≥ GDS's | 1.000; filtered 0.994 | GDS 1.000; filtered 0.961 | `concurrency` 4 (seed refused): **5 distinct**; `concurrency` 1, seed 42: 1 |
+| 176 | proper colouring; colours ≤ GDS's | 5, 5, 4, 7 (karate, `zipf60`, `uniform60`, `zipf300`) | GDS 6, 6, 5, 11 | `concurrency` 4: **2 distinct** |
+| 188 | valid routes; no improving 2-opt move; ratio to the enumerated optimum | ratio 1.0000 | optimum (9 points) | no runnable reference |
+
+Against the GDS statements of TS-25 ("Parity entries", "Evidence"):
+
+* **Documented as non-deterministic, confirmed:** 106 and 078 gave a different result in each run at `concurrency` 4, where GDS refuses `randomSeed` (rmp #62), and equal results at `concurrency` 1 with a seed, as GDS documents; 064 differed in each run at both values, since GDS refuses `randomSeed` (#66 finding 1) and seeds from the clock otherwise (`SpeakerListenerLPAComputation.java:45-47`, read). For 106 and 078 the runs at 4 also differ in seed, so threads and seed are not separated.
+* **Not stated by GDS, observed non-deterministic:** 062 Leiden (5 distinct partitions with a fixed seed at `concurrency` 4) and 176 K-1 colouring (2 distinct colourings, no randomness involved).
+* **Not stated by GDS, no difference observed:** 006, 059, 061, 063, 065, 080, 081 gave one result in 5 runs at `concurrency` 4 on 300 nodes. This does not show that they are deterministic; the TS-25 statement for them stays unverified. Their verification in lpg does not depend on it: rule Q compares quality, not equality.
+
+### The 97 entries
+
+Reference and rule from `algorithm-entries.md` Verification; result from the family sections (oracle runs) and the #71 review. Every row also passed `all_97_entries_meet_the_exit_conditions` (conditions 1, 3, 4 and, for the 90 projecting entries, 5).
+
+| ALG | Name | Parallel | Reference | Oracle rule | Result |
+|---|---|---|---|---|---|
+| 001 | Breadth-first search | yes | GDS `gds.bfs.stream` | V: same node set, each node at its BFS depth | same node sets, BFS depth order (`zipf60`, `uniform60`, #64); #71 conforms: lpg's order is GDS's algorithm on lpg's node numbering |
+| 002 | Depth-first search | no | GDS `gds.dfs.stream` | V: a DFS preorder of the projection over the same node set | same node sets, DFS preorder (#64); #71 conforms (as 001) |
+| 003 | Neighbourhood at hop | no | MAGE `neighbors.*` | X | equal, 5 cases (#64); #71 conforms |
+| 004 | Path expansion and reachable subgraph | no | MAGE `path.*` | X (paths and node sets) | equal, except the repetitions of the `<T>` case of `pathSubgraphNodes` (MAGE dangling `string_view`, #64 finding 2); #71 fixed (`UNDIRECTED` `pathSubgraphAll` duplicates) |
+| 006 | Random walk | yes | none (rule Q) | Q: every walk is a walk of the projection, `walkLength` long or ending at a node with no out-edge; `walksPerNode` walks per start node; over 10 000 walks with `returnFactor` = `inOutFactor` = 1, each node's first-step frequencies within 4 standard errors of its weighted out-edge probabilities | valid walks; first steps within 2.98 SE (bound 4) over 30 000 walks (#64); #71 fixed (no walk from a node without out-edges) |
+| 007 | Topological sort | yes | GDS | V: a topological order of the same node set; `maxDistanceFromSource` X | equal node sets and distances; GDS's filler rows left out (#64 finding 3); #71 conforms |
+| 008 | Ancestors and descendants | no | NetworkX `ancestors`, `descendants` | X | equal (#64); #71 conforms |
+| 009 | Reachability test | no | NetworkX `has_path` | X | equal (#64); #71 conforms |
+| 011 | Dominators | no | NetworkX `immediate_dominators`, `dominance_frontiers` | X | equal (#64); #71 conforms |
+| 013 | Unweighted shortest paths | no | NetworkX `shortest_path_length`, `shortest_path` | X lengths; V paths | equal (#64); #71 conforms |
+| 014 | Dijkstra | no | GDS (both procedures) | F costs; V paths | largest difference 0 (#64); #71 conforms |
+| 015 | Bidirectional Dijkstra | no | NetworkX `bidirectional_dijkstra` | F cost; V path | 0 (#64); #71 conforms |
+| 018 | A* | no | GDS | F costs; V paths | 0 on `geo30` (#64); #71 conforms |
+| 019 | Bellman-Ford | yes | GDS | F costs; V paths; `isNegativeCycle` X | 0; negative cycles flagged as GDS (#64); #71 conforms |
+| 020 | Negative-cycle detection | no | NetworkX `negative_edge_cycle`, `find_negative_cycle` | X existence; V: the cycle's weight is negative | equal; the cycle's weight is negative (#64); #71 conforms |
+| 021 | SPFA | no | NetworkX `single_source_bellman_ford` | F costs; V paths | 0 (#64); #71 conforms |
+| 023 | Delta-stepping | yes | GDS | F costs; V paths | 0 (#64); #71 conforms |
+| 024 | Johnson | yes | NetworkX `johnson`; petgraph `johnson` | F | at most 4.4e-16 (#64); #71 conforms |
+| 025 | Floyd-Warshall | no | NetworkX `floyd_warshall` | F | at most 4.3e-16 (#64); #71 fixed (negative self-loop: 22N11) |
+| 026 | Seidel | no | NetworkX `all_pairs_shortest_path_length` | X | equal (#64); #71 conforms |
+| 027 | All-pairs shortest distances | yes | GDS | F | 0 (#64); #71 conforms |
+| 028 | All shortest paths between nodes | no | NetworkX `all_shortest_paths` | X (path sets) | equal path sets (#64); #71 conforms |
+| 029 | Yen's k shortest paths | yes | GDS | F costs in order; V paths | at most 1.5e-16, costs in order (#64); #71 conforms |
+| 030 | Length of the k-th shortest path | no | petgraph `k_shortest_path` | F | equal (#64); #71 conforms |
+| 031 | All simple paths | no | NetworkX `all_simple_paths` with `cutoff` | X (path sets) | equal to NetworkX and MAGE (#64); #71 conforms |
+| 032 | Longest path in a DAG | yes | GDS | F cost; V path | 0 (#64); #71 conforms |
+| 034 | Degree centrality | yes | GDS | F | 3.9e-16 (#65); #71 conforms |
+| 035 | Betweenness centrality | yes | GDS, without sampling | F | 1.7e-15 (#65); #71 conforms |
+| 038 | Closeness centrality | yes | GDS | F | 1.7e-16 (#65); #71 conforms |
+| 039 | Harmonic centrality | yes | GDS | F | 1.7e-16 (#65); #71 conforms |
+| 040 | Eigenvector centrality | yes | GDS | F | 3.3e-16 (#65); #71 conforms |
+| 041 | Katz centrality | no | MAGE `katz_centrality.get` | F (`epsilon`) | 0 (#65); #71 conforms |
+| 042 | PageRank | yes | GDS | F | at most 6.9e-16, 8 cases (#63); #71 conforms |
+| 043 | Personalised PageRank | yes | GDS `gds.pageRank` with `sourceNodes` | F | 6.9e-18 (#65), 4.2e-17 (#63); #71 conforms |
+| 044 | ArticleRank | yes | GDS | F | 3.3e-16 (#65); #71 conforms |
+| 045 | HITS | yes | GDS | F | 1.1e-16 (#65); #71 fixed (parameter domains) |
+| 059 | Influence maximisation (CELF) | yes | GDS at `concurrency` 1 | Q: with `propagationProbability` 1, the spread equals the exact greedy reachability cover; at the default, the spread of lpg's seed set is at least GDS's minus 3 standard errors, both re-estimated with 10 000 cascades | Q met: p = 1 cover 50 = GDS; spread at least GDS − 3 SE (#65); #71 fixed (`propagationProbability` domain) |
+| 061 | Louvain | yes | GDS | Q: the ring of cliques gives its planted partition (P); karate-club modularity recorded with GDS's | Q met: planted partition of `rc24`; modularity at least GDS's (#66); #71 fixed (write of intermediate communities) |
+| 062 | Leiden | yes | GDS | Q: as 061 | Q met: as 061, modularity equal to GDS's (#66); #71 fixed (as 061) |
+| 063 | Label propagation | yes | GDS | Q: as 061 | Q met: planted partition of `rc24` (GDS: 1 community) (#66); #71 conforms |
+| 064 | SLLPA | yes | GDS | Q: on the ring of cliques each node's strongest label is its clique; karate-club result recorded with GDS's | Q met: strongest label = clique on `rc24`, seeds 42 and 7 (#66); #71 fixed (`partitioning` domain) |
+| 065 | Modularity optimisation | yes | GDS | Q: as 061 | Q met: planted partition; modularity at least GDS's (#66); #71 conforms |
+| 076 | Spectral clustering | no | none (rule Q) | Q: the ring of cliques with `num_clusters` 4 gives its planted partition (P); modularity recorded | Q met: planted partition, modularity 0.6875 (#66); #71 conforms |
+| 077 | Balanced-cut clustering | no | none (rule Q) | Q: as 076; ratio-cut value recorded | Q met: planted partition, ratio cut 1.3333 (#66); #71 conforms |
+| 078 | Approximate maximum k-cut | yes | GDS at `concurrency` 1 with `randomSeed` | Q: cut weight at least GDS's on the same graph; the optimum, enumerated on graphs of at most 12 nodes, recorded | Q met: cut at least GDS's in 6 cases, the enumerated optimum on `cyc12` (#66); #71 fixed (`k` domain) |
+| 080 | K-means | yes | GDS at `concurrency` 1 with `randomSeed` | Q: four well-separated planted clusters give their partition (P); inertia at most GDS's under F | Q met: planted partition, inertia 20.3279 = GDS's (#66); #71 fixed (7 behaviours of GDS) |
+| 081 | HDBSCAN | yes | GDS | Q: planted clusters with noise points give their partition (P), noise labels equal | Q met: planted partition and 4 noise points as GDS (#66); #71 conforms |
+| 082 | Partition quality | yes | GDS `gds.modularity`, `gds.conductance`; NetworkX `modularity`, `partition_quality`, `constant_potts_model` | F | 8.3e-17; sums equal NetworkX's (#66); #71 fixed (negative community) |
+| 083 | Weakly connected components | yes | GDS | P | equal partitions, also ids when seeded (#67); #71 conforms |
+| 084 | Connected components | no | NetworkX `connected_components` | P | equal (#67); #71 conforms |
+| 085 | Strongly connected components | no | GDS | P | equal (#67); #71 conforms |
+| 086 | Condensation | no | NetworkX `condensation` | P members; X component edges | equal (#67); #71 conforms |
+| 089 | Biconnected components | no | NetworkX `biconnected_component_edges` | P on edges | equal (#67); #71 conforms |
+| 090 | Articulation points | no | GDS | X | equal (#67); #71 conforms |
+| 091 | Bridges | no | GDS | X (unordered pairs, `remainingSizes`) | equal (#67); #71 conforms |
+| 093 | k-core decomposition | yes | GDS | X | equal, with `degeneracy` (#67); #71 conforms |
+| 105 | Node similarity | yes | GDS (both procedures) | F; V where `topK` cuts through equal similarities | equal similarities per source (#65); #71 fixed (`similarityCutoff` domain) |
+| 106 | K-nearest neighbours | yes | exact brute-force top-K; GDS at `concurrency` 1 with `randomSeed` | Q: recall against the exact top-K at least GDS's on the same graph | Q met: recall 1.000 (GDS 1.000), filtered 0.994 (GDS 0.961) (#65); #71 fixed (perturbation, `sampleRate`) |
+| 107 | Vector similarity functions | no | GDS functions | F | 42 values or errors equal (#65); #71 conforms |
+| 112 | Adamic-Adar | no | GDS function | F | equal (#65); #71 conforms; GDS's self-loop rule read, not run |
+| 113 | Common neighbours | no | GDS function | F | equal (#65); #71 conforms; as 112 |
+| 114 | Preferential attachment | no | GDS function | F | equal (#65); #71 conforms |
+| 115 | Resource allocation | no | GDS function | F | equal (#65); #71 conforms; as 112 |
+| 116 | Same community | no | GDS function | F | equal (#65); #71 conforms |
+| 117 | Total neighbours | no | GDS function | F | equal (#65); #71 conforms |
+| 120 | Triangle count and listing | yes | GDS `gds.triangleCount`, `gds.triangles` | X | equal (#67); #71 conforms |
+| 121 | Clustering coefficient | yes | GDS | F | 0; average within 1e-9 (#67); #71 conforms |
+| 123 | Eccentricity and related measures | no | NetworkX `eccentricity`, `diameter`, `radius` | X unweighted; F weighted | equal (#67); #71 conforms |
+| 128 | Girth | no | NetworkX `girth` | X | equal (#67); #71 conforms |
+| 143 | Laplacian matrix | no | NetworkX `laplacian_matrix` | F | 1.9e-16 (#67); #71 conforms |
+| 147 | Minimum spanning tree | no | GDS | V: total weight F | same node sets, totals within 1e-9 (#68); #71 conforms |
+| 149 | k-spanning tree | no | GDS | V: a tree of `k` nodes; total weight F | equal node sets except karate k 5: weight 7 against GDS's 5, a tie choice (#68; #71 C2); #71 conforms |
+| 151 | Number of spanning trees | no | determinant of the reduced Laplacian over rationals (Python `fractions`) | X | equal; 22003 above `INTEGER` (#68); #71 conforms |
+| 153 | Steiner tree | yes | GDS | V: a tree reaching every reachable target; total weight F | weighted cases equal; unweighted `uniform60` 9 edges against GDS's 10, a tie choice (#68; #71 C6); #71 conforms |
+| 154 | Prize-collecting Steiner tree | no | GDS | V: a tree; `totalWeight` and `sumOfPrizes` F | weight equal within 2e-16 relative; prizes equal (#68); #71 conforms |
+| 155 | Maximum flow | yes | GDS | V: capacities and conservation hold; `totalFlow` F | flows 46 and 79 as GDS (#68); #71 conforms |
+| 157 | Minimum-cost flow | no | GDS | V: as 155; `totalFlow`, `totalCost` F | costs 457 and 564 as GDS (#68); #71 conforms |
+| 161 | Maximum and maximal matching | no | NetworkX `max_weight_matching` (`maxcardinality`), `is_maximal_matching` | V: matching size equal; greedy form a maximal matching | sizes equal (#68); #71 conforms |
+| 163 | Bipartite matching | no | NetworkX `hopcroft_karp_matching` | X size | equal (#68); #71 conforms |
+| 169 | Maximal cliques | no | NetworkX `find_cliques` | X (clique sets) | equal (#68); #71 fixed (empty projection) |
+| 171 | Clique counting | yes | GDS | X | equal (#68); #71 conforms |
+| 173 | Greedy colouring | no | NetworkX `greedy_color`, same strategy and node order | V: proper colouring; number of colours equal | equal colour counts, 6 strategies (#68); #71 conforms |
+| 174 | DSatur colouring | no | petgraph `dsatur_coloring` | V: proper colouring; number of colours equal | equal (5, 5, 4, 3) (#68); #71 conforms |
+| 176 | K-1 colouring | yes | GDS at `concurrency` 1 | Q: proper colouring with at most GDS's number of colours | Q met: proper; colours 5, 5, 4, 7 against GDS's 6, 6, 5, 11 (#68); #71 conforms |
+| 177 | Greedy feedback arc set | no | petgraph `greedy_feedback_arc_set` | X; V: removing the arcs leaves a DAG | equal; acyclic remainder (#68); #71 conforms |
+| 178 | Set cover | no | MAGE `set_cover.greedy` | V: a cover of equal size | 3 sets = exhaustive optimum (MAGE random: 6, 4, 7) (#68); #71 conforms |
+| 180 | Cycle detection | no | MAGE `cycles.get` | X (cycles as node sets) | 57 and 57 cycles, equal (#69); #71 conforms |
+| 181 | Simple-cycle enumeration | no | NetworkX `simple_cycles` | X (cycles up to rotation) | equal (#69); #71 conforms |
+| 187 | Travelling salesman | no | optimum enumerated on graphs of at most 9 nodes | V: a tour of every point; cost at most 2 times (`2_approx`) or 1.5 times (`1.5_approx`) the optimum | within the bounds: worst ratio 1.3274 (2-approx), 1.1149 (1.5-approx) (#69); #71 conforms |
+| 188 | Vehicle routing | no | optimum enumerated on graphs of at most 9 nodes | Q: every non-depot node on exactly one route, each route starts and ends at the depot, at most `number_of_vehicles` routes; no 2-opt move shortens a route; ratio to the optimum recorded | Q met: valid routes, no improving 2-opt move, ratio 1.0000 (#69); #71 conforms |
+| 189 | Graph isomorphism | no | NetworkX `is_isomorphic` on multigraphs | X | equal (#69); #71 conforms |
+| 190 | Subgraph isomorphism | no | petgraph `is_isomorphic_subgraph` | X | equal (#69); #71 conforms |
+| 194 | Bipartiteness | no | NetworkX `is_bipartite`, bipartite `sets` | X; V sides | equal; sides a 2-colouring (#69); #71 conforms |
+| 203 | Tournament tests | no | NetworkX `is_tournament`, `is_directed_acyclic_graph` (a tournament is transitive exactly when acyclic) | X | equal (#69); #71 conforms |
+| 204 | Degree-sequence realisability | no | NetworkX `is_graphical` | X | equal (#69); #71 conforms |
+| 205 | Transitive closure | no | NetworkX `transitive_closure_dag` | X | equal (#69); #71 conforms |
+| 206 | Transitive reduction | no | NetworkX `transitive_reduction` | X | equal (#69); #71 conforms |
+
+### Coverage
+
+`cargo +nightly llvm-cov nextest --branch --no-fail-fast --lcov` over the whole suite (683 tests pass) on the tested code; branch outcomes counted from the `BRDA` records of the 23 product files of `src/algo/` (the `tests*.rs` and `trace.rs` modules excluded). The coverage build directory (3.8 G) was deleted after each run. **2 118 of 2 324 branch outcomes covered (91.1 %)**:
+
+Per file (covered / total): `blossom.rs` 157 / 162, `centrality.rs` 68 / 74, `clustering.rs` 105 / 124, `community.rs` 189 / 206, `components.rs` 86 / 92, `config.rs` 31 / 42, `cycles.rs` 113 / 126, `flow.rs` 58 / 60, `functions.rs` 32 / 40, `kernels.rs` 77 / 82, `matching.rs` 112 / 114, `measures.rs` 69 / 72, `mem.rs` 2 / 2, `mod.rs` 63 / 76, `pagerank.rs` 52 / 54, `paths.rs` 246 / 268, `projection.rs` 42 / 46, `scale.rs` 11 / 18, `sched.rs` 16 / 18, `similarity.rs` 132 / 148, `structure.rs` 56 / 58, `traversal.rs` 190 / 208, `trees.rs` 211 / 234.
+
+The 206 uncovered outcomes lie on 179 lines. Each line falls in one group (lines of `src/algo/<file>.rs`):
+
+1. **Test-only code in product files** (8 lines, 11 outcomes): a `debug_assert!` (`blossom` 85); assertions of the unit tests inside `config` 587, `sched` 439, `trees` 1250; a `trace!` argument (`measures` 468); the release arm of the worker-count probe, which every test run sets (`components` 388, 878; `paths` 811).
+2. **Argument errors not exercised** (22G03 or 22N11; 27 lines, 39 outcomes): `config` 436, 457, 468, 469, 509, 518, 519 (value types of keys); `kernels` 77 (a node given as a negative integer); `matching` 810; `functions` 275, 483; `paths` 422, 432, 725, 1766 (NaN or negative weights, missing coordinates, a non-integer `max_length`); `traversal` 377, 803, 807, 808, 953; `clustering` 328, 1000, 1005 (vector and cluster-count checks); `cycles` 371; `scale` 84, 108 (scaler offsets); `similarity` 449 (`topN` with `bottomN`).
+3. **Degenerate inputs the fixtures do not hold** (47 lines, 52 outcomes): zero norms, empty or equal vectors, constant values and NaN in `pagerank` 471, `scale` 144, 160, 174, 182, 190, `similarity` 332, 619, 622, `functions` 180, 242, 249, 252, 258 (the extremes of the exact integer–float comparison), `community` 791, 1261, 1317, 1856, `measures` 324, `trees` 892, 1028, 1157 (NaN prizes); empty or single-node inputs in `clustering` 166, 255, 480, 488, 696, 768, 1075, `trees` 593, 1035, `centrality` 291, 301, `kernels` 162, 262, `cycles` 456, 513, 525, 545, 547 (fewer than three TSP points), `similarity` 882, 899, `projection` 641; no weight property or an isolated node in the spectral Laplacian (`clustering` 976, 1020, 1022); an edge without the projected property (`projection` 435).
+4. **Internal invariants and states one transaction cannot produce** (26 lines, 27 outcomes): a corrupt adjacency (`projection` 411); projections of 2^32 nodes or more (`projection` 458); `Config::set` of a key the parser always fills (`config` 369); `let … else` on values present by construction and walk-back guards (`paths` 869, 874, 880, 884, 1446, 1547, 1897; `components` 584; `matching` 1059; `centrality` 837; `trees` 729, 770); a thread that fails to start (`sched` 278); write rows for an element deleted since the projection, a column of another type, or a closed graph type (`mod` 885, 905, 941, 944, 964, 983, 997, 1058, 1087, 1091).
+5. **Functional branches no case reaches** (71 lines, 77 outcomes; reachable in principle, not verified): blossom expansion and relabel cases (`blossom` 95, 248, 445); a stale heap entry and a graph without edges (`centrality` 370, 597, 770); a visited HDBSCAN cluster (`clustering` 764); local moving that exhausts `maxIterations`, Leiden stopping by `tolerance`, refinement corner cases, LPA `consecutiveIds`, small-community merging (`community` 998, 1055, 1073, 1190, 1213, 1219, 1223, 1228, 1245, 1412, 1631, 1794); unseeded `consecutiveIds`, a WCC round without change, articulation sizes (`components` 291, 375, 739); MAGE cycle filters, more than 63 fundamental cycles, VRP passes (`cycles` 142, 169, 239, 691, 694); push-relabel without an active node or residual arc (`flow` 339, 397); path-search early exits and ties (`paths` 747, 788, 898, 968, 1397, 1455, 1559, 1587, 1624, 1975); the eigenvector L2 scaler (`pagerank` 227); similarity filters, ties and joins (`similarity` 274, 282, 431, 509, 534, 680, 780, 802, 931); a non-tournament with the edge count of one (`structure` 308); `pathExpand` relationship forms and hop limits, zero walk weights (`traversal` 552, 567, 604, 614, 701, 825, 847, 1030); k-tree and Steiner rare branches, GW events (`trees` 408, 452, 467, 787, 799, 838, 913, 944, 1004, 1048, 1143); Bellman-Ford write with a negative cycle (`mod` 1053, 1054).
+
+### Quality gate
+
+| Command | Result |
+|---|---|
+| `cargo nextest run --no-fail-fast` | 683 passed, 38 skipped, 0 failed (680 before #70, plus the three `tests_exit` tests) |
+| `cargo clippy --all-targets -- -D warnings` | no warning |
+| `cargo fmt --all -- --check` | clean |
+| `cargo deny check licenses` | "licenses ok" |
+| `cargo +1.89 build` | exit 0 |
+| `cargo tree -p lpg -e normal` | 47 crates besides lpg; each crate and version is a row of TS-31 (`dependencies.md`), and `once_cell`, `pin-project-lite`, `tracing-core` are named in the `tracing` row; `Cargo.toml` and `Cargo.lock` unchanged |
+| `cargo doc --no-deps` | builds; the FR-ALG-001 table renders in `Session::run_algorithm` (97 rows). 7 warnings, all links to private items in files #70 did not change (`src/auth`, `src/gqlstatus`, `src/proc`, `DayToSecond`), as before (#63 gate) |
+| Ignored laboratory tests (`heaptrack.sh`, each alone) | the 7 `lab_*memory*` tests pass |
+
+### RAM space
+
+| Location | Before | After | Left and why |
+|---|---|---|---|
+| `/tmp` | 2.5 G used | 2.5 G used | heaptrack recordings, coverage data and GDS outputs in the session scratchpad deleted after use |
+| `/tmp/lpgram` | empty | empty | every test removes its directory |
+| `/dev/shm/lpg-target` | 8.2 G | 8.8 G | the build in use (`debug` 8.5 G, of which `debug/incremental` 6.4 G, shared by the test, clippy and 1.89 builds; `release` 249 M; `doc` 18 M); each `llvm-cov-target` (3.8 G) deleted after its run |
+
+### Deferred to Sprint 6 (timing, UPDATE 57)
+
+* Time per entry for all 97 entries, on the reference hardware, with projections read from persistent storage.
+* Speedup at 1, 2, 4, 8 and 16 workers for the 38 parallel entries.
+* `perf stat` cache-miss rates on projections.
+* Flame graphs per family.
+* Whether the extra synchronous rounds of 019, 093 and 176 (condition 6) cost time against the references.
+
+### Evidence for the specification update of unverified point 9
+
+For the technical-writer pass on `quality-and-testing.md` point 9 (and TS-25 where it states the GDS determinism statements):
+
+1. **Classification.** Closed by rmp #62 (38 parallel, 59 single-thread). Re-checked on the tested code: `algo::tests_exit::all_97_entries_meet_the_exit_conditions` asserts `Entry::parallel` equal to `algorithm-entries.md` for all 97 entries, and measures exactly `min(concurrency, 11)` workers for every parallel entry and at most one for the others, at `concurrency` 1 to 16 ([condition 4](#condition-4-parallel-entries-use-more-than-one-and-at-most-concurrency-workers-the-others-one-fr-alg-006)).
+2. **lpg's determinism.** All 97 entries (111 routines) bit-equal at `concurrency` 1 to 16, twice each, in the same test ([condition 3](#condition-3-equal-results-at-every-concurrency-1-to-16)); the family tests on the oracle fixtures (`Lab::det`, `check_cases`, rmp #63 to #69); #71's step-by-step traces of the parallel entries at `concurrency` 1 and 16.
+3. **GDS determinism statements** ([parity entries](#parity-entries-quality-measures-and-gds-determinism); [`raw/gds-determinism-70.txt`](raw/gds-determinism-70.txt), GDS 2026.09.0, `zipf300`, 5 runs): confirmed non-deterministic as documented: 106, 078 (at `concurrency` 4; equal at 1 with a seed), 064 (at 4 and at 1, no seed accepted); observed non-deterministic, not documented by GDS: 062 (seeded), 176; no difference in 5 runs, so still unverified: 006, 059, 061, 063, 065, 080, 081. Quality measures and reference values of all 15 parity entries in the same table.
+4. **Convergence counts** ([condition 6](#condition-6-convergence-of-synchronous-rounds-against-the-reference)): equal to GDS for 040, 042, 043, 044, 045 (iterations) and 061, 062 (levels); 019 h + 1 rounds against NetworkX's hop depth h; 063 (2, 4, 5 against GDS's 2, 4, 3), 065 (3, 3, 4 against 3, 4, 5) explained by node numbering and tie rule (#71); 093 (7, 17, 11, 42 against GDS phases 4, 8, 4, 20, #71 C3); 106 (7, 6 against 5, 4); 176 (6, 9, 13, 24 Jones-Plassmann rounds against GDS's 6, 3, 3, 4 passes, a different quantity); per-round equality with the ported reference for 001, 007, 023, 032, 080, 153, 155 (#71); no reference count for 064, 078 (fixed counts), 083, 153, 155.
+
+### Unverified points and limits
+
+1. The GDS determinism statements for 006, 059, 061, 063, 065, 080, 081 (no difference in 5 runs). For 106 and 078 at `concurrency` 4 the seed differs between runs too.
+2. That the run's uncharged reallocation instant and scan chunk stay within its reservation on every graph; shown for the measured projection only.
+3. The #69 heap share of the rows held by the test after the statement (#64/#69 open point 6).
+4. The three rule-V divergences of condition 2 (004 `<T>`, 149 karate k 5, 153 `uniform60` unweighted) await the specification decisions #71 reported.
+5. 064's GDS superstep count is read from source, not run; 080's GDS iteration count is not reported by GDS.
+6. The 77 functional branch outcomes of coverage group 5 are not reached by any test.

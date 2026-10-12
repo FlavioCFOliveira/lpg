@@ -536,6 +536,117 @@ impl Session {
     /// [`Session::execute`] runs the `CALL` of it (FR-ALG-002, TS-25 Rust
     /// API): the same registry entry, binder and run.
     ///
+    /// # Provided algorithms
+    ///
+    /// The library provides the 97 entries of the inventory (FR-ALG-001,
+    /// `docs/functional-spec/graph-algorithms.md`), under these routine
+    /// names. A `.stream` routine returns rows; a `.write` routine writes
+    /// its result through the caller's transaction and returns one summary
+    /// row; the `gds.similarity.*` and `gds.linkprediction.*` routines
+    /// return one value. A parallel entry runs on up to `concurrency`
+    /// workers (FR-ALG-006); every entry returns the same result at every
+    /// `concurrency`.
+    ///
+    /// | ALG | Entry | Parallel | Routines |
+    /// |---|---|---|---|
+    /// | 001 | Breadth-first search | yes | `gds.bfs.stream` |
+    /// | 002 | Depth-first search | no | `gds.dfs.stream` |
+    /// | 003 | Neighbourhood at hop | no | `neighbors.at_hop`, `neighbors.by_hop` |
+    /// | 004 | Path expansion and reachable subgraph | no | `gds.pathExpand.stream`, `gds.pathSubgraphNodes.stream`, `gds.pathSubgraphAll.stream` |
+    /// | 006 | Random walk | yes | `gds.randomWalk.stream` |
+    /// | 007 | Topological sort | yes | `gds.dag.topologicalSort.stream` |
+    /// | 008 | Ancestors and descendants | no | `graph_util.ancestors`, `graph_util.descendants` |
+    /// | 009 | Reachability test | no | `gds.hasPathConnecting.stream` |
+    /// | 011 | Dominators | no | `gds.dominatorsSimpleFast.stream`, `gds.dominatorsSimpleFast.write` |
+    /// | 013 | Unweighted shortest paths | no | `gds.unweightedShortestPaths.stream`, `gds.unweightedShortestPaths.write` |
+    /// | 014 | Dijkstra | no | `gds.shortestPath.dijkstra.stream`, `gds.shortestPath.dijkstra.write`, `gds.allShortestPaths.dijkstra.stream`, `gds.allShortestPaths.dijkstra.write` |
+    /// | 015 | Bidirectional Dijkstra | no | `gds.bidirectionalDijkstra.stream`, `gds.bidirectionalDijkstra.write` |
+    /// | 018 | A* | no | `gds.shortestPath.astar.stream`, `gds.shortestPath.astar.write` |
+    /// | 019 | Bellman-Ford | yes | `gds.bellmanFord.stream`, `gds.bellmanFord.write` |
+    /// | 020 | Negative-cycle detection | no | `gds.findNegativeCycle.stream` |
+    /// | 021 | SPFA | no | `gds.spfa.stream`, `gds.spfa.write` |
+    /// | 023 | Delta-stepping | yes | `gds.allShortestPaths.delta.stream`, `gds.allShortestPaths.delta.write` |
+    /// | 024 | Johnson | yes | `gds.johnson.stream` |
+    /// | 025 | Floyd-Warshall | no | `gds.floydWarshall.stream` |
+    /// | 026 | Seidel | no | `gds.seidel.stream` |
+    /// | 027 | All-pairs shortest distances | yes | `gds.allShortestPaths.stream` |
+    /// | 028 | All shortest paths between nodes | no | `gds.allShortestPathsBetweenNodes.stream`, `gds.allShortestPathsBetweenNodes.write` |
+    /// | 029 | Yen's k shortest paths | yes | `gds.shortestPath.yens.stream`, `gds.shortestPath.yens.write` |
+    /// | 030 | Length of the k-th shortest path | no | `gds.kShortestPath.stream`, `gds.kShortestPath.write` |
+    /// | 031 | All simple paths | no | `algo.all_simple_paths` |
+    /// | 032 | Longest path in a DAG | yes | `gds.dag.longestPath.stream` |
+    /// | 034 | Degree centrality | yes | `gds.degree.stream`, `gds.degree.write` |
+    /// | 035 | Betweenness centrality | yes | `gds.betweenness.stream`, `gds.betweenness.write` |
+    /// | 038 | Closeness centrality | yes | `gds.closeness.stream`, `gds.closeness.write` |
+    /// | 039 | Harmonic centrality | yes | `gds.closeness.harmonic.stream`, `gds.closeness.harmonic.write` |
+    /// | 040 | Eigenvector centrality | yes | `gds.eigenvector.stream`, `gds.eigenvector.write` |
+    /// | 041 | Katz centrality | no | `katz_centrality.get` |
+    /// | 042 | PageRank | yes | `gds.pageRank.stream`, `gds.pageRank.write` |
+    /// | 043 | Personalised PageRank | yes | `gds.pageRank.stream`, `gds.pageRank.write` |
+    /// | 044 | ArticleRank | yes | `gds.articleRank.stream`, `gds.articleRank.write` |
+    /// | 045 | HITS | yes | `gds.hits.stream`, `gds.hits.write` |
+    /// | 059 | Influence maximisation (CELF) | yes | `gds.influenceMaximization.celf.stream`, `gds.influenceMaximization.celf.write` |
+    /// | 061 | Louvain | yes | `gds.louvain.stream`, `gds.louvain.write` |
+    /// | 062 | Leiden | yes | `gds.leiden.stream`, `gds.leiden.write` |
+    /// | 063 | Label propagation | yes | `gds.labelPropagation.stream`, `gds.labelPropagation.write` |
+    /// | 064 | SLLPA | yes | `gds.sllpa.stream`, `gds.sllpa.write` |
+    /// | 065 | Modularity optimisation | yes | `gds.modularityOptimization.stream`, `gds.modularityOptimization.write` |
+    /// | 076 | Spectral clustering | no | `cugraph.spectral_clustering.get` |
+    /// | 077 | Balanced-cut clustering | no | `cugraph.balanced_cut_clustering.get` |
+    /// | 078 | Approximate maximum k-cut | yes | `gds.maxkcut.stream` |
+    /// | 080 | K-means | yes | `gds.kmeans.stream`, `gds.kmeans.write` |
+    /// | 081 | HDBSCAN | yes | `gds.hdbscan.stream`, `gds.hdbscan.write` |
+    /// | 082 | Partition quality | yes | `gds.modularity.stream`, `gds.conductance.stream` |
+    /// | 083 | Weakly connected components | yes | `gds.wcc.stream`, `gds.wcc.write` |
+    /// | 084 | Connected components | no | `gds.connectedComponents.stream`, `gds.connectedComponents.write` |
+    /// | 085 | Strongly connected components | no | `gds.scc.stream`, `gds.scc.write` |
+    /// | 086 | Condensation | no | `gds.condensation.stream`, `gds.condensation.write` |
+    /// | 089 | Biconnected components | no | `biconnected_components.get` |
+    /// | 090 | Articulation points | no | `gds.articulationPoints.stream`, `gds.articulationPoints.write` |
+    /// | 091 | Bridges | no | `gds.bridges.stream` |
+    /// | 093 | k-core decomposition | yes | `gds.kcore.stream`, `gds.kcore.write` |
+    /// | 105 | Node similarity | yes | `gds.nodeSimilarity.stream`, `gds.nodeSimilarity.write`, `gds.nodeSimilarity.filtered.stream`, `gds.nodeSimilarity.filtered.write` |
+    /// | 106 | K-nearest neighbours | yes | `gds.knn.stream`, `gds.knn.write`, `gds.knn.filtered.stream`, `gds.knn.filtered.write` |
+    /// | 107 | Vector similarity functions | no | `gds.similarity.cosine`, `gds.similarity.pearson`, `gds.similarity.euclideanDistance`, `gds.similarity.euclidean`, `gds.similarity.jaccard`, `gds.similarity.overlap` |
+    /// | 112 | Adamic-Adar | no | `gds.linkprediction.adamicAdar` |
+    /// | 113 | Common neighbours | no | `gds.linkprediction.commonNeighbors` |
+    /// | 114 | Preferential attachment | no | `gds.linkprediction.preferentialAttachment` |
+    /// | 115 | Resource allocation | no | `gds.linkprediction.resourceAllocation` |
+    /// | 116 | Same community | no | `gds.linkprediction.sameCommunity` |
+    /// | 117 | Total neighbours | no | `gds.linkprediction.totalNeighbors` |
+    /// | 120 | Triangle count and listing | yes | `gds.triangleCount.stream`, `gds.triangleCount.write`, `gds.triangles` |
+    /// | 121 | Clustering coefficient | yes | `gds.localClusteringCoefficient.stream`, `gds.localClusteringCoefficient.write` |
+    /// | 123 | Eccentricity and related measures | no | `gds.eccentricity.stream`, `gds.eccentricity.write` |
+    /// | 128 | Girth | no | `gds.girth.stream` |
+    /// | 143 | Laplacian matrix | no | `gds.laplacianMatrix.stream` |
+    /// | 147 | Minimum spanning tree | no | `gds.spanningTree.stream`, `gds.spanningTree.write` |
+    /// | 149 | k-spanning tree | no | `gds.kSpanningTree.write` |
+    /// | 151 | Number of spanning trees | no | `gds.countSpanningTrees.stream` |
+    /// | 153 | Steiner tree | yes | `gds.steinerTree.stream`, `gds.steinerTree.write` |
+    /// | 154 | Prize-collecting Steiner tree | no | `gds.prizeSteinerTree.stream`, `gds.prizeSteinerTree.write` |
+    /// | 155 | Maximum flow | yes | `gds.maxFlow.stream`, `gds.maxFlow.write` |
+    /// | 157 | Minimum-cost flow | no | `gds.maxFlow.minCost.stream`, `gds.maxFlow.minCost.write` |
+    /// | 161 | Maximum and maximal matching | no | `gds.maximumMatching.stream`, `gds.maximumMatching.write` |
+    /// | 163 | Bipartite matching | no | `bipartite_matching.max` |
+    /// | 169 | Maximal cliques | no | `gds.maximalCliques.stream` |
+    /// | 171 | Clique counting | yes | `gds.cliqueCounting.stream`, `gds.cliqueCounting.write` |
+    /// | 173 | Greedy colouring | no | `graph_coloring.color_graph` |
+    /// | 174 | DSatur colouring | no | `gds.dsaturColoring.stream`, `gds.dsaturColoring.write` |
+    /// | 176 | K-1 colouring | yes | `gds.k1coloring.stream`, `gds.k1coloring.write` |
+    /// | 177 | Greedy feedback arc set | no | `gds.greedyFeedbackArcSet.stream`, `gds.greedyFeedbackArcSet.write` |
+    /// | 178 | Set cover | no | `set_cover.greedy` |
+    /// | 180 | Cycle detection | no | `cycles.get` |
+    /// | 181 | Simple-cycle enumeration | no | `gds.elementaryCircuits.stream` |
+    /// | 187 | Travelling salesman | no | `tsp.solve` |
+    /// | 188 | Vehicle routing | no | `vrp.route` |
+    /// | 189 | Graph isomorphism | no | `gds.isIsomorphic.stream` |
+    /// | 190 | Subgraph isomorphism | no | `gds.isIsomorphicSubgraph.stream` |
+    /// | 194 | Bipartiteness | no | `gds.isBipartiteUndirected.stream`, `gds.isBipartiteUndirected.write` |
+    /// | 203 | Tournament tests | no | `gds.isTournament.stream` |
+    /// | 204 | Degree-sequence realisability | no | `gds.isDegreeSequenceGraphlike.stream` |
+    /// | 205 | Transitive closure | no | `gds.transitiveClosure.stream`, `gds.transitiveClosure.write` |
+    /// | 206 | Transitive reduction | no | `gds.transitiveReduction.stream`, `gds.transitiveReduction.write` |
+    ///
     /// # Errors
     ///
     /// 42N08 if `name` is no algorithm routine; 22N11 for a key that is

@@ -1,0 +1,17 @@
+# GDS 2026.09.0 determinism runs on zipf300 (rmp #70): docs/evidence/lab-sprint-5/oracle-cases/gds_cases_70.sh, REPS=5, run 2026-10-12.
+# Output of det_compare.py; c4 = concurrency 4, c1 = concurrency 1. Queries in the script.
+006.c4: 5 runs, 1 distinct results, - distinct partitions
+059.c4: 5 runs, 1 distinct results, - distinct partitions
+061.c4: 5 runs, 1 distinct results, 1 distinct partitions
+062.c4: 5 runs, 5 distinct results, 5 distinct partitions
+063.c4: 5 runs, 1 distinct results, 1 distinct partitions
+064.c1: 5 runs, 5 distinct results, - distinct partitions
+064.c4: 5 runs, 5 distinct results, - distinct partitions
+065.c4: 5 runs, 1 distinct results, 1 distinct partitions
+078.c1: 5 runs, 1 distinct results, 1 distinct partitions
+078.c4: 5 runs, 5 distinct results, 5 distinct partitions
+080.c4: 5 runs, 1 distinct results, 1 distinct partitions
+081.c4: 5 runs, 1 distinct results, 1 distinct partitions
+106.c1: 5 runs, 1 distinct results, - distinct partitions
+106.c4: 5 runs, 5 distinct results, - distinct partitions
+176.c4: 5 runs, 2 distinct results, 2 distinct partitions

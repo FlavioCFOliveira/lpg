@@ -161,13 +161,24 @@ struct Probe {
     heap: Mutex<u64>,
     /// The bytes the run reserved once the projection was built.
     reserved: Mutex<u64>,
+    /// The bytes of the buffer-pool frames the build's page reads added
+    /// (`Pool::grow`; the pool charges them to the accountant beyond its
+    /// floor, which its fixed charge covers, never to the run).
+    pool: Mutex<u64>,
+    /// A second build in the same transaction, the pages now cached: its
+    /// heap peak, reservation and the bytes of the frames it added.
+    warm: Mutex<(u64, u64, u64)>,
 }
 
 impl ReadProcedure for Probe {
     fn call(&self, cx: &mut ReadContext<'_>, _: &[Value]) -> Result<Rows, Error> {
         let g = cx.st.graphs[cx.graph];
+        let frames = |mem: &Mem<'_>| {
+            mem.tx.engine().core().pool.buffer_frames() * crate::storage::page::PAGE_SIZE as u64
+        };
         let mut mem = Mem::new(cx.tx, cx.st);
         let mut built = None;
+        let before = frames(&mem);
         let info = allocation_counter::measure(|| {
             built = Some(projection::build(
                 &mut mem,
@@ -178,6 +189,7 @@ impl ReadProcedure for Probe {
         });
         *self.heap.lock().unwrap() = info.bytes_max;
         *self.reserved.lock().unwrap() = mem.reserved();
+        *self.pool.lock().unwrap() = frames(&mem) - before;
         let Any::Small(p) = built.expect("built")? else {
             panic!("a small projection");
         };
@@ -217,6 +229,21 @@ impl ReadProcedure for Probe {
         }
         *self.ranks.lock().unwrap() = outs;
         *self.out.lock().unwrap() = Some(p);
+        drop(mem);
+        // The warm build: the same projection, its pages in the pool.
+        let mut mem = Mem::new(cx.tx, cx.st);
+        let before = frames(&mem);
+        let mut again = None;
+        let info = allocation_counter::measure(|| {
+            again = Some(projection::build(
+                &mut mem,
+                &g,
+                &self.spec,
+                self.orientation,
+            ));
+        });
+        again.expect("built")?;
+        *self.warm.lock().unwrap() = (info.bytes_max, mem.reserved(), frames(&mem) - before);
         Ok(Box::new(std::iter::empty()))
     }
 }
@@ -230,6 +257,8 @@ async fn project(db: &Database, s: &Session, spec: Spec, orientation: Orientatio
         ranks: Mutex::new(Vec::new()),
         heap: Mutex::new(0),
         reserved: Mutex::new(0),
+        pool: Mutex::new(0),
+        warm: Mutex::new((0, 0, 0)),
     });
     let name = format!("algo_probe_{}", Arc::as_ptr(&p) as usize);
     db.register_procedure(Signature::new(&name, vec![], &[]), p.clone())
@@ -923,6 +952,8 @@ fn lab_zipf_projection_memory() {
         let bytes = probe.out.lock().unwrap().as_ref().unwrap().bytes();
         let heap = *probe.heap.lock().unwrap();
         let reserved = *probe.reserved.lock().unwrap();
+        let pool = *probe.pool.lock().unwrap();
+        let (warm_heap, warm_reserved, warm_pool) = *probe.warm.lock().unwrap();
         let pr = rows(
             &s,
             "CALL gds.pageRank.write($c)",
@@ -932,12 +963,22 @@ fn lab_zipf_projection_memory() {
         .unwrap();
         let acc = engine.accountant();
         eprintln!(
-            "LAB zipf 20000/200000: projection arrays {bytes} B; heap peak of the build {heap} B, reserved by the run {reserved} B; accountant peak before {before} B, after {} B, cap {} B; ranIterations {:?}",
+            "LAB zipf 20000/200000: projection arrays {bytes} B; heap peak of the build {heap} B, reserved by the run {reserved} B, pool frames charged during the build {pool} B; warm build: heap peak {warm_heap} B, reserved {warm_reserved} B, pool frames {warm_pool} B; accountant peak before {before} B, after {} B, cap {} B; ranIterations {:?}",
             acc.peak(),
             acc.cap(),
             pr[0][0]
         );
         assert!(acc.peak() <= acc.cap());
+        // rmp #70: the build's heap beyond the run's reservation is the
+        // pool's frames, which the pool charges to the accountant itself;
+        // with the pages cached, the build allocates no frame and its heap
+        // peak stays within its reservation.
+        assert!(heap <= reserved + pool, "uncharged heap in the cold build");
+        assert_eq!(warm_pool, 0, "the warm build adds no pool frame");
+        assert!(
+            warm_heap <= warm_reserved,
+            "uncharged heap in the warm build"
+        );
         db.close().await.unwrap();
     });
 }
