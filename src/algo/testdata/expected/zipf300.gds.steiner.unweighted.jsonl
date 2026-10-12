@@ -1,0 +1,16 @@
+{"weight": 1.0, "nodeId": 0, "parentId": 86}
+{"weight": 1.0, "nodeId": 5, "parentId": 284}
+{"weight": 1.0, "nodeId": 13, "parentId": 49}
+{"weight": 1.0, "nodeId": 49, "parentId": 200}
+{"weight": 1.0, "nodeId": 50, "parentId": 125}
+{"weight": 1.0, "nodeId": 77, "parentId": 291}
+{"weight": 1.0, "nodeId": 86, "parentId": 284}
+{"weight": 1.0, "nodeId": 123, "parentId": 261}
+{"weight": 1.0, "nodeId": 125, "parentId": 86}
+{"weight": 1.0, "nodeId": 181, "parentId": 5}
+{"weight": 1.0, "nodeId": 200, "parentId": 181}
+{"weight": 0.0, "nodeId": 218, "parentId": 218}
+{"weight": 1.0, "nodeId": 261, "parentId": 49}
+{"weight": 1.0, "nodeId": 284, "parentId": 218}
+{"weight": 1.0, "nodeId": 291, "parentId": 181}
+{"weight": 1.0, "nodeId": 299, "parentId": 218}

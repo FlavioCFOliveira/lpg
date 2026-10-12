@@ -369,6 +369,30 @@ pub(crate) mod probe {
             .unwrap_or_else(PoisonError::into_inner)
             .remove(key)
     }
+
+    /// The rounds of the iterative entries (rmp #67), by key.
+    static ROUNDS: Mutex<BTreeMap<String, Vec<(&'static str, usize)>>> =
+        Mutex::new(BTreeMap::new());
+
+    /// Records that a run under `key` took `rounds` rounds of `what`.
+    pub(crate) fn record_rounds(key: &str, what: &'static str, rounds: usize) {
+        ROUNDS
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .entry(key.to_string())
+            .or_default()
+            .push((what, rounds));
+    }
+
+    /// The rounds recorded under `key` since the last call, which clears
+    /// them.
+    pub(crate) fn take_rounds(key: &str) -> Vec<(&'static str, usize)> {
+        ROUNDS
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(key)
+            .unwrap_or_default()
+    }
 }
 
 #[cfg(test)]

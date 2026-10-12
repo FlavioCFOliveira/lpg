@@ -46,13 +46,18 @@
 //!
 //! [TS-25]: ../../docs/technical-spec/algorithms.md
 
+mod blossom;
 mod centrality;
 mod clustering;
 mod community;
+mod components;
 pub(crate) mod config;
 mod cycles;
+mod flow;
 mod functions;
 mod kernels;
+mod matching;
+mod measures;
 pub(crate) mod mem;
 mod pagerank;
 mod paths;
@@ -68,10 +73,15 @@ mod tests_centrality;
 #[cfg(test)]
 mod tests_community;
 #[cfg(test)]
+mod tests_components;
+#[cfg(test)]
+mod tests_flow;
+#[cfg(test)]
 mod tests_paths;
 #[cfg(test)]
 mod tests_structure;
 mod traversal;
+mod trees;
 
 use std::sync::Arc;
 use std::time::Instant;
@@ -201,6 +211,9 @@ pub(crate) enum WriteKind {
         dst: usize,
         value: usize,
     },
+    /// Node property `writeProperty` of each node in the list in column
+    /// `ids` is set to column `value` (the condensation's `componentId`).
+    NodeList { ids: usize, value: usize },
 }
 
 /// An algorithm of the inventory (module documentation).
@@ -361,6 +374,36 @@ pub(crate) static ENTRIES: &[Entry] = &[
     clustering::BALANCED_CUT,
     clustering::KMEANS,
     clustering::HDBSCAN,
+    components::WCC,
+    components::CONNECTED,
+    components::SCC,
+    components::CONDENSATION,
+    components::BICONNECTED,
+    components::ARTICULATION_POINTS,
+    components::BRIDGES,
+    components::KCORE,
+    measures::TRIANGLE_COUNT,
+    measures::TRIANGLES,
+    measures::LOCAL_CLUSTERING,
+    measures::ECCENTRICITY,
+    measures::GIRTH,
+    measures::LAPLACIAN,
+    trees::SPANNING_TREE,
+    trees::K_SPANNING_TREE,
+    trees::COUNT_SPANNING_TREES,
+    trees::STEINER_TREE,
+    trees::PRIZE_STEINER_TREE,
+    flow::MAX_FLOW,
+    flow::MIN_COST_FLOW,
+    matching::MAXIMUM_MATCHING,
+    matching::BIPARTITE_MATCHING,
+    matching::MAXIMAL_CLIQUES,
+    matching::CLIQUE_COUNTING,
+    matching::GREEDY_COLORING,
+    matching::DSATUR,
+    matching::K1_COLORING,
+    matching::FEEDBACK_ARC_SET,
+    matching::SET_COVER,
 ];
 
 /// The mode of an algorithm routine.
@@ -372,6 +415,10 @@ pub(crate) enum AlgoMode {
 
 /// What an entry's function runs with.
 pub(crate) struct Run<'r, 'm> {
+    /// The mode of the call: a write mode may write rows the stream mode
+    /// does not return (every node's flag of ALG-090, no root row for a
+    /// tree's relationships).
+    pub(crate) mode: AlgoMode,
     pub(crate) graph: &'r Any,
     pub(crate) cfg: &'r Config,
     pub(crate) sched: &'r Sched,
@@ -453,10 +500,13 @@ pub(crate) fn routines() -> Vec<Routine> {
     };
     let mut out = Vec::new();
     for e in ENTRIES {
-        out.push(Routine {
-            sig: Signature::new(e.stream, params(e), e.stream_columns),
-            body: Body::Algo(e, AlgoMode::Stream),
-        });
+        // An entry with no stream mode (ALG-149) has no stream name.
+        if !e.stream.is_empty() {
+            out.push(Routine {
+                sig: Signature::new(e.stream, params(e), e.stream_columns),
+                body: Body::Algo(e, AlgoMode::Stream),
+            });
+        }
         if let Some(w) = e.write {
             out.push(Routine {
                 sig: Signature::new(w, params(e), e.write_columns),
@@ -648,6 +698,7 @@ pub(crate) fn invoke(
     let pre = millis(started);
     let computing = Instant::now();
     let out = (e.run)(&mut Run {
+        mode,
         graph: &graph,
         cfg: &cfg,
         sched: &sched,
@@ -902,6 +953,18 @@ fn write_rows(
             }
             check_closed(cx, g, &written)?;
             Ok((0, written.len() as u64, 0))
+        }
+        WriteKind::NodeList { ids, value } => {
+            let mut pairs: Vec<(u64, Value)> = Vec::new();
+            for r in rows {
+                if let Value::List(l) = &r[ids] {
+                    pairs.extend(
+                        l.iter()
+                            .filter_map(|v| Some((row_node(v)?, r[value].clone()))),
+                    );
+                }
+            }
+            Ok((write_node_values(cx, g, cfg, &pairs)?, 0, 0))
         }
         WriteKind::NodeProp { id, value } => {
             let pairs: Vec<(u64, Value)> = rows

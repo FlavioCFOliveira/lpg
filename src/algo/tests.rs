@@ -136,10 +136,11 @@ fn parameter_record_of_an_entry() {
     assert_eq!(c.seed(), 0);
     let c = Config::parse(&record(&[("randomSeed", int(-1))]), &[SEED]).unwrap();
     assert_eq!(c.seed(), u64::MAX);
-    // Every entry is registered under its stream and write names.
+    // Every entry is registered under its stream and write names; an
+    // entry without a stream mode (ALG-149) has a write mode.
     let r = crate::proc::Registry::with_builtins();
     for e in ENTRIES {
-        assert!(r.get(e.stream).is_some());
+        assert!(r.get(e.stream).is_some() || (e.stream.is_empty() && e.write.is_some()));
         assert_eq!(
             e.write.is_some_and(|w| r.get(w).is_some()),
             e.write.is_some()
@@ -205,6 +206,7 @@ impl ReadProcedure for Probe {
         for any in [Any::Small(p.clone()), Any::Large(wide)] {
             let sched = Sched::new(p.ids.len(), 4, true, None);
             outs.push((pagerank::ENTRY.run)(&mut Run {
+                mode: AlgoMode::Stream,
                 graph: &any,
                 cfg: &cfg,
                 sched: &sched,
@@ -945,13 +947,18 @@ fn lab_zipf_projection_memory() {
 #[test]
 fn every_entry_has_its_columns() {
     for e in ENTRIES {
-        assert!(!e.algs.is_empty() && !e.stream_columns.is_empty(), "{e:?}");
+        assert!(
+            !e.algs.is_empty() && (!e.stream_columns.is_empty() || e.stream.is_empty()),
+            "{e:?}"
+        );
         // GDS's modularity optimisation reports `nodes`, not
-        // `nodePropertiesWritten` (`algorithm-entries.md`, ALG-065).
+        // `nodePropertiesWritten` (`algorithm-entries.md`, ALG-065); its
+        // k-spanning tree and K-1 colouring report no written count
+        // (ALG-149, ALG-176).
         assert!(
             e.write.is_none()
                 || e.write_columns.iter().any(|c| c.ends_with("Written"))
-                || e.algs == [65],
+                || matches!(e.algs, [65] | [149] | [176]),
             "{e:?}"
         );
         assert!(format!("{e:?}").starts_with(e.stream));

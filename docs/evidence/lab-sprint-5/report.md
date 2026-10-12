@@ -510,3 +510,160 @@ Both peaks equal the fixture import's: no run of either family exceeded it, so t
 | `/tmp` | 2.5 G used | 2.5 G used | no file kept; case files under `/tmp` deleted |
 | `/tmp/lpgram` | empty | empty | every test removes its directory |
 | `/dev/shm/lpg-target` | 7.7 G | 8.3 G | the build in use; the 2.7 G `llvm-cov-target` was deleted after each coverage run |
+
+## #67 and #68
+
+Components and structural measures (rmp #67, 13 entries) and spanning trees, flows, matching, covering, cliques and colouring (rmp #68, 16 entries), with the ALG-187 carry-over, built together on the runtime of #63, at `d2618b0` plus uncommitted changes, on 2026-10-12. Correctness only: no timing was measured.
+
+### Runtime extensions (generic)
+
+| Extension | Where |
+|---|---|
+| `Run::mode`: a write mode may write rows its stream does not return (ALG-090's 0/1 on every node; no root row for a tree's relationships) | `src/algo/mod.rs` |
+| Write-only entries (empty `stream`, ALG-149); `WriteKind::NodeList` (each node of a list column, ALG-086) | `src/algo/mod.rs`, `tests.rs` invariants adjusted |
+| `kernels::Simple` (simple graph, sorted rows) and `simple_undirected`, `intersect_count`; `kernels::IndexedHeap` (textbook 1-based binary heap with decrease-key) | `src/algo/kernels.rs` |
+| Test probe of rounds (`sched::probe::record_rounds`) | `src/algo/sched.rs` |
+| Fixture `flow30` (`flow_network(33, 30, 90)`); `gds_batch.sh` also projects `capacity` and `cost`; test `call_text` quotes each name part (`bipartite_matching.max` holds a reserved word) | `src/lab/generator.rs`, `gds_batch.sh`, `tests_paths.rs` |
+
+### Decisions
+
+| Decision | References studied | Taken | Rejected |
+|---|---|---|---|
+| 083 parallel form | Kùzu `weakly_connected_components.cpp`, NetworKit `ParallelConnectedComponents.cpp` (min-label rounds), LAGraph `LG_CC_FastSV6.c` (pointer jumping), GDS `wcc/` (CAS union-find, studied) | synchronous min-label rounds + pointer jumping, labels = smallest index | per-block union-find merged in block order (an O(n) structure per block) |
+| 093 parallel form | GDS `KCoreDecomposition.java` (scan/act phases, studied), rustworkx `core_number.rs`, NetworKit `CoreDecomposition.cpp` | synchronous peeling rounds by blocks; degrees as GDS (parallel edges, self-loop twice; measured) | asynchronous cascades |
+| 120/121 parallel form | graphina `parallel/triangles.rs`, LAGraph `LAGr_TriangleCount.c`, GDS `IntersectingTriangleCount.java` | each block counts its own nodes by sorted-row intersections | degree-ordered forward counting (increments to other blocks' nodes) |
+| 155 | Goldberg–Tarjan; petgraph `dinics.rs`, NetworKit `Dinic.cpp`, pathfinding `edmonds_karp.rs`; GDS documents a parallel push-relabel (not in its open repository) | synchronous two-phase push-relabel (pushes from round-start heights; relabels after), applied in block order | Dinic (sequential), asynchronous push-relabel |
+| 157 | NetworKit `SuccessiveShortestPath.cpp` (port), NetworkX simplex (studied) | successive shortest paths from a super source; `alpha` no effect | cost scaling (GDS) |
+| 153 (item C) | GDS `ShortestPathsSteinerAlgorithm.java`, `SteinerBasedDeltaStepping.java`, `SimpleRerouter.java` (studied) | nearest-target growth; distances by synchronous Bellman-Ford rounds by blocks; GDS's simple rerouting with edges by target | delta-stepping buckets (`delta` has no effect) |
+| 154 | GDS `pricesteiner/*` (studied), `pcst_fast` @ `25ab31a` (MIT, read) | Goemans–Williamson growth (events found by scanning edges) + strong pruning | pairing heaps (only change the cost) |
+| 151 | graphalgs `st.rs:79` (f64 cast), NetworkX (float) | exact: determinants modulo 2^61−1 and 2^62−57, CRT, Hadamard–Fischer bound; nalgebra f64 only when the bound exceeds 2^123 | f64 determinant (karate: 5090996323019138 from nalgebra, exact 5090996323019136) |
+| 176 (parity) | GDS `k1coloring/*` (speculative + repair, studied), LAGraph `LAGraph_coloring_independent_set.c` (rounds) | Jones–Plassmann rounds, largest-degree-first priority | speculative rounds (timing-free conflicts need repair rounds; more colours) |
+| Matching (187, carry-over) | rustworkx `max_weight_matching.rs`, NetworkX `matching.py` | port of rustworkx (blossom, i128 duals), distances rounded to 2^-20 m | float duals |
+| 090/091 | petgraph `bridges.rs:83` (skips every edge to the parent), GDS (skips one) | own low-link DFS with GDS's parent rule | calling petgraph (reports both parallel edges as bridges) |
+| 178 | MAGE `solver.py:119-141` (random order, not greedy) | classic greedy (most uncovered elements, first listed) | MAGE's random order (not reproducible) |
+
+### Copies
+
+| Source | Commit | Licence | Into |
+|---|---|---|---|
+| rustworkx-core `max_weight_matching.rs` | `25398ab47f66` | Apache-2.0 (modified; notice in header) | `blossom.rs` |
+| graphalgs `metrics.rs` (eccentricity, diameter, radius), `spec/laplacian.rs`; method of `spec/st.rs` | `1f8a412ef4af` | MIT | `measures.rs`, `trees.rs` |
+| petgraph `maximal_cliques.rs`; `condensation` logic (`mod.rs:477`) | 0.8.3 | MIT | `matching.rs`, `components.rs` |
+| NetworKit `flow/SuccessiveShortestPath.cpp` (port) | `5f03e17cec09` | MIT (text quoted) | `flow.rs` |
+| MAGE `bipartite_matching.cpp` (port) | `c72636014a8b` | Apache-2.0 | `matching.rs` |
+| NetworkX `greedy_coloring.py` strategies (port); `tests/test_matching.py` cases | 3.7 | BSD-3-Clause (text quoted) | `matching.rs`, `blossom.rs` tests |
+| Called (dependency petgraph 0.8.3) | — | — | `tarjan_scc`, `UnionFind`, `maximum_matching`, `greedy_matching`, `dsatur_coloring`, `greedy_feedback_arc_set` (on a `DiGraph` in forward order), `bellman_ford` |
+
+### Instruments
+
+[`oracle-cases/gds_cases_67_68.sh`](oracle-cases/gds_cases_67_68.sh), [`nx_cases_67_68.sh`](oracle-cases/nx_cases_67_68.sh), [`mage_cases_67_68.sh`](oracle-cases/mage_cases_67_68.sh) (new): 142 GDS, 54 NetworkX and 3 MAGE outputs. Every container was removed (`docker ps -a` lists none). lpg's CSV import numbers nodes in the order of the `id:ID` strings (0, 1, 10, 11, …; measured), GDS's native projection in numeric order; the order-dependent heuristics (149, 153 rerouting) were also run on a GDS Cypher-aggregation projection that numbers nodes in lpg's order (`*.o.jsonl`), and the NetworkX colouring oracle renumbers nodes to lpg's order.
+
+### Oracle results
+
+| ALG | Oracle, rule | Graphs | Result |
+|---|---|---|---|
+| 083 | GDS, P (default, `UNDIRECTED`, threshold 0.5, `consecutiveIds`, seeded: ids equal too) | karate, zipf60, uniform60, zipf300, zipf60c | equal; write `componentCount` and distribution equal |
+| 084 | NetworkX, P | zipf60, uniform60, zipf300 | equal |
+| 085 | GDS, P | zipf60, uniform60, zipf300 | equal |
+| 086 | NetworkX, P members, X edges | zipf60, uniform60, cyc12 | equal |
+| 089 | NetworkX on the simple graph, P on edges | karate, zipf60, uniform60 | equal |
+| 090, 091 | GDS, X (`resultingComponents`, unordered pairs with `remainingSizes`; write values 1/0) | karate, zipf60, uniform60 | equal |
+| 093 | GDS, X (+ `degeneracy`) | karate, zipf60, uniform60, zipf300 | equal |
+| 120 | GDS, X (counts, `maxDegree` 5, listing, `globalTriangleCount`) | same | equal |
+| 121 | GDS, F | same | largest difference 0; average within 1e-9 |
+| 123 | NetworkX, X / F weighted | karate, uniform60 (undirected), cyc12, zipf60 (directed, from NX shortest paths) | equal |
+| 128 | NetworkX `girth`, X; directed: shortest NX simple cycle | karate, petersen, bip20, dag40, cyc12 | equal |
+| 143 | NetworkX, F | karate (undirected), zipf60 (directed), both weighted | largest difference 1.9e-16 |
+| 147 | GDS, V | karate, zipf60, uniform60 (min, max, unweighted) | same node set, totals within 1e-9 |
+| 149 | GDS, V (k nodes; weight of the tree on them) | karate, zipf60, uniform60 (k 5 min, k 4 max) | equal node sets except karate k 5 (below) |
+| 151 | rational determinant, X; 22003 above `INTEGER` | karate, petersen, negw30, flow30, dag40 (undirected, 22003), dag40/geo30/rc24 rooted | equal |
+| 153 | GDS in lpg's order, V | zipf60, uniform60, zipf300 (weighted, rerouting, unweighted) | weighted equal; unweighted below |
+| 154 | GDS, V | geo30 (`lat`; `lng` gives no row, as GDS) | weight 535.7222378524907 against 535.7222378524908; prizes equal |
+| 155, 157 | GDS, V | flow30 (2 → 1 and 5 → 3 terminals, no capacity) | flow 46 and 79; cost 457 and 564 (also `alpha` 2), as GDS |
+| 161 | NetworkX sizes, V; greedy maximal | karate, zipf60, uniform60, petersen | equal |
+| 163 | NetworkX Hopcroft–Karp, X | bip20; karate gives 0 as MAGE | equal |
+| 169 | NetworkX `find_cliques`, X | karate, zipf60, uniform60 | equal |
+| 171 | GDS, X | karate; zipf60, uniform60, zipf300 against GDS on their simple graph | equal; `globalCount` [45, 11, 2] |
+| 173 | NetworkX, V (proper, equal colour count) | 6 strategies × karate, zipf60, uniform60, petersen; `random_sequential` proper only | equal |
+| 174 | petgraph `dsatur_coloring`, V | same | equal (5, 5, 4, 3) |
+| 177 | petgraph on the same edge sequence, X; acyclic remainder | zipf60, cyc12 | equal (44 and 4 arcs) |
+| 178 | MAGE (random), V | bip20 | lpg 3 sets = exhaustive optimum; MAGE runs 6, 4, 7 |
+| 187 | NetworkX `min_weight_matching`, 24 points (24 odd vertices); exhaustive on random sets of 2–14 | — | 2132.585815131451 = NetworkX; NetworkX's 14 blossom cases equal |
+
+### Parity entry 176 (rule Q)
+
+Proper colouring, bit-equal at `concurrency` 1–16 twice; colours: karate 5 (GDS 6 natural, 6 undirected), zipf60 5 (6, 6), uniform60 4 (5, 6), zipf300 7 (11, 11). At most GDS's in every case.
+
+### Rounds against the reference
+
+| Graph | 083 rounds (lpg) | 093 rounds (lpg) | GDS k-core phases |
+|---|---|---|---|
+| karate | 3 | 7 | 4 |
+| zipf60 | 4 | 17 | 8 |
+| uniform60 | 4 | 11 | 4 |
+| zipf300 | 4 | 42 | 20 |
+
+GDS's k-core phases are counted from its control flow (`KCoreDecomposition.java`: one scan, and one act phase per level, a cascade inside a phase) applied to the core values; GDS's WCC has no rounds (one concurrent union-find pass). lpg's synchronous rounds are more numerous; no timing was measured.
+
+### Determinism, worker counts, `CALL` and the Rust API
+
+Every stream entry: bit-equal rows at `concurrency` 1–16, twice each, and `CALL` equal to `Transaction::run_algorithm` in one snapshot (`Lab::det`). On a 2-node projection the parallel entries (083, 093, 120, 121, 153, 155, 171, 176) start exactly `min(concurrency, 2)` workers at 1, 2 and 16; every other entry one (149 through its write mode).
+
+### Memory
+
+| Measure | Value |
+|---|---|
+| 143 on zipf300 under a 524 288 B transaction limit | 51N73 (300² floats = 720 000 B); accountant peak 5 269 825 B ≤ cap 33 554 432 B |
+| #67 family on zipf300 (14 entries) | accountant peak 5 269 825 B; heaptrack peak of the whole test 4.23 MB (`heaptrack.sh … lab_family67_memory_and_rounds`, includes four fixture loads) |
+| #68 family on zipf300, flow30, geo30 (14 entries) | accountant peak 3 476 197 B; heaptrack peak 3.85 MB (`… lab_family68_memory`) |
+
+### Coverage
+
+`cargo llvm-cov nextest -E 'test(/algo::(tests_(components|flow)|blossom|trees)::/)'`, 19 tests. Regions covered: `components.rs` 1052/1100, `measures.rs` 592/627, `trees.rs` 1556/1602, `flow.rs` 625/652, `matching.rs` 1262/1315, `blossom.rs` 938/939. Every uncovered region, by reason:
+
+* **Errors of a reservation or of `emit`** (`)?;` after `r.mem.grow`, `r.emit`): the refusal path is covered by the memory tests.
+* **`usize` projections**: each `with_projection!` arm of 2^32 nodes or more.
+* **Argument errors not exercised**: `graph_coloring` and `set_cover` value types (`matching.rs:766-787, 959-965`); a negative-cost cycle in 157 and a negative cycle in weighted 123 (`flow.rs:447-459`, `measures.rs:380-384`).
+* **Inputs the fixtures do not hold**: self-loops in flow30 and geo30 (`flow.rs:217`, `trees.rs:1093`), a self-loop in 163 (`matching.rs:331`), unseeded components with a seed property (`components.rs:397-408`), an excluded node in `gds.triangles` (`measures.rs:266`), a NaN triangle count (`measures.rs:319`), no node (`components.rs:240`, `measures.rs:332`, `trees.rs:578, 997`), an uncoverable element (`matching.rs:1008`).
+* **Implicit `else` branches and loop exits**: the test-only rounds probe (`components.rs:384, 861`), Steiner's guard against a parent cycle and rerouting without change (`trees.rs:743, 785`), the k-tree's node dropped after its parent left (`trees.rs:395`), GW deactivation of an inactive cluster and the no-event exit (`trees.rs:881, 899, 961, 975`), a relabel without residual arc (`flow.rs:394`), `blossom.rs:97`.
+
+### Findings
+
+1. **GDS 2026.09.0's clique counting fails on a projection with self-loops or parallel edges**: `ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 1` (zipf60, zipf300), `NegativeArraySizeException: -1` (uniform60). The simple-graph projection runs.
+2. **GDS's prize-collecting Steiner tree refuses an integer prize** ("Value type required: [DOUBLE]").
+3. **GDS's Steiner rows give rounded path-cost differences** (0.5641788520905568 for an edge of 0.5641788520905567); the tests compare edges within 1e-12.
+4. **GDS's degrees differ by entry** (measured): k-core counts parallel edges and a self-loop twice; the clustering coefficient's degree counts distinct neighbours and the node itself when it has a self-loop; triangle counts are the simple graph's; `maxDegree` uses the projected degree.
+5. **rustworkx's `augment_blossom` tests `> num_nodes`**, which misses the blossom numbered `num_nodes`; NetworkX tests any blossom; lpg tests `>=`.
+6. **MAGE's "greedy" set cover is a random order** (sizes 6, 4 and 7 in three runs on bip20).
+7. **lpg's CSV import numbers nodes in the string order of `id:ID`**, so order-dependent results (ties, heuristics) differ from GDS's native projection; in lpg's order, 153's rerouting equals GDS (zipf60: 4.0411 both; natively GDS 3.9209).
+
+### Divergences and open points (stated plainly)
+
+1. **149 on karate, k 5, minimum**: lpg's tree weighs 7, GDS's 5 in lpg's node order (7 in GDS's own order). Karate's integer weights tie; the queue and leaf choices among equal weights are GDS's own code (GPL, not ported). Asserted on zipf60 and uniform60 (float weights, equal node sets), recorded on karate.
+2. **153 unweighted on uniform60**: lpg 9, GDS 10 (lpg lighter); equal hop counts tie. Weighted cases asserted; unweighted recorded (zipf60 and zipf300 equal).
+3. **151** uses nalgebra's `f64` determinant only to decide when the diagonal bound exceeds 2^123 and the residue fits `INTEGER`; that decision is not proved (exercised by a unit test). TS-25 names nalgebra for 151; the exact count does not use it otherwise.
+4. **173**: NetworkX's `smallest_last` and `independent_set` take arbitrary set elements; the oracle runs copies taking the smallest node. `random_sequential` is checked for properness only.
+5. **Accepted with no effect**: 153 `delta`, 157 `alpha`, 176 `maxIterations` and `batchSize` (`ranIterations` is 1), 173 `edge_property`, 083 and 121 `forceSeedOptimization`. **Refused**: 120 `labelFilter` (22N11; its GDS semantics were not measured).
+6. **154**: the best root is detached before pruning, where GDS's code (studied) prunes the root above it; not triggered on geo30, GDS's behaviour in that case unverified.
+7. **149**: a node whose tree parent has left the tree is dropped (GDS's code adds it); not reached by the fixtures (coverage).
+8. **089, 128, 161, 169, 171, 173** read the simple graph (parallel edges once); 128 counts a self-loop as a cycle of one edge.
+9. `algorithm-entries.md` and TS-25 were not edited (out of scope): the measured GDS rules above (findings 1–4, 7) and points 3, 5 are candidates.
+
+### Quality gate
+
+| Command | Result |
+|---|---|
+| `cargo nextest run --no-fail-fast` | 651 passed, 38 skipped, 0 failed |
+| `cargo clippy --all-targets -- -D warnings` | no warning |
+| `cargo fmt --all -- --check` | clean |
+| `cargo deny check licenses` | "licenses ok" |
+| `cargo +1.89 build` | exit 0 |
+| `Cargo.toml`, `Cargo.lock` | unchanged; no new crate |
+
+### RAM space
+
+| Location | Before | After | Left and why |
+|---|---|---|---|
+| `/tmp` | 2.5 G used | 2.5 G used | `/tmp/pcst_fast` clone (reference, 9.5 MB) kept; case files deleted |
+| `/tmp/lpgram` | empty | empty | every test removes its directory |
+| `/dev/shm/lpg-target` | 8.2 G | 5.4 G | the build in use; 7.6 G of stale `debug/incremental` and the `llvm-cov-target` deleted (the first coverage run hit the quota) |

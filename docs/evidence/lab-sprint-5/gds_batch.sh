@@ -11,7 +11,8 @@
 # 2026.09.0, installed as `gds_oracle.sh` installs it) imports them, then
 # projects two graphs: `g` with orientation NATURAL and `u` with
 # orientation UNDIRECTED, each with every node and relationship, the
-# `weight` relationship property when `edges.csv` has it, and every node
+# `weight`, `capacity` and `cost` relationship properties that `edges.csv`
+# has (rmp #68), and every node
 # property column of `nodes.csv` except `uid` (`vec`, `community`, `lat`,
 # `lng`). Nodes are projected under one label, `ALL`; with LABELS set (a
 # Cypher list such as `['C', 'N']`) under those labels instead, so that
@@ -38,9 +39,11 @@ cases="$(realpath "$2")"
 out="$(realpath "$3")"
 
 props=()
-if head -1 "$dir/edges.csv" | tr ',' '\n' | grep -qx "weight:double"; then
-    props+=("weight: {property: 'weight'}")
-fi
+for p in weight capacity cost; do
+    if head -1 "$dir/edges.csv" | tr ',' '\n' | grep -qx "$p:double"; then
+        props+=("$p: {property: '$p'}")
+    fi
+done
 nprops=()
 for c in $(head -1 "$dir/nodes.csv" | tr ',' '\n'); do
     name=${c%%:*}

@@ -305,7 +305,13 @@ pub(super) fn call_text(proc: &str, args: &[Value], config: &Value) -> (String, 
     }
     ps.insert("c".to_string(), config.clone());
     list.push("$c".to_string());
-    (format!("CALL {proc}({})", list.join(", ")), ps)
+    // Each part quoted: MAGE's `bipartite_matching.max` holds a reserved
+    // word.
+    let quoted: Vec<String> = proc.split('.').map(|x| format!("`{x}`")).collect();
+    (
+        format!("CALL {}({})", quoted.join("."), list.join(", ")),
+        ps,
+    )
 }
 
 /// GDS PathRows of `file` by target uid: (`nodeIds`, `totalCost`).

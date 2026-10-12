@@ -1,0 +1,11 @@
+{"weight": 0.014605936641748585, "nodeId": 0, "parentId": 22}
+{"weight": 0.14299586964164235, "nodeId": 3, "parentId": 28}
+{"weight": 0.9519412695613443, "nodeId": 11, "parentId": 21}
+{"weight": 0.0, "nodeId": 14, "parentId": 14}
+{"weight": 0.4744057452004693, "nodeId": 17, "parentId": 0}
+{"weight": 0.19956991625717158, "nodeId": 21, "parentId": 3}
+{"weight": 0.5839877879046403, "nodeId": 22, "parentId": 37}
+{"weight": 0.3716660538209323, "nodeId": 28, "parentId": 14}
+{"weight": 0.4268246178257311, "nodeId": 37, "parentId": 11}
+{"weight": 0.5641788520905567, "nodeId": 45, "parentId": 17}
+{"weight": 0.2094757969914941, "nodeId": 59, "parentId": 22}

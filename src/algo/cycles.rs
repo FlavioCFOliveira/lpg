@@ -32,9 +32,10 @@
 //!   verification row requires; lpg uses a minimum-weight perfect matching,
 //!   as Christofides' algorithm and NetworkX's `christofides`
 //!   (`approximation/traveling_salesman.py`, BSD-3-Clause, method only)
-//!   do: exact, by dynamic programming over subsets, for at most 20 odd
-//!   vertices; above that, greedy (the bound then does not hold; rmp #69
-//!   open point).
+//!   do: Edmonds' blossom algorithm ([`super::blossom`], rmp #68), on the
+//!   distances rounded to 2^-20 m, for any number of odd vertices (it
+//!   replaces rmp #69's greedy fallback above 20, which voided the
+//!   bound).
 //! * **188** is the deterministic Clarke-Wright savings heuristic followed
 //!   by 2-opt on each route (TS-25; user decision 2026-10-12, item D),
 //!   over every node of the projection, with MAGE's parameters
@@ -584,59 +585,33 @@ pub(crate) fn christofides(dm: &[Vec<f64>]) -> Vec<usize> {
     path
 }
 
-/// A minimum-weight perfect matching of `odd` (an even number of points):
-/// exact by dynamic programming over subsets up to 20 points, else
-/// greedy by increasing distance (module documentation).
-fn min_matching(dm: &[Vec<f64>], odd: &[usize]) -> Vec<(usize, usize)> {
+/// The scale of the integer weights of [`min_matching`]: distances in
+/// units of 2^-20 m.
+const MATCHING_SCALE: f64 = (1u64 << 20) as f64;
+
+/// A minimum-weight perfect matching of `odd` (an even number of points;
+/// module documentation): the maximum-cardinality maximum-weight matching
+/// of [`super::blossom`] on the complete graph with weights `W − d`,
+/// `d` each distance rounded to 2^-20 m and `W` the largest plus 1. A
+/// perfect matching maximises the sum of `W − d` exactly when it
+/// minimises the sum of `d`.
+pub(crate) fn min_matching(dm: &[Vec<f64>], odd: &[usize]) -> Vec<(usize, usize)> {
     let q = odd.len();
-    if q > 20 {
-        let mut pairs: Vec<(f64, usize, usize)> = Vec::new();
-        for a in 0..q {
-            for b in a + 1..q {
-                pairs.push((dm[odd[a]][odd[b]], a, b));
-            }
-        }
-        pairs.sort_by(|x, y| x.0.total_cmp(&y.0).then((x.1, x.2).cmp(&(y.1, y.2))));
-        let mut taken = vec![false; q];
-        let mut out = Vec::new();
-        for (_, a, b) in pairs {
-            if !taken[a] && !taken[b] {
-                taken[a] = true;
-                taken[b] = true;
-                out.push((odd[a], odd[b]));
-            }
-        }
-        return out;
-    }
-    let full = (1usize << q) - 1;
-    let mut best = vec![f64::INFINITY; full + 1];
-    let mut choice = vec![(0usize, 0usize); full + 1];
-    best[0] = 0.0;
-    for mask in 1..=full {
-        if mask.count_ones() % 2 == 1 {
-            continue;
-        }
-        let a = mask.trailing_zeros() as usize;
+    let mut edges: Vec<(usize, usize, i128)> = Vec::with_capacity(q * q.saturating_sub(1) / 2);
+    for a in 0..q {
         for b in a + 1..q {
-            if mask & (1 << b) == 0 {
-                continue;
-            }
-            let rest = mask & !(1 << a) & !(1 << b);
-            let c = best[rest] + dm[odd[a]][odd[b]];
-            if c < best[mask] {
-                best[mask] = c;
-                choice[mask] = (a, b);
-            }
+            let d = (dm[odd[a]][odd[b]] * MATCHING_SCALE).round() as i128;
+            edges.push((a, b, d));
         }
     }
-    let mut out = Vec::new();
-    let mut mask = full;
-    while mask != 0 {
-        let (a, b) = choice[mask];
-        out.push((odd[a], odd[b]));
-        mask &= !(1 << a) & !(1 << b);
+    let top = edges.iter().map(|e| e.2).max().unwrap_or(0) + 1;
+    for e in &mut edges {
+        e.2 = top - e.2;
     }
-    out
+    let mate = super::blossom::max_weight_matching(q, &edges, true);
+    (0..q)
+        .filter_map(|a| mate[a].filter(|b| a < *b).map(|b| (odd[a], odd[b])))
+        .collect()
 }
 
 fn run_vrp(r: &mut Run<'_, '_>) -> Result<Output, Error> {

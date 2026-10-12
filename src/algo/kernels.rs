@@ -476,3 +476,225 @@ pub(crate) fn levels<I: Ix>(
     }
     Ok(out)
 }
+
+/// The simple graph of a projection (rmp #67, #68): the distinct other
+/// ends of each node's edges in the run's orientation, sorted by index,
+/// the node itself left out. Under `UNDIRECTED` it is the simple
+/// undirected graph that triangle, clique, matching and colouring
+/// entries read; parallel edges count once and self-loops not at all.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct Simple {
+    pub(crate) row: Vec<usize>,
+    pub(crate) col: Vec<usize>,
+}
+
+impl Simple {
+    /// The neighbours of `v`, ascending.
+    pub(crate) fn of(&self, v: usize) -> &[usize] {
+        &self.col[self.row[v]..self.row[v + 1]]
+    }
+
+    /// The number of nodes.
+    pub(crate) fn len(&self) -> usize {
+        self.row.len() - 1
+    }
+
+    /// Whether `a` and `b` are adjacent.
+    pub(crate) fn adjacent(&self, a: usize, b: usize) -> bool {
+        self.of(a).binary_search(&b).is_ok()
+    }
+
+    /// The bytes [`simple`] reserves for `n` nodes and `m` entries.
+    pub(crate) fn bytes(n: usize, m: usize) -> usize {
+        (n + 1 + m) * size_of::<usize>()
+    }
+}
+
+/// The simple graph of `p` ([`Simple`]) in the run's orientation,
+/// reserved from `mem`.
+///
+/// # Errors
+///
+/// As [`Mem::grow`].
+pub(crate) fn simple<I: Ix>(p: &Projection<I>, mem: &mut Mem<'_>) -> Result<Simple, Error> {
+    simple_of(p, mem, false)
+}
+
+/// The simple undirected graph of `p` whatever the run's orientation:
+/// both directions of every edge (K-1 colouring, rmp #68).
+///
+/// # Errors
+///
+/// As [`Mem::grow`].
+pub(crate) fn simple_undirected<I: Ix>(
+    p: &Projection<I>,
+    mem: &mut Mem<'_>,
+) -> Result<Simple, Error> {
+    simple_of(p, mem, true)
+}
+
+fn simple_of<I: Ix>(p: &Projection<I>, mem: &mut Mem<'_>, both: bool) -> Result<Simple, Error> {
+    let n = p.node_count();
+    let m: usize = if both {
+        2 * p.edge_ids.len()
+    } else {
+        (0..n).map(|v| p.out_degree(v)).sum()
+    };
+    mem.grow(Simple::bytes(n, m))?;
+    let mut row = Vec::with_capacity(n + 1);
+    let mut col = Vec::with_capacity(m);
+    row.push(0);
+    for v in 0..n {
+        let start = col.len();
+        if both {
+            col.extend(
+                p.fwd.col[p.fwd.row[v]..p.fwd.row[v + 1]]
+                    .iter()
+                    .chain(&p.rev.col[p.rev.row[v]..p.rev.row[v + 1]])
+                    .map(|w| w.index())
+                    .filter(|w| *w != v),
+            );
+        } else {
+            col.extend(p.out(v).map(|(w, _)| w.index()).filter(|w| *w != v));
+        }
+        col[start..].sort_unstable();
+        let mut keep = start;
+        for i in start..col.len() {
+            if i == start || col[i] != col[keep - 1] {
+                col[keep] = col[i];
+                keep += 1;
+            }
+        }
+        col.truncate(keep);
+        row.push(col.len());
+    }
+    Ok(Simple { row, col })
+}
+
+/// The number of common elements of two ascending slices.
+pub(crate) fn intersect_count(a: &[usize], b: &[usize]) -> usize {
+    let (mut i, mut j, mut c) = (0, 0, 0);
+    while i < a.len() && j < b.len() {
+        match a[i].cmp(&b[j]) {
+            Ordering::Less => i += 1,
+            Ordering::Greater => j += 1,
+            Ordering::Equal => {
+                c += 1;
+                i += 1;
+                j += 1;
+            }
+        }
+    }
+    c
+}
+
+/// An indexed binary min-heap over elements `0..n` with a cost each
+/// (rmp #68): the textbook array heap rooted at position 1, with
+/// decrease- and increase-key. Ties are left where the sift operations,
+/// which move an element only past a strictly larger cost, leave them,
+/// so equal costs come out in an order fixed by the operations' sequence.
+#[derive(Debug, Clone)]
+pub(crate) struct IndexedHeap {
+    heap: Vec<usize>,
+    at: Vec<usize>,
+    cost: Vec<f64>,
+}
+
+impl IndexedHeap {
+    /// An empty heap over `n` elements.
+    pub(crate) fn new(n: usize) -> IndexedHeap {
+        IndexedHeap {
+            heap: vec![0],
+            at: vec![0; n],
+            cost: vec![0.0; n],
+        }
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.heap.len() == 1
+    }
+
+    /// Whether `e` is in the heap.
+    pub(crate) fn contains(&self, e: usize) -> bool {
+        self.at[e] > 0
+    }
+
+    /// The last cost given to `e`.
+    pub(crate) fn cost(&self, e: usize) -> f64 {
+        self.cost[e]
+    }
+
+    fn less(&self, a: usize, b: usize) -> bool {
+        self.cost[a] < self.cost[b]
+    }
+
+    fn place(&mut self, pos: usize, e: usize) {
+        self.heap[pos] = e;
+        self.at[e] = pos;
+    }
+
+    fn up(&mut self, from: usize) -> bool {
+        let e = self.heap[from];
+        let mut i = from;
+        while i > 1 && self.less(e, self.heap[i / 2]) {
+            let p = self.heap[i / 2];
+            self.place(i, p);
+            i /= 2;
+        }
+        self.place(i, e);
+        i != from
+    }
+
+    fn down(&mut self, from: usize) {
+        let size = self.heap.len() - 1;
+        let e = self.heap[from];
+        let mut i = from;
+        loop {
+            let mut j = 2 * i;
+            if j > size {
+                break;
+            }
+            if j < size && self.less(self.heap[j + 1], self.heap[j]) {
+                j += 1;
+            }
+            if !self.less(self.heap[j], e) {
+                break;
+            }
+            let c = self.heap[j];
+            self.place(i, c);
+            i = j;
+        }
+        self.place(i, e);
+    }
+
+    /// Adds `e` with `cost`, or sets its cost if it is in the heap.
+    pub(crate) fn set(&mut self, e: usize, cost: f64) {
+        self.cost[e] = cost;
+        if self.contains(e) {
+            let pos = self.at[e];
+            if !self.up(pos) {
+                self.down(pos);
+            }
+        } else {
+            self.heap.push(e);
+            let last = self.heap.len() - 1;
+            self.at[e] = last;
+            self.up(last);
+        }
+    }
+
+    /// Removes and returns the element of the smallest cost.
+    pub(crate) fn pop(&mut self) -> Option<usize> {
+        if self.is_empty() {
+            return None;
+        }
+        let top = self.heap[1];
+        let last = self.heap.pop().expect("an element");
+        self.at[top] = 0;
+        if self.heap.len() > 1 {
+            self.place(1, last);
+            self.down(1);
+        }
+        Some(top)
+    }
+}

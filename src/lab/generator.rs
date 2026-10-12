@@ -987,6 +987,8 @@ mod tests {
                 "zipf60c",
                 communities(power_law(31, 60, 180, true, true), 32, 4),
             ),
+            // rmp #67 and #68.
+            ("flow30", flow_network(33, 30, 90)),
         ]
     }
 
