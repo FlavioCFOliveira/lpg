@@ -119,6 +119,10 @@ pub(crate) struct Spec {
     pub(crate) edge_props: Vec<String>,
     /// Node properties loaded as arrays, in this order.
     pub(crate) node_props: Vec<String>,
+    /// Keep each edge's type token ([`Projection::edge_types`]).
+    pub(crate) edge_types: bool,
+    /// Keep each node's label tokens ([`Projection::labels`]).
+    pub(crate) node_labels: bool,
 }
 
 /// One compressed sparse row array: the targets of node `v` are
@@ -143,14 +147,13 @@ pub(crate) struct Projection<I> {
     /// Edge property arrays by forward position ([`Spec::edge_props`]).
     pub(crate) edge_props: Vec<Vec<f64>>,
     /// Node property arrays by dense index ([`Spec::node_props`]).
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "the entries that read node properties arrive with #64 to #69"
-        )
-    )]
     pub(crate) node_props: Vec<Vec<f64>>,
+    /// The type token of the edge at each forward position, if
+    /// [`Spec::edge_types`]; empty otherwise.
+    pub(crate) edge_types: Vec<u64>,
+    /// The label tokens of node `v`: `labels.1[labels.0[v]..labels.0[v +
+    /// 1]]`, if [`Spec::node_labels`]; empty otherwise.
+    pub(crate) labels: (Vec<usize>, Vec<u64>),
     pub(crate) orientation: Orientation,
 }
 
@@ -251,7 +254,9 @@ pub(crate) fn build(
     // Nodes, in identifier order.
     let mut ids: Vec<u64> = Vec::new();
     let mut node_props: Vec<Vec<f64>> = vec![Vec::new(); node_keys.len()];
-    let decode = labels.is_some() || !node_keys.is_empty();
+    let mut label_row: Vec<usize> = Vec::new();
+    let mut label_col: Vec<u64> = Vec::new();
+    let decode = labels.is_some() || !node_keys.is_empty() || spec.node_labels;
     scan(mem, g.nodes, |mem, k, v| {
         let id = element_of(k).ok_or_else(|| corrupt("a malformed node key"))?;
         if decode {
@@ -266,9 +271,20 @@ pub(crate) fn build(
                     number(key.and_then(|key| ps.iter().find(|(p, _)| *p == key).map(|(_, x)| x)));
                 mem.push(arr, x)?;
             }
+            if spec.node_labels {
+                let at = label_col.len();
+                mem.push(&mut label_row, at)?;
+                for l in ls {
+                    mem.push(&mut label_col, l)?;
+                }
+            }
         }
         mem.push(&mut ids, id)
     })?;
+    if spec.node_labels {
+        let at = label_col.len();
+        mem.push(&mut label_row, at)?;
+    }
 
     // Edge properties, by edge identifier.
     let mut edge_values: Vec<(u64, Vec<f64>)> = Vec::new();
@@ -299,6 +315,7 @@ pub(crate) fn build(
     let mut rev_row: Vec<usize> = Vec::new();
     let mut rev_col: Vec<usize> = Vec::new();
     let mut rev_edge: Vec<u64> = Vec::new();
+    let mut edge_types: Vec<u64> = Vec::new();
     scan(mem, g.adj, |mem, k, _| {
         let a = decode_adj(k).ok_or_else(|| corrupt("a malformed adjacency key"))?;
         if types.as_ref().is_some_and(|t| !t.contains(&a.ty)) {
@@ -318,6 +335,9 @@ pub(crate) fn build(
             mem.push(row, at)?;
         }
         mem.push(col, w)?;
+        if a.dir == OUT && spec.edge_types {
+            mem.push(&mut edge_types, a.ty)?;
+        }
         if a.dir == OUT {
             mem.push(&mut edge_ids, a.edge)
         } else {
@@ -371,6 +391,8 @@ pub(crate) fn build(
         rev_slot,
         edge_props,
         node_props,
+        edge_types,
+        labels: (label_row, label_col),
         orientation,
     };
     if u32::try_from(n).is_ok() {
@@ -391,6 +413,8 @@ struct Parts {
     rev_slot: Vec<usize>,
     edge_props: Vec<Vec<f64>>,
     node_props: Vec<Vec<f64>>,
+    edge_types: Vec<u64>,
+    labels: (Vec<usize>, Vec<u64>),
     orientation: Orientation,
 }
 
@@ -418,6 +442,8 @@ impl Parts {
             rev_slot: self.rev_slot,
             edge_props: self.edge_props,
             node_props: self.node_props,
+            edge_types: self.edge_types,
+            labels: self.labels,
             orientation: self.orientation,
         })
     }
@@ -545,6 +571,20 @@ impl<I: IndexType> Projection<I> {
     /// The number of outgoing edges of `v` in the run's orientation.
     pub(crate) fn out_degree(&self, v: usize) -> usize {
         self.out(v).size_hint().0
+    }
+
+    /// The label tokens of node `v` ([`Spec::node_labels`]).
+    pub(crate) fn labels_of(&self, v: usize) -> &[u64] {
+        let (row, col) = &self.labels;
+        if row.is_empty() {
+            return &[];
+        }
+        &col[row[v]..row[v + 1]]
+    }
+
+    /// The element identifier of the edge at forward position `slot`.
+    pub(crate) fn edge_id(&self, slot: usize) -> u64 {
+        self.edge_ids[slot]
     }
 
     /// Edge property `p` of the edge at forward position `slot`.

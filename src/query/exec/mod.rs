@@ -308,6 +308,20 @@ impl Held {
         self.peak
     }
 
+    /// Keeps `bytes` held and releases the rest of the reservation, so an
+    /// algorithm run hands its rows' share over without reserving it twice
+    /// (rmp #64).
+    pub(crate) fn shrink_to(&mut self, bytes: u64) {
+        if let Some(r) = &mut self.res {
+            let extra = r.bytes().saturating_sub(bytes);
+            r.shrink(extra);
+            if let Some(c) = &self.counted {
+                c.fetch_sub(extra, crate::sync::atomic::Ordering::Relaxed);
+            }
+        }
+        self.used = self.used.min(bytes);
+    }
+
     /// Releases everything.
     pub(crate) fn release(&mut self) {
         if let (Some(r), Some(c)) = (self.res.take(), &self.counted) {

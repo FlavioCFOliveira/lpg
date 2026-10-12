@@ -14,8 +14,9 @@
 # `dbms.security.procedures.unrestricted=gds.*`); the entrypoint itself is
 # bypassed so that `neo4j-admin database import full` runs first. It then
 # projects every node and every relationship as graph `g` with ORIENTATION
-# (`NATURAL` by default) and the `weight`, `capacity` and `cost` properties
-# that `edges.csv` has, and runs
+# (`NATURAL` by default), the `weight`, `capacity` and `cost` properties
+# that `edges.csv` has and the `lat` and `lng` node properties that
+# `nodes.csv` has (rmp #64), and runs
 #
 #   CALL PROCEDURE('g', CONFIG) YIELD_RETURN
 #
@@ -31,7 +32,7 @@ set -euo pipefail
 IMAGE="neo4j:2026.09.0-community"
 
 if [[ $# -lt 2 ]]; then
-    sed -n '2,27p' "$0"
+    sed -n '2,28p' "$0"
     exit 2
 fi
 
@@ -49,8 +50,18 @@ for p in weight capacity cost; do
         props+=("$p: {property: '$p'}")
     fi
 done
+nprops=()
+for p in lat lng; do
+    if head -1 "$dir/nodes.csv" | tr ',' '\n' | grep -qx "$p:double"; then
+        nprops+=("'$p'")
+    fi
+done
 projection="{ALL: {type: '*', orientation: '$orientation', properties: {$(IFS=,; echo "${props[*]:-}")}}}"
-query="CALL gds.graph.project('g', '*', $projection) YIELD graphName WITH graphName CALL $procedure(graphName, $config) $ret"
+nodes="'*'"
+if [[ ${#nprops[@]} -gt 0 ]]; then
+    nodes="{ALL: {label: '*', properties: [$(IFS=,; echo "${nprops[*]}")]}}"
+fi
+query="CALL gds.graph.project('g', $nodes, $projection) YIELD graphName WITH graphName CALL $procedure(graphName, $config) $ret"
 
 docker run --rm \
     --volume "$dir:/import:ro" \

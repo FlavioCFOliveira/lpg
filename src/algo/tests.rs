@@ -195,6 +195,8 @@ impl ReadProcedure for Probe {
             rev_slot: p.rev_slot.clone(),
             edge_props: p.edge_props.clone(),
             node_props: p.node_props.clone(),
+            edge_types: p.edge_types.clone(),
+            labels: p.labels.clone(),
             orientation: p.orientation,
         };
         let cfg = Config::parse(&empty(), &super::keys(&pagerank::ENTRY, AlgoMode::Stream))?;
@@ -206,6 +208,8 @@ impl ReadProcedure for Probe {
                 cfg: &cfg,
                 sched: &sched,
                 mem: &mut mem,
+                args: &[],
+                other: None,
             })?);
         }
         *self.ranks.lock().unwrap() = outs;
@@ -267,6 +271,7 @@ fn projection_keeps_the_multigraph_and_runs_petgraph() {
             types: Some(vec!["R".into()]),
             edge_props: vec!["cap".into()],
             node_props: vec!["k".into(), "w".into()],
+            ..Spec::default()
         };
         let probe = project(&db, &s, spec.clone(), Orientation::Natural).await;
         let p = probe.out.lock().unwrap().take().unwrap();
@@ -396,6 +401,8 @@ fn drop_self_loops(p: &Projection<u32>) -> Projection<u32> {
         rev_slot,
         edge_props: vec![props],
         node_props: Vec::new(),
+        edge_types: Vec::new(),
+        labels: (Vec::new(), Vec::new()),
         orientation: Orientation::Natural,
     }
 }
@@ -931,12 +938,16 @@ fn lab_zipf_projection_memory() {
     });
 }
 
-/// Every entry declares its procedures and columns.
+/// Every entry declares its procedures and columns; a write mode reports
+/// what it wrote.
 #[test]
 fn every_entry_has_its_columns() {
     for e in ENTRIES {
-        assert!(!e.algs.is_empty() && e.stream_columns[0] == "nodeId");
-        assert!(e.write.is_none() || e.write_columns.contains(&"nodePropertiesWritten"));
+        assert!(!e.algs.is_empty() && !e.stream_columns.is_empty(), "{e:?}");
+        assert!(
+            e.write.is_none() || e.write_columns.iter().any(|c| c.ends_with("Written")),
+            "{e:?}"
+        );
         assert!(format!("{e:?}").starts_with(e.stream));
     }
 }

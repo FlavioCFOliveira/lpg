@@ -39,8 +39,15 @@ pub(crate) enum Ty {
     Choice(&'static [&'static str]),
     /// A string or a list of strings (labels, edge types).
     Names,
-    /// A list of nodes or node element identifiers (`sourceNodes`).
+    /// A list of nodes or node element identifiers (`sourceNodes`); a
+    /// single one is a list of one.
     Nodes,
+    /// One node or node element identifier (`sourceNode`).
+    Node,
+    /// A boolean.
+    Bool,
+    /// A list of non-negative integers (`degreeSequence`).
+    Ints,
     /// A GDS scaler: a name, or a record with `type` and, for `log`,
     /// `offset` ([`super::scale`]).
     Scaler,
@@ -56,6 +63,7 @@ pub(crate) enum Def {
     Int(i64),
     Float(f64),
     Str(&'static str),
+    Bool(bool),
     /// `["*"]`: every label or edge type.
     Star,
     /// `[]`.
@@ -107,6 +115,23 @@ pub(crate) const SEED: Key = Key::new(RANDOM_SEED, Ty::Int { min: i64::MIN }, De
 
 /// The key of a node-property write mode.
 pub(crate) const WRITE: Key = Key::new(WRITE_PROPERTY, Ty::Str, Def::Required);
+
+/// `writeRelationshipType`: the type of the relationships a write mode
+/// creates.
+pub(crate) const WRITE_RELATIONSHIP_TYPE: &str = "writeRelationshipType";
+
+/// The keys of a node-property write mode.
+pub(crate) const NODE_WRITE: &[Key] = &[WRITE];
+
+/// The keys of a relationship write mode (`algorithm-entries.md` RelWrite).
+pub(crate) const REL_WRITE: &[Key] = &[Key::new(WRITE_RELATIONSHIP_TYPE, Ty::Str, Def::Required)];
+
+/// The keys of a path write mode (`algorithm-entries.md` PathWrite).
+pub(crate) const PATH_WRITE: &[Key] = &[
+    Key::new(WRITE_RELATIONSHIP_TYPE, Ty::Str, Def::Required),
+    Key::new("writeNodeIds", Ty::Bool, Def::Bool(false)),
+    Key::new("writeCosts", Ty::Bool, Def::Bool(false)),
+];
 
 /// Keys accepted with no effect (TS-25 Common keys).
 pub(crate) const IGNORED: &[&str] = &[
@@ -187,6 +212,7 @@ impl Config {
                     Def::Int(i) => Value::Int(i),
                     Def::Float(f) => Value::Float(f),
                     Def::Str(s) => Value::string(s),
+                    Def::Bool(b) => Value::Bool(b),
                     Def::Star => Value::List(vec![Value::string("*")].into()),
                     Def::EmptyList => Value::List(Vec::new().into()),
                 },
@@ -261,16 +287,31 @@ impl Config {
         }
     }
 
+    /// A [`Ty::Bool`] key; false when null.
+    pub(crate) fn bool(&self, name: &str) -> bool {
+        matches!(self.get(name), Value::Bool(true))
+    }
+
+    /// The integers of a [`Ty::Ints`] key.
+    pub(crate) fn ints(&self, name: &str) -> Vec<i64> {
+        match self.get(name) {
+            Value::List(l) => l
+                .iter()
+                .filter_map(|v| match v {
+                    Value::Int(i) => Some(*i),
+                    _ => None,
+                })
+                .collect(),
+            _ => Vec::new(),
+        }
+    }
+
     /// `concurrency`.
     pub(crate) fn concurrency(&self) -> usize {
         usize::try_from(self.int(CONCURRENCY)).unwrap_or(usize::MAX)
     }
 
     /// `randomSeed` as the generator's seed.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "the randomised entries arrive with #64 to #69")
-    )]
     pub(crate) fn seed(&self) -> u64 {
         self.int(RANDOM_SEED).cast_unsigned()
     }
@@ -364,6 +405,30 @@ fn check(key: &Key, v: &Value) -> Result<Value, Error> {
                 x => Ok(Value::List(vec![one(x)?].into())),
             }
         }
+        Ty::Node => match v {
+            Value::Node(id) => Ok(Value::Node(*id)),
+            Value::Int(i) if *i >= 0 => Ok(Value::Node(i.cast_unsigned())),
+            Value::Int(_) => Err(invalid(format!(
+                "the configuration key {name} holds a negative node identifier"
+            ))),
+            _ => Err(wrong_type(name, "a node or a node identifier")),
+        },
+        Ty::Bool => match v {
+            Value::Bool(_) => Ok(v.clone()),
+            _ => Err(wrong_type(name, "a boolean")),
+        },
+        Ty::Ints => match v {
+            Value::List(l) if l.iter().all(|x| matches!(x, Value::Int(_))) => {
+                if l.iter().any(|x| matches!(x, Value::Int(i) if *i < 0)) {
+                    Err(invalid(format!(
+                        "the configuration key {name} holds a negative integer"
+                    )))
+                } else {
+                    Ok(v.clone())
+                }
+            }
+            _ => Err(wrong_type(name, "a list of integers")),
+        },
         Ty::Scaler => super::scale::Scaler::parse(name, v).map(|s| s.value()),
     }
 }

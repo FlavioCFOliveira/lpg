@@ -1,0 +1,47 @@
+{"nodeIds": [1], "costs": [0.0], "index": 0, "sourceNode": 1, "targetNode": 1, "totalCost": 0.0}
+{"nodeIds": [1, 51], "costs": [0.0, 1.0], "index": 1, "sourceNode": 1, "targetNode": 51, "totalCost": 1.0}
+{"nodeIds": [1, 51, 16], "costs": [0.0, 1.0, 2.0], "index": 2, "sourceNode": 1, "targetNode": 16, "totalCost": 2.0}
+{"nodeIds": [1, 51, 58], "costs": [0.0, 1.0, 2.0], "index": 3, "sourceNode": 1, "targetNode": 58, "totalCost": 2.0}
+{"nodeIds": [1, 51, 49], "costs": [0.0, 1.0, 2.0], "index": 4, "sourceNode": 1, "targetNode": 49, "totalCost": 2.0}
+{"nodeIds": [1, 51, 17], "costs": [0.0, 1.0, 2.0], "index": 5, "sourceNode": 1, "targetNode": 17, "totalCost": 2.0}
+{"nodeIds": [1, 51, 24], "costs": [0.0, 1.0, 2.0], "index": 6, "sourceNode": 1, "targetNode": 24, "totalCost": 2.0}
+{"nodeIds": [1, 51, 25], "costs": [0.0, 1.0, 2.0], "index": 7, "sourceNode": 1, "targetNode": 25, "totalCost": 2.0}
+{"nodeIds": [1, 51, 26], "costs": [0.0, 1.0, 2.0], "index": 8, "sourceNode": 1, "targetNode": 26, "totalCost": 2.0}
+{"nodeIds": [1, 51, 25, 53], "costs": [0.0, 1.0, 2.0, 3.0], "index": 9, "sourceNode": 1, "targetNode": 53, "totalCost": 3.0}
+{"nodeIds": [1, 51, 26, 55], "costs": [0.0, 1.0, 2.0, 3.0], "index": 10, "sourceNode": 1, "targetNode": 55, "totalCost": 3.0}
+{"nodeIds": [1, 51, 26, 43], "costs": [0.0, 1.0, 2.0, 3.0], "index": 11, "sourceNode": 1, "targetNode": 43, "totalCost": 3.0}
+{"nodeIds": [1, 51, 26, 36], "costs": [0.0, 1.0, 2.0, 3.0], "index": 12, "sourceNode": 1, "targetNode": 36, "totalCost": 3.0}
+{"nodeIds": [1, 51, 26, 12], "costs": [0.0, 1.0, 2.0, 3.0], "index": 13, "sourceNode": 1, "targetNode": 12, "totalCost": 3.0}
+{"nodeIds": [1, 51, 58, 31], "costs": [0.0, 1.0, 2.0, 3.0], "index": 14, "sourceNode": 1, "targetNode": 31, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 52], "costs": [0.0, 1.0, 2.0, 3.0], "index": 15, "sourceNode": 1, "targetNode": 52, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 50], "costs": [0.0, 1.0, 2.0, 3.0], "index": 16, "sourceNode": 1, "targetNode": 50, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 47], "costs": [0.0, 1.0, 2.0, 3.0], "index": 17, "sourceNode": 1, "targetNode": 47, "totalCost": 3.0}
+{"nodeIds": [1, 51, 58, 0], "costs": [0.0, 1.0, 2.0, 3.0], "index": 18, "sourceNode": 1, "targetNode": 0, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 46], "costs": [0.0, 1.0, 2.0, 3.0], "index": 19, "sourceNode": 1, "targetNode": 46, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 30], "costs": [0.0, 1.0, 2.0, 3.0], "index": 20, "sourceNode": 1, "targetNode": 30, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 35], "costs": [0.0, 1.0, 2.0, 3.0], "index": 21, "sourceNode": 1, "targetNode": 35, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 28], "costs": [0.0, 1.0, 2.0, 3.0], "index": 22, "sourceNode": 1, "targetNode": 28, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 22], "costs": [0.0, 1.0, 2.0, 3.0], "index": 23, "sourceNode": 1, "targetNode": 22, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 21], "costs": [0.0, 1.0, 2.0, 3.0], "index": 24, "sourceNode": 1, "targetNode": 21, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 15], "costs": [0.0, 1.0, 2.0, 3.0], "index": 25, "sourceNode": 1, "targetNode": 15, "totalCost": 3.0}
+{"nodeIds": [1, 51, 17, 29], "costs": [0.0, 1.0, 2.0, 3.0], "index": 26, "sourceNode": 1, "targetNode": 29, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 5], "costs": [0.0, 1.0, 2.0, 3.0], "index": 27, "sourceNode": 1, "targetNode": 5, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 4], "costs": [0.0, 1.0, 2.0, 3.0], "index": 28, "sourceNode": 1, "targetNode": 4, "totalCost": 3.0}
+{"nodeIds": [1, 51, 17, 38], "costs": [0.0, 1.0, 2.0, 3.0], "index": 29, "sourceNode": 1, "targetNode": 38, "totalCost": 3.0}
+{"nodeIds": [1, 51, 17, 48], "costs": [0.0, 1.0, 2.0, 3.0], "index": 30, "sourceNode": 1, "targetNode": 48, "totalCost": 3.0}
+{"nodeIds": [1, 51, 24, 34], "costs": [0.0, 1.0, 2.0, 3.0], "index": 31, "sourceNode": 1, "targetNode": 34, "totalCost": 3.0}
+{"nodeIds": [1, 51, 24, 23], "costs": [0.0, 1.0, 2.0, 3.0], "index": 32, "sourceNode": 1, "targetNode": 23, "totalCost": 3.0}
+{"nodeIds": [1, 51, 24, 19], "costs": [0.0, 1.0, 2.0, 3.0], "index": 33, "sourceNode": 1, "targetNode": 19, "totalCost": 3.0}
+{"nodeIds": [1, 51, 24, 14], "costs": [0.0, 1.0, 2.0, 3.0], "index": 34, "sourceNode": 1, "targetNode": 14, "totalCost": 3.0}
+{"nodeIds": [1, 51, 24, 9], "costs": [0.0, 1.0, 2.0, 3.0], "index": 35, "sourceNode": 1, "targetNode": 9, "totalCost": 3.0}
+{"nodeIds": [1, 51, 24, 7], "costs": [0.0, 1.0, 2.0, 3.0], "index": 36, "sourceNode": 1, "targetNode": 7, "totalCost": 3.0}
+{"nodeIds": [1, 51, 49, 57], "costs": [0.0, 1.0, 2.0, 3.0], "index": 37, "sourceNode": 1, "targetNode": 57, "totalCost": 3.0}
+{"nodeIds": [1, 51, 17, 56], "costs": [0.0, 1.0, 2.0, 3.0], "index": 38, "sourceNode": 1, "targetNode": 56, "totalCost": 3.0}
+{"nodeIds": [1, 51, 24, 42], "costs": [0.0, 1.0, 2.0, 3.0], "index": 39, "sourceNode": 1, "targetNode": 42, "totalCost": 3.0}
+{"nodeIds": [1, 51, 25, 50, 41], "costs": [0.0, 1.0, 2.0, 3.0, 4.0], "index": 40, "sourceNode": 1, "targetNode": 41, "totalCost": 4.0}
+{"nodeIds": [1, 51, 26, 36, 45], "costs": [0.0, 1.0, 2.0, 3.0, 4.0], "index": 41, "sourceNode": 1, "targetNode": 45, "totalCost": 4.0}
+{"nodeIds": [1, 51, 25, 4, 39], "costs": [0.0, 1.0, 2.0, 3.0, 4.0], "index": 42, "sourceNode": 1, "targetNode": 39, "totalCost": 4.0}
+{"nodeIds": [1, 51, 25, 21, 37], "costs": [0.0, 1.0, 2.0, 3.0, 4.0], "index": 43, "sourceNode": 1, "targetNode": 37, "totalCost": 4.0}
+{"nodeIds": [1, 51, 25, 5, 20], "costs": [0.0, 1.0, 2.0, 3.0, 4.0], "index": 44, "sourceNode": 1, "targetNode": 20, "totalCost": 4.0}
+{"nodeIds": [1, 51, 25, 21, 37, 54], "costs": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], "index": 45, "sourceNode": 1, "targetNode": 54, "totalCost": 5.0}
+{"nodeIds": [1, 51, 25, 50, 41, 8], "costs": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], "index": 46, "sourceNode": 1, "targetNode": 8, "totalCost": 5.0}

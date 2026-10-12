@@ -32,16 +32,37 @@
 //!   `algo-common/.../result/HistogramUtils.java` `centralitySummary`,
 //!   studied for the keys only).
 //!
+//! * **Row outputs** (rmp #64, #69). An entry whose result is not one
+//!   float per node returns [`Output::Rows`]: its stream rows, each
+//!   charged to the run's reservation as it is produced ([`Run::emit`]),
+//!   so an output larger than the memory cap fails the statement with
+//!   51N72 or 51N73 (FR-LIM-001); the reservation then shrinks to the
+//!   rows' share, which is released with the last row. Its write mode
+//!   writes what the rows describe ([`WriteKind`]): node properties,
+//!   relationships of type `writeRelationshipType` (PathWrite, RelWrite)
+//!   or a flag on edges (EdgePropWrite).
+//! * **MAGE entries** take MAGE's positional parameters ([`Arg`]) before
+//!   the `configuration` record (TS-25 Names and signatures).
+//!
 //! [TS-25]: ../../docs/technical-spec/algorithms.md
 
 pub(crate) mod config;
+mod cycles;
+mod kernels;
 pub(crate) mod mem;
 mod pagerank;
+mod paths;
 pub(crate) mod projection;
 pub(crate) mod scale;
 pub(crate) mod sched;
+mod structure;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_paths;
+#[cfg(test)]
+mod tests_structure;
+mod traversal;
 
 use std::sync::Arc;
 use std::time::Instant;
@@ -53,8 +74,13 @@ use crate::gqlstatus::codes;
 use crate::proc::{Body, Parameter, Procs, ReadContext, Routine, Rows, Signature};
 use crate::query::exec::{Cx, Held};
 use crate::types::Value;
-use config::{COMMON, Config, Key, NODE_LABELS, ORIENTATION, RELATIONSHIP_TYPES, SEED, WRITE};
+use config::{
+    COMMON, Config, Key, NODE_LABELS, NODE_WRITE, ORIENTATION, RELATIONSHIP_TYPES, SEED,
+    WRITE_RELATIONSHIP_TYPE,
+};
 use mem::Mem;
+#[cfg(test)]
+pub(crate) use paths::haversine_nm;
 use projection::{Any, Orientation, Spec, with_projection};
 use sched::Sched;
 
@@ -73,6 +99,78 @@ pub(crate) const RANK_WRITE: &[&str] = &[
     "nodePropertiesWritten",
     "configuration",
 ];
+
+/// The stream columns of a path result (`algorithm-entries.md` PathRows).
+pub(crate) const PATH_ROWS: &[&str] = &[
+    "index",
+    "sourceNode",
+    "targetNode",
+    "totalCost",
+    "nodeIds",
+    "costs",
+    "path",
+];
+
+/// The write columns of a path result (PathWrite).
+pub(crate) const PATH_WRITE: &[&str] = &[
+    "preProcessingMillis",
+    "computeMillis",
+    "postProcessingMillis",
+    "writeMillis",
+    "relationshipsWritten",
+    "configuration",
+];
+
+/// The write columns of a derived node-property write (NodeWrite).
+pub(crate) const NODE_WRITE_COLUMNS: &[&str] = &["nodePropertiesWritten", "configuration"];
+
+/// The write columns of a derived relationship write (RelWrite).
+pub(crate) const REL_WRITE_COLUMNS: &[&str] = &["relationshipsWritten", "configuration"];
+
+/// The write columns of a derived edge-property write (EdgePropWrite).
+pub(crate) const EDGE_PROP_WRITE_COLUMNS: &[&str] =
+    &["relationshipPropertiesWritten", "configuration"];
+
+/// A positional parameter of a MAGE entry, before `configuration`.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Arg {
+    pub(crate) name: &'static str,
+    pub(crate) default: ArgDefault,
+}
+
+impl Arg {
+    pub(crate) const fn new(name: &'static str, default: ArgDefault) -> Arg {
+        Arg { name, default }
+    }
+}
+
+/// The default of a positional parameter.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ArgDefault {
+    Required,
+    Null,
+    Str(&'static str),
+}
+
+/// What a write mode writes, read from the stream rows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum WriteKind {
+    /// Node property `writeProperty` of the node in column `id` is set to
+    /// column `value`.
+    NodeProp { id: usize, value: usize },
+    /// One relationship of type `writeRelationshipType` from
+    /// `sourceNode` to `targetNode` per PathRows row, with `totalCost`,
+    /// and `nodeIds` and `costs` when `writeNodeIds` and `writeCosts`
+    /// are true. A row whose column `cycle` is true is written only when
+    /// `writeNegativeCycles` is true.
+    PathRels { cycle: Option<usize> },
+    /// One relationship of type `writeRelationshipType` per row, from the
+    /// node in column `src` to the node in column `dst`.
+    Rels { src: usize, dst: usize },
+    /// Edge property `writeProperty` of the edge in column `edge` is set
+    /// to true.
+    EdgeFlag { edge: usize },
+}
 
 /// An algorithm of the inventory (module documentation).
 pub(crate) struct Entry {
@@ -100,6 +198,52 @@ pub(crate) struct Entry {
     pub(crate) write_columns: &'static [&'static str],
     /// The computation.
     pub(crate) run: fn(&mut Run<'_, '_>) -> Result<Output, Error>,
+    /// MAGE's positional parameters, before `configuration`.
+    pub(crate) args: &'static [Arg],
+    /// Node properties projected by name, after those of `node_props`.
+    pub(crate) named_node_props: &'static [&'static str],
+    /// Projects each edge's type and each node's labels.
+    pub(crate) edge_types: bool,
+    pub(crate) node_labels: bool,
+    /// Projects a second graph from `otherNodeLabels` and
+    /// `otherRelationshipTypes` ([`Run::other`]).
+    pub(crate) second: bool,
+    /// The keys of the write mode.
+    pub(crate) write_keys: &'static [Key],
+    pub(crate) write_kind: WriteKind,
+}
+
+impl Entry {
+    /// The fields an entry leaves at their usual value.
+    pub(crate) const BASE: Entry = Entry {
+        algs: &[],
+        stream: "",
+        write: None,
+        keys: &[],
+        parallel: false,
+        randomised: false,
+        undirected: false,
+        edge_props: &[],
+        node_props: &[],
+        stream_columns: &[],
+        write_columns: &[],
+        run: no_run,
+        args: &[],
+        named_node_props: &[],
+        edge_types: false,
+        node_labels: false,
+        second: false,
+        write_keys: NODE_WRITE,
+        write_kind: WriteKind::NodeProp { id: 0, value: 1 },
+    };
+}
+
+/// The function of [`Entry::BASE`], replaced by every entry.
+fn no_run(_: &mut Run<'_, '_>) -> Result<Output, Error> {
+    Err(Error::new(
+        codes::C50N00,
+        "internal error: an entry without a function",
+    ))
 }
 
 impl std::fmt::Debug for Entry {
@@ -109,7 +253,51 @@ impl std::fmt::Debug for Entry {
 }
 
 /// Every entry.
-pub(crate) static ENTRIES: &[Entry] = &[pagerank::ENTRY];
+pub(crate) static ENTRIES: &[Entry] = &[
+    pagerank::ENTRY,
+    traversal::BFS,
+    traversal::DFS,
+    traversal::AT_HOP,
+    traversal::BY_HOP,
+    traversal::PATH_EXPAND,
+    traversal::PATH_SUBGRAPH_NODES,
+    traversal::PATH_SUBGRAPH_ALL,
+    traversal::RANDOM_WALK,
+    traversal::TOPOLOGICAL_SORT,
+    traversal::ANCESTORS,
+    traversal::DESCENDANTS,
+    traversal::HAS_PATH,
+    traversal::DOMINATORS,
+    paths::UNWEIGHTED,
+    paths::DIJKSTRA,
+    paths::DIJKSTRA_ALL,
+    paths::BIDIRECTIONAL,
+    paths::ASTAR,
+    paths::BELLMAN_FORD,
+    paths::NEGATIVE_CYCLE,
+    paths::SPFA,
+    paths::DELTA,
+    paths::JOHNSON,
+    paths::FLOYD_WARSHALL,
+    paths::SEIDEL,
+    paths::ALL_PAIRS,
+    paths::ALL_SHORTEST_BETWEEN,
+    paths::YENS,
+    paths::K_SHORTEST,
+    paths::ALL_SIMPLE_PATHS,
+    paths::LONGEST_PATH,
+    cycles::CYCLES,
+    cycles::CIRCUITS,
+    cycles::TSP,
+    cycles::VRP,
+    structure::IS_ISOMORPHIC,
+    structure::IS_ISOMORPHIC_SUBGRAPH,
+    structure::BIPARTITE,
+    structure::TOURNAMENT,
+    structure::GRAPHLIKE,
+    structure::CLOSURE,
+    structure::REDUCTION,
+];
 
 /// The mode of an algorithm routine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -124,6 +312,41 @@ pub(crate) struct Run<'r, 'm> {
     pub(crate) cfg: &'r Config,
     pub(crate) sched: &'r Sched,
     pub(crate) mem: &'r mut Mem<'m>,
+    /// The positional arguments ([`Entry::args`]).
+    pub(crate) args: &'r [Value],
+    /// The second projection ([`Entry::second`]).
+    pub(crate) other: Option<&'r Any>,
+}
+
+impl Run<'_, '_> {
+    /// Appends `row` to `rows`, charging it to the run's reservation
+    /// first (module documentation).
+    ///
+    /// # Errors
+    ///
+    /// As [`Mem::grow`].
+    pub(crate) fn emit(
+        &mut self,
+        rows: &mut Vec<Vec<Value>>,
+        row: Vec<Value>,
+    ) -> Result<(), Error> {
+        let bytes = crate::query::exec::row_bytes(&row) as usize;
+        self.mem.grow(bytes - size_of::<Vec<Value>>())?;
+        self.mem.push(rows, row)
+    }
+
+    /// The token of name `name` of `kind`, `None` if no element has it.
+    pub(crate) fn token(&self, kind: TokenKind, name: &str) -> Option<u64> {
+        self.mem.tx.engine().token_id(kind, name)
+    }
+}
+
+/// The bytes [`Run::emit`] charged for `rows`.
+fn rows_bytes(rows: &[Vec<Value>]) -> usize {
+    rows.iter()
+        .map(|r| crate::query::exec::row_bytes(r) as usize - size_of::<Vec<Value>>())
+        .sum::<usize>()
+        + std::mem::size_of_val(rows)
 }
 
 /// What an entry computes.
@@ -136,20 +359,41 @@ pub(crate) enum Output {
         ran_iterations: Option<u64>,
         did_converge: Option<bool>,
     },
+    /// The stream rows, and the values of the write mode's columns that
+    /// the rows do not give (`containsNegativeCycle`, `bipartite`).
+    Rows {
+        rows: Vec<Vec<Value>>,
+        extra: Vec<(&'static str, Value)>,
+    },
 }
 
 /// The routines of every entry, for the registry.
 pub(crate) fn routines() -> Vec<Routine> {
-    let config = || Parameter::with_default("configuration", Value::Record(Vec::new().into()));
+    let params = |e: &Entry| {
+        let mut ps: Vec<Parameter> = e
+            .args
+            .iter()
+            .map(|a| match a.default {
+                ArgDefault::Required => Parameter::new(a.name),
+                ArgDefault::Null => Parameter::with_default(a.name, Value::Null),
+                ArgDefault::Str(s) => Parameter::with_default(a.name, Value::string(s)),
+            })
+            .collect();
+        ps.push(Parameter::with_default(
+            "configuration",
+            Value::Record(Vec::new().into()),
+        ));
+        ps
+    };
     let mut out = Vec::new();
     for e in ENTRIES {
         out.push(Routine {
-            sig: Signature::new(e.stream, vec![config()], e.stream_columns),
+            sig: Signature::new(e.stream, params(e), e.stream_columns),
             body: Body::Algo(e, AlgoMode::Stream),
         });
         if let Some(w) = e.write {
             out.push(Routine {
-                sig: Signature::new(w, vec![config()], e.write_columns),
+                sig: Signature::new(w, params(e), e.write_columns),
                 body: Body::Algo(e, AlgoMode::Write),
             });
         }
@@ -215,10 +459,17 @@ pub(crate) fn call(
 }
 
 /// The actions a run performs (TS-23): it traverses and reads the
-/// working graph, and a write mode sets properties in it.
-pub(crate) fn requests(mode: AlgoMode) -> Vec<(Action, bool)> {
+/// working graph, and a write mode sets properties in it, and creates
+/// relationships when it writes them.
+pub(crate) fn requests(e: &Entry, mode: AlgoMode) -> Vec<(Action, bool)> {
     let mut r = vec![(Action::Traverse, false), (Action::Read, false)];
     if mode == AlgoMode::Write {
+        if matches!(
+            e.write_kind,
+            WriteKind::PathRels { .. } | WriteKind::Rels { .. }
+        ) {
+            r.push((Action::Create, false));
+        }
         r.push((Action::SetProperty, false));
     }
     r
@@ -233,7 +484,7 @@ fn keys(e: &Entry, mode: AlgoMode) -> Vec<Key> {
     }
     k.extend_from_slice(e.keys);
     if mode == AlgoMode::Write {
-        k.push(WRITE);
+        k.extend_from_slice(e.write_keys);
     }
     k
 }
@@ -263,10 +514,17 @@ pub(crate) fn invoke(
     args: &[Value],
 ) -> Result<Rows, Error> {
     let started = Instant::now();
-    let mut cfg = Config::parse(&args[0], &keys(e, mode))?;
+    let positional = &args[..e.args.len()];
+    let mut cfg = Config::parse(&args[e.args.len()], &keys(e, mode))?;
     if e.undirected {
         cfg.set(ORIENTATION, Value::string("UNDIRECTED"));
     }
+    let mut node_props: Vec<String> = e
+        .node_props
+        .iter()
+        .filter_map(|k| cfg.str(k).map(str::to_string))
+        .collect();
+    node_props.extend(e.named_node_props.iter().map(|p| (*p).to_string()));
     let spec = Spec {
         labels: filter(&cfg, NODE_LABELS),
         types: filter(&cfg, RELATIONSHIP_TYPES),
@@ -275,15 +533,24 @@ pub(crate) fn invoke(
             .iter()
             .filter_map(|k| cfg.str(k).map(str::to_string))
             .collect(),
-        node_props: e
-            .node_props
-            .iter()
-            .filter_map(|k| cfg.str(k).map(str::to_string))
-            .collect(),
+        node_props,
+        edge_types: e.edge_types,
+        node_labels: e.node_labels,
     };
     let g = cx.st.graphs[cx.graph];
     let mut mem = Mem::new(cx.tx, cx.st);
-    let graph = projection::build(&mut mem, &g, &spec, Orientation::of(cfg.str(ORIENTATION)))?;
+    let orientation = Orientation::of(cfg.str(ORIENTATION));
+    let graph = projection::build(&mut mem, &g, &spec, orientation)?;
+    let other = if e.second {
+        let other = Spec {
+            labels: filter(&cfg, "otherNodeLabels"),
+            types: filter(&cfg, "otherRelationshipTypes"),
+            ..Spec::default()
+        };
+        Some(projection::build(&mut mem, &g, &other, orientation)?)
+    } else {
+        None
+    };
     let n = with_projection!(&graph, p => p.node_count());
     #[allow(unused_mut, reason = "the probe key is set under test only")]
     let mut sched = Sched::new(n, cfg.concurrency(), e.parallel, mem.check());
@@ -298,28 +565,104 @@ pub(crate) fn invoke(
         cfg: &cfg,
         sched: &sched,
         mem: &mut mem,
+        args: positional,
+        other: other.as_ref(),
     })?;
     let compute = millis(computing);
+    drop(other);
     let ids = match graph {
         Any::Small(p) => p.ids,
         Any::Large(p) => p.ids,
     };
-    let Output::NodeFloats {
-        values,
-        ran_iterations,
-        did_converge,
-    } = out;
-    match mode {
-        AlgoMode::Stream => {
-            let held = mem.finish(n * (size_of::<u64>() + size_of::<f64>()))?;
-            Ok(stream_rows(ids, values, held))
+    let (rows, extra) = match out {
+        Output::NodeFloats {
+            values,
+            ran_iterations,
+            did_converge,
+        } => {
+            let held = mem.finish(ids.len() * (size_of::<u64>() + size_of::<f64>()))?;
+            return node_floats(
+                e,
+                mode,
+                cx,
+                held,
+                &g,
+                &cfg,
+                ids,
+                values,
+                (ran_iterations, did_converge),
+                (pre, compute),
+            );
         }
+        Output::Rows { rows, extra } => (rows, extra),
+    };
+    drop(ids);
+    let held = mem.keep(rows_bytes(&rows));
+    match mode {
+        AlgoMode::Stream => Ok(Box::new(rows.into_iter().map(move |row| {
+            let _ = &held;
+            Ok(row)
+        }))),
         AlgoMode::Write => {
-            let _arrays = mem.finish(n * (size_of::<u64>() + size_of::<f64>()))?;
             let writing = Instant::now();
-            let written = write_floats(cx, &g, &cfg, &ids, &values)?;
+            let written = write_rows(cx, &g, &cfg, e.write_kind, &rows)?;
+            drop(rows);
+            drop(held);
+            let summary = Summary {
+                written: written.0,
+                rels_written: written.1,
+                edge_props_written: written.2,
+                ran_iterations: None,
+                did_converge: None,
+                values: &[],
+                pre,
+                compute,
+                write: millis(writing),
+                config: cfg.record(),
+                extra: &extra,
+            };
+            let row = e
+                .write_columns
+                .iter()
+                .map(|c| summary.column(c))
+                .collect::<Vec<_>>();
+            Ok(Box::new(std::iter::once(Ok(row))))
+        }
+    }
+}
+
+/// The rows of an entry with one float per node (PageRank's).
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the parts of one run, handed over once"
+)]
+fn node_floats(
+    e: &Entry,
+    mode: AlgoMode,
+    cx: &mut ReadContext<'_>,
+    held: Held,
+    g: &crate::storage::graph::Graph,
+    cfg: &Config,
+    ids: Vec<u64>,
+    values: Vec<f64>,
+    (ran_iterations, did_converge): (Option<u64>, Option<bool>),
+    (pre, compute): (Value, Value),
+) -> Result<Rows, Error> {
+    match mode {
+        AlgoMode::Stream => Ok(stream_rows(ids, values, held)),
+        AlgoMode::Write => {
+            let _arrays = held;
+            let writing = Instant::now();
+            let pairs: Vec<(u64, Value)> = ids
+                .iter()
+                .zip(&values)
+                .map(|(id, x)| (*id, Value::Float(*x)))
+                .collect();
+            let written = write_node_values(cx, g, cfg, &pairs)?;
             let summary = Summary {
                 written,
+                rels_written: 0,
+                edge_props_written: 0,
                 ran_iterations,
                 did_converge,
                 values: &values,
@@ -327,6 +670,7 @@ pub(crate) fn invoke(
                 compute,
                 write: millis(writing),
                 config: cfg.record(),
+                extra: &[],
             };
             let row = e
                 .write_columns
@@ -348,19 +692,18 @@ fn stream_rows(ids: Vec<u64>, values: Vec<f64>, held: Held) -> Rows {
     }))
 }
 
-/// Sets property `writeProperty` of each projected node to its value,
+/// Sets property `writeProperty` of each node of `pairs` to its value,
 /// through the caller's write set; returns the number of nodes written.
-fn write_floats(
+fn write_node_values(
     cx: &mut ReadContext<'_>,
     g: &crate::storage::graph::Graph,
     cfg: &Config,
-    ids: &[u64],
-    values: &[f64],
+    pairs: &[(u64, Value)],
 ) -> Result<u64, Error> {
     let name = cfg.str(config::WRITE_PROPERTY).unwrap_or_default();
     let key = cx.tx.token(TokenKind::PropertyKey, name)?;
     let mut written = Vec::new();
-    for (i, (id, x)) in ids.iter().zip(values).enumerate() {
+    for (i, (id, x)) in pairs.iter().enumerate() {
         if i % crate::query::exec::CHECK_EVERY == 0 {
             cx.check()?;
         }
@@ -368,24 +711,145 @@ fn write_floats(
             continue;
         };
         props.retain(|(k, _)| *k != key);
-        props.push((key, Value::Float(*x)));
+        props.push((key, x.clone()));
         cx.tx.set_node(g, *id, &labels, &props)?;
         cx.st.counters.properties_set += 1;
         written.push(Value::Node(*id));
     }
+    check_closed(cx, g, &written)?;
+    Ok(written.len() as u64)
+}
+
+/// Checks a closed graph type against the elements a write mode wrote,
+/// as a `SET` or `INSERT` checks it.
+fn check_closed(
+    cx: &mut ReadContext<'_>,
+    g: &crate::storage::graph::Graph,
+    written: &[Value],
+) -> Result<(), Error> {
     if let Some(gt) = cx.st.graph_types[cx.graph].clone() {
         let mut c = Cx {
             tx: cx.tx,
             st: cx.st,
         };
-        crate::query::exec::write::check_closed(&mut c, g, &gt, &written)?;
+        crate::query::exec::write::check_closed(&mut c, g, &gt, written)?;
     }
-    Ok(written.len() as u64)
+    Ok(())
+}
+
+/// The node element identifier in a row's column.
+fn row_node(v: &Value) -> Option<u64> {
+    match v {
+        Value::Int(i) => Some(i.cast_unsigned()),
+        Value::Node(id) => Some(*id),
+        _ => None,
+    }
+}
+
+/// Writes what `rows` describe (module documentation); returns the node
+/// properties, relationships and relationship properties written.
+fn write_rows(
+    cx: &mut ReadContext<'_>,
+    g: &crate::storage::graph::Graph,
+    cfg: &Config,
+    kind: WriteKind,
+    rows: &[Vec<Value>],
+) -> Result<(u64, u64, u64), Error> {
+    match kind {
+        WriteKind::NodeProp { id, value } => {
+            let pairs: Vec<(u64, Value)> = rows
+                .iter()
+                .filter_map(|r| Some((row_node(&r[id])?, r[value].clone())))
+                .collect();
+            Ok((write_node_values(cx, g, cfg, &pairs)?, 0, 0))
+        }
+        WriteKind::PathRels { .. } | WriteKind::Rels { .. } => {
+            let name = cfg.str(WRITE_RELATIONSHIP_TYPE).unwrap_or_default();
+            let ty = cx.tx.token(TokenKind::EdgeType, name)?;
+            let (path, cycle) = match kind {
+                WriteKind::PathRels { cycle } => (true, cycle),
+                _ => (false, None),
+            };
+            let with_ids = path && cfg.bool("writeNodeIds");
+            let with_costs = path && cfg.bool("writeCosts");
+            let negative_cycles = cycle.is_some() && cfg.bool("writeNegativeCycles");
+            let mut keys = Vec::new();
+            for k in ["totalCost", "nodeIds", "costs"] {
+                keys.push(if path {
+                    cx.tx.token(TokenKind::PropertyKey, k)?
+                } else {
+                    0
+                });
+            }
+            let (src, dst) = match kind {
+                WriteKind::Rels { src, dst } => (src, dst),
+                _ => (1, 2),
+            };
+            let mut written = Vec::new();
+            for (i, r) in rows.iter().enumerate() {
+                if i % crate::query::exec::CHECK_EVERY == 0 {
+                    cx.check()?;
+                }
+                if let Some(c) = cycle
+                    && r[c] == Value::Bool(true)
+                    && !negative_cycles
+                {
+                    continue;
+                }
+                let (Some(a), Some(b)) = (row_node(&r[src]), row_node(&r[dst])) else {
+                    continue;
+                };
+                let mut props = Vec::new();
+                if path {
+                    props.push((keys[0], r[3].clone()));
+                    if with_ids {
+                        props.push((keys[1], r[4].clone()));
+                    }
+                    if with_costs {
+                        props.push((keys[2], r[5].clone()));
+                    }
+                }
+                let id = cx.tx.create_edge(g, a, b, ty, &props)?;
+                cx.st.counters.edges_created += 1;
+                cx.st.counters.properties_set += props.len() as u64;
+                written.push(Value::Edge(id));
+            }
+            check_closed(cx, g, &written)?;
+            Ok((0, written.len() as u64, 0))
+        }
+        WriteKind::EdgeFlag { edge } => {
+            let name = cfg.str(config::WRITE_PROPERTY).unwrap_or_default();
+            let key = cx.tx.token(TokenKind::PropertyKey, name)?;
+            let mut written = Vec::new();
+            for (i, r) in rows.iter().enumerate() {
+                if i % crate::query::exec::CHECK_EVERY == 0 {
+                    cx.check()?;
+                }
+                let Value::Int(e) = r[edge] else {
+                    continue;
+                };
+                let id = e.cast_unsigned();
+                let Some(rec) = cx.tx.edge(g, id)? else {
+                    continue;
+                };
+                let mut props = rec.props;
+                props.retain(|(k, _)| *k != key);
+                props.push((key, Value::Bool(true)));
+                cx.tx.set_edge(g, id, &props)?;
+                cx.st.counters.properties_set += 1;
+                written.push(Value::Edge(id));
+            }
+            check_closed(cx, g, &written)?;
+            Ok((0, 0, written.len() as u64))
+        }
+    }
 }
 
 /// What a write mode's summary row is built from.
 struct Summary<'a> {
     written: u64,
+    rels_written: u64,
+    edge_props_written: u64,
     ran_iterations: Option<u64>,
     did_converge: Option<bool>,
     values: &'a [f64],
@@ -393,6 +857,8 @@ struct Summary<'a> {
     compute: Value,
     write: Value,
     config: Value,
+    /// The entry's own columns ([`Output::Rows`]).
+    extra: &'a [(&'static str, Value)],
 }
 
 impl Summary<'_> {
@@ -401,6 +867,8 @@ impl Summary<'_> {
         let int = |x: u64| Value::Int(i64::try_from(x).unwrap_or(i64::MAX));
         match c {
             "nodePropertiesWritten" => int(self.written),
+            "relationshipsWritten" => int(self.rels_written),
+            "relationshipPropertiesWritten" => int(self.edge_props_written),
             "ranIterations" => self.ran_iterations.map_or(Value::Null, int),
             "didConverge" => self.did_converge.map_or(Value::Null, Value::Bool),
             "centralityDistribution" => distribution(self.values),
@@ -409,7 +877,12 @@ impl Summary<'_> {
             "postProcessingMillis" => Value::Int(0),
             "writeMillis" => self.write.clone(),
             "configuration" => self.config.clone(),
-            other => panic!("no summary value for the column {other}"),
+            other => self
+                .extra
+                .iter()
+                .find(|(k, _)| *k == other)
+                .map(|(_, v)| v.clone())
+                .unwrap_or_else(|| panic!("no summary value for the column {other}")),
         }
     }
 }

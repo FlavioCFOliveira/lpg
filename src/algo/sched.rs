@@ -52,10 +52,6 @@ pub(crate) fn block_size(n: usize) -> usize {
 
 /// The generator of block `block` for `seed` (module documentation).
 #[must_use]
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "the randomised entries arrive with #64 to #69")
-)]
 pub(crate) fn rng(seed: u64, block: usize) -> ChaCha8Rng {
     let mut r = ChaCha8Rng::seed_from_u64(seed);
     r.set_stream(block as u64);
@@ -118,6 +114,12 @@ impl Sched {
     /// The number of workers a call starts.
     #[cfg(test)]
     pub(crate) fn workers(&self) -> usize {
+        self.workers
+    }
+
+    /// The number of workers a call starts, for the memory a run
+    /// reserves per worker.
+    pub(crate) fn worker_count(&self) -> usize {
         self.workers
     }
 

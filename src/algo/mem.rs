@@ -101,6 +101,14 @@ impl<'r> Mem<'r> {
         self.held.peak()
     }
 
+    /// Ends the run and keeps `keep` bytes of its reservation for the rows
+    /// it returns, which [`Mem::grow`] already charged; the rest is
+    /// released.
+    pub(crate) fn keep(mut self, keep: usize) -> Held {
+        self.held.shrink_to(keep as u64);
+        std::mem::take(&mut self.held)
+    }
+
     /// Ends the run's reservation and returns one of `keep` bytes for the
     /// result the run returns, reserved before the run's is released, so
     /// that the accountant never counts less than is allocated.

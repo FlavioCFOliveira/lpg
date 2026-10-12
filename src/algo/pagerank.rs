@@ -89,6 +89,7 @@ pub(crate) const ENTRY: Entry = Entry {
     stream_columns: SCORE,
     write_columns: RANK_WRITE,
     run,
+    ..Entry::BASE
 };
 
 /// One node's state after a superstep.

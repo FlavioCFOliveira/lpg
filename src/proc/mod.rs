@@ -313,7 +313,7 @@ impl RoutineRef {
     pub(crate) fn requests(&self) -> Vec<(Action, bool)> {
         match self.0.body {
             Body::Builtin(b) => builtin::requests(b),
-            Body::Algo(_, m) => crate::algo::requests(m),
+            Body::Algo(e, m) => crate::algo::requests(e, m),
             _ => Vec::new(),
         }
     }
