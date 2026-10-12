@@ -530,6 +530,25 @@ impl Session {
         ResultStream::start(&self.inner, gql, parameters, false, None).await
     }
 
+    /// Runs the graph algorithm routine `name`, such as
+    /// `gds.pageRank.stream`, with `parameters` keyed by the routine's
+    /// parameter names (`configuration` for the GDS-named routines), as
+    /// [`Session::execute`] runs the `CALL` of it (FR-ALG-002, TS-25 Rust
+    /// API): the same registry entry, binder and run.
+    ///
+    /// # Errors
+    ///
+    /// 42N08 if `name` is no algorithm routine; 22N11 for a key that is
+    /// no parameter of it; as [`Session::execute`].
+    pub async fn run_algorithm(
+        &self,
+        name: &str,
+        parameters: Parameters,
+    ) -> Result<ResultStream, Error> {
+        let (gql, params) = crate::algo::call(&self.inner.procs, name, parameters)?;
+        self.execute(&gql, params).await
+    }
+
     /// Runs `gql` as [`Session::execute`] with every operator measured
     /// (FR-OBS-006); the stream's summary holds the profiled plan once its
     /// last row is pulled.
@@ -1132,6 +1151,21 @@ impl Transaction {
             Some(&self.shared),
         )
         .await
+    }
+
+    /// Runs the graph algorithm routine `name` in this transaction, as
+    /// [`Session::run_algorithm`].
+    ///
+    /// # Errors
+    ///
+    /// As [`Session::run_algorithm`] and [`Transaction::execute`].
+    pub async fn run_algorithm(
+        &self,
+        name: &str,
+        parameters: Parameters,
+    ) -> Result<ResultStream, Error> {
+        let (gql, params) = crate::algo::call(&self.session.inner.procs, name, parameters)?;
+        self.execute(&gql, params).await
     }
 
     /// Commits the transaction (FR-TX-001). A cancelled, terminated or

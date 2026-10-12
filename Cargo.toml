@@ -9,7 +9,14 @@ exclude = ["docs/evidence/"]
 [dependencies]
 rustix = { version = "1.1.5", features = ["fs"] }
 crc32c = "0.6.8"
-rand = "0.10.3"
+# `chacha` exports `ChaCha8Rng`, the portable per-block generator of the
+# graph algorithms (TS-25 Randomness); it is not a default feature.
+rand = { version = "0.10.3", features = ["chacha"] }
+# Graph algorithms (TS-25, TS-31): petgraph's visit traits and functions
+# run on lpg's projection; nalgebra for the dense linear algebra of
+# ALG-026, 076, 077, 143 and 151 (without `macros`, which brings syn).
+petgraph = "0.8.3"
+nalgebra = { version = "0.35.0", default-features = false, features = ["std"] }
 # Temporal values (TS-21): IANA zones read from the operating system
 # (`tzdb-zoneinfo`, /usr/share/zoneinfo or TZDIR); jiff bundles no zone
 # rules. Zone links are fixed in `src/types/zone_links.rs`.

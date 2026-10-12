@@ -339,7 +339,7 @@ fn violation(what: String) -> Error {
 
 /// The closed-graph-type check of the elements a statement wrote
 /// (module documentation).
-fn check_closed(
+pub(crate) fn check_closed(
     cx: &mut Cx<'_>,
     g: &Graph,
     gt: &GraphType,

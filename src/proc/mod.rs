@@ -246,6 +246,8 @@ pub(crate) enum Body {
     Write(Arc<dyn WriteProcedure>),
     Function(Arc<dyn Function>),
     Builtin(builtin::Builtin),
+    /// A graph algorithm in one of its modes ([`crate::algo`]).
+    Algo(&'static crate::algo::Entry, crate::algo::AlgoMode),
 }
 
 /// A registered routine.
@@ -258,7 +260,7 @@ impl Routine {
     /// The routine's mode.
     pub(crate) fn mode(&self) -> Mode {
         match self.body {
-            Body::Write(_) => Mode::ReadWrite,
+            Body::Write(_) | Body::Algo(_, crate::algo::AlgoMode::Write) => Mode::ReadWrite,
             _ => Mode::ReadOnly,
         }
     }
@@ -289,6 +291,7 @@ impl Routine {
                 Ok(Box::new(std::iter::once(Ok(vec![v]))))
             }
             Body::Builtin(b) => builtin::run(*b, &mut { read }, args),
+            Body::Algo(e, m) => crate::algo::invoke(e, *m, &mut { read }, args),
         }
     }
 }
@@ -310,6 +313,7 @@ impl RoutineRef {
     pub(crate) fn requests(&self) -> Vec<(Action, bool)> {
         match self.0.body {
             Body::Builtin(b) => builtin::requests(b),
+            Body::Algo(_, m) => crate::algo::requests(m),
             _ => Vec::new(),
         }
     }
@@ -336,7 +340,7 @@ impl Registry {
     /// A registry holding the built-in routines only.
     pub(crate) fn with_builtins() -> Registry {
         let mut map = BTreeMap::new();
-        for r in builtin::all() {
+        for r in builtin::all().into_iter().chain(crate::algo::routines()) {
             map.insert(r.sig.name.clone(), Arc::new(r));
         }
         Registry { map }
